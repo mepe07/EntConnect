@@ -1,0 +1,12 @@
+# Dependências
+node_modules/
+dist/
+build/
+bin/
+obj/
+
+# Variáveis de Ambiente (Segurança!)
+.env
+.DS_Store
+.idea/
+.vscode/

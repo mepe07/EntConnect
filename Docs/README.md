@@ -1,0 +1,1 @@
+Diagramas, requisitos, manuais, etc
