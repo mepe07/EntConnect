@@ -10,3 +10,14 @@ obj/
 .DS_Store
 .idea/
 .vscode/
+
+# Logs de erros do sistema e do NPM (para não encherem o repositório)
+*.log
+npm-debug.log*
+
+# Variantes do ficheiro .env (muito importante!)
+.env.*
+!.env.example
+
+# Relatórios de Testes (gerados automaticamente mais tarde)
+coverage/
