@@ -10,6 +10,7 @@ obj/
 .DS_Store
 .idea/
 .vscode/
+.vs/
 
 # Logs de erros do sistema e do NPM (para não encherem o repositório)
 *.log
