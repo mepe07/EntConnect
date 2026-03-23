@@ -49,7 +49,10 @@ model Coaching {
   ID_Professor       Int?
   ID_Estado_Coaching Int?
   ID_Sala            Int?
-  Colaborador        Colaborador?     @relation(fields: [ID_Colaborador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Colaborador")
+  ID_Coordenador     Int?
+  Aula               Aula[]
+  Direcao            Direcao?         @relation(fields: [ID_Direcao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Colaborador")
+  Coordenador        Coordenador?     @relation(fields: [ID_Coordenador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Coordenador")
   Enc_Educacao       Enc_Educacao?    @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_EncEducacao")
   Estado_Coaching    Estado_Coaching  @relation(fields: [ID_Coaching], references: [ID_Estado_Coaching], onUpdate: NoAction, map: "FK_Coaching_Estado_Coaching1")
   Professor          Professor?       @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Professor")
