@@ -10,7 +10,7 @@ async function bootstrap() {
   // 1. Criar a configuração base do Swagger
   const config = new DocumentBuilder()
     .setTitle('API EntConnect') // O nome do vosso projeto
-    .setDescription('Documentação oficial da API para o projeto de PDS')
+    .setDescription('Documentação oficial da API para o projeto EntConnect') // Uma breve descrição do que a API faz
     .setVersion('1.0')
     // .addBearerAuth() // <-- Descomenta isto mais tarde quando tiverem login/tokens JWT!
     .build();
