@@ -1,11 +1,12 @@
 {
-  "name": "",
+  "name": "EntConnect",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
+    "debug": "react-router build && react-router dev",
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
