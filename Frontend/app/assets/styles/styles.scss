@@ -1,0 +1,37 @@
+@use "variables/colors";
+
+.container {
+    max-width: 1400px;
+    margin: auto;
+}
+
+header {
+    background-color: colors.$theme-100;
+
+    .header-container{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        height: 76px;
+
+        .logo {
+            width: 180px;
+        }
+
+        .menu {
+            display: inline-block;
+
+            .profile-picture{
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 48px;
+                width: 48px;
+                background-color: colors.$gray-1;
+                border: 1px solid colors.$theme-80;
+                border-radius: 50%;
+            }
+        }
+    }
+}
