@@ -21,23 +21,23 @@ export class CoachingController {
     return this.coachingService.create(createCoachingDto);
   }
 
-  @Get()
-  findAll() {
-    return this.coachingService.findAll();
-  }
+  // @Get()
+  // findAll() {
+  //   return this.coachingService.findAll();
+  // }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.coachingService.findOne(+id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.coachingService.findOne(+id);
+  // }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCoachingDto: UpdateCoachingDto) {
-    return this.coachingService.update(+id, updateCoachingDto);
-  }
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateCoachingDto: UpdateCoachingDto) {
+  //   return this.coachingService.update(+id, updateCoachingDto);
+  // }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.coachingService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.coachingService.remove(+id);
+  // }
 }

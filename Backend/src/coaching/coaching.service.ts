@@ -15,20 +15,20 @@ export class CoachingService {
     });
   }
 
-  async findAll() {
-    // Usa o Prisma para ir buscar todos os registos de coaching na DB
-    return this.prisma.coaching.findMany();
-  }
+  // async findAll() {
+  //   // Usa o Prisma para ir buscar todos os registos de coaching na DB
+  //   return this.prisma.coaching.findMany();
+  // }
 
-  findOne(id: number) {
-    return `This action returns a #${id} coaching`;
-  }
+  // findOne(id: number) {
+  //   return `This action returns a #${id} coaching`;
+  // }
 
-  update(id: number, updateCoachingDto: UpdateCoachingDto) {
-    return `This action updates a #${id} coaching`;
-  }
+  // update(id: number, updateCoachingDto: UpdateCoachingDto) {
+  //   return `This action updates a #${id} coaching`;
+  // }
 
-  remove(id: number) {
-    return `This action removes a #${id} coaching`;
-  }
+  // remove(id: number) {
+  //   return `This action removes a #${id} coaching`;
+  // }
 }

@@ -20,25 +20,25 @@ export class UtilizadorController {
   }
 
 
-  @Post()
-  create(@Body() createUtilizadorDto: CreateUtilizadorDto) {
-    return this.utilizadorService.create(createUtilizadorDto);
-  }
+  // @Post()
+  // create(@Body() createUtilizadorDto: CreateUtilizadorDto) {
+  //   return this.utilizadorService.create(createUtilizadorDto);
+  // }
 
-  @Get()
-  findAll() {
-    return this.utilizadorService.findAll();
-  }
+  // @Get()
+  // findAll() {
+  //   return this.utilizadorService.findAll();
+  // }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.utilizadorService.findOne(+id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.utilizadorService.findOne(+id);
+  // }
 
  
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.utilizadorService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.utilizadorService.remove(+id);
+  // }
 }
