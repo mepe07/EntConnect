@@ -43,30 +43,35 @@ model Artigo {
 
 model Coaching {
   ID_Coaching        Int              @id(map: "PK__Coaching__67C45CE807C5C68F") @default(autoincrement())
-  Duracao            DateTime         @db.Date
   ID_Direcao         Int?
   ID_Enc_Educacao    Int?
   ID_Professor       Int?
   ID_Estado_Coaching Int?
   ID_Sala            Int?
   ID_Coordenador     Int?
+  Preco              Decimal?         @db.Decimal(10, 2)
+  Valor_em_Falta     Decimal?         @db.Decimal(10, 2)
+  Inicio_Coaching    DateTime?        @db.DateTime
+  Duracao            Int              @default(0, map: "DF__Coaching__Duraca__42E1EEFE")
   Aula               Aula[]
   Direcao            Direcao?         @relation(fields: [ID_Direcao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Colaborador")
   Coordenador        Coordenador?     @relation(fields: [ID_Coordenador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Coordenador")
   Enc_Educacao       Enc_Educacao?    @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_EncEducacao")
-  Estado_Coaching    Estado_Coaching  @relation(fields: [ID_Coaching], references: [ID_Estado_Coaching], onUpdate: NoAction, map: "FK_Coaching_Estado_Coaching1")
+  Estado_Coaching    Estado_Coaching? @relation(fields: [ID_Estado_Coaching], references: [ID_Estado_Coaching], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Estado_Coaching")
   Professor          Professor?       @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Professor")
   Sala               Sala?            @relation(fields: [ID_Sala], references: [ID_Sala], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Sala")
   Coaching_Aluno     Coaching_Aluno[]
 }
 
 model Coaching_Aluno {
-  ID_Coaching    Int
-  ID_Aluno       Int
-  Observacoes    String?   @db.VarChar(500)
-  Data_Inscricao DateTime? @default(now(), map: "DF__Coaching___Data___17F790F9") @db.DateTime
-  Aluno          Aluno     @relation(fields: [ID_Aluno], references: [ID_aluno], onDelete: Cascade, onUpdate: NoAction, map: "FK_CoachingAluno_Aluno")
-  Coaching       Coaching  @relation(fields: [ID_Coaching], references: [ID_Coaching], onDelete: Cascade, onUpdate: NoAction, map: "FK_CoachingAluno_Coaching")
+  ID_Coaching      Int
+  ID_Aluno         Int
+  Observacoes      String?   @db.VarChar(500)
+  Data_Inscricao   DateTime? @default(now(), map: "DF__Coaching___Data___17F790F9") @db.DateTime
+  Montante_a_Pagar Decimal?  @db.Decimal(10, 2)
+  Pago             Boolean?  @default(false, map: "DF__Coaching_A__Pago__41EDCAC5")
+  Aluno            Aluno     @relation(fields: [ID_Aluno], references: [ID_aluno], onDelete: Cascade, onUpdate: NoAction, map: "FK_CoachingAluno_Aluno")
+  Coaching         Coaching  @relation(fields: [ID_Coaching], references: [ID_Coaching], onDelete: Cascade, onUpdate: NoAction, map: "FK_CoachingAluno_Coaching")
 
   @@id([ID_Coaching, ID_Aluno], map: "PK_Coaching_Aluno")
 }
@@ -101,9 +106,9 @@ model Estado {
 }
 
 model Estado_Coaching {
-  ID_Estado_Coaching Int       @id(map: "PK__Estado_C__28363E49FC48E36B") @default(autoincrement())
-  Tipo               String    @db.VarChar(20)
-  Coaching           Coaching?
+  ID_Estado_Coaching Int        @id(map: "PK__Estado_C__28363E49FC48E36B") @default(autoincrement())
+  Tipo               String     @db.VarChar(20)
+  Coaching           Coaching[]
 }
 
 model Modalidade {
@@ -151,11 +156,12 @@ model Tamanho {
 }
 
 model Utilizador {
-  ID_Utilizador Int    @id(map: "PK__Utilizad__02069817600CB419") @default(autoincrement())
-  ID_Pessoa     Int    @unique(map: "UQ__Utilizad__81E8E178D6E729CD")
-  Utilizador    String @unique(map: "UQ_Utilizador_Nome") @db.VarChar(100)
-  Password      String @db.VarChar(100)
-  Pessoa        Pessoa @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK_Utilizador_Pessoa")
+  ID_Utilizador Int     @id(map: "PK__Utilizad__02069817600CB419") @default(autoincrement())
+  ID_Pessoa     Int     @unique(map: "UQ__Utilizad__81E8E178D6E729CD")
+  Utilizador    String  @unique(map: "UQ_Utilizador_Nome") @db.VarChar(100)
+  Password      String  @db.VarChar(100)
+  Ativo         Boolean @default(true, map: "DF__Utilizado__Ativo__40F9A68C")
+  Pessoa        Pessoa  @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK_Utilizador_Pessoa")
 }
 
 model Aula {
@@ -196,4 +202,14 @@ model Direcao {
   Aula      Aula[]
   Coaching  Coaching[]
   Pessoa    Pessoa     @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK__Direcao__ID_Pess__2CF2ADDF")
+}
+
+model sysdiagrams {
+  name         String @db.NVarChar(128)
+  principal_id Int
+  diagram_id   Int    @id(map: "PK__sysdiagr__C2B05B6169B6C269") @default(autoincrement())
+  version      Int?
+  definition   Bytes?
+
+  @@unique([principal_id, name], map: "UK_principal_name")
 }
