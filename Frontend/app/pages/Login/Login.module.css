@@ -1,0 +1,122 @@
+/* O fundo verde de ecrã inteiro */
+.loginContainer {
+    /* Ocupa 100% da altura da janela do ecrã */
+    min-height: 100vh;
+    /* Uma cor aproximada ao teu mockup (verde escuro) */
+    background-color: #1a3c34;
+    /* Usamos Flexbox para centrar os elementos no meio do ecrã */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: sans-serif;
+    color: white;
+    /* Se tiveres a imagem de fundo com os rabiscos, podes adicioná-la assim mais tarde: */
+    /* background-image: url('../../assets/fundo.png'); */
+    /* background-size: cover; */
+}
+
+/* O título grande "EntConnect" */
+.brandTitle {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+/* O cartão branco no meio do ecrã */
+.loginCard {
+    background-color: white;
+    color: #333;
+    padding: 3rem;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 400px; /* Não deixa o cartão ficar gigante em ecrãs grandes */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.cardTitle {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-weight: 500;
+    color: #222;
+}
+
+/* Os grupos de input e label para ficarem um por baixo do outro */
+.loginForm {
+    display: flex;
+    flex-direction: column;
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.5rem;
+}
+
+    .inputGroup label {
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+        color: #555;
+    }
+
+    /* Estilo das caixas de texto */
+    .inputGroup input {
+        padding: 0.75rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.3s ease;
+    }
+
+        /* Quando clicas no input, a borda fica da cor do tema */
+        .inputGroup input:focus {
+            border-color: #1a3c34;
+        }
+
+/* O link "Esqueci-me" */
+.forgotPassword {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #666;
+    text-decoration: none;
+    margin-bottom: 1.5rem;
+}
+
+    .forgotPassword:hover {
+        text-decoration: underline;
+    }
+
+/* O botão principal */
+.submitButton {
+    background-color: #1a3c34;
+    color: white;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-weight: 600;
+    width: 50%;
+    margin: 0 auto; /* Centra o botão */
+}
+
+    .submitButton:hover {
+        background-color: #122b25; /* Um verde um pouco mais escuro ao passar o rato */
+    }
+
+/* O rodapé pequenino em baixo */
+.footerBranding {
+    margin-top: 3rem;
+    text-align: center;
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.entartesLogo {
+    font-size: 1.5rem;
+    font-weight: lighter;
+    margin-top: 0.5rem;
+}
