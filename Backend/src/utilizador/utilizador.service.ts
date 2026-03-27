@@ -3,6 +3,8 @@ import { CreateUtilizadorDto } from './dto/create-utilizador.dto';
 import { UpdateUtilizadorDto } from './dto/update-utilizador.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
+// Serviço para lidar com operações simples CRUD relacionados com utilizadores.
+
 @Injectable()
 export class UtilizadorService {
 
@@ -13,6 +15,14 @@ export class UtilizadorService {
     return this.prisma.utilizador.update({
       where: {ID_Utilizador: id},
       data: {Ativo: false}
+    })
+  }
+
+    async unlockUser(id: number) {
+    // Vai à tabela utilizador, procura pelo ID e atualiza o campo ativo para true
+    return this.prisma.utilizador.update({
+      where: {ID_Utilizador: id},
+      data: {Ativo: true}
     })
   }
 
