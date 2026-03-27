@@ -1,0 +1,234 @@
+/* --- AS NOSSAS VARIÁVEIS (A base do Dark Mode) --- */
+.loginContainer {
+    /* Cores Modo Claro (Defeito) */
+    --bg-primary: #f8f9fa;
+    --bg-panel: #ffffff;
+    --text-primary: #1a1a1a;
+    --text-secondary: #6c757d;
+    --input-bg: #ffffff;
+    --input-border: #ced4da;
+    --brand-color: #1a4a38; /* Aquele teu verde escuro bonito */
+    --brand-color-hover: #123528;
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.4s ease, color 0.4s ease;
+    position: relative;
+}
+
+    /* O Interruptor do Dark Mode vira as cores todas do avesso! */
+    .loginContainer.dark {
+        --bg-primary: #121212;
+        --bg-panel: #1e1e1e;
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0a0;
+        --input-bg: #2d2d2d;
+        --input-border: #404040;
+        --brand-color: #2ea071; /* Verde mais claro para contrastar no preto */
+        --brand-color-hover: #3bbf88;
+    }
+
+/* Botão do Sol/Lua lá em cima no canto */
+.themeToggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 10;
+    transition: transform 0.2s;
+}
+
+    .themeToggle:hover {
+        transform: scale(1.1);
+    }
+
+/* --- O SPLIT SCREEN (Ecrã Bipartido) --- */
+.brandPanel {
+    flex: 1; /* Ocupa 50% */
+    background: linear-gradient(135deg, #1a4a38 0%, #0d251c 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+    text-align: center;
+}
+
+.formPanel {
+    flex: 1; /* Ocupa os outros 50% */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--bg-primary);
+    transition: background-color 0.4s ease;
+}
+
+/* Esconde o painel verde se estiveres no telemóvel (Design Responsivo!) */
+@media (max-width: 768px) {
+    .brandPanel {
+        display: none;
+    }
+}
+
+.brandTitle {
+    font-size: 3.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.brandSubtitle {
+    font-size: 1.2rem;
+    opacity: 0.8;
+    max-width: 400px;
+}
+
+.footerBranding {
+    position: absolute;
+    bottom: 20px;
+    opacity: 0.6;
+}
+
+.entartesLogo {
+    font-weight: bold;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+}
+
+/* --- O FORMULÁRIO E A MAGIA --- */
+.loginCard {
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+    background-color: var(--bg-panel);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: background-color 0.4s ease;
+}
+
+.cardTitle {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.cardSubtitle {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+.loginForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* MAGIA DAS FLOATING LABELS */
+.inputGroup {
+    position: relative;
+    width: 100%;
+}
+
+    .inputGroup input {
+        width: 100%;
+        padding: 1rem 1rem 0.5rem 1rem; /* Mais espaço em cima para a etiqueta */
+        font-size: 1rem;
+        color: var(--text-primary);
+        background-color: var(--input-bg);
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+
+    .inputGroup label {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        pointer-events: none; /* Deixa clicar "através" da etiqueta */
+        transition: all 0.2s ease;
+        font-size: 1rem;
+    }
+
+    /* Quando o input está focado OU quando não está vazio (não está mostrar o placeholder=" ") */
+    .inputGroup input:focus,
+    .inputGroup input:not(:placeholder-shown) {
+        border-color: var(--brand-color);
+    }
+
+        /* Atira a etiqueta lá para cima e põe-na pequena! */
+        .inputGroup input:focus + label,
+        .inputGroup input:not(:placeholder-shown) + label {
+            top: 6px;
+            font-size: 0.75rem;
+            color: var(--brand-color);
+            font-weight: 600;
+        }
+
+/* OLHO MÁGICO */
+.eyeButton {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    opacity: 0.6;
+}
+
+    .eyeButton:hover {
+        opacity: 1;
+    }
+
+/* OUTROS ESTILOS */
+.formActions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.forgotPassword {
+    color: var(--brand-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+    .forgotPassword:hover {
+        text-decoration: underline;
+    }
+
+.submitButton {
+    background-color: var(--brand-color);
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 1rem;
+}
+
+    .submitButton:hover {
+        background-color: var(--brand-color-hover);
+    }
+
+.errorMessage {
+    background-color: rgba(217, 83, 79, 0.1);
+    color: #d9534f;
+    padding: 0.8rem;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+}

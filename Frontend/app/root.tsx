@@ -2,6 +2,7 @@ import {
   isRouteErrorResponse,
   Links,
   Meta,
+  Navigate,
   Outlet,
   Scripts,
   ScrollRestoration,
@@ -12,6 +13,7 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { Header } from "./structure/header/header";
 import { NavigationMenu } from "./structure/navigation-menu/navigation-menu";
+import { Login } from "./pages/Login/Login";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -36,6 +38,7 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
+    <>
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
@@ -44,22 +47,40 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <Header />
-          <div className="container main-wrapper">
-            <NavigationMenu />
-            <div className="body-wrapper">
-              <Outlet />
-            </div>
-          </div>
-          <ScrollRestoration />
-          <Scripts />
+        {children}
+        <ScrollRestoration />
+        <Scripts />
       </body>
     </html>
+    </>
   );
 }
 
 export default function App() {
-  return <Outlet />;
+  const page = (
+    <>
+    <Header />
+    <div className="container main-wrapper">
+      <NavigationMenu />
+      <div className="body-wrapper">
+        <Outlet />
+      </div>
+    </div>
+    </>
+  );
+
+  // If we're still on the server, return the page as is.
+  if(typeof window === 'undefined') {
+    return page;
+  }
+  
+  // If we're on the client, check for the token and conditionally render the page or redirect to login.
+  const currentUserToken = localStorage.getItem('entconnect_token');
+  if (currentUserToken) {
+    return page;
+  } else {
+    return <Login />;
+  }
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

@@ -1,13 +1,13 @@
-import { Dashboard } from "~/views/dashboard";
+import { Login } from "~/pages/Login/Login";
 
-const title = "Dashboard";
+const title = "Login";
 
 export default function Home() {
   return (
     <>
     <title>{title}</title>
     <meta property="og:title" content={title} />
-    <Dashboard />
+    <Login />
     </>
   );
 }
