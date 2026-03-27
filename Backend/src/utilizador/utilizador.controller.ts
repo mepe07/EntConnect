@@ -19,6 +19,16 @@ export class UtilizadorController {
     return {message: `Utilizador com ID ${id} bloqueado com sucesso.`};
   }
 
+  @Patch(':id/unlock')
+  @ApiOperation({summary: 'Desbloquear um utilizador'})
+  @ApiResponse({status:200})
+  async unlockUser(@Param('id') id: string) {
+    // +id é para converter a string do id para número, já que o serviço espera um número
+    await this.utilizadorService.unlockUser(+id);
+
+    return {message: `Utilizador com ID ${id} desbloqueado com sucesso.`};
+  }
+
 
   // @Post()
   // create(@Body() createUtilizadorDto: CreateUtilizadorDto) {
