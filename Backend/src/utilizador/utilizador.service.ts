@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUtilizadorDto } from './dto/create-utilizador.dto';
 import { UpdateUtilizadorDto } from './dto/update-utilizador.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 // Serviço para lidar com operações simples CRUD relacionados com utilizadores.
 
