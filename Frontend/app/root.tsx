@@ -69,17 +69,17 @@ export default function App() {
   }, []);
   
   const page = (
-    // Build the default page structure with header, navigation menu, and outlet for nested routes.
-    <>
-    <Header />
-    <div className="container main-wrapper">
-      <NavigationMenu />
-      <div className="body-wrapper">
-        <Outlet />
-      </div>
-    </div>
-    </>
-  );
+        <>
+            <Header />
+            {/* RETIRÁMOS A PALAVRA 'container' DAQUI! */}
+            <div className="main-wrapper">
+                <NavigationMenu />
+                <div className="body-wrapper">
+                    <Outlet />
+                </div>
+            </div>
+        </>
+    );
 
   // If we're on the client, check for the token and conditionally render the page or redirect to login.
   if(domLoaded) {
