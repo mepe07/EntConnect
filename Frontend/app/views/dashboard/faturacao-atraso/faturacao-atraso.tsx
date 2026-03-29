@@ -26,7 +26,7 @@ export function FaturacaoAtraso() {
     const [devedores, setDevedores] = useState<Encarregado[]>([]);
     const [aCarregar, setACarregar] = useState(true);
 
-    // ESTADOS DA BARRA DE FERRAMENTAS (Ideia 4)
+    // ESTADOS DA BARRA DE FERRAMENTAS (Ideia 4) 
     const [termoPesquisa, setTermoPesquisa] = useState("");
     const [filtroGravidade, setFiltroGravidade] = useState("todos");
 
