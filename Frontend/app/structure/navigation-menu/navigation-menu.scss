@@ -1,0 +1,44 @@
+@use "../../assets/styles/variables/colors";
+
+.navigation-menu {
+    position: relative;
+    padding: 40px 0;
+    flex: 0 0 300px;
+    height: 100%;
+    background-color: colors.$gray-8;
+    z-index: 2;
+
+    & > ul {
+        position: relative;
+        z-index: 2;
+
+         li {
+            padding: 10px 30px;
+            font-size: 20px;
+            color: colors.$gray-1;
+            transition: all 0.2s;
+
+            &.active {
+                font-weight: 600;
+                background-color: colors.$theme-100;
+            }
+
+            &:hover {
+                background-color: colors.$theme-80;
+                cursor: pointer;
+            }
+        }
+    }
+
+    &:before{
+        content: '';
+        position: absolute;
+        display: block;
+        top: 0;
+        left: calc((100vw - 100% + 290px) * -1);
+        height: 100%;
+        width: 100vw;
+        background-color: colors.$gray-8;
+        z-index: 1;
+    }
+}

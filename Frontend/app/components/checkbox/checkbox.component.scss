@@ -1,0 +1,44 @@
+@use "../../assets/styles/variables/colors";
+
+.checkbox-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+
+    &:hover {
+        .custom-checkbox {
+            border-color: colors.$gray-5;
+        }
+    }
+
+    .custom-checkbox {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background-color: colors.$gray-1;
+        border: 1px solid colors.$gray-4;
+        border-radius: 4px;
+
+        i {
+            font-size: 14px;
+        }
+
+        &.checked {
+            border-color: colors.$theme-100;
+        }
+    }
+
+    input[type="checkbox"] {
+        display: none;
+    }
+
+    label {
+        font-size: 14px;
+        color: colors.$gray-8;
+        cursor: pointer;
+    }
+}

@@ -1,0 +1,30 @@
+@use "variables/colors";
+
+body{
+    height: 100vh;
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Poppins';
+    }
+
+    h1{
+        font-size: 36px;
+        color: colors.$theme-100;
+        font-weight: 600;
+    }
+    
+    .container {
+        max-width: 1400px;
+        height: 100%;
+        margin: auto;
+    }
+
+    .main-wrapper {
+        display: flex;
+        width: 100%;
+
+        .body-wrapper {
+            padding: 46px;
+        }
+    }
+}
