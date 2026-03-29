@@ -4,4 +4,5 @@ export default [
     index("routes/home.tsx"), 
     route("marketplace", "routes/marketplace.tsx"),
     route("test-components", "routes/test-components.tsx"),
-    route("login", "routes/login.tsx")] satisfies RouteConfig;
+    route("login", "routes/login.tsx"),
+    route("coaching/faturacao-atraso", "routes/faturacao-atraso.tsx")] satisfies RouteConfig;

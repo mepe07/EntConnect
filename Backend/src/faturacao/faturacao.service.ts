@@ -6,70 +6,77 @@ export class FaturacaoService {
   constructor(private readonly prisma: PrismaService) {}
 
   // Representa o '+ getGeneralBilling()' do Coordinator no vosso UML 
-  async obterFaturacaoGeral() {
-    // 1. O Prisma vai buscar todas as inscrições que não estão pagas
-    const faturasPendentes = await this.prisma.coaching_Aluno.findMany({
-      where: {
-        Pago: false,
-        Montante_a_Pagar: { not: null } // Ignora se o preço estiver vazio por algum erro
-      },
-      include: {
-        Coaching: true, // Traz os dados da sessão (datas, etc)
-        Aluno: {
-          include: {
-            Enc_Educacao: {
-              include: {
-                Pessoa: true, // Precisamos disto para saber o Nome e o Email de quem vai pagar!
-              },
+    // Ficheiro: faturacao.service.ts
+  
+    async obterFaturacaoGeral() {
+        // 1. O Prisma vai buscar todas as inscrições não pagas, mas agora com "raio-X" profundo!
+        const faturasPendentes = await this.prisma.coaching_Aluno.findMany({
+            where: {
+                Pago: false,
+                Montante_a_Pagar: { not: null } 
             },
-          },
-        },
-      },
-    });
-
-    // 2. Criamos um "dicionário" (Map) para organizar as contas por Encarregado
-    const mapaFaturacao = new Map();
-
-    for (const item of faturasPendentes) {
-      // Regra de segurança: Se por acaso o aluno não tiver encarregado associado, saltamos este registo
-      if (!item.Aluno || !item.Aluno.Enc_Educacao) continue;
-
-      const idEE = item.Aluno.Enc_Educacao.ID_Pessoa;
-      const pessoaEE = item.Aluno.Enc_Educacao.Pessoa;
-      
-      // Converte o Decimal da Base de Dados para um Número normal para podermos somar
-      const montante = Number(item.Montante_a_Pagar) || 0; 
-
-      // Se este Encarregado de Educação ainda não tem "Ficha de Cliente" no nosso mapa, criamos agora:
-      if (!mapaFaturacao.has(idEE)) {
-        mapaFaturacao.set(idEE, {
-          ID_Enc_Educacao: idEE,
-          Nome_Enc_Educacao: pessoaEE.Nome,
-          Email_Enc_Educacao: pessoaEE.Email,
-          Total_Em_Divida: 0,      // O contador começa a zeros
-          Detalhes_Divida: [],     // A lista de sessões que ele deve
+            include: {
+                // A MAGIA ACONTECE AQUI: Vamos buscar a sessão e quem a deu!
+                Coaching: { 
+                    include: {
+                        Professor: {
+                            include: {
+                                Pessoa: true // Essencial para obtermos o Nome do Professor!
+                            }
+                        }
+                    }
+                }, 
+                Aluno: {
+                    include: {
+                        Enc_Educacao: {
+                            include: {
+                                Pessoa: true, // Para sabermos a quem cobrar a dívida
+                            },
+                        },
+                    },
+                },
+            },
         });
-      }
 
-      // Vamos buscar a ficha dele ao mapa
-      const faturaDoEE = mapaFaturacao.get(idEE);
+        const mapaFaturacao = new Map();
+
+        for (const item of faturasPendentes) {
+            if (!item.Aluno || !item.Aluno.Enc_Educacao) continue;
+
+            const idEE = item.Aluno.Enc_Educacao.ID_Pessoa;
+            const pessoaEE = item.Aluno.Enc_Educacao.Pessoa;
       
-      // Somamos o valor desta sessão específica ao total dele
-      faturaDoEE.Total_Em_Divida += montante;
+            const montante = Number(item.Montante_a_Pagar) || 0; 
 
-      // Adicionamos o "talão" desta sessão à lista para o vosso Frontend poder mostrar os detalhes
-      faturaDoEE.Detalhes_Divida.push({
-        ID_Coaching: item.ID_Coaching,
-        ID_Aluno: item.ID_Aluno,
-        Nome_Aluno: item.Aluno.Nome,
-        Montante_Sessao: montante,
-        Data_Inscricao: item.Data_Inscricao,
-      });
+            // Criar a "Ficha de Cliente" se ainda não existir no mapa
+            if (!mapaFaturacao.has(idEE)) {
+                mapaFaturacao.set(idEE, {
+                    ID_Enc_Educacao: idEE,
+                    Nome_Enc_Educacao: pessoaEE.Nome,
+                    Email_Enc_Educacao: pessoaEE.Email,
+                    Contato_Enc_Educacao: pessoaEE.Contacto, // Dica: Útil para a coordenadora ligar logo!
+                    Total_Em_Divida: 0,      
+                    Detalhes_Divida: [],     
+                });
+            }
+
+            const faturaDoEE = mapaFaturacao.get(idEE);
+            faturaDoEE.Total_Em_Divida += montante;
+
+            // O RELATÓRIO: Injetamos todos os dados ricos que pediste para o Frontend
+            faturaDoEE.Detalhes_Divida.push({
+                ID_Coaching: item.ID_Coaching,
+                Nome_Aluno: item.Aluno.Nome,
+                Montante_Sessao: montante,
+                // Usamos o operador '?' (Optional Chaining) para evitar erros caso a sessão não tenha prof atribuído
+                Nome_Professor: item.Coaching.Professor?.Pessoa?.Nome || 'Professor não atribuído',
+                Data_Sessao: item.Coaching.Inicio_Coaching, 
+                Data_Inscricao: item.Data_Inscricao,
+            });
+        }
+
+        return Array.from(mapaFaturacao.values());
     }
-
-    // 3. O NestJS e a Internet comunicam em Arrays/Listas. Convertemos o nosso Map para Array!
-    return Array.from(mapaFaturacao.values());
-  }
 
   // Representa o '+ getBilling()' do LegalGuardian
   async obterFaturacaoPorEncarregado(idEncarregado: number) {

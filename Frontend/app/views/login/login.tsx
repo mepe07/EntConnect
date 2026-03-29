@@ -4,9 +4,9 @@ import { AuthService } from '../../services/auth.service';
 import styles from './login.module.css';
 
 const CITACOES = [
-    "«O EntConnect reduziu a nossa burocracia em 60%.» - Diretor Rui",
-    "«A gestão das turmas nunca foi tão fácil.» - Prof. Sara",
-    "«Uma obra de arte na gestão escolar.» - Coord. Ana"
+    "«O EntConnect reduziu a nossa burocracia em 60%.»",
+    "«A gestão das turmas nunca foi tão fácil.»",
+    "«Uma obra de arte na gestão escolar.»"
 ];
 
 const SUBTITULO_COMPLETO = "A plataforma inteligente para a gestão escolar do futuro.";
@@ -76,7 +76,7 @@ export function Login() {
                 navigateTo('/');
             }
         } catch (erro) {
-            setErrorMessage('Não foi possível contactar o servidor. Tente mais tarde.');
+            setErrorMessage('Credencias Invalidas');
         }
     };
 
