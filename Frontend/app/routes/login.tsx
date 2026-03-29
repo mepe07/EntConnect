@@ -2,7 +2,7 @@ import { Login } from "~/views/login/login";
 
 const title = "Login";
 
-export default function Home() {
+export default function LoginRoute() {
   return (
     <>
     <title>{title}</title>
