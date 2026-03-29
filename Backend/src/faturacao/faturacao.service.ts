@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export class FaturacaoService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Representa o '+ getGeneralBilling()' do Coordinator no vosso UML
+  // Representa o '+ getGeneralBilling()' do Coordinator no vosso UML 
   async obterFaturacaoGeral() {
     // 1. O Prisma vai buscar todas as inscrições que não estão pagas
     const faturasPendentes = await this.prisma.coaching_Aluno.findMany({
