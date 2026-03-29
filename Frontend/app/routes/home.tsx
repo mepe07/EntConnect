@@ -1,4 +1,4 @@
-import { Dashboard } from "~/views/dashboard";
+import { Dashboard } from "~/views/dashboard/dashboard";
 
 const title = "Dashboard";
 

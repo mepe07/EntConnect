@@ -1,4 +1,4 @@
-import { Marketplace } from "~/views/marketplace";
+import { Marketplace } from "~/views/marketplace/marketplace";
 
 const title = "Marketplace";
 

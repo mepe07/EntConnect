@@ -1,0 +1,32 @@
+@use "../../assets/styles/variables/colors";
+
+.textarea-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    
+    label {
+        font-size: 14px;
+        color: colors.$gray-8;
+    }
+
+    textarea {
+        padding: 10px 14px;
+        font-size: 14px;
+        color: colors.$gray-8;
+        background-color: colors.$gray-1;
+        border: 1px solid colors.$gray-4;
+        border-radius: 8px;
+        resize: vertical;
+        min-height: 100px;
+
+        &:hover {
+            border-color: colors.$gray-5;
+        }
+
+        &:focus {
+            border-color: colors.$theme-100;
+            outline: none;
+        }
+    }
+}

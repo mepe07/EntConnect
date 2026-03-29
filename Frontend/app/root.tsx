@@ -13,7 +13,8 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { Header } from "./structure/header/header";
 import { NavigationMenu } from "./structure/navigation-menu/navigation-menu";
-import { Login } from "./pages/Login/Login";
+import { Login } from "./views/login/login";
+import { useEffect, useState } from "react";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -29,6 +30,10 @@ export const links: Route.LinksFunction = () => [
   {
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap",
+  },
+  {
+    rel: "stylesheet",
+    href: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/fontawesome.min.css",
   },
   {
     rel: "stylesheet",
@@ -54,10 +59,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
     </html>
     </>
   );
-}
+} 
 
 export default function App() {
+  const [domLoaded, setDomLoaded] = useState(false);
+
+  useEffect(() => {
+    setDomLoaded(true);
+  }, []);
+  
   const page = (
+    // Build the default page structure with header, navigation menu, and outlet for nested routes.
     <>
     <Header />
     <div className="container main-wrapper">
@@ -69,18 +81,15 @@ export default function App() {
     </>
   );
 
-  // If we're still on the server, return the page as is.
-  if(typeof window === 'undefined') {
-    return page;
-  }
-  
   // If we're on the client, check for the token and conditionally render the page or redirect to login.
-  const currentUserToken = localStorage.getItem('entconnect_token');
-  if (currentUserToken) {
-    return page;
-  } else {
-    return <Login />;
-  }
+  if(domLoaded) {
+    const currentUserToken = localStorage.getItem('entconnect_token');
+      if (currentUserToken) {
+        return page;
+      } else {
+        return <Login />;
+      }
+    }
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

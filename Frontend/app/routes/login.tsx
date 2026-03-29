@@ -1,4 +1,4 @@
-import { Login } from "~/pages/Login/Login";
+import { Login } from "~/views/login/login";
 
 const title = "Login";
 

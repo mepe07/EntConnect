@@ -1,65 +1,44 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
-import styles from './Login.module.css';
+import { Link, useNavigate } from 'react-router';
+import { AuthService } from '../../services/auth.service';
+import styles from './login.module.css';
 
 export function Login() {
+    const authService = new AuthService();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [mensagemErro, setMensagemErro] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
-    // OS NOSSOS NOVOS INTERRUPTORES (Ideia 1 e 4)
-    const [mostrarPassword, setMostrarPassword] = useState(false);
-    const [temaEscuro, setTemaEscuro] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [darkTheme, setDarkTheme] = useState(false);
 
-    const navegarPara = useNavigate();
+    const navigateTo = useNavigate();
 
     const handleLogin = async (evento: React.FormEvent) => {
         evento.preventDefault();
-        setMensagemErro('');
+        setErrorMessage('');
 
         try {
-            const resposta = await fetch('http://localhost:3000/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password }),
-            });
-
-            const dados = await resposta.json();
-
-            if (!resposta.ok) {
-                setMensagemErro(dados.message || 'Erro ao iniciar sessão.');
-                return;
+            const result = await authService.login(username, password);
+            if (result) {
+                navigateTo('/');
             }
-
-            localStorage.setItem('entconnect_token', dados.access_token);
-
-            navegarPara('/');
-
-            // if (dados.role === 'Professor') {
-            //     navegarPara('/dashboard-professor');
-            // } else if (dados.role === 'Coordenador') {
-            //     navegarPara('/dashboard-coordenador');
-            // } else if (dados.role === 'Direcao') {
-            //     navegarPara('/dashboard-direcao');
-            // } else {
-            //     navegarPara('/');
-            // }
         } catch (erro) {
-            setMensagemErro('Não foi possível contactar o servidor. Tente mais tarde.');
+            setErrorMessage('Não foi possível contactar o servidor. Tente mais tarde.');
         }
     };
 
     return (
         // Ideia 4 (Dark Mode): Se o tema for escuro, adicionamos a classe 'dark' ao contentor principal
-        <div className={`${styles.loginContainer} ${temaEscuro ? styles.dark : ''}`}>
+        <div className={`${styles.loginContainer} ${darkTheme ? styles.dark : ''}`}>
 
             {/* Botão flutuante para mudar o tema (Sol/Lua) */}
             <button
                 className={styles.themeToggle}
-                onClick={() => setTemaEscuro(!temaEscuro)}
+                onClick={() => setDarkTheme(!darkTheme)}
                 title="Alternar Modo Escuro"
             >
-                {temaEscuro ? '☀️' : '🌙'}
+                {darkTheme ? '☀️' : '🌙'}
             </button>
 
             {/* LADO ESQUERDO: A Montra da Marca (Ideia 3 - Split Screen) */}
@@ -99,7 +78,7 @@ export function Login() {
                             {/* Ideia 1 (Olho Mágico): O tipo muda consoante o estado! */}
                             <input
                                 id="passwordInput"
-                                type={mostrarPassword ? "text" : "password"}
+                                type={showPassword ? "text" : "password"}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder=" "
@@ -111,15 +90,15 @@ export function Login() {
                             <button
                                 type="button"
                                 className={styles.eyeButton}
-                                onClick={() => setMostrarPassword(!mostrarPassword)}
+                                onClick={() => setShowPassword(!showPassword)}
                             >
-                                {mostrarPassword ? '🙈' : '👁️'}
+                                {showPassword ? '🙈' : '👁️'}
                             </button>
                         </div>
 
-                        {mensagemErro && (
+                        {errorMessage && (
                             <div className={styles.errorMessage}>
-                                ⚠️ {mensagemErro}
+                                ⚠️ {errorMessage}
                             </div>
                         )}
 
