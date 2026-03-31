@@ -10,6 +10,11 @@ export class UtilizadorService {
 
   constructor(private prisma: PrismaService) {}
 
+  // WIP
+  async getAllUsers() {
+    return this.prisma.utilizador.findMany();
+  }
+
   async blockUser(id: number) {
     // Vai à tabela utilizador, procura pelo ID e atualiza o campo ativo para false
     return this.prisma.utilizador.update({

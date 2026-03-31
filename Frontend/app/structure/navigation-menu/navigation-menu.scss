@@ -1,0 +1,129 @@
+// Ficheiro: structure/navigation-menu/navigation-menu.scss
+@use "../../assets/styles/variables/colors";
+
+.navigation-menu {
+    // LÓGICA: Largura fixa de 280px em PCs.
+    // Em telemóveis, o media-query em baixo vai lidar com isto.
+    width: 280px;
+    min-width: 280px;
+    height: 100vh;
+    background-color: colors.$gray-8;
+    color: colors.$gray-1;
+    padding: 2rem 0;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); // Dá profundidade à barra
+    overflow-y: auto; // Permite scroll se os menus ficarem gigantes
+
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+
+        li {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            // Os Links agora preenchem todo o espaço do botão (melhor UX!)
+            a, .dropdown-titulo {
+                display: flex;
+                align-items: center;
+                width: 100%;
+                padding: 12px 30px;
+                font-size: 1.1rem;
+                color: colors.$gray-1;
+                text-decoration: none; // Tira os sublinhados feios
+                box-sizing: border-box;
+            }
+            // O estado ATIVO da página atual
+            &.active {
+                background-color: colors.$theme-100;
+                font-weight: 600;
+
+                a {
+                    color: #ffffff;
+                }
+            }
+            // O Efeito ao passar o Rato
+            &:not(.active):hover {
+                background-color: colors.$theme-80;
+            }
+        }
+    }
+}
+
+/* --- ESTILOS DO MENU ACORDEÃO (COACHING) --- */
+.menu-dropdown {
+    padding: 0 !important;
+
+    .dropdown-titulo {
+        justify-content: space-between;
+
+        .seta {
+            transition: transform 0.3s ease;
+
+            &.aberta {
+                transform: rotate(180deg);
+            }
+        }
+    }
+    // A barra lateral verde (Destaque quando está num sub-menu)
+    &.active-parent {
+        border-left: 4px solid colors.$theme-100;
+        background-color: rgba(255, 255, 255, 0.03); // Ligeiro clareamento
+    }
+}
+
+/* --- O SUB-MENU --- */
+.sub-menu-lista {
+    background-color: colors.$gray-8 !important;
+    animation: deslizarBaixo 0.2s ease-out forwards;
+
+    .sub-item {
+        a {
+            padding: 10px 30px 10px 50px !important; // Recuo (indentação) para notar que é submenu
+            font-size: 0.95rem !important;
+            color: colors.$gray-3 !important;
+            transition: color 0.2s ease;
+        }
+
+        &.active {
+            background-color: transparent !important; // Sem blocos verdes nos submenus!
+            border-left: 3px solid colors.$theme-100;
+
+            a {
+                color: #ffffff !important;
+                font-weight: 600;
+            }
+        }
+
+        &:not(.active):hover {
+            background-color: transparent !important;
+
+            a {
+                color: colors.$theme-100 !important; // O texto fica verde ao passar o rato
+            }
+        }
+    }
+}
+
+@keyframes deslizarBaixo {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- RESPONSIVIDADE (Ecrãs Pequenos/Telemóveis) --- */
+@media (max-width: 768px) {
+    .navigation-menu {
+        // Em telemóveis, o menu costuma encolher ou esconder-se.
+        // Se a vossa app tiver "Menu Hambúrguer", a largura aqui devia ser gerida lá!
+        position: absolute;
+        z-index: 100;
+        width: 100%; // Ocupa o ecrã todo
+        height: auto;
+    }
+}

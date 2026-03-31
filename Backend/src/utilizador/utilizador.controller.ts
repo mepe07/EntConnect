@@ -14,6 +14,13 @@ export class UtilizadorController {
     private readonly importService: UtilizadorImportService // Injetado aqui ImportUsersService
   ) {}
 
+  @Get('utilizadores')
+  @ApiOperation({summary: 'Listar todos os utilizadores'})
+  @ApiResponse({status:200})
+  async getAllUsers() {
+    return this.utilizadorService.getAllUsers();
+  }
+
   @Patch(':id/block')
   @ApiOperation({summary: 'Bloquear um utilizador'})
   @ApiResponse({status:200})

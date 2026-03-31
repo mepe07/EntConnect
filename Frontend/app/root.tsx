@@ -2,13 +2,19 @@ import {
   isRouteErrorResponse,
   Links,
   Meta,
+  Navigate,
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
 } from "react-router";
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { Header } from "./structure/header/header";
+import { NavigationMenu } from "./structure/navigation-menu/navigation-menu";
+import { Login } from "./views/login/login";
+import { useEffect, useState } from "react";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -21,10 +27,23 @@ export const links: Route.LinksFunction = () => [
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
   },
+  {
+    rel: "stylesheet",
+    href: "https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap",
+  },
+  {
+    rel: "stylesheet",
+    href: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/fontawesome.min.css",
+  },
+  {
+    rel: "stylesheet",
+    href: "/app/assets/styles/styles.scss",
+  }
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
+    <>
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
@@ -38,11 +57,39 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
+    </>
   );
-}
+} 
 
 export default function App() {
-  return <Outlet />;
+  const [domLoaded, setDomLoaded] = useState(false);
+
+  useEffect(() => {
+    setDomLoaded(true);
+  }, []);
+  
+  const page = (
+        <>
+            <Header />
+            {/* RETIRÁMOS A PALAVRA 'container' DAQUI! */}
+            <div className="main-wrapper">
+                <NavigationMenu />
+                <div className="body-wrapper">
+                    <Outlet />
+                </div>
+            </div>
+        </>
+    );
+
+  // If we're on the client, check for the token and conditionally render the page or redirect to login.
+  if(domLoaded) {
+    const currentUserToken = localStorage.getItem('entconnect_token');
+      if (currentUserToken) {
+        return page;
+      } else {
+        return <Login />;
+      }
+    }
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

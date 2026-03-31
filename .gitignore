@@ -22,3 +22,6 @@ npm-debug.log*
 
 # Relatórios de Testes (gerados automaticamente mais tarde)
 coverage/
+
+# Ignorar documentação gerada automaticamente
+Docs/backend_compodoc/
