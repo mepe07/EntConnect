@@ -1,4 +1,4 @@
-import { FaturacaoAtraso } from "~/views/coaching/faturacao-atraso/faturacao-atraso";
+import { FaturacaoAtraso } from "~/views/dashboard/faturacao-atraso/faturacao-atraso";
 
 const title = "Faturação em Atraso | EntConnect";
 
