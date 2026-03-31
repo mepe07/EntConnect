@@ -4,31 +4,45 @@ import { TableColumnTypesEnum } from '~/components/table/models/enums/table-colu
 import { ButtonTypeEnum } from '~/components/button/models/enums/button-type.enum';
 import { ButtonColorEnum } from '~/components/button/models/enums/button-color.enum';
 import { ButtonComponent } from '~/components/button/button.component';
+import { UsersService } from './users.service';
+import { useEffect, useState } from 'react';
 
 export function Utilizadores() {
-    async function blockUser(userId: number) {
-        const confirmed = confirm('Queres bloquear este utilizador?');
-        if (!confirmed) return;
+    const usersService = new UsersService();
 
-        // Aqui irias fazer a chamada à API para bloquear o utilizador
-        const response = await fetch(`http://localhost:3000/utilizador/${userId}/block`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-        });
-        const data = await response.json();
-    }
-    async function unlockUser(userId: number) {
-        const confirmed = confirm('Queres desbloquear este utilizador?');
-        if (!confirmed) return;
+    const [users, setUsers] = useState([]);
+    
+    // Transform users data to fit the table component
+    const usersData: Record<string, any>[] = users.map((user: any) => ({
+        user: user.Utilizador,
+        id_utilizador: user.ID_Utilizador,
+        ativo: user.Ativo ? "Sim" : "Não"
+    }));
 
-        // Aqui irias fazer a chamada à API para desbloquear o utilizador
-        const response = await fetch(`http://localhost:3000/utilizador/${userId}/unlock`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            
-        });
-        const data = await response.json();
-    }
+    // #region API Calls
+        async function fetchUsersData() {
+            const usersData = await usersService.getUsers();
+            setUsers(usersData);
+        }
+
+        function blockUnlockUser(userId: number, action: 'block' | 'unlock') {
+            if (action === 'block') {
+                usersService.blockUser(userId).then(response => {
+                    fetchUsersData();
+                });
+            } else {
+                usersService.unlockUser(userId).then(response => {
+                    fetchUsersData();
+                });
+            }
+        }
+
+    // #endregion
+
+    // Get the data from the API on component mount
+    useEffect(() => {
+        fetchUsersData();
+    }, []);
 
     return (
         <>
@@ -38,21 +52,21 @@ export function Utilizadores() {
                 label="Bloquear Utilizador"
                 icon="fa-lock"
                 config={{ type: ButtonTypeEnum.Primary, color: ButtonColorEnum.Error }}
-                onClick={() => blockUser(1)}
+                onClick={() => usersService.blockUser(1)}
             />
             <ButtonComponent
                 label="Desbloquear Utilizador"
                 icon="fa-lock"
                 config={{ type: ButtonTypeEnum.Primary, color: ButtonColorEnum.Theme }}
-                onClick={() => unlockUser(1)}
+                onClick={() => usersService.unlockUser(1)}
             />
 
             <TableComponent
                 config={{
                     columns: [
-                        { key: "name", value: "Nome", type: TableColumnTypesEnum.Default },
-                        { key: "email", value: "Email", type: TableColumnTypesEnum.Default },
-                        { key: "type", value: "Tipo", type: TableColumnTypesEnum.Default }
+                        { key: "user", value: "Nome", type: TableColumnTypesEnum.Default },
+                        { key: "id_utilizador", value: "ID Utilizador", type: TableColumnTypesEnum.Default },
+                        { key: "ativo", value: "Ativo", type: TableColumnTypesEnum.Default }
                     ],
                     filters: [
                         {
@@ -69,23 +83,25 @@ export function Utilizadores() {
                     actions: [
                         {
                             icon: "fa-eye",
-                            tooltip: "Ver Devedor",
+                            tooltip: "Ver Utilizador",
                             config: { type: ButtonTypeEnum.Tertiary },
-                            onClick: (row) => alert(`Queres ver o devedor ${row.name}?`)
+                            onClick: (row) => alert(`Queres ver o utilizador ${row.User}?`)
                         },
                         {
-                            icon: "fa-trash",
-                            tooltip: "Eliminar Devedor",
+                            icon: "fa-lock",
+                            tooltip: "Bloquear Utilizador",
                             config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Error },
-                            onClick: (row) => alert(`Queres eliminar o devedor ${row.name}?`)
+                            onClick: (row) => blockUnlockUser(row.id_utilizador, 'block')
+                        },
+                        {
+                            icon: "fa-lock",
+                            tooltip: "Desbloquear Utilizador",
+                            config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Theme },
+                            onClick: (row) => blockUnlockUser(row.id_utilizador, 'unlock')
                         }
                     ]
                 }}
-                data={[
-                    { name: "João Gonçalves", email: "joao@example.com", debt: "1000" },
-                    { name: "Maria Silva", email: "maria@example.com", debt: "2000" },
-                    { name: "Pedro Santos", email: "pedro@example.com", debt: "3000" }
-                ]}
+                data={usersData}
             />
         </>
     );
