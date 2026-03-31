@@ -1,18 +1,38 @@
+//#region  imports
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { CoachingService } from './coaching.service';
 import { CreateCoachingDto } from './dto/create-coaching.dto';
 import { UpdateCoachingDto } from './dto/update-coaching.dto';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags, ApiBody } from '@nestjs/swagger';
+import path from 'path';
+import { GestaoEstudiosService } from './estudios/gestaoEstudios.service';
+import { get } from 'http';
+//#endregion
 
 @ApiTags('Coaching') // Tag para agrupar os endpoints relacionados a Coaching no Swagger
 @Controller('coaching')
 export class CoachingController {
-  constructor(private readonly coachingService: CoachingService) {}
+  constructor(
+    private readonly coachingService: CoachingService,
+    private readonly gestaoEstudiosService: GestaoEstudiosService
+  ) {}
 
+
+  /**
+   * Recebe o pedido HTTP para criar uma nova sessão de coaching.
+   * Os dados de entrada são automaticamente validados pelas regras definidas no CreateCoachingDto
+   * antes de serem passados para a camada de serviço (Service) para inserção na Base de Dados.
+   * * @param createCoachingDto Objeto JSON contendo os dados da nova sessão (Duração, Preço, Sala, etc.)
+   * @returns O objeto completo da sessão de coaching recém-criada, incluindo o ID gerado automaticamente.
+   */
   @Post()
   @ApiOperation({ 
-    summary: 'Criar uma nova sessão', 
+    summary: 'Criar nova sessão de coaching', 
     description: 'Criar uma nova sessão de coaching na base de dados.' 
+  })
+  @ApiBody({ 
+    type: CreateCoachingDto, 
+    description: 'A estrutura de dados (Payload) necessária para criar a sessão.' 
   })
   @ApiResponse({ status: 201, description: 'A sessão de coaching foi criada com sucesso.' })
   @ApiResponse({ status: 400, description: 'Os dados enviados são inválidos (ex: falta a Duração).' })
@@ -21,23 +41,85 @@ export class CoachingController {
     return this.coachingService.create(createCoachingDto);
   }
 
-  // @Get()
-  // findAll() {
-  //   return this.coachingService.findAll();
-  // }
+  @Get('estudios')
+  @ApiOperation({
+    summary: 'Listar todos os estúdios',
+    description: 'Retorna uma lista completa de todas as salas/estúdios da escola, incluindo o seu estado atual de disponibilidade.'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Sucesso: Lista de estúdios retornada com sucesso.' 
+  })
+  async getAllStudios() {
+    return this.gestaoEstudiosService.getAllStudios();
+  }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.coachingService.findOne(+id);
-  // }
+  /**
+   * Tranca/bloqueia um estúdio específico na base de dados, alterando o seu estado de disponibilidade para 'false'.
+   * Útil para períodos de manutenção, limpeza ou quando a sala é desativada, impedindo novas marcações de coaching.
+   * * @param id O identificador único numérico da Sala/Estúdio que vem no URL do pedido.
+   * @returns Um objeto JSON contendo uma mensagem de sucesso e os dados completos do estúdio atualizado.
+   * @throws {NotFoundException} Retorna erro 404 caso o ID do estúdio não exista na base de dados.
+   * @throws {BadRequestException} Retorna erro 400 caso o estúdio já se encontre bloqueado.
+   */
+  @Patch('estudios/:id/bloquear')
+  @ApiOperation({
+    summary: 'Bloquear/trancar estúdio',
+    description: 'Altera o estado de um estúdio para indisponível. Garante primeiro que o estúdio existe e que ainda não está bloqueado antes de efetuar a alteração na base de dados.'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Sucesso: O estúdio foi bloqueado corretamente. Retorna a mensagem e o objeto da sala.' 
+  })
+  @ApiResponse({ 
+    status: 400, 
+    description: 'Bad Request: O estúdio já se encontra bloqueado ou o ID enviado tem um formato inválido.' 
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: 'Not Found: O estúdio com o ID fornecido não foi encontrado no sistema.' 
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: 'Internal Server Error: Erro inesperado de comunicação com a base de dados.' 
+  })
+  async lockStudio(@Param('id') id: string) {
+    // '+' converte a string que vem do URL para o tipo 'number' exigido pelo Service
+    return this.gestaoEstudiosService.lockStudio(+id);
+  }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateCoachingDto: UpdateCoachingDto) {
-  //   return this.coachingService.update(+id, updateCoachingDto);
-  // }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.coachingService.remove(+id);
-  // }
+  /**
+   * Destranca/desbloqueia um estúdio específico na base de dados, alterando o seu estado de disponibilidade para 'true'.
+   * Útil para tornar a sala novamente disponível após períodos de manutenção, limpeza, etc.
+   * * @param id O identificador único numérico da Sala/Estúdio que vem no URL do pedido.
+   * @returns Um objeto JSON contendo uma mensagem de sucesso e os dados completos do estúdio atualizado.
+   * @throws {NotFoundException} Retorna erro 404 caso o ID do estúdio não exista na base de dados.
+   * @throws {BadRequestException} Retorna erro 400 caso o estúdio já se encontre desbloqueado.
+   */
+  @Patch('estudios/:id/desbloquear')
+  @ApiOperation({
+    summary: 'Desbloquear/destrancar estúdio',
+    description: 'Altera o estado de um estúdio para disponível. Garante primeiro que o estúdio existe e que ainda não está desbloqueado antes de efetuar a alteração na base de dados.'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Sucesso: O estúdio foi desbloqueado corretamente. Retorna a mensagem e o objeto da sala.' 
+  })
+  @ApiResponse({ 
+    status: 400, 
+    description: 'Bad Request: O estúdio já se encontra desbloqueado ou o ID enviado tem um formato inválido.' 
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: 'Not Found: O estúdio com o ID fornecido não foi encontrado no sistema.' 
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: 'Internal Server Error: Erro inesperado de comunicação com a base de dados.' 
+  })
+  async unlockStudio(@Param('id') id: string) {
+    return this.gestaoEstudiosService.unlockStudio(+id);
+  }
 }
+
