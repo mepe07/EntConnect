@@ -5,4 +5,4 @@ export default [
     route("marketplace", "routes/marketplace.tsx"),
     route("test-components", "routes/test-components.tsx"),
     route("login", "routes/login.tsx"),
-    route("coaching/faturacao-atraso", "routes/faturacao-atraso.tsx")] satisfies RouteConfig;
+    route("faturacao", "routes/faturacao.tsx")] satisfies RouteConfig;

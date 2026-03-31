@@ -1,27 +1,17 @@
+import type { InputComponentProps } from './input-props.interface';
 import './input.component.scss';
 
-
-import React from 'react';
-
-interface InputComponentProps {
-  id: string;
-  label?: string;
-  placeholder?: string;
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}
-
-export function InputComponent({ id, label, placeholder, value, onChange }: InputComponentProps) {
+export function InputComponent(options: InputComponentProps) {
   return (
     <>
       <div className="input-container">
-        {label && <label htmlFor={id}>{label}</label>}
+        {options.label && <label htmlFor={options.id}>{options.label}</label>}
         <input
-          id={id}
+          id={options.id}
           type="text"
-          placeholder={placeholder}
-          value={value}
-          onChange={onChange}
+          placeholder={options.placeholder}
+          value={options.value}
+          onChange={options.onChange}
         />
       </div>
     </>
