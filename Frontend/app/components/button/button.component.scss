@@ -1,0 +1,72 @@
+@use '../../assets/styles/variables/colors';
+
+.button-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 10px;
+    width: fit-content;
+    height: 34px;
+    font-family: 'Poppins';
+    font-size: 16px;
+    color: colors.$gray-1;
+    background-color: colors.$theme-100;
+    border-radius: 4px;
+    cursor: pointer;
+
+    & > i {
+        font-size: 14px;
+    }
+
+    &:hover {
+        background-color: colors.$theme-80;
+    }
+
+    &.error {
+        color: colors.$gray-1;
+        background-color: colors.$error-100;
+
+        &:hover {
+            background-color: colors.$error-80;
+        }
+    }
+
+    &.secondary {
+        color: colors.$theme-100;
+        background-color: colors.$theme-20;
+
+        &:hover {
+            background-color: colors.$theme-40;
+        }
+
+        &.error {
+            color: colors.$error-100;
+            background-color: colors.$error-20;
+
+            &:hover {
+                background-color: colors.$error-40;
+            }
+        }
+    }
+
+    &.tertiary {
+        color: colors.$theme-100;
+        background-color: colors.$gray-1;
+        border: 1px solid colors.$gray-4;
+
+        &:hover {
+            background-color: colors.$gray-2;
+        }
+
+        &.error {
+            color: colors.$error-100;
+            background-color: colors.$gray-1;
+            border: 1px solid colors.$gray-4;
+
+            &:hover {
+                background-color: colors.$gray-2;
+            }
+        }
+    }
+}
