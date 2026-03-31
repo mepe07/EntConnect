@@ -9,6 +9,13 @@ import { ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
 export class UtilizadorController {
   constructor(private readonly utilizadorService: UtilizadorService) {}
 
+  @Get('utilizadores')
+  @ApiOperation({summary: 'Listar todos os utilizadores'})
+  @ApiResponse({status:200})
+  async getAllUsers() {
+    return this.utilizadorService.getAllUsers();
+  }
+
   @Patch(':id/block')
   @ApiOperation({summary: 'Bloquear um utilizador'})
   @ApiResponse({status:200})

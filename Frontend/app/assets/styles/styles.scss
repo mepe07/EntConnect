@@ -12,22 +12,17 @@ body {
         color: colors.$theme-100;
         font-weight: 600;
     }
-    /* Ficheiro: /app/assets/styles/styles.scss */
 
     .main-wrapper {
-        /* O Flexbox é a magia que põe o Menu e a Dashboard lado a lado! */
         display: flex;
-        width: 100%;
-        /* Opcional: Se o vosso Header tem 76px de altura (como vi antes), 
-     isto garante que o resto da página ocupa exatamente até ao fundo do ecrã */
         min-height: calc(100vh - 76px);
+        width: 100%;
     }
 
     .body-wrapper {
-        /* O flex: 1 diz à Dashboard: "Ocupa todo o espaço que sobrar depois do Menu!" */
         flex: 1;
-        /* Se o conteúdo da Dashboard for gigante, só esta parte faz scroll (o Menu fica fixo) */
+        padding: 46px;
+        background-color: colors.$gray-1;
         overflow-y: auto;
-        background-color: #f4f7f6; /* Uma cor de fundo suave para o conteúdo geral */
     }
 }

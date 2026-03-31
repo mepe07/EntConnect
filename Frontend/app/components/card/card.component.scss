@@ -1,0 +1,53 @@
+@use "../../assets/styles/variables/colors";
+
+.card {
+    background-color: colors.$gray-1;
+    border: 1px solid colors.$gray-3;
+    border-radius: 8px;
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+
+    &.has-action {
+        cursor: pointer;
+        transition: box-shadow 0.2s ease;
+
+        &:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+    }
+
+    .card-header {
+        font-size: 14px;
+        text-transform: uppercase;
+        color: colors.$gray-7;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .card-body {
+        font-size: 32px;
+        font-weight: 800;
+        color: colors.$gray-8;
+    }
+
+    &.card-warning {
+        border-color: colors.$warning-100;
+        background-color: colors.$warning-20;
+
+        .card-body {
+            color: colors.$warning-100;
+        }
+    }
+
+    &.card-error {
+        border-color: colors.$error-100;
+        background-color: colors.$error-20;
+
+        .card-body {
+            color: colors.$error-100;
+        }
+    }
+}
