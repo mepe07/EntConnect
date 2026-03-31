@@ -1,0 +1,98 @@
+@use '../../assets/styles/variables/colors';
+
+.toolbar{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    background-color: colors.$gray-1;
+    border: 1px solid colors.$gray-3;
+    border-radius: 8px;
+
+    & > .input-container {
+        width: 400px;
+    }
+
+    .filters-toolbar {
+        display: flex;
+        gap: 16px;
+        align-items: flex-end;
+
+        & > * {
+            width: 200px;
+        }
+    }
+}
+
+.table-container {
+    background-color: colors.$gray-1;
+    border: 1px solid colors.$gray-3;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+
+        thead {
+            th {
+                padding: 16px;
+                font-size: 14px;
+                text-align: left;
+                text-transform: uppercase;
+                color: colors.$gray-7; 
+                background-color: colors.$gray-2;
+                border-bottom: 2px solid colors.$gray-3;
+            }
+        }
+
+        tbody {
+            tr {
+                transition: background-color 0.2s;
+
+                &:hover {
+                    background-color: colors.$gray-2;
+                }
+                
+                td {
+                    padding: 16px;
+                    font-size: 15px;
+                    color: colors.$gray-8;
+                    border-bottom: 1px solid colors.$gray-3;
+
+                    .chip {
+                        padding: 6px 12px;
+                        width: fit-content;
+                        font-size: 14px;
+                        font-weight: 600;
+			            color: colors.$info-100;
+                        background-color: colors.$info-20;
+                        border-radius: 20px;
+                    }
+
+                    &.warning {
+                        .chip {
+                            background-color: colors.$warning-20;
+                            color: colors.$warning-100;
+                        }
+                    }
+
+                    &.error {
+                        .chip {
+                            background-color: colors.$error-20;
+                            color: colors.$error-100;
+                        }
+                    }
+
+                    &.row-actions {
+                        display: flex;
+                        gap: 8px;
+                    }
+                }
+            }
+        }
+    }
+}

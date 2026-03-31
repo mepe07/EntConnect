@@ -73,7 +73,7 @@
 
 /* --- O SUB-MENU --- */
 .sub-menu-lista {
-    background-color: darken(colors.$gray-8, 4%) !important;
+    background-color: colors.$gray-8 !important;
     animation: deslizarBaixo 0.2s ease-out forwards;
 
     .sub-item {

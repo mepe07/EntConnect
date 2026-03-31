@@ -1,0 +1,8 @@
+import type { CardTypeEnum } from "./models/enums/card-type.enum";
+
+export interface CardComponentProps {
+  title: string;
+  description: string;
+  type?: CardTypeEnum;
+  onClick?: (e?: any) => void;
+}

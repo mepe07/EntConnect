@@ -1,14 +1,9 @@
+import type { CheckboxComponentProps } from './checkbox-props.interface';
 import './checkbox.component.scss';
 import React, { useState } from 'react';
 
-interface CheckboxComponentProps {
-  id: string;
-  selected?: boolean;
-  label?: string;
-}
-
-export function CheckboxComponent({ id, selected = false, label }: CheckboxComponentProps) {
-  const [isChecked, setIsChecked] = useState(selected);
+export function CheckboxComponent(options: CheckboxComponentProps) {
+  const [isChecked, setIsChecked] = useState(options.selected);
 
   function handleCheckboxChange(e: React.ChangeEvent<HTMLInputElement>) {
     setIsChecked(e.target.checked);
@@ -27,10 +22,10 @@ export function CheckboxComponent({ id, selected = false, label }: CheckboxCompo
         <div className={`custom-checkbox ${isChecked ? "checked" : ""}`} onClick={handleCustomCheckboxClick}>
           {isChecked && <i className="fa fa-check"></i>}
         </div>
-        {label && <label htmlFor={id}>{label}</label>}
+        {options.label && <label htmlFor={options.id}>{options.label}</label>}
         <input
           type="checkbox"
-          id={id}
+          id={options.id}
           checked={isChecked}
           onChange={handleCheckboxChange}
         />
