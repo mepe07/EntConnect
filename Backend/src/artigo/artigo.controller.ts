@@ -7,28 +7,28 @@ import { UpdateArtigoDto } from './dto/update-artigo.dto';
 export class ArtigoController {
   constructor(private readonly artigoService: ArtigoService) {}
 
-  @Post()
-  create(@Body() createArtigoDto: CreateArtigoDto) {
-    return this.artigoService.create(createArtigoDto);
-  }
+  // // @Post()
+  // // create(@Body() createArtigoDto: CreateArtigoDto) {
+  // //   return this.artigoService.create(createArtigoDto);
+  // // }
 
-  @Get()
-  findAll() {
-    return this.artigoService.findAll();
-  }
+  // // @Get()
+  // // findAll() {
+  // //   return this.artigoService.findAll();
+  // // }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.artigoService.findOne(+id);
-  }
+  // // @Get(':id')
+  // // findOne(@Param('id') id: string) {
+  // //   return this.artigoService.findOne(+id);
+  // // }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateArtigoDto: UpdateArtigoDto) {
-    return this.artigoService.update(+id, updateArtigoDto);
-  }
+  // // @Patch(':id')
+  // // update(@Param('id') id: string, @Body() updateArtigoDto: UpdateArtigoDto) {
+  // //   return this.artigoService.update(+id, updateArtigoDto);
+  // // }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.artigoService.remove(+id);
-  }
+  // // @Delete(':id')
+  // // remove(@Param('id') id: string) {
+  // //   return this.artigoService.remove(+id);
+  // // }
 }
