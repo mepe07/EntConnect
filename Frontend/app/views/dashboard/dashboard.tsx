@@ -13,7 +13,7 @@ export function Dashboard() {
         <div className="dashboard-wrapper">
       
             {/* 1. O TAPETE VERMELHO */}
-            <header className="dashboard-boas-vindas">
+            <div className="dashboard-boas-vindas">
                 <div>
                     <h1>Olá, {nomeUtilizador}! 👋</h1>
                     <p>Aqui está o resumo da tua escola para o dia de hoje.</p>
@@ -21,7 +21,7 @@ export function Dashboard() {
                 <div className="data-hoje">
                     {new Date().toLocaleDateString('pt-PT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                 </div>
-            </header>
+            </div>
 
             {/* 2. OS SINAIS VITAIS (KPIs) */}
             <section className="kpi-grid">
