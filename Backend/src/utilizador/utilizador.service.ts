@@ -66,25 +66,4 @@ export class UtilizadorService {
     })
   }
 
-
-
-  // create(createUtilizadorDto: CreateUtilizadorDto) {
-  //   return 'This action adds a new utilizador';
-  // }
-
-  // findAll() {
-  //   return `This action returns all utilizador`;
-  // }
-
-  // findOne(id: number) {
-  //   return `This action returns a #${id} utilizador`;
-  // }
-
-  // update(id: number, updateUtilizadorDto: UpdateUtilizadorDto) {
-  //   return `This action updates a #${id} utilizador`;
-  // }
-
-  // remove(id: number) {
-  //   return `This action removes a #${id} utilizador`;
-  // }
 }
