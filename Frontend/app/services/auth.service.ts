@@ -4,7 +4,7 @@ import type { User } from "~/models/interfaces/user.interface";
 export class AuthService {
     private _userToken: string | null = null;
     private _userInfo: any = null;
-    private _apiUrl = 'http://localhost:3000/auth';
+    private _apiUrl = 'http://localhost:3000';
 
     /**
      * Logs in the user by sending their credentials to the backend and storing the received token in localStorage.
@@ -16,7 +16,7 @@ export class AuthService {
         try {
             // Check if we already have a token in localStorage. If not, proceed with the login request.
             if (!localStorage.getItem('entconnect_token')) {
-                const response = await fetch(`${this._apiUrl}/login`, {
+                const response = await fetch(`${this._apiUrl}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password }),
@@ -43,6 +43,11 @@ export class AuthService {
         }
     }
 
+    /**
+     * Logs out the user by clearing the token from localStorage and resetting the service's user information.
+     * 
+     * @param event: The click event from the logout link, used to prevent the default navigation behavior.
+     */
     logout(event: React.MouseEvent<HTMLAnchorElement>) {
         event.preventDefault();
 
@@ -50,6 +55,7 @@ export class AuthService {
         this._userInfo = null;
         localStorage.removeItem('entconnect_token');
 
+        // Redirect to the home page after logging out
         window.location.href = '/';
     }
 

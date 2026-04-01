@@ -7,7 +7,8 @@
     gap: 6px;
     padding: 0 10px;
     width: fit-content;
-    height: 34px;
+    height: 42px;
+    min-width: 42px;
     font-family: 'Poppins';
     font-size: 16px;
     color: colors.$gray-1;
@@ -67,6 +68,16 @@
             &:hover {
                 background-color: colors.$gray-2;
             }
+        }
+    }
+
+    &.small {
+        padding: 0 6px;
+        height: 32px;
+        min-width: 32px;
+
+        & > i {
+            font-size: 12px;
         }
     }
 }
