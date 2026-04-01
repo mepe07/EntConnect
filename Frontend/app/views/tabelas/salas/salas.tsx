@@ -1,32 +1,49 @@
-import React, { useState } from 'react'; // Importação do CSS específico para esta página
-import { InputComponent } from "../../../components/input/input.component";
-    import { SelectBoxComponent } from "../../../components/selectbox/selectbox.component";
-import './salas.scss';
+// Ficheiro: app/views/tabelas/salas/salas.tsx
 
+// LÓGICA: Adicionamos o useEffect aos imports do React!
+import React, { useState, useEffect } from 'react'; 
+import { InputComponent } from "~/components/input/input.component";
+import { SelectBoxComponent } from "~/components/selectbox/selectbox.component";
+// LÓGICA: Importamos o nosso Estafeta!
+import { salasService } from "~/services/salas.service";
+import './salas.scss';
 
 // Interface para representar os dados de uma sala
 interface Sala {
-    id: number;
-    nome: string;
-    disponivel: boolean;
-    modalidade: string;
+    ID_Sala: number;
+    Nome: string;
+    Disponivel: boolean;
+    Modalidade: string;
 }
 
 export function Salas() {
-    const [salas, setSalas] = useState<Sala[]>([
-        { id: 1, nome: 'Sala Ballet 5', disponivel: true, modalidade: 'Ballet' },
-        { id: 2, nome: 'Sala Jazz 2', disponivel: false, modalidade: 'Jazz' },
-    ]); 
-
+    const [salas, setSalas] = useState<Sala[]>([]); 
     const [termoPesquisa, setTermoPesquisa] = useState(''); 
+
+    // ==========================================
+    // LIGAR OS CABOS
+    // ==========================================
+
+    // O useEffect com um array vazio [] no final significa: "Executa isto APENAS 1 VEZ quando a página abre"
+    useEffect(() => {
+        carregarSalasDoServidor();
+    }, []);
+
+    const carregarSalasDoServidor = async () => {
+        try {
+            // Mandamos o estafeta ir buscar os dados e ESPERAMOS (await)
+            const dadosReais = await salasService.getSalas();
+            setSalas(dadosReais);
+        } catch (erro) {
+            alert("Atenção: Não foi possível ligar ao servidor!");
+        }
+    };
 
     // ==========================================
     // LÓGICA DO MODAL TRANSFORMER (CREATE & UPDATE)
     // ==========================================
-    const [modalAberto, setModalAberto] = useState(false); 
-    
-    // NOVO: A memória que diz ao Modal se estamos a Editar ou a Criar
-    const [salaEmEdicao, setSalaEmEdicao] = useState<Sala | null>(null);
+    const [modalAberto, setModalAberto] = useState(false);  
+    const [salaEmEdicao, setSalaEmEdicao] = useState<Sala | null>(null); // A memória que diz ao Modal se estamos a Editar ou a Criar
 
     const [novoNome, setNovoNome] = useState(''); 
     const [novaModalidade, setNovaModalidade] = useState(''); 
@@ -44,38 +61,43 @@ export function Salas() {
     // NOVO: Função para ABRIR modal de EDIÇÃO (Tudo preenchido)
     const abrirModalEdicao = (sala: Sala) => {
         setSalaEmEdicao(sala); // Guardamos a sala que estamos a editar
-        setNovoNome(sala.nome); // Injetamos o nome antigo no Input
-        setNovaModalidade(sala.modalidade); // Injetamos a modalidade antiga
-        setNovaDisponibilidade(sala.disponivel); // Injetamos a disponibilidade
+        setNovoNome(sala.Nome); // Injetamos o nome antigo no Input
+        setNovaModalidade(sala.Modalidade); // Injetamos a modalidade antiga
+        setNovaDisponibilidade(sala.Disponivel); // Injetamos a disponibilidade
         setModalAberto(true);
     };
 
-    const handleSalvarSala = () => {
-        if (!novoNome || !novaModalidade) {
-            alert('Por favor, preencha todos os campos obrigatórios.');
-            return;
+    // FUNÇÃO CORRIGIDA SEM ZOMBIES!
+    const handleSalvarSala = async () => {
+        if (salaEmEdicao) {
+            // UPDATE: (Ainda não criámos isto no salas.service, por isso deixo só um alerta por agora)
+            alert("O Update no Backend vai ser o próximo passo!");
+        } else {
+            // CREATE REAL:
+            try {
+                // Mandamos o Estafeta criar a sala e esperamos que o NestJS devolva a sala com o ID verdadeiro!
+                const novaSalaDaBD = await salasService.createSala({
+                    nome: novoNome,
+                    modalidade: novaModalidade,
+                    disponivel: novaDisponibilidade
+                });
+            
+                // Adicionamos a sala real que veio do SQL Server à nossa lista visual no ecrã
+                setSalas([...salas, novaSalaDaBD]);
+
+            } catch (erro) {
+                // Imprimir o erro verdadeiro na consola (F12) para o detetive investigar caso o servidor falhe
+                console.error("O estafeta tropeçou! Eis o relatório do acidente:", erro);
+                alert("Erro ao tentar guardar o estúdio na Base de Dados!");
+                
+                // O return é vital: funciona como um travão de mão. Se der erro, ele sai da função aqui 
+                // e não chega às linhas de baixo que fecham o modal.
+                return; 
+            }
         }
 
-        if (salaEmEdicao) {
-            // LÓGICA DE UPDATE: Se tínhamos uma sala na memória, vamos atualizá-la!
-            // Usamos o .map() para percorrer a lista. Se for o ID que estamos a editar, substituímos os dados.
-            setSalas(salas.map(s => 
-                s.id === salaEmEdicao.id 
-                    ? { ...s, nome: novoNome, disponivel: novaDisponibilidade, modalidade: novaModalidade } 
-                    : s
-            ));
-        } else {
-            // LÓGICA DE CREATE: O que tu já tinhas feito tão bem!
-            const novaSala: Sala = {
-                id: salas.length > 0 ? Math.max(...salas.map(s => s.id)) + 1 : 1,
-                nome: novoNome,
-                disponivel: novaDisponibilidade,
-                modalidade: novaModalidade,
-            };
-            setSalas([...salas, novaSala]);
-        }
-        
-        // Limpa a memória e fecha a janela
+        // Se o código chegou até aqui sem bater no 'return' lá de cima, é porque foi tudo um sucesso!
+        // Podemos limpar a memória e fechar as portas do modal.
         setSalaEmEdicao(null);
         setModalAberto(false); 
     };
@@ -83,21 +105,26 @@ export function Salas() {
     // ==========================================
     // LÓGICA DE ELIMINAÇÃO (DELETE)
     // ==========================================
-    const handleApagarSala = (id: number) => {
-        // Validação de segurança para não apagar sem querer
+    const handleApagarSala = async (id: number) => {
         const confirmacao = window.confirm("Tens a certeza absoluta que queres apagar esta sala?");
         
         if (confirmacao) {
-            // O .filter() atua como um atirador furtivo: cria uma nova lista deixando de fora apenas o ID escolhido!
-            setSalas(salas.filter(sala => sala.id !== id));
+            try {
+                await salasService.deleteSala(id);
+                setSalas(salas.filter(sala => sala.ID_Sala !== id));
+                alert("Sala apagada com sucesso da Base de Dados!");
+            } catch (erro: any) {
+                // Em vez do texto estático, usamos a mensagem que o Estafeta nos trouxe
+                alert(erro.message);
+            }
         }
     };
 
     // ==========================================
 
     const salasFiltradas = salas.filter(sala =>
-        sala.nome.toLowerCase().includes(termoPesquisa.toLowerCase()) ||
-        sala.modalidade.toLowerCase().includes(termoPesquisa.toLowerCase())
+        sala.Nome.toLowerCase().includes(termoPesquisa.toLowerCase()) ||
+        sala.Modalidade.toLowerCase().includes(termoPesquisa.toLowerCase())
     ); 
 
     return (
@@ -142,23 +169,21 @@ export function Salas() {
                             </tr>
                         ) : (
                             salasFiltradas.map((sala) => (
-                                <tr key={sala.id}>
-                                    <td className="id-coluna">#{sala.id}</td>
-                                    <td><strong>{sala.nome}</strong></td>
-                                    <td><i className="fa-solid fa-music text-gray"></i> {sala.modalidade}</td>
+                                <tr key={sala.ID_Sala}>
+                                    <td className="id-coluna">#{sala.ID_Sala}</td>
+                                    <td><strong>{sala.Nome}</strong></td>
+                                    <td><i className="fa-solid fa-music text-gray"></i> {sala.Modalidade}</td>
                                     <td>
-                                        <span className={`tag-estado ${sala.disponivel ? 'sucesso' : 'aviso'}`}>
-                                            {sala.disponivel ? 'Livre' : 'Ocupada'}
+                                        <span className={`tag-estado ${sala.Disponivel ? 'sucesso' : 'aviso'}`}>
+                                            {sala.Disponivel ? 'Livre' : 'Ocupada'}
                                         </span>
                                     </td>
                                     <td className="acoes-coluna">
-                                        {/* LIGAMOS O BOTÃO AO MODAL DE EDIÇÃO PASSANDO A SALA ATUAL */}
                                         <button className="btn-icone editar" onClick={() => abrirModalEdicao(sala)}>
                                             <i className="fa-solid fa-pen"></i>
                                         </button>
                                         
-                                        {/* LIGAMOS O BOTÃO AO NOSSO SNIPER (DELETE) */}
-                                        <button className="btn-icone apagar" onClick={() => handleApagarSala(sala.id)}>
+                                        <button className="btn-icone apagar" onClick={() => handleApagarSala(sala.ID_Sala)}>
                                             <i className="fa-solid fa-trash"></i>
                                         </button>
                                     </td>
@@ -177,7 +202,6 @@ export function Salas() {
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <div className="modal-header">
-                            {/* LÓGICA: O Título muda consoante a memória (Edição vs Criação) */}
                             <h2>{salaEmEdicao ? "Editar Estúdio" : "Adicionar Novo Estúdio"}</h2>
                             <button className="btn-fechar" onClick={() => { setModalAberto(false); setSalaEmEdicao(null); }}>
                                 <i className="fa-solid fa-xmark"></i>
@@ -224,7 +248,6 @@ export function Salas() {
                         <div className="modal-footer">
                             <button className="btn-secundario" onClick={() => { setModalAberto(false); setSalaEmEdicao(null); }}>Cancelar</button>
                             
-                            {/* LÓGICA: O texto do botão também se adapta! */}
                             <button className="btn-primario" onClick={handleSalvarSala}>
                                 {salaEmEdicao ? "Guardar Alterações" : "Guardar Estúdio"}
                             </button>
@@ -232,7 +255,6 @@ export function Salas() {
                     </div>
                 </div>
             )}
-
         </div>
     );
-}
+} 
