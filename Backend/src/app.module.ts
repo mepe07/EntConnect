@@ -5,9 +5,19 @@ import { UtilizadorModule } from './utilizador/utilizador.module';
 import { FaturacaoModule } from './faturacao/faturacao.module';
 import { ArtigoModule } from './artigo/artigo.module';
 import { AuthModule } from './auth/auth.module';
+import { InfraestruturaModule } from './Infraestrutura/infraestrutura.module'; //Azure blobs
 
 @Module({
-  imports: [PrismaModule, CoachingModule, UtilizadorModule, FaturacaoModule, ArtigoModule, AuthModule],
+  //módulos
+  imports: [
+            PrismaModule, 
+            CoachingModule, 
+            UtilizadorModule, 
+            FaturacaoModule, 
+            ArtigoModule, 
+            AuthModule, 
+            InfraestruturaModule
+          ],
   controllers: [],
   providers: [],
 })
