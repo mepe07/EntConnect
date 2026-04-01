@@ -7,11 +7,16 @@ export function NavigationMenu() {
     const location = useLocation();
     const path = location.pathname.toLowerCase();
 
-    const [menuCoachingAberto, setMenuCoachingAberto] = useState(false);
+    const [configMenuOpen, setConfigMenuOpen] = useState(false);
 
     const isActive = (route: string) => {
         const normalized = route === '/' ? '/' : `/${route}`;
         return path === normalized;
+    };
+
+    const contains = (route: string) => {
+        const normalized = route === '/' ? '/' : `/${route}`;
+        return path.startsWith(normalized);
     };
 
     const isCoachingActive = path.startsWith('/coaching');
@@ -31,13 +36,20 @@ export function NavigationMenu() {
                 <li className={isActive('faturacao') ? 'active' : ''}>
                     <Link to="/faturacao">Faturação</Link>
                 </li>
-
-                <li className={isActive('utilizadores') ? 'active' : ''}>
-                    <Link to="/utilizadores">Utilizadores</Link>
-                </li>
                 
-                <li className={isActive('configuracoes') ? 'active' : ''}>
-                    <Link to="/configuracoes">Configurações</Link>
+                <li className={contains('configuracoes') ? 'active' : ''}>
+                    <Link to="#" onClick={() => setConfigMenuOpen(!configMenuOpen)}>
+                        Configurações
+                        <i className={`fa fa-chevron-down ${contains('configuracoes') || configMenuOpen ? 'open' : ''}`}></i>
+                    </Link>
+                    <ul className={`submenu ${contains('configuracoes') || configMenuOpen ? 'open' : ''}`}>
+                        <li className={isActive('configuracoes/utilizadores') ? 'active' : ''}>
+                            <Link to="/configuracoes/utilizadores">Utilizadores</Link>
+                        </li>
+                        <li className={isActive('configuracoes/modalidades') ? 'active' : ''}>
+                            <Link to="/configuracoes/modalidades">Modalidades</Link>
+                        </li>
+                    </ul>
                 </li>
             </ul>
         </nav>
