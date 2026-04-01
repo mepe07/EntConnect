@@ -7,11 +7,16 @@ export function NavigationMenu() {
     const location = useLocation();
     const path = location.pathname.toLowerCase();
 
-    const [menuCoachingAberto, setMenuCoachingAberto] = useState(false);
+    const [configMenuOpen, setConfigMenuOpen] = useState(false);
 
     const isActive = (route: string) => {
         const normalized = route === '/' ? '/' : `/${route}`;
         return path === normalized;
+    };
+
+    const contains = (route: string) => {
+        const normalized = route === '/' ? '/' : `/${route}`;
+        return path.startsWith(normalized);
     };
 
     const isCoachingActive = path.startsWith('/coaching');
@@ -27,46 +32,24 @@ export function NavigationMenu() {
                 <li className={isActive('marketplace') ? 'active' : ''}>
                     <Link to="/marketplace">Marketplace</Link>
                 </li>
-        
-                {/* === O ACORDEÃO (COACHING) === */}
-                <li 
-                    className={`menu-dropdown ${isCoachingActive ? 'active-parent' : ''}`}
-                    onClick={() => setMenuCoachingAberto(!menuCoachingAberto)}
-                >
-                    <div className="dropdown-titulo">
-                        <span>Coaching</span>
-                        {/* SUBSTITUÍMOS O FONT-AWESOME POR UM SVG PURO (Adeus quadrado feio!) */}
-                        <svg 
-                            className={`seta ${menuCoachingAberto ? 'aberta' : ''}`} 
-                            width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                        >
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </div>
-                </li>
-
-                {/* AS SUB-OPÇÕES DO COACHING */}
-                {menuCoachingAberto && (
-                    <ul className="sub-menu-lista">
-                        <li className={`sub-item ${isActive('coaching/horarios') ? 'active' : ''}`}>
-                            <Link to="/coaching/horarios">Horários</Link>
-                        </li>
-                        <li className={`sub-item ${isActive('coaching/professores') ? 'active' : ''}`}>
-                            <Link to="/coaching/professores">Professores</Link>
-                        </li>
-                        <li className={`sub-item ${isActive('coaching/faturacao-atraso') ? 'active' : ''}`}>
-                            <Link to="/coaching/faturacao-atraso">Faturação em Atraso</Link>
-                        </li>
-                    </ul>
-                )}
-                {/* ========================================= */}
 
                 <li className={isActive('faturacao') ? 'active' : ''}>
                     <Link to="/faturacao">Faturação</Link>
                 </li>
                 
-                <li className={isActive('configuracoes') ? 'active' : ''}>
-                    <Link to="/configuracoes">Configurações</Link>
+                <li className={contains('configuracoes') ? 'active' : ''}>
+                    <Link to="#" onClick={() => setConfigMenuOpen(!configMenuOpen)}>
+                        Configurações
+                        <i className={`fa fa-chevron-down ${contains('configuracoes') || configMenuOpen ? 'open' : ''}`}></i>
+                    </Link>
+                    <ul className={`submenu ${contains('configuracoes') || configMenuOpen ? 'open' : ''}`}>
+                        <li className={isActive('configuracoes/utilizadores') ? 'active' : ''}>
+                            <Link to="/configuracoes/utilizadores">Utilizadores</Link>
+                        </li>
+                        <li className={isActive('configuracoes/modalidades') ? 'active' : ''}>
+                            <Link to="/configuracoes/modalidades">Modalidades</Link>
+                        </li>
+                    </ul>
                 </li>
             </ul>
         </nav>
