@@ -35,7 +35,7 @@ export class UsersService {
      * @returns A resposta da API após tentar obter os utilizadores.
      */
     async getUsers() {
-        const response = await fetch(`http://localhost:3000/utilizador/utilizadores`, {
+        const response = await fetch(`http://localhost:3000/utilizador`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
         });
