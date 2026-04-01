@@ -68,6 +68,7 @@ export function Utilizadores() {
                     columns: [
                         { key: "idUtilizador", value: "ID", type: TableColumnTypesEnum.Default },
                         { key: "nome", value: "Nome", type: TableColumnTypesEnum.Default },
+                        { key: "email", value: "Email", type: TableColumnTypesEnum.Default },
                         { key: "cargos", value: "Cargos", type: TableColumnTypesEnum.Default },
                         { key: "ativo", value: "Ativo", type: TableColumnTypesEnum.Chip }
                     ],
