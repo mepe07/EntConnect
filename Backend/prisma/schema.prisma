@@ -83,12 +83,16 @@ model Cor {
 }
 
 model Disponibilidade {
-  ID_Disponibilidade Int        @id(map: "PK__Disponib__7E99F3FC5D9DAEFB") @default(autoincrement())
-  ID_Professor       Int?
-  Dia_Semana         String     @db.VarChar(20)
-  Hora_Inicio        DateTime   @db.Time
-  Hora_Fim           DateTime   @db.Time
-  Professor          Professor? @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Disponibilidade_Professor")
+  ID_Disponibilidade      Int                    @id(map: "PK__Disponib__7E99F3FC5D9DAEFB") @default(autoincrement())
+  ID_Professor            Int?
+  Dia_Semana              String                 @db.VarChar(20)
+  Hora_Inicio             DateTime               @db.Time
+  Hora_Fim                DateTime               @db.Time
+  EstadoDisponibilidadeID Int
+  DataAtualizacao         DateTime               @db.Date
+  AlteradoPorUtilizadorID Int
+  Estado_Disponibilidade  Estado_Disponibilidade @relation(fields: [EstadoDisponibilidadeID], references: [ID], onUpdate: NoAction, map: "FK__Disponibi__Estad__45BE5BA9")
+  Professor               Professor?             @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Disponibilidade_Professor")
 }
 
 model Enc_Educacao {
@@ -212,4 +216,10 @@ model sysdiagrams {
   definition   Bytes?
 
   @@unique([principal_id, name], map: "UK_principal_name")
+}
+
+model Estado_Disponibilidade {
+  ID              Int               @id(map: "PK__Estado_D__3214EC2794B14D2B") @default(autoincrement())
+  Tipo            String?           @db.VarChar(100)
+  Disponibilidade Disponibilidade[]
 }

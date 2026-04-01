@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, BadRequestException } from '@nestjs/common'; 
+import { Controller, Get, Post, Put, Body, Patch, Param, BadRequestException } from '@nestjs/common'; 
 import { UtilizadorService } from './utilizador.service';
 import { CreateUtilizadorDto } from './dto/create-utilizador.dto';
 import { UpdateUtilizadorDto } from './dto/update-utilizador.dto';
 import { ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { UtilizadorImportService } from './ImportUsers/utilizador-import.service';
+import { ApiBody } from '@nestjs/swagger';
 
 @ApiTags('Utilizadores')
 @Controller('utilizador')
@@ -44,20 +45,85 @@ export class UtilizadorController {
     return {message: `Utilizador com ID ${id} desbloqueado com sucesso.`};
   }
 
-  @Post('importar-do-blob')
+  /**
+   * Importa um lote de utilizadores a partir de um ficheiro CSV.
+   * * O ficheiro já deve ter sido previamente carregado para o Azure Blob Storage.
+   * * O sistema irá ler o ficheiro linha a linha, criar a Pessoa e o respetivo Utilizador associado.
+   * @param {string} nomeFicheiro - O nome exato do ficheiro CSV armazenado no Azure (ex: "Alunos.csv").
+   * @returns Retorna um objeto contendo uma mensagem de sucesso e a lista dos registos importados.
+   * @throws {BadRequestException} Se o nome do ficheiro não for enviado ou se o ficheiro não existir no Azure.
+   */
+  @Post('importusersblob')
   @ApiOperation({ summary: 'Importar utilizadores lendo um CSV do Azure Blob Storage' })
+  @ApiBody({
+    description: 'Nome do ficheiro CSV que já se encontra no Azure Blob Storage',
+    schema: {
+      type: 'object',
+      properties: {
+        nomeFicheiro: { 
+          type: 'string', 
+          example: 'Alunos.csv' 
+        }
+      }
+    }
+  })
   @ApiResponse({ status: 201, description: 'Os utilizadores foram importados do Azure e criados com sucesso.' })
   @ApiResponse({ status: 400, description: 'Ficheiro não especificado ou não encontrado no Azure.' })
   @ApiResponse({ status: 500, description: 'Erro interno ao comunicar com o Blob Storage ou gravar na base de dados.' })
   async importarDoBlob(@Body('nomeFicheiro') nomeFicheiro: string) {
     
-    //Tratamento de Erro: Verifica se o utilizador se esqueceu de enviar o nome
+    // Tratamento de Erro: Verifica se o utilizador se esqueceu de enviar o nome
     if (!nomeFicheiro || nomeFicheiro.trim() === '') {
       throw new BadRequestException('Por favor, envie o "nomeFicheiro" (formato JSON) no corpo do pedido.');
     }
 
-    //Chama o serviço que vai ligar ao Azure e tratar os erros de ficheiro não encontrado
+    // Chama o serviço que vai ligar ao Azure e tratar os erros de ficheiro não encontrado
     return this.importService.importarDeBlob(nomeFicheiro);
+  }
+
+  /**
+   * Atualiza a foto de perfil de um utilizador.
+   * * Este endpoint recebe o URL de uma imagem previamente carregada para o Azure Blob Storage 
+   * e associa esse URL ao perfil da Pessoa ligada ao ID do Utilizador fornecido.
+   * * @param {string} UrlPhoto - O URL completo da imagem guardada no Azure Blob Storage (enviado no corpo do pedido).
+   * @param {string} id - O ID do utilizador a atualizar (capturado a partir da rota da API).
+   * @returns Retorna uma Promise com o registo da Pessoa atualizada na base de dados.
+   */
+  @Put(':id/uploadphoto')
+  @ApiOperation({ summary: 'Carregar Fotos para o Azure Blob Storage' })
+  @ApiBody({
+    description: 'URL da foto guardada no Azure',
+    schema: {
+      type: 'object',
+      properties: {
+        UrlPhoto: { 
+          type: 'string', 
+          example: 'https://aminhaconta.blob.core.windows.net/fotos/joao.png' 
+        }
+      }
+    }
+  })
+  async UploadPhoto(@Body('UrlPhoto') UrlPhoto: string, @Param('id') id: string) {
+    
+    // O +id converte rapidamente a string recebida no parâmetro da rota para um número (Number)
+    return this.utilizadorService.UploadPhoto(UrlPhoto, +id); 
+  }
+
+  /**
+   * Remove a foto de perfil de um utilizador.
+   * @param {string} id - O ID do utilizador a atualizar.
+   * @returns Uma mensagem de sucesso.
+   */
+  @Patch(':id/removephoto')
+  @ApiOperation({ summary: 'Remover a foto de perfil do utilizador (coloca a null)' })
+  @ApiResponse({ status: 200, description: 'A foto de perfil foi removida com sucesso.' })
+  @ApiResponse({ status: 404, description: 'O utilizador com o ID fornecido não foi encontrado.' })
+  async RemovePhoto(@Param('id') id: string) {
+    
+    await this.utilizadorService.RemovePhoto(+id);
+    
+    // Como estamos apenas a apagar, devolver uma mensagem simples fica muito elegante no frontend
+    return { message: `A foto do utilizador com ID ${id} foi removida com sucesso.` };
   }
 
   // @Post()

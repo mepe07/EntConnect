@@ -43,7 +43,7 @@ export class BlobsService {
       const blockBlobClient = containerClient.getBlockBlobClient(nomeFicheiro);
 
       const buffer = await blockBlobClient.downloadToBuffer();
-      return buffer.toString('utf-8');
+      return buffer.toString('latin1'); // tratar caracteres especiais (ex: acentos, ç, ^)
       
     } catch (error) {
       console.error("Erro ao comunicar com o Azure Blob Storage:", error);

@@ -54,10 +54,10 @@ export class UtilizadorImportService {
         });
 
         resultados.push({ pessoa: novaPessoa, utilizador: novoUtilizador });
-        console.log(`✅ Sucesso: ${nome} importado do Azure Blob!`);
+        console.log(`Sucesso: ${nome} importado do Azure Blob!`);
 
       } catch (erro: any) {
-         console.error(`❌ Erro ao importar ${nome}:`, erro.message || erro);
+         console.error(`Erro ao importar ${nome}:`, erro.message || erro);
       }
     }
 

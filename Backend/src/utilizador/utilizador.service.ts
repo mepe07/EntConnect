@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateUtilizadorDto } from './dto/create-utilizador.dto';
 import { UpdateUtilizadorDto } from './dto/update-utilizador.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotFoundException } from '@nestjs/common'; //exceção
 
 // Serviço para lidar com operações simples CRUD relacionados com utilizadores.
 
@@ -66,7 +67,41 @@ export class UtilizadorService {
     })
   }
 
+    async UploadPhoto(url: string, id: number) {
+    return this.prisma.utilizador.update({
+      where: { ID_Utilizador: id },
+      data: {
+        Pessoa: { 
+          update: {
+            Foto: url,
+          },
+        },
+      },
+      //Para te devolver os dados da pessoa e confirmares a foto no Postman
+      include: {
+        Pessoa: true, 
+      }
+    });
+  }
 
+  async RemovePhoto(id: number) {
+    // 1. Encontra o Utilizador para descobrir o seu ID_Pessoa
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: id },
+      select: { ID_Pessoa: true },
+    });
+
+    if (!utilizador) {
+      // Lembra-te de importar o NotFoundException no topo se ainda não o tiveres!
+      throw new NotFoundException(`Utilizador com ID ${id} não encontrado.`); 
+    }
+
+    // 2. Vai à tabela Pessoa e coloca a foto a null (vazio)
+    return this.prisma.pessoa.update({
+      where: { ID_Pessoa: utilizador.ID_Pessoa },
+      data: { Foto: null },
+    });
+  }
 
   // create(createUtilizadorDto: CreateUtilizadorDto) {
   //   return 'This action adds a new utilizador';
