@@ -1,9 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile } from '@nestjs/common'; //Adicionados UseInterceptors, UploadedFile para ImportarCSV
+import { Controller, Get, Post, Body, Patch, Param, BadRequestException } from '@nestjs/common'; 
 import { UtilizadorService } from './utilizador.service';
 import { CreateUtilizadorDto } from './dto/create-utilizador.dto';
 import { UpdateUtilizadorDto } from './dto/update-utilizador.dto';
 import { ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { UtilizadorImportService } from './ImportUsers/utilizador-import.service';
 
 @ApiTags('Utilizadores')
@@ -11,7 +10,7 @@ import { UtilizadorImportService } from './ImportUsers/utilizador-import.service
 export class UtilizadorController {
   constructor(
     private readonly utilizadorService: UtilizadorService,
-    private readonly importService: UtilizadorImportService // Injetado aqui ImportUsersService
+    private readonly importService: UtilizadorImportService
   ) {}
 
   @Get('utilizadores')
@@ -25,9 +24,7 @@ export class UtilizadorController {
   @ApiOperation({summary: 'Bloquear um utilizador'})
   @ApiResponse({status:200})
   async blockUser(@Param('id') id: string) {
-    // +id é para converter a string do id para número, já que o serviço espera um número
     await this.utilizadorService.blockUser(+id);
-
     return {message: `Utilizador com ID ${id} bloqueado com sucesso.`};
   }
 
@@ -35,21 +32,24 @@ export class UtilizadorController {
   @ApiOperation({summary: 'Desbloquear um utilizador'})
   @ApiResponse({status:200})
   async unlockUser(@Param('id') id: string) {
-    // +id é para converter a string do id para número, já que o serviço espera um número
     await this.utilizadorService.unlockUser(+id);
-
     return {message: `Utilizador com ID ${id} desbloqueado com sucesso.`};
   }
 
-@Post('importar')
-  @ApiOperation({ summary: 'Importar utilizadores via CSV' })
-  @ApiResponse({ status: 201, description: 'Os utilizadores foram importados e criados com sucesso.' })
-  @ApiResponse({ status: 400, description: 'Ficheiro inválido ou não enviado (ex: falta o ficheiro CSV).' })
-  @ApiResponse({ status: 500, description: 'Erro interno ao tentar processar ou gravar na base de dados.' })
-  @UseInterceptors(FileInterceptor('ficheiro')) 
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+  @Post('importar-do-blob')
+  @ApiOperation({ summary: 'Importar utilizadores lendo um CSV do Azure Blob Storage' })
+  @ApiResponse({ status: 201, description: 'Os utilizadores foram importados do Azure e criados com sucesso.' })
+  @ApiResponse({ status: 400, description: 'Ficheiro não especificado ou não encontrado no Azure.' })
+  @ApiResponse({ status: 500, description: 'Erro interno ao comunicar com o Blob Storage ou gravar na base de dados.' })
+  async importarDoBlob(@Body('nomeFicheiro') nomeFicheiro: string) {
+    
+    //Tratamento de Erro: Verifica se o utilizador se esqueceu de enviar o nome
+    if (!nomeFicheiro || nomeFicheiro.trim() === '') {
+      throw new BadRequestException('Por favor, envie o "nomeFicheiro" (formato JSON) no corpo do pedido.');
+    }
 
-    return this.importService.importarDeCSV(file);
+    //Chama o serviço que vai ligar ao Azure e tratar os erros de ficheiro não encontrado
+    return this.importService.importarDeBlob(nomeFicheiro);
   }
 
   // @Post()
@@ -66,8 +66,6 @@ export class UtilizadorController {
   // findOne(@Param('id') id: string) {
   //   return this.utilizadorService.findOne(+id);
   // }
-
- 
 
   // @Delete(':id')
   // remove(@Param('id') id: string) {
