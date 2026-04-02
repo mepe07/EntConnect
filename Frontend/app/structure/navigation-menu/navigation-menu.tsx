@@ -23,9 +23,16 @@ export function NavigationMenu() {
     // A MÁGICA ACONTECE AQUI: A permissão junta os dois cargos com um "OU" (||)
     const podeVerAdmin = isDirecao || isCoordenador;
 
+    const [configMenuOpen, setConfigMenuOpen] = useState(false);
+
     const isActive = (route: string) => {
         const normalized = route === '/' ? '/' : `/${route}`;
         return path === normalized;
+    };
+
+    const contains = (route: string) => {
+        const normalized = route === '/' ? '/' : `/${route}`;
+        return path.startsWith(normalized);
     };
 
     const isCoachingActive = path.startsWith('/coaching');
@@ -93,20 +100,29 @@ export function NavigationMenu() {
                                 <li className={`sub-item ${isActive('admin/modalidades') ? 'active' : ''}`}>
                                     <Link to="/admin/modalidades">Modalidades</Link>
                                 </li>
+                                <li className={`sub-item ${isActive('configuracoes /utilizadores') ? 'active' : ''}`}>
+                                    <Link to="/configuracoes/utilizadores">Utilizadores</Link>
+                                </li>
                             </ul>
                         )}
                     </>
                 )}
 
-                {/* ========================================= */}
-
+                {/* 3. LÓGICA DE PROTEÇÃO: Usamos a nossa nova variável conjunta! 
                 <li className={isActive('faturacao') ? 'active' : ''}>
                     <Link to="/faturacao">Faturação</Link>
                 </li>
-                
-                <li className={isActive('configuracoes') ? 'active' : ''}>
-                    <Link to="/configuracoes">Configurações</Link>
-                </li>
+                <li className={contains('configuracoes') ? 'active' : ''}>
+                    <Link to="#" onClick={() => setConfigMenuOpen(!configMenuOpen)}>
+                        Configurações
+                        <i className={`fa fa-chevron-down ${contains('configuracoes') || configMenuOpen ? 'open' : ''}`}></i>
+                    </Link>
+                    <ul className={`submenu ${contains('configuracoes') || configMenuOpen ? 'open' : ''}`}>
+                        <li className={isActive('configuracoes/modalidades') ? 'active' : ''}>
+                            <Link to="/configuracoes/modalidades">Modalidades</Link>
+                        </li>
+                    </ul>
+                </li>*/}
             </ul>
         </nav>
     );
