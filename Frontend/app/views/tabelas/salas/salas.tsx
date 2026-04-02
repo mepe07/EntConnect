@@ -69,10 +69,28 @@ export function Salas() {
 
     // FUNÇÃO CORRIGIDA SEM ZOMBIES!
     const handleSalvarSala = async () => {
-        if (salaEmEdicao) {
-            // UPDATE: (Ainda não criámos isto no salas.service, por isso deixo só um alerta por agora)
-            alert("O Update no Backend vai ser o próximo passo!");
-        } else {
+       if (salaEmEdicao) {
+        // UPDATE REAL:
+        try {
+            // 1. Mandamos o Estafeta atualizar a sala com o ID que está guardado na memória
+            const salaAtualizadaDaBD = await salasService.updateSala(salaEmEdicao.ID_Sala, {
+                nome: novoNome,
+                modalidade: novaModalidade,
+                disponivel: novaDisponibilidade
+            });
+        
+            // 2. Atualizamos o ecrã cirurgicamente! 
+            // O '.map' percorre a lista e substitui APENAS a sala que editámos.
+            setSalas(salas.map(sala => 
+                sala.ID_Sala === salaEmEdicao.ID_Sala ? salaAtualizadaDaBD : sala
+            ));
+
+        } catch (erro) {
+            console.error("Erro ao atualizar:", erro);
+            alert("Erro ao tentar atualizar o estúdio na Base de Dados!");
+            return; // Travão de mão: se der erro, não fecha o modal
+        }
+    } else {
             // CREATE REAL:
             try {
                 // Mandamos o Estafeta criar a sala e esperamos que o NestJS devolva a sala com o ID verdadeiro!
