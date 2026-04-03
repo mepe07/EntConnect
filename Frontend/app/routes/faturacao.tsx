@@ -1,4 +1,4 @@
-import { Faturacao } from "~/views/faturacao/faturacao";
+import { Faturacao } from "~/views/relatorios/faturacao";
 
 const title = "Centro de Faturação | EntConnect";
 
