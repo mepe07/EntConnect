@@ -1,56 +1,234 @@
 // Ficheiro: structure/navigation-menu/navigation-menu.tsx
 import './navigation-menu.scss';
-import { useLocation, Link } from 'react-router'; // Atenção: se der erro, pode ser 'react-router-dom'
+import { useLocation, Link } from 'react-router'; 
 import { useState } from 'react';
+import { authService } from '~/services/auth.service';
+import type { MenuConfig } from '../../models/interfaces/menu.interface';
+import type { User } from '../../models/interfaces/user.interface';
 
+// ============================================================================
+// DICIONÁRIO DE ROTAS (Configuration-Driven UI)
+// Centraliza a estrutura de navegação consoante o nível de acesso do utilizador.
+// ============================================================================
+const MENU_CONFIG: MenuConfig = {
+    
+    // --- Perfil: Coordenadora ---
+    admin: [
+        { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
+        { titulo: 'Gestão Utilizadores', path: '/admin/utilizadores', icone: 'fa-solid fa-users' },
+        {
+            titulo: 'Infraestrutura',
+            icone: 'fa-solid fa-building',
+            submenu: [
+                { titulo: 'Gestão de Estúdios', path: '/admin/salas' },
+                { titulo: 'Gestão de Modalidades', path: '/admin/modalidades' },
+            ]
+        },
+        {
+            titulo: 'Aulas & Coaching',
+            icone: 'fa-solid fa-chalkboard-user',
+            submenu: [
+                { titulo: 'Gerir Horário Aulas', path: '/admin/horarios' },
+                { titulo: 'Gerir Coaching', path: '/admin/coaching' },
+                { titulo: 'Calendário Geral', path: '/admin/calendario' },
+            ]
+        },
+        {
+            titulo: 'Professores',
+            icone: 'fa-solid fa-user-tie',
+            submenu: [
+                { titulo: 'Gerir Professores', path: '/admin/professores' },
+                { titulo: 'Disponibilidades', path: '/admin/professores-disponibilidade' },
+            ]
+        },
+        {
+            titulo: 'Marketplace & Inventário',
+            icone: 'fa-solid fa-store',
+            submenu: [
+                { titulo: 'Gerir Inventário', path: '/marketplace/inventario' },
+                { titulo: 'Gerir Anúncios', path: '/marketplace/anuncios' },
+            ]
+        },
+        {
+            titulo: 'Relatórios',
+            icone: 'fa-solid fa-file-invoice-dollar',
+            submenu: [
+                { titulo: 'Faturação', path: '/relatorios/faturacao' },
+                { titulo: 'Histórico Coaching', path: '/relatorios/historico-coaching' },
+                { titulo: 'Estatísticas', path: '/relatorios/estatisticas' },
+            ]
+        },
+        { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' }
+    ],
+
+    // --- Perfil: Professor ---
+    professor: [
+        { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
+        {
+            titulo: 'Agenda',
+            icone: 'fa-regular fa-calendar-days',
+            submenu: [
+                { titulo: 'Disponibilidades', path: '/agenda/disponibilidades' },
+                { titulo: 'Agendamentos', path: '/agenda/agendamentos' },
+                { titulo: 'Propostas de Coaching', path: '/agenda/propostas' },
+                { titulo: 'Confirmações', path: '/agenda/confirmacoes' },
+            ]
+        },
+        {
+            titulo: 'Relatórios',
+            icone: 'fa-solid fa-file-invoice-dollar',
+            submenu: [
+                { titulo: 'Faturação', path: '/relatorios/faturacao' },
+                { titulo: 'Coaching', path: '/relatorios/coaching' },
+                { titulo: 'Estatísticas', path: '/relatorios/estatisticas' },
+            ]
+        },
+        {
+            titulo: 'Marketplace',
+            icone: 'fa-solid fa-store',
+            submenu: [
+                { titulo: 'Catálogo', path: '/marketplace/catalogo' },
+                { titulo: 'Os Meus Anúncios', path: '/marketplace/meus-anuncios' },
+            ]
+        },
+        { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' }
+    ],
+
+    // --- Perfil: Encarregado de Educação ---
+    encarregado: [
+        { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
+        {
+            titulo: 'Coaching',
+            icone: 'fa-solid fa-handshake-angle',
+            submenu: [
+                { titulo: 'Ver Oferta', path: '/coaching/oferta' },
+                { titulo: 'Nova Proposta', path: '/coaching/nova-proposta' },
+                { titulo: 'Marcações', path: '/coaching/marcacoes' },
+                { titulo: 'Confirmações', path: '/coaching/confirmacoes' },
+            ]
+        },
+        {
+            titulo: 'Relatórios',
+            icone: 'fa-solid fa-file-invoice-dollar',
+            submenu: [
+                { titulo: 'Faturação', path: '/relatorios/faturacao' },
+                { titulo: 'Estatísticas', path: '/relatorios/estatisticas' },
+            ]
+        },
+        {
+            titulo: 'Marketplace',
+            icone: 'fa-solid fa-store',
+            submenu: [
+                { titulo: 'Catálogo', path: '/marketplace/catalogo' },
+                { titulo: 'Os Meus Anúncios', path: '/marketplace/meus-anuncios' },
+            ]
+        },
+        { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' }
+    ]
+};
+
+// ============================================================================
+// COMPONENTE PRINCIPAL
+// ============================================================================
 export function NavigationMenu() {
     const location = useLocation();
-    const path = location.pathname.toLowerCase();
+    const path = location.pathname.toLowerCase(); 
 
-    const [configMenuOpen, setConfigMenuOpen] = useState(false);
+    // Guarda o título do menu atualmente expandido (comportamento de acordeão)
+    const [menuAberto, setMenuAberto] = useState<string | null>(null);
 
-    const isActive = (route: string) => {
-        const normalized = route === '/' ? '/' : `/${route}`;
-        return path === normalized;
+    /*
+    * Diz erro no role, mas isso é do TypeScript, 
+    * que não sabe que o token tem um campo "role".
+    * O JWT guarda essa informação
+    * ex:
+    * {
+    * "sub": 1,
+    * "name": "coord01",
+    * "role": "Coordenador", <--- aqui está a role
+    * "iat": 1775074104
+    * "exp": 1775081304
+    * A interface User tem o campo "role", ja resolve este erro.
+    */
+    const userInfo = authService.getUserInfo() as User;
+    const roleDoUser = userInfo?.role; 
+
+    // Fallback de segurança: assume o perfil com menos privilégios por defeito
+    let menuAtivo = MENU_CONFIG.encarregado; 
+    
+    // Mapeamento do dicionário consoante a role do utilizador
+    if (roleDoUser === 'Direcao' || roleDoUser === 'Coordenador' || roleDoUser === 'Admin') {
+        menuAtivo = MENU_CONFIG.admin;
+    } else if (roleDoUser === 'Professor') {
+        menuAtivo = MENU_CONFIG.professor;
+    } else if (roleDoUser === 'EncEducacao') {
+        menuAtivo = MENU_CONFIG.encarregado;
+    }
+
+    // Avalia se as rotas atuais correspondem ao menu para aplicar estilos ativos
+    const isActive = (route: string) => path === route;
+    const isSubmenuActive = (submenu: any[]) => submenu.some(item => path === item.path);
+
+    // Gere a abertura e fecho exclusivo das secções expansíveis
+    const toggleMenu = (titulo: string) => {
+        setMenuAberto(menuAberto === titulo ? null : titulo);
     };
-
-    const contains = (route: string) => {
-        const normalized = route === '/' ? '/' : `/${route}`;
-        return path.startsWith(normalized);
-    };
-
-    const isCoachingActive = path.startsWith('/coaching');
 
     return (
         <nav className="navigation-menu">
             <ul>
-                {/* LÓGICA: O <li> agora envolve o <Link>, como mandam as regras do HTML! */}
-                <li className={isActive('dashboard') || isActive('/') ? 'active' : ''}>
-                    <Link to="/">Dashboard</Link>
-                </li>
-                
-                <li className={isActive('marketplace') ? 'active' : ''}>
-                    <Link to="/marketplace">Marketplace</Link>
-                </li>
+                {menuAtivo.map((item, index) => {
+                    
+                    // Caso A: Item de navegação simples (sem submenu)
+                    if (item.path && !item.submenu) {
+                        return (
+                            <li key={index} className={isActive(item.path) ? 'active' : ''}>
+                                <Link to={item.path}>
+                                    <div className="item-content">
+                                        {item.icone && <i className={item.icone}></i>}
+                                        <span>{item.titulo}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                        );
+                    }
 
-                <li className={isActive('faturacao') ? 'active' : ''}>
-                    <Link to="/faturacao">Faturação</Link>
-                </li>
-                
-                <li className={contains('configuracoes') ? 'active' : ''}>
-                    <Link to="#" onClick={() => setConfigMenuOpen(!configMenuOpen)}>
-                        Configurações
-                        <i className={`fa fa-chevron-down ${contains('configuracoes') || configMenuOpen ? 'open' : ''}`}></i>
-                    </Link>
-                    <ul className={`submenu ${contains('configuracoes') || configMenuOpen ? 'open' : ''}`}>
-                        <li className={isActive('configuracoes/utilizadores') ? 'active' : ''}>
-                            <Link to="/configuracoes/utilizadores">Utilizadores</Link>
-                        </li>
-                        <li className={isActive('configuracoes/modalidades') ? 'active' : ''}>
-                            <Link to="/configuracoes/modalidades">Modalidades</Link>
-                        </li>
-                    </ul>
-                </li>
+                    // Caso B: Categoria expansível (com submenu)
+                    if (item.submenu) {
+                        const isAberto = menuAberto === item.titulo || isSubmenuActive(item.submenu);
+                        
+                        return (
+                            <li key={index} className={`menu-dropdown ${isSubmenuActive(item.submenu) ? 'active-parent' : ''}`}>
+                                <div className="dropdown-titulo" onClick={() => toggleMenu(item.titulo)}>
+                                    <div className="item-content">
+                                        {item.icone && <i className={item.icone}></i>}
+                                        <span>{item.titulo}</span>
+                                    </div>
+                                    <svg 
+                                        className={`seta ${isAberto ? 'aberta' : ''}`} 
+                                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                                    >
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </div>
+                                
+                                {/* Renderização dos itens filhos */}
+                                <ul className={`submenu ${isAberto ? 'open' : ''}`}>
+                                    {item.submenu?.map((subItem, subIndex) => (
+                                        <li key={subIndex} className={`sub-item ${isActive(subItem.path || '') ? 'active' : ''}`}>
+                                            <Link to={subItem.path || '#'}>
+                                                {subItem.icone && <i className={subItem.icone}></i>}
+                                                <span>{subItem.titulo}</span>
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </li>
+                        );
+                    }
+
+                    return null;
+                })}
             </ul>
         </nav>
     );

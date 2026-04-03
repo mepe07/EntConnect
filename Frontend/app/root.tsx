@@ -13,6 +13,7 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { Header } from "./structure/header/header";
 import { NavigationMenu } from "./structure/navigation-menu/navigation-menu";
+import '@fortawesome/fontawesome-free/css/all.min.css';
 import { Login } from "./views/login/login";
 import { useEffect, useState } from "react";
 
@@ -33,7 +34,7 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/fontawesome.min.css",
+    href: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
   },
   {
     rel: "stylesheet",

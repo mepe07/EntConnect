@@ -56,7 +56,9 @@ export class AuthService {
             userRole = 'Coordenador';
         } else if (user.Pessoa?.Direcao) {
             userRole = 'Direcao';
-        }
+        } else if (user.Pessoa?.Enc_Educacao) {
+            userRole = 'Enc_Educacao';
+            }
 
         // 5. Construção do bilhete VIP (Payload do JWT)
         const payload = {

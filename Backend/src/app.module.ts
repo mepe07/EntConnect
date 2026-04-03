@@ -5,9 +5,10 @@ import { UtilizadorModule } from './utilizador/utilizador.module';
 import { FaturacaoModule } from './faturacao/faturacao.module';
 import { ArtigoModule } from './artigo/artigo.module';
 import { AuthModule } from './auth/auth.module';
+import { SalasModule } from './salas/salas.module';
 
 @Module({
-  imports: [PrismaModule, CoachingModule, UtilizadorModule, FaturacaoModule, ArtigoModule, AuthModule],
+  imports: [PrismaModule, CoachingModule, UtilizadorModule, FaturacaoModule, ArtigoModule, AuthModule, SalasModule],
   controllers: [],
   providers: [],
 })

@@ -86,3 +86,6 @@ export class AuthService {
         return this._userInfo;
     }
 }
+
+// Dependencia Singleton
+export const authService = new AuthService();

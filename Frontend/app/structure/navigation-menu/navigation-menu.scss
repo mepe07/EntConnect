@@ -11,99 +11,92 @@
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
     overflow-y: auto;
 
-    & > ul {
+    ul {
         list-style: none;
         padding: 0;
         margin: 0;
+    }
+    /* ITENS PRINCIPAIS DO MENU */
+    & > ul > li {
+        transition: all 0.2s ease;
+        cursor: pointer;
 
-        & > li {
-            transition: all 0.2s ease;
-            cursor: pointer;
-            a, .dropdown-titulo {
+        & > a, & > .dropdown-titulo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            color: colors.$gray-1;
+            box-sizing: border-box;
+            text-decoration: none;
+            /* Caixa onde fica o Ícone + Texto (para ficarem alinhados) */
+            .item-content {
                 display: flex;
                 align-items: center;
-                width: 100%;
-                padding: 12px 30px;
-                font-size: 1.1rem;
-                color: colors.$gray-1;
-                box-sizing: border-box;
-            }
+                gap: 12px; /* O espaço perfeito entre o ícone e a palavra! */
 
-            &.active {
-                background-color: colors.$theme-100;
-                font-weight: 600;
-
-                a {
-                    color: colors.$gray-1;
+                i {
+                    font-size: 1.1rem;
+                    width: 20px; /* Garante que os ícones ocupam todos o mesmo espaço */
+                    text-align: center;
                 }
             }
 
-            &:not(.active):hover {
-                background-color: colors.$theme-80;
-            }
+            .seta {
+                transition: transform 0.3s ease;
 
-            &:has(.submenu) {
-                & > a {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-
-                    & > i {
-                        flex: 0 0 40px;
-                        transition: all 0.3s ease;
-
-                        &.open {
-                            transform: rotate(180deg);
-                        }
-                    }
-                }
-            }
-
-            & > .submenu {
-                max-height: 0px;
-                overflow: hidden;
-                background-color: colors.$gray-8;
-                transition: all 0.3s ease;
-
-                &.open {
-                    max-height: 1000px; // Valor grande para permitir a expansão total
-                }
-
-                li {
-                    font-weight: 400;
-
-                    a {
-                        padding: 10px 30px 10px 50px;
-                        font-size: 16px;
-                        color: colors.$gray-3;
-                    }
-
-                    &.active {
-                        font-weight: 600;
-                        background-color: colors.$theme-80 !important;
-                    }
-
-                    &:not(.active):hover {
-                        background-color: transparent !important;
-
-                        a {
-                            color: colors.$theme-40 !important;
-                        }
-                    }
+                &.aberta {
+                    transform: rotate(180deg);
                 }
             }
         }
-    }
-}
+        /* ESTADOS: Ativo e Hover */
+        &.active, &.active-parent {
+            background-color: colors.$theme-100;
+            font-weight: 600;
+        }
 
-/* --- RESPONSIVIDADE (Ecrãs Pequenos/Telemóveis) --- */
-@media (max-width: 768px) {
-    .navigation-menu {
-        // Em telemóveis, o menu costuma encolher ou esconder-se.
-        // Se a vossa app tiver "Menu Hambúrguer", a largura aqui devia ser gerida lá!
-        position: absolute;
-        z-index: 100;
-        width: 100%; // Ocupa o ecrã todo
-        height: auto;
+        &:not(.active):not(.active-parent):hover {
+            background-color: colors.$theme-80;
+        }
+        /* SUBMENUS */
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            background-color: colors.$gray-8;
+            transition: max-height 0.3s ease-in-out;
+
+            &.open {
+                max-height: 600px;
+            }
+
+            .sub-item {
+                display: block;
+                width: 100%;
+
+                a {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 12px 30px 12px 50px;
+                    font-size: 0.95rem;
+                    color: colors.$gray-3;
+                    text-decoration: none;
+                    transition: all 0.2s ease;
+                    box-sizing: border-box;
+                }
+
+                &.active > a {
+                    font-weight: 600;
+                    color: colors.$theme-40;
+                }
+
+                &:not(.active):hover > a {
+                    color: colors.$theme-40;
+                }
+            }
+        }
     }
 }
