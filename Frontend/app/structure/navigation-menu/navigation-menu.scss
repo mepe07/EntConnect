@@ -11,99 +11,88 @@
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
     overflow-y: auto;
 
-    & > ul {
+    ul {
         list-style: none;
         padding: 0;
         margin: 0;
+    }
+    /* ITENS PRINCIPAIS DO MENU */
+    & > ul > li {
+        transition: all 0.2s ease;
+        cursor: pointer;
 
-        & > li {
-            transition: all 0.2s ease;
-            cursor: pointer;
-            a, .dropdown-titulo {
-                display: flex;
-                align-items: center;
-                width: 100%;
-                padding: 12px 30px;
-                font-size: 1.1rem;
-                color: colors.$gray-1;
-                box-sizing: border-box;
+        & > a, & > .dropdown-titulo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            color: colors.$gray-1;
+            box-sizing: border-box;
+            text-decoration: none;
+            /* Animação da Seta SVG */
+            .seta {
+                transition: transform 0.3s ease;
+
+                &.aberta {
+                    transform: rotate(180deg);
+                }
+            }
+        }
+        /* ESTADO: Ativo (Link direto) ou Pai Ativo (Gaveta aberta noutra página) */
+        &.active, &.active-parent {
+            background-color: colors.$theme-100;
+            font-weight: 600;
+        }
+        /* ESTADO: Hover nos itens principais */
+        &:not(.active):not(.active-parent):hover {
+            background-color: colors.$theme-80;
+        }
+        /* SUBMENUS (Os filhos) */
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            background-color: colors.$gray-8;
+            transition: max-height 0.3s ease-in-out;
+
+            &.open {
+                max-height: 600px;
             }
 
-            &.active {
-                background-color: colors.$theme-100;
-                font-weight: 600;
+            .sub-item {
+                display: block;
+                width: 100%;
 
                 a {
-                    color: colors.$gray-1;
+                    display: block;
+                    padding: 12px 30px 12px 50px; /* 50px = Recuo à esquerda */
+                    font-size: 0.95rem;
+                    color: colors.$gray-3;
+                    text-decoration: none;
+                    transition: all 0.2s ease;
+                    box-sizing: border-box;
                 }
-            }
-
-            &:not(.active):hover {
-                background-color: colors.$theme-80;
-            }
-
-            &:has(.submenu) {
-                & > a {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-
-                    & > i {
-                        flex: 0 0 40px;
-                        transition: all 0.3s ease;
-
-                        &.open {
-                            transform: rotate(180deg);
-                        }
-                    }
+                /* ESTADO: Submenu ATIVO */
+                &.active > a {
+                    font-weight: 600;
+                    color: colors.$theme-40;
                 }
-            }
-
-            & > .submenu {
-                max-height: 0px;
-                overflow: hidden;
-                background-color: colors.$gray-8;
-                transition: all 0.3s ease;
-
-                &.open {
-                    max-height: 1000px; // Valor grande para permitir a expansão total
-                }
-
-                li {
-                    font-weight: 400;
-
-                    a {
-                        padding: 10px 30px 10px 50px;
-                        font-size: 16px;
-                        color: colors.$gray-3;
-                    }
-
-                    &.active {
-                        font-weight: 600;
-                        background-color: colors.$theme-80 !important;
-                    }
-
-                    &:not(.active):hover {
-                        background-color: transparent !important;
-
-                        a {
-                            color: colors.$theme-40 !important;
-                        }
-                    }
+                /* ESTADO: Hover no Submenu */
+                &:not(.active):hover > a {
+                    color: colors.$theme-40;
                 }
             }
         }
     }
 }
 
-/* --- RESPONSIVIDADE (Ecrãs Pequenos/Telemóveis) --- */
+/* RESPONSIVIDADE (Ecrãs Pequenos) */
 @media (max-width: 768px) {
     .navigation-menu {
-        // Em telemóveis, o menu costuma encolher ou esconder-se.
-        // Se a vossa app tiver "Menu Hambúrguer", a largura aqui devia ser gerida lá!
         position: absolute;
         z-index: 100;
-        width: 100%; // Ocupa o ecrã todo
+        width: 100%;
         height: auto;
     }
 }
