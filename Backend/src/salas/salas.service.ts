@@ -34,7 +34,7 @@ export class SalasService {
             ID_Sala: novaSala.ID_Sala,
             Nome: novaSala.Nome,
             Disponivel: novaSala.Disponivel,
-            // Se a sala tiver uma modalidade associada, vamos buscar o "Descri__o" lá dentro. 
+            // Se a sala tiver uma modalidade associada, vamos buscar o "Descricao" lá dentro. 
             // Se não, enviamos 'Sem Modalidade'
             Modalidade: novaSala.Modalidade ? novaSala.Modalidade.Descricao : 'Sem Modalidade'
         };
