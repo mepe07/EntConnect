@@ -6,8 +6,9 @@ export default [
     route("test-components", "routes/test-components.tsx"),
     route("login", "routes/login.tsx"),
     route("faturacao", "routes/faturacao.tsx"),
-    route("configuracoes/utilizadores", "routes/configuracoes/utilizadores.tsx"),
+    // // route("configuracoes/utilizadores", "routes/configuracoes/utilizadores.tsx"),
     route("admin/salas", "routes/salas.tsx"),
+    route("admin/utilizadores", "routes/configuracoes/utilizadores.tsx")
 
     // LÓGICA:
     // O primeiro argumento ("admin/salas") é o que aparece na barra do browser.

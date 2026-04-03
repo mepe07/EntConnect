@@ -18,7 +18,7 @@ export function Utilizadores() {
     const usersData: Record<string, any>[] = users.map((user: User) => ({
         ...user,
         ativo: user.ativo ? {value: "Sim", infoType: InfoTypesEnum.Info} : {value: "Não", infoType: InfoTypesEnum.Error},
-        cargos: user.cargos.join(", ")
+        cargo: user.cargo
     }));
 
     // #region API Calls
@@ -27,6 +27,17 @@ export function Utilizadores() {
             const usersData = await usersService.getUsers();
             setUsers(usersData);
         }
+
+        // Extrair os cargos, remover os repetidos (Set) e filtrar vazios
+        const cargosUnicos = Array.from(new Set(usersData.map(user => user.cargo).filter(Boolean)));
+
+        // Construir o array final de opções com o "Todos" no início
+        const opcoesCargo = [
+            { value: "", label: "Todos" },
+            ...cargosUnicos.map(cargo => ({ value: cargo, label: cargo }))
+        ];
+
+
 
         /**
          * Function to block or unblock a user based on the action parameter
@@ -63,26 +74,22 @@ export function Utilizadores() {
         <>
             <h1>Utilizadores</h1>
 
+            
             <TableComponent
                 config={{
                     columns: [
                         { key: "idUtilizador", value: "ID", type: TableColumnTypesEnum.Default },
                         { key: "nome", value: "Nome", type: TableColumnTypesEnum.Default },
                         { key: "email", value: "Email", type: TableColumnTypesEnum.Default },
-                        { key: "cargos", value: "Cargos", type: TableColumnTypesEnum.Default },
+                        { key: "cargo", value: "Cargo", type: TableColumnTypesEnum.Default },
                         { key: "ativo", value: "Ativo", type: TableColumnTypesEnum.Chip }
                     ],
                     filters: [
                         {
-                            key: "cargos",
+                            key: "cargo",
                             label: "Cargo",
                             value: "",
-                            options: [
-                                { value: "", label: "Todos" },
-                                { value: "Professor", label: "Professor" },
-                                { value: "Funcionário", label: "Funcionário" },
-                                { value: "Coordenador", label: "Coordenador" }
-                            ]
+                            options: opcoesCargo
                         },
                         {
                             key: "ativo",
@@ -110,13 +117,14 @@ export function Utilizadores() {
                         {
                             icon: "fa-lock",
                             tooltip: "Bloquear/Desbloquear Utilizador",
-                            config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Error, size: SizeEnum.Small },
+                            config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Error, size: SizeEnum.Small},
                             onClick: (row: User) => blockUnlockUser(row.idUtilizador, ((row.ativo as unknown as { value: string }).value as string === "Sim" ? 'block' : 'unlock'))
                         }
                     ]
                 }}
                 data={usersData}
             />
+            
         </>
     );
 } 
