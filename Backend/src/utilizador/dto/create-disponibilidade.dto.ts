@@ -2,11 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString, IsOptional, IsDateString } from 'class-validator';
 
 export class CreateDisponibilidadeDto {
-  @ApiProperty({ example: 1, description: 'ID do Professor' })
-  @IsNotEmpty()
-  @IsNumber()
-  ID_Professor: number;
-
+  
   @ApiProperty({ example: 'Segunda-feira', description: 'Dia da semana' })
   @IsNotEmpty()
   @IsString()
@@ -19,15 +15,13 @@ export class CreateDisponibilidadeDto {
   @IsDateString()
   Hora_Inicio: string;
 
-  @ApiProperty({ example: '2024-05-10T13:00:00Z', description: 'Hora de fim' })
-  @IsNotEmpty() // Aqui também!
-  @IsDateString()
-  Hora_Fim: string;
-
-  @ApiProperty({ example: 1, description: 'ID do Estado da Disponibilidade' })
-  @IsNotEmpty() // E aqui também!
+// Apagas o Hora_Fim e metes isto:
+  @ApiProperty({ 
+    example: 60, 
+    description: 'Duração da disponibilidade em minutos' 
+  })
   @IsNumber()
-  EstadoDisponibilidadeID: number;
+  Duracao: number;
 
   @ApiProperty({ example: 1, description: 'ID do Utilizador que está a criar/alterar' })
   @IsNotEmpty()

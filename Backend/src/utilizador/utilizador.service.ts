@@ -36,7 +36,7 @@ export class UtilizadorService {
       if (user.Pessoa?.Direcao) cargos.push('Direção');
       if (user.Pessoa?.Enc_Educacao) cargos.push('Encarregado de Educação');
 
-      // Construir o objeto final elegante e seguro (sem enviar a Password!)
+      // Construir o objeto final a ser enviado para o Frontend
       return {
         idUtilizador: user.ID_Utilizador,
         username: user.Utilizador,
