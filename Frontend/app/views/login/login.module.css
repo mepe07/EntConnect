@@ -51,7 +51,7 @@
    ========================================= */
 .brandPanel {
     flex: 6.5;
-    background: url('../../assets/media/foto-bailarina-login.jpg') no-repeat center center;
+    background: url('../../assets/media/foto-bailarina-login.png') no-repeat center center;
     background-size: cover;
     color: white;
     display: flex;

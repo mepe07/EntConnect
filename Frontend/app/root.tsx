@@ -13,6 +13,7 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { Header } from "./structure/header/header";
 import { NavigationMenu } from "./structure/navigation-menu/navigation-menu";
+import '@fortawesome/fontawesome-free/css/all.min.css';
 import { Login } from "./views/login/login";
 import { useEffect, useState } from "react";
 
