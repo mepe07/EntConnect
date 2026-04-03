@@ -31,7 +31,19 @@
             color: colors.$gray-1;
             box-sizing: border-box;
             text-decoration: none;
-            /* Animação da Seta SVG */
+            /* Caixa onde fica o Ícone + Texto (para ficarem alinhados) */
+            .item-content {
+                display: flex;
+                align-items: center;
+                gap: 12px; /* O espaço perfeito entre o ícone e a palavra! */
+
+                i {
+                    font-size: 1.1rem;
+                    width: 20px; /* Garante que os ícones ocupam todos o mesmo espaço */
+                    text-align: center;
+                }
+            }
+
             .seta {
                 transition: transform 0.3s ease;
 
@@ -40,16 +52,16 @@
                 }
             }
         }
-        /* ESTADO: Ativo (Link direto) ou Pai Ativo (Gaveta aberta noutra página) */
+        /* ESTADOS: Ativo e Hover */
         &.active, &.active-parent {
             background-color: colors.$theme-100;
             font-weight: 600;
         }
-        /* ESTADO: Hover nos itens principais */
+
         &:not(.active):not(.active-parent):hover {
             background-color: colors.$theme-80;
         }
-        /* SUBMENUS (Os filhos) */
+        /* SUBMENUS */
         .submenu {
             max-height: 0;
             overflow: hidden;
@@ -65,34 +77,26 @@
                 width: 100%;
 
                 a {
-                    display: block;
-                    padding: 12px 30px 12px 50px; /* 50px = Recuo à esquerda */
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 12px 30px 12px 50px;
                     font-size: 0.95rem;
                     color: colors.$gray-3;
                     text-decoration: none;
                     transition: all 0.2s ease;
                     box-sizing: border-box;
                 }
-                /* ESTADO: Submenu ATIVO */
+
                 &.active > a {
                     font-weight: 600;
                     color: colors.$theme-40;
                 }
-                /* ESTADO: Hover no Submenu */
+
                 &:not(.active):hover > a {
                     color: colors.$theme-40;
                 }
             }
         }
-    }
-}
-
-/* RESPONSIVIDADE (Ecrãs Pequenos) */
-@media (max-width: 768px) {
-    .navigation-menu {
-        position: absolute;
-        z-index: 100;
-        width: 100%;
-        height: auto;
     }
 }
