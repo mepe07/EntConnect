@@ -6,6 +6,7 @@ import { FaturacaoModule } from './faturacao/faturacao.module';
 import { ArtigoModule } from './artigo/artigo.module';
 import { AuthModule } from './auth/auth.module';
 import { InfraestruturaModule } from './Infraestrutura/infraestrutura.module'; //Azure blobs
+import { SalasModule } from './salas/salas.module';
 
 @Module({
   //módulos
@@ -16,9 +17,9 @@ import { InfraestruturaModule } from './Infraestrutura/infraestrutura.module'; /
             FaturacaoModule, 
             ArtigoModule, 
             AuthModule, 
-            InfraestruturaModule
+            InfraestruturaModule,
+            SalasModule
           ],
-  controllers: [],
-  providers: [],
+
 })
 export class AppModule {}

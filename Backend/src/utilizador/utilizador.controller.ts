@@ -1,17 +1,21 @@
-import { Controller, Get, Post, Put, Body, Patch, Param, BadRequestException } from '@nestjs/common'; 
+import { Controller, Get, Post, Put, Body, Patch, Param, Delete, BadRequestException } from '@nestjs/common'; 
 import { UtilizadorService } from './utilizador.service';
+import { DispobilidadeService } from './professor/Disponibilidade.service';
 import { CreateUtilizadorDto } from './dto/create-utilizador.dto';
 import { UpdateUtilizadorDto } from './dto/update-utilizador.dto';
-import { ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { UtilizadorImportService } from './ImportUsers/utilizador-import.service';
 import { ApiBody } from '@nestjs/swagger';
+import { CreateDisponibilidadeDto } from './dto/create-disponibilidade.dto';
+import { UpdateDisponibilidadeDto } from './dto/update-disponibilidade.dto';
 
 @ApiTags('Utilizadores')
 @Controller('utilizador')
 export class UtilizadorController {
   constructor(
     private readonly utilizadorService: UtilizadorService,
-    private readonly importService: UtilizadorImportService
+    private readonly importService: UtilizadorImportService,
+    private readonly dispobilidadeService: DispobilidadeService
   ) {}
 
   /**
@@ -125,24 +129,38 @@ export class UtilizadorController {
     // Como estamos apenas a apagar, devolver uma mensagem simples fica muito elegante no frontend
     return { message: `A foto do utilizador com ID ${id} foi removida com sucesso.` };
   }
+  @Post('professor/:id/adicionar-disponibilidade')
+  @ApiOperation({summary: 'Criar disponibilidade para um professor'})
+  @ApiParam({ 
+    name: 'id', 
+    description: 'Identificador único (ID) do professor',
+    example: 1,
+    type: Number
+  })
+  @ApiResponse({status:201})
+  async createDisponibility(
+    @Param('id') id: string, 
+    @Body() createDisponibilidadeDto: CreateDisponibilidadeDto) {
+    return this.dispobilidadeService.createAvailability(+id, createDisponibilidadeDto);
+  }
 
-  // @Post()
-  // create(@Body() createUtilizadorDto: CreateUtilizadorDto) {
-  //   return this.utilizadorService.create(createUtilizadorDto);
-  // }
+  @Patch('professor/disponibilidade/:id/atualizar-disponibilidade')
+  @ApiOperation({summary: 'Atualizar disponibilidade - Ex: aprovar'})
+  @ApiParam({ 
+    name: 'id', 
+    description: 'Identificador único (ID) da Disponibilidade a alterar',
+    example: 1,
+    type: Number
+  })
+  @ApiResponse({status:200})
+  async updateDisponibility(
+    @Param('id') idDisponibilidade: string,
+    @Body() updateDisponibilidadeDto: UpdateDisponibilidadeDto) {
+      return this.dispobilidadeService.updateAvailability(+idDisponibilidade, updateDisponibilidadeDto);
+    } 
 
-  // @Get()
-  // findAll() {
-  //   return this.utilizadorService.findAll();
-  // }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.utilizadorService.findOne(+id);
-  // }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.utilizadorService.remove(+id);
-  // }
+
+
 }

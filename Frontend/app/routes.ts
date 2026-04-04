@@ -1,9 +1,31 @@
 import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
 export default [
+    // A porta principal
     index("routes/home.tsx"), 
+    
+    // Rota de Login
     route("login", "routes/login.tsx"),
-    route("test-components", "routes/test-components.tsx"),
+
+    // ==========================================
+    // AS CORREÇÕES DOS CAMINHOS (URLs)
+    // O 1º argumento agora é igualzinho à NavBar!
+    // ==========================================
+
+    // NavBar diz: path: '/admin/salas'
+    route("admin/salas", "routes/salas.tsx"),
+
+    // NavBar diz: path: '/admin/utilizadores'
+    route("admin/utilizadores", "routes/configuracoes/utilizadores.tsx"),
+
+    // NavBar diz: path: '/relatorios/faturacao'
+    route("relatorios/faturacao", "routes/faturacao.tsx"),
+
+    // Rota solta do marketplace
     route("marketplace", "routes/marketplace.tsx"),
-    route("faturacao", "routes/faturacao.tsx"),
-    route("configuracoes/utilizadores", "routes/configuracoes/utilizadores.tsx")] satisfies RouteConfig;
+
+    // Rota de testes
+    route("test-components", "routes/test-components.tsx"),
+
+
+] satisfies RouteConfig;

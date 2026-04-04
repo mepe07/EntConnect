@@ -1,0 +1,245 @@
+// Ficheiro: app/views/relatorios/faturacao/faturacao.scss
+
+.pagina-faturacao {
+    padding: 32px;
+    background-color: #f1f5f9; // Um fundo ligeiramente cinza para os cards brancos saltarem
+    min-height: 100vh;
+
+    h1 {
+        margin-bottom: 32px;
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -1px;
+    }
+    /* Secção de Filtros Superior */
+    .filtros-iniciais {
+        display: flex;
+        gap: 24px;
+        align-items: flex-end;
+        background-color: #ffffff;
+        padding: 32px;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 32px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+        .grupo-data {
+            position: relative; // Essencial para o ícone novo não "fugir"
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+
+            input[type="date"] {
+                appearance: none; // Remove estilos base de alguns browsers
+                padding: 14px 45px 14px 20px; // Aumentamos o espaço à direita para o ícone
+                border: 2px solid #f1f5f9;
+                border-radius: 10px;
+                background-color: #f8fafc;
+                color: #1e293b;
+                font-family: inherit;
+                font-size: 16px;
+                width: 100%;
+                outline: none;
+                cursor: pointer;
+                // O SEGREDO: Esconder o ícone nativo mas mantê-lo clicável
+                &::-webkit-calendar-picker-indicator {
+                    position: absolute;
+                    right: -7.5px;
+                    bottom: 10px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 24px;
+                    height: 24px;
+                    margin: 15px;
+                    padding: 5px;
+                    opacity: 0; // Fica invisível
+                    cursor: pointer;
+                    z-index: 0; // Fica por cima para apanhar o clique
+                }
+
+                &:focus {
+                    border-color: #3b82f6;
+                    background-color: #ffffff;
+                }
+            }
+            // O TEU NOVO ÍCONE (Usando FontAwesome)
+            &::after {
+                content: '\f073'; // Código Unicode do calendário no FontAwesome
+                font-family: 'Font Awesome 6 Free'; // Verifica se é esta a versão da tua app
+                font-weight: 900;
+                position: absolute;
+                right: 18px;
+                bottom: 16px; // Ajusta conforme a altura do teu input
+                color: gray; // AQUI escolhes a cor que quiseres!
+                font-size: 15px;
+                pointer-events: none; // O clique "atravessa" o ícone e bate no input
+                z-index: 1;
+            }
+        }
+    }
+    /* Layout Master-Detail */
+    .layout-master-detail {
+        display: flex;
+        gap: 32px;
+        align-items: flex-start;
+
+        .painel-esquerdo {
+            width: 400px; // Mais largo para aguentar os cards "fortes"
+            flex-shrink: 0;
+
+            h3 {
+                font-size: 18px;
+                font-weight: 700;
+                color: #475569;
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .lista-cards {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+
+                .card-resumo {
+                    display: flex;
+                    align-items: center;
+                    gap: 24px;
+                    padding: 32px; // Padding reforçado
+                    background-color: #ffffff;
+                    border: 2px solid transparent;
+                    border-radius: 20px;
+                    cursor: pointer;
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+
+                    &:hover {
+                        transform: scale(1.02);
+                        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+                    }
+
+                    &.ativo {
+                        background-color: #ffffff;
+                        border-color: #3b82f6;
+                        box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.2);
+
+                        .info-prof h4 {
+                            color: #3b82f6;
+                        }
+                    }
+
+                    .foto-container {
+                        width: 80px; // Foto bem maior
+                        height: 80px;
+                        flex-shrink: 0;
+                        position: relative;
+
+                        img {
+                            width: 100%;
+                            height: 100%;
+                            border-radius: 24px; // Quadrado arredondado moderno
+                            object-fit: cover;
+                            border: 3px solid #ffffff;
+                            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                        }
+
+                        .foto-fallback {
+                            width: 100%;
+                            height: 100%;
+                            border-radius: 24px;
+                            background: linear-gradient(135deg, #3b82f6, #2563eb);
+                            color: #ffffff;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 32px;
+                            font-weight: 800;
+                        }
+                    }
+
+                    .info-prof {
+                        h4 {
+                            margin: 0 0 6px 0;
+                            font-size: 24px; // Nome com impacto
+                            font-weight: 800;
+                            color: #0f172a;
+                        }
+
+                        .stats-resumo {
+                            font-size: 16px;
+                            color: #64748b;
+                            font-weight: 500;
+                        }
+                    }
+                }
+            }
+        }
+
+        .painel-direito {
+            flex-grow: 1;
+            min-width: 0;
+
+            .detalhe-conteudo {
+                background-color: #ffffff;
+                padding: 40px;
+                border-radius: 24px;
+                border: 1px solid #e2e8f0;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+
+                .cabecalho-detalhe {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 40px;
+                    padding-bottom: 32px;
+                    border-bottom: 2px solid #f1f5f9;
+
+                    .info-selecionada {
+                        display: flex;
+                        align-items: center;
+                        gap: 24px;
+
+                        .foto-grande {
+                            width: 100px;
+                            height: 100px;
+                            border-radius: 30px;
+                            object-fit: cover;
+                        }
+
+                        h2 {
+                            font-size: 36px;
+                            font-weight: 900;
+                            color: #0f172a;
+                            margin: 0;
+                        }
+                    }
+
+                    .kpis {
+                        display: flex;
+                        gap: 40px;
+
+                        .kpi-box {
+                            text-align: right;
+
+                            .label {
+                                font-size: 14px;
+                                color: #64748b;
+                                text-transform: uppercase;
+                                font-weight: 700;
+                            }
+
+                            .valor {
+                                font-size: 32px;
+                                font-weight: 900;
+                                color: #3b82f6;
+                                display: block;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

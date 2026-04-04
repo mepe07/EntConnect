@@ -6,6 +6,7 @@ export interface ButtonComponentProps {
   label?: string;
   icon?: string;
   tooltip?: string;
+  disabled?: boolean;
   config?: {
     type?: ButtonTypeEnum;
     color?: ButtonColorEnum;
