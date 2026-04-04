@@ -78,6 +78,44 @@ export class FaturacaoService {
         return Array.from(mapaFaturacao.values());
     }
 
+    async obterRelatorioFaturacaoGeral(dataInicio: Date, dataFim: Date) {
+        // 1. A Query com os saltos (includes) que estudámos
+        const inscricoes = await this.prisma.coaching_Aluno.findMany({
+            where: {
+                Coaching: {
+                    Inicio_Coaching: {
+                        gte: dataInicio,
+                        lte: dataFim,
+                    },
+                },
+            },
+            include: {
+                Aluno: true,
+                Coaching: {
+                    include: {
+                        Professor: { include: { Pessoa: true } },
+                        Sala: true,
+                    },
+                },
+            },
+        });
+
+        // 2. Mapeamento para o DTO limpo que o React espera
+        return inscricoes.map((item) => {
+            return {
+                idCoaching: item.ID_Coaching,
+                dataAula: item.Coaching.Inicio_Coaching,
+                nomeProfessor: item.Coaching.Professor?.Pessoa?.Nome || 'Professor não atribuído',
+                fotoProfessorUrl: item.Coaching.Professor?.Pessoa?.Foto || null,
+                nomeAluno: item.Aluno.Nome,
+                // Garantimos que o valor é um número para não dar erro no Frontend
+                valorTotal: Number(item.Montante_a_Pagar) || 0,
+                estaPago: item.Pago,
+                duracaoMinutos: item.Coaching.Duracao,
+                salaNome: item.Coaching.Sala?.Nome || 'Sem sala',
+            };
+        });
+    }
   // Representa o '+ getBilling()' do LegalGuardian
   async obterFaturacaoPorEncarregado(idEncarregado: number) {
     // Aqui vais à base de dados buscar apenas as dívidas/faturas de 1 pessoa
