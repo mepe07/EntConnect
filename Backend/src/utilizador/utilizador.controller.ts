@@ -90,7 +90,7 @@ export class UtilizadorController {
    * @returns Retorna uma Promise com o registo da Pessoa atualizada na base de dados.
    */
   @Put(':id/uploadphoto')
-  @ApiOperation({ summary: 'Carregar Fotos para o Azure Blob Storage' })
+  @ApiOperation({ summary: 'Adiciona um URL da foto de perfil do Utilizador na BD' })
   @ApiBody({
     description: 'URL da foto guardada no Azure',
     schema: {
