@@ -1,13 +1,27 @@
-import { Controller, Get, Post, Put, Body, Patch, Param, Delete, BadRequestException } from '@nestjs/common'; 
+import { 
+  Controller, Get, Post, Put, Body, Patch, Param, Delete, 
+  UseInterceptors, UploadedFile, BadRequestException 
+} from '@nestjs/common'; 
+import { FileInterceptor } from '@nestjs/platform-express';
+
+// Swagger
+import { 
+  ApiOperation, ApiTags, ApiResponse, ApiParam, ApiConsumes, ApiBody 
+} from '@nestjs/swagger';
+
+// Serviços e DTOs
 import { UtilizadorService } from './utilizador.service';
 import { DispobilidadeService } from './professor/Disponibilidade.service';
+import { UtilizadorImportService } from './ImportUsers/utilizador-import.service';
+import { BlobsService } from '../Infraestrutura/Blobs/blobs.service'; // <--- Não esqueças este!
+
 import { CreateUtilizadorDto } from './dto/create-utilizador.dto';
 import { UpdateUtilizadorDto } from './dto/update-utilizador.dto';
-import { ApiOperation, ApiTags, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { UtilizadorImportService } from './ImportUsers/utilizador-import.service';
-import { ApiBody } from '@nestjs/swagger';
 import { CreateDisponibilidadeDto } from './dto/create-disponibilidade.dto';
 import { UpdateDisponibilidadeDto } from './dto/update-disponibilidade.dto';
+
+// Tipagem do Multer (Se não tiver o @types/multer instalado, mas ajuda o TS)
+import 'multer';
 
 @ApiTags('Utilizadores')
 @Controller('utilizador')
@@ -15,7 +29,8 @@ export class UtilizadorController {
   constructor(
     private readonly utilizadorService: UtilizadorService,
     private readonly importService: UtilizadorImportService,
-    private readonly dispobilidadeService: DispobilidadeService
+    private readonly dispobilidadeService: DispobilidadeService,
+    private readonly blobsService: BlobsService,
   ) {}
 
   /**
@@ -51,16 +66,16 @@ export class UtilizadorController {
 
   /**
    * Importa um lote de utilizadores a partir de um ficheiro CSV.
-   * * O ficheiro já deve ter sido previamente carregado para o Azure Blob Storage.
+   * * O ficheiro já deve ter sido previamente carregado para o contentor 'importar-csv' no Azure Blob Storage.
    * * O sistema irá ler o ficheiro linha a linha, criar a Pessoa e o respetivo Utilizador associado.
    * @param {string} nomeFicheiro - O nome exato do ficheiro CSV armazenado no Azure (ex: "Alunos.csv").
    * @returns Retorna um objeto contendo uma mensagem de sucesso e a lista dos registos importados.
    * @throws {BadRequestException} Se o nome do ficheiro não for enviado ou se o ficheiro não existir no Azure.
    */
   @Post('importusersblob')
-  @ApiOperation({ summary: 'Importar utilizadores lendo um CSV do Azure Blob Storage' })
+  @ApiOperation({ summary: 'Importar utilizadores lendo um CSV do contentor "importar-csv" no Azure' })
   @ApiBody({
-    description: 'Nome do ficheiro CSV que já se encontra no Azure Blob Storage',
+    description: 'Nome do ficheiro CSV que já se encontra no Azure Blob Storage (Contentor: importar-csv)',
     schema: {
       type: 'object',
       properties: {
@@ -81,37 +96,76 @@ export class UtilizadorController {
       throw new BadRequestException('Por favor, envie o "nomeFicheiro" (formato JSON) no corpo do pedido.');
     }
 
-    // Chama o serviço que vai ligar ao Azure e tratar os erros de ficheiro não encontrado
+    // Retiramos o 'importar-csv' daqui, o serviço já sabe qual é o contentor
     return this.importService.importarDeBlob(nomeFicheiro);
   }
 
+  
   /**
-   * Atualiza a foto de perfil de um utilizador.
-   * * Este endpoint recebe o URL de uma imagem previamente carregada para o Azure Blob Storage 
-   * e associa esse URL ao perfil da Pessoa ligada ao ID do Utilizador fornecido.
-   * * @param {string} UrlPhoto - O URL completo da imagem guardada no Azure Blob Storage (enviado no corpo do pedido).
-   * @param {string} id - O ID do utilizador a atualizar (capturado a partir da rota da API).
-   * @returns Retorna uma Promise com o registo da Pessoa atualizada na base de dados.
+   * Faz o upload físico de uma foto para o Azure e atualiza o URL na Base de Dados.
+   * 1. Recebe o ficheiro via Multipart Form Data.
+   * 2. Envia para o Azure Blob Storage.
+   * 3. Guarda o URL gerado na tabela Pessoa (ligada ao ID_Utilizador).
+   * * @param id ID do utilizador (ID_Utilizador)
+   * @param file Ficheiro de imagem capturado pelo interceptor
    */
   @Put(':id/uploadphoto')
-  @ApiOperation({ summary: 'Adiciona um URL da foto de perfil do Utilizador na BD' })
+  @UseInterceptors(FileInterceptor('file')) // 'file' é o nome do campo no Postman/Swagger
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Faz upload de uma foto para o Azure e guarda o URL na BD' })
   @ApiBody({
-    description: 'URL da foto guardada no Azure',
     schema: {
       type: 'object',
       properties: {
-        UrlPhoto: { 
-          type: 'string', 
-          example: 'https://aminhaconta.blob.core.windows.net/fotos/joao.png' 
-        }
-      }
-    }
+        file: {
+          type: 'string',
+          format: 'binary', // Isto ativa o botão "Choose File" no Swagger
+        },
+      },
+    },
   })
-  async UploadPhoto(@Body('UrlPhoto') UrlPhoto: string, @Param('id') id: string) {
-    
-    // O +id converte rapidamente a string recebida no parâmetro da rota para um número (Number)
-    return this.utilizadorService.UploadPhoto(UrlPhoto, +id); 
+  async UploadPhoto(
+  @Param('id') id: string,
+  @UploadedFile() file: Express.Multer.File,
+) {
+  if (!file) {
+    throw new BadRequestException('Selecione uma foto.');
   }
+
+  // Definimos o nome fixo: user + id do utilizador
+  const nomeParaAzure = `user${id}`;
+
+  // Enviamos para o serviço com o novo nome 
+  const urlGerado = await this.blobsService.uploadFicheiro(
+    'fotos-pessoas', //'fotos-pessoas' COMO PRIMEIRO ARGUMENTO (CONTAINER NAME)
+    file, 
+    nomeParaAzure
+  );
+
+  // Guardamos o link final na BD (Prisma)
+  return this.utilizadorService.UploadPhoto(urlGerado, +id);
+}
+
+
+// src/utilizador/utilizador.controller.ts
+
+  /**
+   * Obtém o URL da foto de perfil de um utilizador.
+   * * Vai à Base de Dados procurar o campo da foto associado à Pessoa.
+   * @param {string} id - O ID do utilizador.
+   * @returns Um objeto com o URL da foto para ser usado no frontend (ex: na tag <img src="...">).
+   */
+  @Get(':id/foto')
+  @ApiOperation({ summary: 'Obter o URL da foto de perfil do utilizador' })
+  @ApiResponse({ status: 200, description: 'URL retornado com sucesso.' })
+  @ApiResponse({ status: 404, description: 'Utilizador não encontrado.' })
+  async getFotoPerfil(@Param('id') id: string) {
+    
+    // Chama o serviço passando o ID convertido para número
+    return this.utilizadorService.getFotoPerfil(+id);
+  }
+  
+
 
   /**
    * Remove a foto de perfil de um utilizador.
@@ -129,6 +183,12 @@ export class UtilizadorController {
     // Como estamos apenas a apagar, devolver uma mensagem simples fica muito elegante no frontend
     return { message: `A foto do utilizador com ID ${id} foi removida com sucesso.` };
   }
+
+
+
+  //#region Professor
+
+  
   @Post('professor/:id/adicionar-disponibilidade')
   @ApiOperation({summary: 'Criar disponibilidade para um professor'})
   @ApiParam({ 
@@ -159,8 +219,5 @@ export class UtilizadorController {
       return this.dispobilidadeService.updateAvailability(+idDisponibilidade, updateDisponibilidadeDto);
     } 
 
-
-
-
-
+  //#endregion
 }

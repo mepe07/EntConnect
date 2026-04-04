@@ -103,6 +103,25 @@ export class UtilizadorService {
     });
   }
 
+  async getFotoPerfil(id: number) {
+    // Procura o utilizador pelo ID e inclui os dados da Pessoa associada
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: id },
+      include: { Pessoa: true } 
+    });
+
+    if (!utilizador || !utilizador.Pessoa) {
+      throw new NotFoundException('Utilizador não encontrado.');
+    }
+
+    // Retorna apenas o URL (verifica se o nome da coluna no teu Prisma é mesmo "Foto" ou "UrlPhoto")
+    return {
+      id: id,
+      url: utilizador.Pessoa.Foto || null, // Devolve null se a pessoa ainda não tiver foto
+      mensagem: utilizador.Pessoa.Foto ? 'Foto encontrada.' : 'Este utilizador não tem foto de perfil.'
+    };
+  }
+  
   // create(createUtilizadorDto: CreateUtilizadorDto) {
   //   return 'This action adds a new utilizador';
   // }

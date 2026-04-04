@@ -13,8 +13,8 @@ export class UtilizadorImportService {
 
   async importarDeBlob(nomeFicheiro: string) {
     
-    // 1. Pedimos ao BlobsService para ir buscar o texto à nuvem!
-    const conteudo = await this.blobsService.lerFicheiroTexto(nomeFicheiro);
+    // 1. Pedimos ao BlobsService para ir buscar o texto à nuvem, AGORA COM O CONTENTOR!
+    const conteudo = await this.blobsService.lerFicheiroTexto('importar-csv', nomeFicheiro);
 
     // 2. Daqui para a frente, é a lógica de CSV que já tinhas feita!
     const linhas = conteudo.split(/\r?\n/);
