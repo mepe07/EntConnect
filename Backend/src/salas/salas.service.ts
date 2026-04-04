@@ -34,9 +34,9 @@ export class SalasService {
             ID_Sala: novaSala.ID_Sala,
             Nome: novaSala.Nome,
             Disponivel: novaSala.Disponivel,
-            // Se a sala tiver uma modalidade associada, vamos buscar o "Descri__o" lá dentro. 
+            // Se a sala tiver uma modalidade associada, vamos buscar o "Descricao" lá dentro. 
             // Se não, enviamos 'Sem Modalidade'
-            Modalidade: novaSala.Modalidade ? novaSala.Modalidade.Descri__o : 'Sem Modalidade'
+            Modalidade: novaSala.Modalidade ? novaSala.Modalidade.Descricao : 'Sem Modalidade'
         };
     }
 
@@ -57,7 +57,7 @@ export class SalasService {
             ID_Sala: sala.ID_Sala,
             Nome: sala.Nome,
             Disponivel: sala.Disponivel,
-            Modalidade: sala.Modalidade ? sala.Modalidade.Descri__o : 'Sem Modalidade'
+            Modalidade: sala.Modalidade ? sala.Modalidade.Descricao : 'Sem Modalidade'
         }));
     }
 
@@ -88,7 +88,7 @@ export class SalasService {
             ID_Sala: salaAtualizada.ID_Sala,
             Nome: salaAtualizada.Nome,
             Disponivel: salaAtualizada.Disponivel,
-            Modalidade: salaAtualizada.Modalidade ? salaAtualizada.Modalidade.Descri__o : 'Sem Modalidade'
+            Modalidade: salaAtualizada.Modalidade ? salaAtualizada.Modalidade.Descricao : 'Sem Modalidade'
         };
     }
 

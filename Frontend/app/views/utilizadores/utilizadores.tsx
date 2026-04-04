@@ -18,7 +18,7 @@ export function Utilizadores() {
     const usersData: Record<string, any>[] = users.map((user: User) => ({
         ...user,
         ativo: user.ativo ? {value: "Sim", infoType: InfoTypesEnum.Info} : {value: "Não", infoType: InfoTypesEnum.Error},
-        cargos: user.cargos.join(", ")
+        cargo: user.role
     }));
 
     // #region API Calls
@@ -69,12 +69,12 @@ export function Utilizadores() {
                         { key: "idUtilizador", value: "ID", type: TableColumnTypesEnum.Default },
                         { key: "nome", value: "Nome", type: TableColumnTypesEnum.Default },
                         { key: "email", value: "Email", type: TableColumnTypesEnum.Default },
-                        { key: "cargos", value: "Cargos", type: TableColumnTypesEnum.Default },
+                        { key: "cargo", value: "Cargo", type: TableColumnTypesEnum.Default },
                         { key: "ativo", value: "Ativo", type: TableColumnTypesEnum.Chip }
                     ],
                     filters: [
                         {
-                            key: "cargos",
+                            key: "cargo",
                             label: "Cargo",
                             value: "",
                             options: [

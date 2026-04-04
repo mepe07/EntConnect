@@ -80,7 +80,7 @@ model Coaching_Aluno {
 
 model Cor {
   ID_Cor    Int      @id(map: "PK__Cor__2BFE6438EB56194B") @default(autoincrement())
-  Descri__o String   @map("Descrição") @db.VarChar(100)
+  Descricao String   @db.VarChar(100)
   Artigo    Artigo[]
 }
 
@@ -107,7 +107,7 @@ model Enc_Educacao {
 
 model Estado {
   ID_Estado Int      @id(map: "PK__Estado__9CF493953A7052DE") @default(autoincrement())
-  Descri__o String   @map("Descrição") @db.VarChar(100)
+  Descricao String   @db.VarChar(100)
   Artigo    Artigo[]
 }
 
@@ -119,7 +119,7 @@ model Estado_Coaching {
 
 model Modalidade {
   ID_Modalidade   Int               @id(map: "PK__Modalida__E0DE2E832A5F0486") @default(autoincrement())
-  Descri__o       String            @map("Descrição") @db.VarChar(100)
+  Descricao       String            @db.VarChar(100)
   Aula_Fixa       Aula_Fixa[]
   Pedido_Coaching Pedido_Coaching[]
   Sala            Sala[]
@@ -160,7 +160,7 @@ model Sala {
 
 model Tamanho {
   ID_Tamanho Int      @id(map: "PK__Tamanho__30680064B32A374C") @default(autoincrement())
-  Descri__o  String   @map("Descrição") @db.VarChar(100)
+  Descricao  String   @db.VarChar(100)
   Artigo     Artigo[]
 }
 
