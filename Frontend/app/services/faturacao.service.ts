@@ -28,6 +28,29 @@ class FaturacaoService {
             throw erro; // Passamos o erro para a página de faturacao.tsx lidar com ele
         }
     }
+
+    // NOVO MÉTODO: O Estafeta para o Histórico de Coaching
+    async getHistorico(inicio: string, fim: string) {
+        // Atenção ao 'H' maiúsculo para bater certo com o NestJS!
+        const urlCompleto = `${this.API_URL}/Historico?inicio=${inicio}&fim=${fim}`;
+        
+        console.log("A pedir histórico a:", urlCompleto);
+
+        try {
+            const response = await fetch(urlCompleto);
+            
+            if (!response.ok) {
+                const erroDoServidor = await response.json().catch(() => null);
+                throw new Error(erroDoServidor?.message || `Erro HTTP: ${response.status}`);
+            }
+
+            return await response.json();
+            
+        } catch (erro) {
+            console.error("O Estafeta do histórico caiu da mota:", erro);
+            throw erro; 
+        }
+    }
 }
 
 export const faturacaoService = new FaturacaoService();

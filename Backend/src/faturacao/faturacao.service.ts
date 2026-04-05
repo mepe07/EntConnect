@@ -116,6 +116,64 @@ export class FaturacaoService {
             };
         });
     }
+
+    async getHistoricoCoaching(dataInicio: Date, dataFim: Date) {
+
+        const aulasBD = await this.prisma.coaching_Aluno.findMany({
+            where: {
+                Coaching: {
+                    Inicio_Coaching: {
+                        gte: dataInicio,
+                        lte: dataFim,
+                    }
+                }
+            },
+            include: {
+                Aluno: true, // Puxa o Aluno
+                Coaching: {
+                    include: {
+                        Professor: {
+                            include: {
+                                Pessoa: true // Puxa o nome do Professor
+                            }
+                        },
+                        Sala: true, // Puxa o Estúdio
+                        Estado_Coaching: true // Puxa o estado da aula
+                    }
+                }
+            },
+            orderBy: {
+                Coaching: {
+                    Inicio_Coaching: 'asc'
+                }
+            }
+        });
+
+        // 3. Mapear os dados para o Frontend
+        return aulasBD.map(registo => {
+            // Prevenção de erros caso falte a data
+            const dataCrua = registo.Coaching?.Inicio_Coaching;
+            const dataDaAula = dataCrua ? new Date(dataCrua) : new Date();
+            
+            // Lógica Atualizada: Vamos ler o 'Tipo' diretamente da tabela Estado_Coaching.
+            // O uso do '?.' (Optional Chaining) garante que o código não rebenta se por acaso
+            // uma aula estiver sem estado associado (ID_Estado_Coaching for NULL).
+            const estadoRealDaDB = registo.Coaching?.Estado_Coaching?.Tipo || 'Sem Estado';
+
+            return {
+                idCoaching: registo.ID_Coaching,
+                idAluno: registo.ID_Aluno,
+                nomeAluno: registo.Aluno?.Nome || 'Aluno Desconhecido',
+                nomeProfessor: registo.Coaching?.Professor?.Pessoa?.Nome || 'Professor Desconhecido',
+                nomeSala: registo.Coaching?.Sala?.Nome || 'Sem Sala',
+                dataAula: dataDaAula.toISOString(),
+                duracaoMinutos: registo.Coaching?.Duracao || 0,
+                // Passamos o estado verdadeiro para o ecrã
+                estadoAula: estadoRealDaDB 
+            };
+        });
+    }
+
   // Representa o '+ getBilling()' do LegalGuardian
   async obterFaturacaoPorEncarregado(idEncarregado: number) {
     // Aqui vais à base de dados buscar apenas as dívidas/faturas de 1 pessoa
