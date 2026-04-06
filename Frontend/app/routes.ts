@@ -27,5 +27,11 @@ export default [
     // Rota de testes
     route("test-components", "routes/test-components.tsx"),
 
+    // Rota do histórico de coaching
+    route("relatorios/historico-coaching", "routes/historico.tsx"),
+
+    // Rota das estatísticas
+    route("relatorios/estatisticas", "routes/estatisticas.tsx")
+
 
 ] satisfies RouteConfig;

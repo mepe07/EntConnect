@@ -28,6 +28,62 @@ class FaturacaoService {
             throw erro; // Passamos o erro para a página de faturacao.tsx lidar com ele
         }
     }
+
+    // NOVO MÉTODO: O Estafeta para o Histórico de Coaching
+    async getHistorico(inicio: string, fim: string) {
+        const urlCompleto = `${this.API_URL}/Historico?inicio=${inicio}&fim=${fim}`;
+        
+        console.log("A pedir histórico a:", urlCompleto);
+
+        try {
+            const response = await fetch(urlCompleto);
+            
+            if (!response.ok) {
+                const erroDoServidor = await response.json().catch(() => null);
+                throw new Error(erroDoServidor?.message || `Erro HTTP: ${response.status}`);
+            }
+
+            return await response.json();
+            
+        } catch (erro) {
+            console.error("O Estafeta do histórico caiu da mota:", erro);
+            throw erro; 
+        }
+    }
+    async getDashboardFinanceiro(inicio: string, fim: string) {
+        // Aponta exatamente para o nome da rota que criámos no faturacao.controller.ts do NestJS
+        const urlCompleto = `${this.API_URL}/dashboard-financeiro?inicio=${inicio}&fim=${fim}`;
+        console.log("A pedir estatísticas a:", urlCompleto);
+
+        try {
+            const response = await fetch(urlCompleto);
+            if (!response.ok) {
+                const erroDoServidor = await response.json().catch(() => null);
+                throw new Error(erroDoServidor?.message || `Erro HTTP: ${response.status}`);
+            }
+            return await response.json();
+        } catch (erro) {
+            console.error("O Estafeta das estatísticas caiu da mota:", erro);
+            throw erro; 
+        }
+    }
+
+    async getPrevisaoFinanceira() {
+        const urlCompleto = `${this.API_URL}/previsao-financeira`;
+        console.log("A pedir a bola de cristal a:", urlCompleto);
+
+        try {
+            const response = await fetch(urlCompleto);
+            if (!response.ok) {
+                const erroDoServidor = await response.json().catch(() => null);
+                throw new Error(erroDoServidor?.message || `Erro HTTP: ${response.status}`);
+            }
+            return await response.json();
+        } catch (erro) {
+            console.error("A bola de cristal do estafeta partiu-se:", erro);
+            throw erro; 
+        }
+    }
 }
 
 export const faturacaoService = new FaturacaoService();

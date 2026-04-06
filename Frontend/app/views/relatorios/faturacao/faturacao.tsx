@@ -2,13 +2,13 @@
 import './faturacao.scss';
 // Adicionámos o useEffect aos imports do React
 import { useState, useMemo, useEffect } from 'react';
-import type { LinhaFaturacaoCoaching, FiltroFaturacao } from '~/models/interfaces/faturacao.interface';
-import { TableComponent } from '~/components/table/table.component';
-import { TableColumnTypesEnum } from '~/components/table/models/enums/table-column-types.enum';
-import { ButtonComponent } from '~/components/button/button.component';
+import type { LinhaFaturacaoCoaching, FiltroFaturacao } from '../../../models/interfaces/faturacao.interface';
+import { TableComponent } from '../../../components/table/table.component';
+import { TableColumnTypesEnum } from '../../../components/table/models/enums/table-column-types.enum';
+import { ButtonComponent } from '../../../components/button/button.component';
 // Importámos a barra de pesquisa para o painel esquerdo
-import { InputComponent } from '~/components/input/input.component';
-import { faturacaoService } from "~/services/faturacao.service";
+import { InputComponent } from '../../../components/input/input.component';
+import { faturacaoService } from "../../../services/faturacao.service";
 
 export function Faturacao() {
     // ==========================================
