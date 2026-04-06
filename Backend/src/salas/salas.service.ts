@@ -1,6 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateSalaDto } from './dto/create-sala.dto';
 
 @Injectable()
 export class SalasService {
@@ -12,30 +13,24 @@ export class SalasService {
     // ==========================================
     // CREATE (Criar uma nova sala)
     // ==========================================
-    async create(createSalaDto: any) {
-        // LÓGICA DE SÉNIOR: Pedimos ao Prisma para criar, mas também para INCLUIR a Modalidade 
-        // logo a seguir, para termos acesso ao texto descritivo da mesma!
+    // Substituímos o 'any' pelo tipo correto!
+    async create(createSalaDto: CreateSalaDto) { 
+        // ... (manténs toda a lógica que já cá tinhas, sem mexer numa vírgula!)
         const novaSala = await this.prisma.sala.create({
             data: {
                 Nome: createSalaDto.nome,
-                // Garantimos que o booleano vai certinho para o SQL Server, precavendo 
-                // caso o Frontend envie uma string "true" em vez do tipo booleano puro
-                Disponivel: createSalaDto.disponivel === true || createSalaDto.disponivel === 'true',
-                ID_Modalidade: parseInt(createSalaDto.modalidade) || null
+                Disponivel: createSalaDto.disponivel === true,
+                ID_Modalidade: parseInt(createSalaDto.modalidade as string) || null
             },
             include: {
-                Modalidade: true // Magia do Prisma: Traz logo os dados da tabela Modalidade ligada!
+                Modalidade: true 
             }
         });
-
-        // O SEGREDO ESTÁ AQUI: Formatamos a resposta EXATAMENTE com a mesma estrutura do findAll!
-        // Assim o React recebe a "novaSalaDaBD" perfeitamente pronta para entrar na tabela do ecrã.
+        
         return {
             ID_Sala: novaSala.ID_Sala,
             Nome: novaSala.Nome,
             Disponivel: novaSala.Disponivel,
-            // Se a sala tiver uma modalidade associada, vamos buscar o "Descricao" lá dentro. 
-            // Se não, enviamos 'Sem Modalidade'
             Modalidade: novaSala.Modalidade ? novaSala.Modalidade.Descricao : 'Sem Modalidade'
         };
     }
