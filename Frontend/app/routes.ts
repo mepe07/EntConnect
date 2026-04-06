@@ -15,6 +15,9 @@ export default [
     // NavBar diz: path: '/admin/salas'
     route("admin/salas", "routes/salas.tsx"),
 
+    // NavBar diz: path: '/admin/modalidades'
+    route("admin/modalidades", "routes/modalidade.tsx"),
+
     // NavBar diz: path: '/admin/utilizadores'
     route("admin/utilizadores", "routes/configuracoes/utilizadores.tsx"),
 

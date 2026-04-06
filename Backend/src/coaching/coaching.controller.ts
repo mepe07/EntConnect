@@ -135,6 +135,13 @@ export class ModalidadeController {
   // Injeta o teu serviço para podermos comunicar com a BD
   constructor(private readonly modalidadeService: ModalidadeService) {}
 
+  // ENDPOINT PARA LISTAR (GET)
+  @Get()
+  @ApiOperation({ summary: 'Listar todas as modalidades' })
+  findAll() {
+    return this.modalidadeService.findAll();
+  }
+
   @Post() // Indica que é um pedido para CRIAR (POST)
   @ApiOperation({ summary: 'Adicionar uma nova modalidade à base de dados' })
   @ApiResponse({ status: 201, description: 'A modalidade foi criada com sucesso.' })

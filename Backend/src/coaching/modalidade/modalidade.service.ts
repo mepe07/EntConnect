@@ -8,6 +8,11 @@ export class ModalidadeService {
 
   constructor(private readonly prisma: PrismaService) {} // Injeta o PrismaService
 
+  // MÉTODO PARA LISTAR TODAS (GET)
+  async findAll() {
+    return this.prisma.modalidade.findMany(); // O findMany() vai buscar todas as linhas da tabela
+  }
+
 async create(createModalidadeDto: CreateModalidadeDto) {
     // Usa o Prisma para criar uma nova modalidade na DB
     return this.prisma.modalidade.create({
@@ -30,4 +35,5 @@ async create(createModalidadeDto: CreateModalidadeDto) {
       where: { ID_Modalidade: id }, // Apaga o registo com este ID
     });
   }
+
 }
