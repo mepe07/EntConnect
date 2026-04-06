@@ -105,7 +105,11 @@ export function Modalidades() {
                 setModalidades(modalidades.filter(mod => mod.ID_Modalidade !== id));
                 alert("Modalidade apagada com sucesso!");
             } catch (erro: any) {
-                alert(erro.message || "Erro ao apagar a modalidade.");
+                // Se o frontend usar Axios, a mensagem do NestJS vem escondida aqui dentro:
+                const mensagemBackend = erro.response?.data?.message;
+                
+                // Mostra a mensagem do backend, ou um fallback se não conseguir ler
+                alert(mensagemBackend || "Impossível remover a modalidade pois a mesma está atribuída a um estúdio.");
             }
         }
     };
