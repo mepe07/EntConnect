@@ -62,7 +62,7 @@ export function Modalidades() {
             // UPDATE REAL:
             try {
                 const modalidadeAtualizadaDaBD = await modalidadesService.updateModalidade(modalidadeEmEdicao.ID_Modalidade, {
-                    Descricao: novaDescricao,
+                    descricao: novaDescricao,
                 });
             
                 setModalidades(modalidades.map(mod => 
@@ -77,7 +77,7 @@ export function Modalidades() {
             // CREATE REAL:
             try {
                 const novaModalidadeDaBD = await modalidadesService.createModalidade({
-                    Descricao: novaDescricao,
+                    descricao: novaDescricao,
                 });
             
                 setModalidades([...modalidades, novaModalidadeDaBD]);
