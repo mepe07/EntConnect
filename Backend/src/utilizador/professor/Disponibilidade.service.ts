@@ -8,6 +8,55 @@ export class DispobilidadeService {
 
     constructor(private prisma: PrismaService) { }
 
+    /**
+     * Obtém a lista de disponibilidades dos professores.
+     * @returns A lista de disponibilidades dos professores.
+     */
+    async getAvailabilities() {
+        // 1. Ir buscar os dados crus com os JOINs necessários
+        const disponibilidadesRaw = await this.prisma.disponibilidade.findMany({
+            include: {
+                Professor: {
+                    include: { Pessoa: true }
+                },
+                Estado_Disponibilidade: true,
+                Utilizador: {
+                    include: { Pessoa: true }
+                }
+                }
+        });
+
+        // 2. Mapear (traduzir) para o contrato que o Frontend espera
+        return disponibilidadesRaw.map(disp => {
+
+            // Lógica para formatar o horário (Ex: "09:00 - 10:00")
+            // Assumindo que a Hora_Inicio vem como DateTime e Duracao em minutos
+            if (disp.Hora_Inicio === null || disp.Duracao === null) {
+                return null;
+            }
+            
+            const horaInicio = new Date(disp.Hora_Inicio);
+            const horaFim = new Date(horaInicio.getTime() + disp.Duracao * 60000);
+
+            const formatHora = (data: Date) => data.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            const stringHorario = `${formatHora(horaInicio)} - ${formatHora(horaFim)}`;
+
+            const strindData = horaInicio.toLocaleDateString('pt-PT');
+
+            // Return para o Frontend
+            return {
+                idDisponibilidade: disp.ID_Disponibilidade,
+                nomeProfessor: disp.Professor?.Pessoa?.Nome || 'Professor Desconhecido',
+                data: strindData,
+                diaSemana: disp.Dia_Semana,
+                horario: stringHorario,
+                alteradoPor: disp.Utilizador?.Pessoa?.Nome || 'Sistema',
+                estado: disp.Estado_Disponibilidade?.Tipo || 'Desconhecido'
+            };
+        }).filter(item => item !== null);
+    }
+
+
     async createAvailability(idProfessor: number, createDisponibilidadeDto: CreateDisponibilidadeDto) {
         // Implementar verificações
 
@@ -33,7 +82,7 @@ export class DispobilidadeService {
     async updateAvailability(idDisponibilidade: number, updateDisponibilidadeDto: UpdateDisponibilidadeDto) {
         // Verificar a disponibilidade existe
         if (await this.prisma.disponibilidade.count({
-            where: {ID_Disponibilidade: idDisponibilidade}
+            where: { ID_Disponibilidade: idDisponibilidade }
         }) === 0) {
             throw new BadRequestException(`A disponibilidade com ID ${idDisponibilidade} não existe.`);
         }

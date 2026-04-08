@@ -87,6 +87,13 @@
                         }
                     }
 
+                    &.success {
+                        .chip {
+                            background-color: colors.$success-20;
+                            color: colors.$success-100;
+                        }
+                    }
+
                     &.row-actions {
                         display: flex;
                         gap: 8px;

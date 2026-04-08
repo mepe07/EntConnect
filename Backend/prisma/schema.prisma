@@ -94,6 +94,7 @@ model Disponibilidade {
   AlteradoPorUtilizadorID Int
   Duracao                 Int
   Estado_Disponibilidade  Estado_Disponibilidade @relation(fields: [EstadoDisponibilidadeID], references: [ID], onUpdate: NoAction, map: "FK__Disponibi__Estad__45BE5BA9")
+  Utilizador              Utilizador             @relation(fields: [AlteradoPorUtilizadorID], references: [ID_Utilizador], onUpdate: NoAction, map: "FK_Alterado_Utilizador")
   Professor               Professor?             @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Disponibilidade_Professor")
 }
 
@@ -171,6 +172,7 @@ model Utilizador {
   Password                                                 String            @db.VarChar(100)
   Ativo                                                    Boolean           @default(true, map: "DF__Utilizado__Ativo__40F9A68C")
   Aula_Fixa                                                Aula_Fixa[]
+  Disponibilidade                                          Disponibilidade[]
   Pedido_Coaching_Pedido_Coaching_ID_EEToUtilizador        Pedido_Coaching[] @relation("Pedido_Coaching_ID_EEToUtilizador")
   Pedido_Coaching_Pedido_Coaching_ID_ProfessorToUtilizador Pedido_Coaching[] @relation("Pedido_Coaching_ID_ProfessorToUtilizador")
   Pessoa                                                   Pessoa            @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK_Utilizador_Pessoa")

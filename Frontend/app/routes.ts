@@ -18,6 +18,9 @@ export default [
     // NavBar diz: path: '/admin/utilizadores'
     route("admin/utilizadores", "routes/configuracoes/utilizadores.tsx"),
 
+    // Aprovar disponibilidade dos professores
+    route("/admin/professores-disponibilidade", "routes/aprovacoes.tsx"),
+
     // NavBar diz: path: '/relatorios/faturacao'
     route("relatorios/faturacao", "routes/faturacao.tsx"),
 

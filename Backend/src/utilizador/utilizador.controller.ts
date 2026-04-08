@@ -49,6 +49,17 @@ export class UtilizadorController {
     return {message: `Utilizador com ID ${id} desbloqueado com sucesso.`};
   }
 
+  /**
+   * Obtém a lista de disponibilidades dos professores.
+   * @returns A lista de disponibilidades dos professores.
+   */
+  @Get('professor/disponibilidade')
+  @ApiOperation({summary: 'Obter disponibilidades dos professores'})
+  @ApiResponse({status:200})
+  async getDisponibilidades() {
+    return this.dispobilidadeService.getAvailabilities();
+  }
+
   @Post('professor/:id/adicionar-disponibilidade')
   @ApiOperation({summary: 'Criar disponibilidade para um professor'})
   @ApiParam({ 

@@ -3,7 +3,7 @@ export interface User {
   username: string;
   nome: string;
   email: string;
-  cargo: string;
+  role: string;
   contacto: string;
   nif: string;
   ativo: boolean;
