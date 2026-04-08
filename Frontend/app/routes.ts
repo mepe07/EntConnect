@@ -15,6 +15,9 @@ export default [
     // NavBar diz: path: '/admin/salas'
     route("admin/salas", "routes/salas.tsx"),
 
+    // NavBar diz: path: '/admin/modalidades'
+    route("admin/modalidades", "routes/modalidade.tsx"),
+
     // NavBar diz: path: '/admin/utilizadores'
     route("admin/utilizadores", "routes/configuracoes/utilizadores.tsx"),
 
@@ -32,6 +35,9 @@ export default [
 
     // Rota do histórico de coaching
     route("relatorios/historico-coaching", "routes/historico.tsx"),
+
+    // Rota das estatísticas
+    route("relatorios/estatisticas", "routes/estatisticas.tsx")
 
 
 ] satisfies RouteConfig;
