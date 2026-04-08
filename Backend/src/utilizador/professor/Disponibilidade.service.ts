@@ -2,6 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDisponibilidadeDto } from '../dto/create-disponibilidade.dto';
 import { UpdateDisponibilidadeDto } from '../dto/update-disponibilidade.dto';
+import { create } from 'domain';
 
 @Injectable()
 export class DispobilidadeService {
@@ -50,6 +51,7 @@ export class DispobilidadeService {
                 data: strindData,
                 diaSemana: disp.Dia_Semana,
                 horario: stringHorario,
+                modalidade: disp.Modalidade,
                 alteradoPor: disp.Utilizador?.Pessoa?.Nome || 'Sistema',
                 estado: disp.Estado_Disponibilidade?.Tipo || 'Desconhecido'
             };
@@ -69,6 +71,7 @@ export class DispobilidadeService {
                 EstadoDisponibilidadeID: 2, // Sempre criado como pendente
                 AlteradoPorUtilizadorID: createDisponibilidadeDto.AlteradoPorUtilizadorID,
                 DataAtualizacao: new Date(), // Data atual
+                Modalidade: createDisponibilidadeDto.Modalidade,
             },
         });
 

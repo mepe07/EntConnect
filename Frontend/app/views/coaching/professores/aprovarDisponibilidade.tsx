@@ -17,6 +17,7 @@ export interface Disponibilidade {
     data: string;
     diaSemana: string;
     horario: string;
+    modalidade: string;
     alteradoPor: string;
     estado: string;
 }
@@ -70,7 +71,7 @@ export default function ApproveAvailability() {
         if (!window.confirm(confirmMessage)) return;
 
         try {
-            // 5. Enviar tudo já mastigado para o teu Service!
+            // Enviar tudo o teu Service
             await disponibilidadesService.atualizarEstado(
                 row.idDisponibilidade, 
                 novoEstado, 
@@ -109,6 +110,7 @@ export default function ApproveAvailability() {
                         { key: "data", value: "Data", type: TableColumnTypesEnum.Default },
                         { key: "diaSemana", value: "Dia da Semana", type: TableColumnTypesEnum.Default },
                         { key: "horario", value: "Horário", type: TableColumnTypesEnum.Default },
+                        { key: "modalidade", value: "Modalidade", type: TableColumnTypesEnum.Default },
                         { key: "alteradoPor", value: "Alterado Por", type: TableColumnTypesEnum.Default },
                         { key: "estadoChip", value: "Estado", type: TableColumnTypesEnum.Chip }
                     ],

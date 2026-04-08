@@ -35,11 +35,13 @@ model Artigo {
   ID_Coordenador  Int?
   Publicado       Boolean       @default(false, map: "DF__Artigo__Publicad__540C7B00")
   Requisitado     Boolean       @default(false, map: "DF__Artigo__Requisit__55009F39")
+  ID_Professor    Int?
   Direcao         Direcao?      @relation(fields: [ID_Direcao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Colaborador")
   Coordenador     Coordenador?  @relation(fields: [ID_Coordenador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Coordenador")
   Cor             Cor?          @relation(fields: [ID_Cor], references: [ID_Cor], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Cor")
   Enc_Educacao    Enc_Educacao? @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_EncEducacao")
   Estado          Estado?       @relation(fields: [ID_Estado], references: [ID_Estado], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Estado")
+  Professor       Professor?    @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Professor")
   Tamanho         Tamanho?      @relation(fields: [ID_Tamanho], references: [ID_Tamanho], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Tamanho")
 }
 
@@ -93,6 +95,7 @@ model Disponibilidade {
   DataAtualizacao         DateTime               @db.Date
   AlteradoPorUtilizadorID Int
   Duracao                 Int
+  Modalidade              String                 @db.VarChar(100)
   Estado_Disponibilidade  Estado_Disponibilidade @relation(fields: [EstadoDisponibilidadeID], references: [ID], onUpdate: NoAction, map: "FK__Disponibi__Estad__45BE5BA9")
   Utilizador              Utilizador             @relation(fields: [AlteradoPorUtilizadorID], references: [ID_Utilizador], onUpdate: NoAction, map: "FK_Alterado_Utilizador")
   Professor               Professor?             @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Disponibilidade_Professor")
@@ -143,6 +146,7 @@ model Pessoa {
 
 model Professor {
   ID_Pessoa       Int               @id(map: "PK__Professo__81E8E179C3CD56EA")
+  Artigo          Artigo[]
   Aula            Aula[]
   Coaching        Coaching[]
   Disponibilidade Disponibilidade[]

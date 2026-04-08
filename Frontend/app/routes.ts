@@ -37,7 +37,13 @@ export default [
     route("relatorios/historico-coaching", "routes/historico.tsx"),
 
     // Rota das estatísticas
-    route("relatorios/estatisticas", "routes/estatisticas.tsx")
+    route("relatorios/estatisticas", "routes/estatisticas.tsx"),
+
+
+    // ==========================================
+    // Enc. Educacao
+    // ==========================================
+    route("/coaching/oferta", "routes/ofertaCoaching.tsx")
 
 
 ] satisfies RouteConfig;
