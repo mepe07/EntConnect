@@ -141,12 +141,14 @@ export default function ApproveAvailability() {
                             icon: "fa-solid fa-check",
                             tooltip: "Aprovar Horário",
                             config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Gray, size: SizeEnum.Large },
+                            show: (row: any) => row.estado === 'Pendente',
                             onClick: (row: any) => handleAtualizarEstado(row, 1)
                         },
                         {
                             icon: "fa-solid fa-xmark",
                             tooltip: "Rejeitar Horário",
                             config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Error, size: SizeEnum.Large },
+                            show: (row: any) => row.estado !== 'Rejeitado',
                             onClick: (row: any) => handleAtualizarEstado(row, 3)
                         }
                     ]
