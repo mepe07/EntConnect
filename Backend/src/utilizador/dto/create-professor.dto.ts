@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsEmail, IsNotEmpty, IsDateString, IsOptional } from 'class-validator';
+// Adicionámos o IsNumberString e o Length aos imports!
+import { IsString, IsEmail, IsNotEmpty, IsDateString, IsOptional, IsNumberString, Length } from 'class-validator';
 
 export class CreateProfessorDto {
   @ApiProperty({ example: 'João Silva', description: 'Nome completo do professor' })
@@ -17,15 +18,20 @@ export class CreateProfessorDto {
   @IsNotEmpty()
   Data_Nascimento!: string;
 
+  // ==========================================
+  // NIF BLINDADO: Obrigatório, só números e exatos 9 dígitos
+  // ==========================================
   @ApiProperty({ example: '123456789', description: 'Número de Identificação Fiscal (NIF)' })
-  @IsString()
-  @IsNotEmpty()
+  @IsNumberString({}, { message: 'O NIF só pode conter números.' })
   NIF!: string;
 
-  @ApiProperty({ example: '912345678', description: 'Contacto telefónico' })
-  @IsString()
-  @IsNotEmpty()
-  Contacto!: string;
+  // ==========================================
+  // CONTACTO: Opcional (não dá erro se vazio), mas se for preenchido só aceita números
+  // ==========================================
+  @ApiPropertyOptional({ example: '912345678', description: 'Contacto telefónico' })
+  @IsNumberString({}, { message: 'O contacto só pode conter números.' })
+  @IsOptional()
+  Contacto?: string;
 
   @ApiPropertyOptional({ example: 'url_da_foto.jpg', description: 'Link para a foto de perfil' })
   @IsString()

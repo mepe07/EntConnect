@@ -19,7 +19,7 @@ export class ProfessorService {
               // O Prisma exige que a data seja um objeto Date do JavaScript
               Data_Nascimento: new Date(createProfessorDto.Data_Nascimento), 
               NIF: createProfessorDto.NIF,
-              Contacto: createProfessorDto.Contacto,
+              Contacto: createProfessorDto.Contacto ?? "", // Se o contacto for opcional, passamos null se não for fornecido"",
               Foto: createProfessorDto.Foto,
             },
           },
