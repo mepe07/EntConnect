@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateModalidadeDto } from '../dto/create-modalidade.dto';
 import { UpdateModalidadeDto } from '../dto/update-modalidade.dto';
 import { PrismaService } from '../../prisma/prisma.service'; // Ajusta o caminho conforme o teu projeto
@@ -30,10 +30,21 @@ async create(createModalidadeDto: CreateModalidadeDto) {
   }
 
   // MÉTODO PARA REMOVER
+ // MÉTODO PARA REMOVER (DELETE) COM PROTEÇÃO
   async remove(id: number) {
-    return this.prisma.modalidade.delete({
-      where: { ID_Modalidade: id }, // Apaga o registo com este ID
-    });
+    try {
+      // Tenta apagar a modalidade
+      return await this.prisma.modalidade.delete({
+        where: { ID_Modalidade: id },
+      });
+    } catch (error: any) {
+      // P2003 é o código do Prisma para "Foreign Key Constraint Failed"
+      if (error.code === 'P2003') {
+        throw new ConflictException('Impossível remover a modalidade pois a mesma está atribuída a um estúdio.');
+      }
+      // Se for outro erro estranho, deixa passar
+      throw error; 
+    }
   }
 
 }
