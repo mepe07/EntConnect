@@ -22,37 +22,27 @@ model Aluno {
 }
 
 model Artigo {
-  ID_Artigo       Int                   @id(map: "PK__Artigo__3B15CD94B31FA6B4") @default(autoincrement())
-  Nome            String                @db.VarChar(255)
-  Quantidade      Int
-  Notas           String?               @db.VarChar(255)
-  ID_Enc_Educacao Int?
-  ID_Direcao      Int?
-  Foto            String?               @db.VarChar(255)
-  ID_Cor          Int?
-  ID_Estado       Int?
-  ID_Tamanho      Int?
-  ID_Coordenador  Int?
-  Requisitado     Boolean               @default(false, map: "DF__Artigo__Requisit__55009F39")
-  ID_Professor    Int?
-  Anuncios        Anuncio_Marketplace[]
-  Direcao         Direcao?              @relation(fields: [ID_Direcao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Colaborador")
-  Coordenador     Coordenador?          @relation(fields: [ID_Coordenador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Coordenador")
-  Cor             Cor?                  @relation(fields: [ID_Cor], references: [ID_Cor], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Cor")
-  Enc_Educacao    Enc_Educacao?         @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_EncEducacao")
-  Estado          Estado?               @relation(fields: [ID_Estado], references: [ID_Estado], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Estado")
-  Professor       Professor?            @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Professor")
-  Tamanho         Tamanho?              @relation(fields: [ID_Tamanho], references: [ID_Tamanho], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Tamanho")
-}
-
-model Anuncio_Marketplace {
-  ID_Anuncio         Int      @id @default(autoincrement())
-  ID_Artigo          Int
-  Quantidade_A_Venda Int
-  Notas_Anuncio      String?  @db.VarChar(255)
-  Estado             String   @default("Dispon?vel") @db.VarChar(50)
-  Data_Criacao       DateTime @default(now())
-  Artigo             Artigo   @relation(fields: [ID_Artigo], references: [ID_Artigo], onDelete: Cascade)
+  ID_Artigo           Int                   @id(map: "PK__Artigo__3B15CD94B31FA6B4") @default(autoincrement())
+  Nome                String                @db.VarChar(255)
+  Quantidade          Int
+  Notas               String?               @db.VarChar(255)
+  ID_Enc_Educacao     Int?
+  ID_Direcao          Int?
+  Foto                String?               @db.VarChar(255)
+  ID_Cor              Int?
+  ID_Estado           Int?
+  ID_Tamanho          Int?
+  ID_Coordenador      Int?
+  Requisitado         Boolean               @default(false, map: "DF__Artigo__Requisit__55009F39")
+  ID_Professor        Int?
+  Anuncio_Marketplace Anuncio_Marketplace[]
+  Direcao             Direcao?              @relation(fields: [ID_Direcao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Colaborador")
+  Coordenador         Coordenador?          @relation(fields: [ID_Coordenador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Coordenador")
+  Cor                 Cor?                  @relation(fields: [ID_Cor], references: [ID_Cor], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Cor")
+  Enc_Educacao        Enc_Educacao?         @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_EncEducacao")
+  Estado              Estado?               @relation(fields: [ID_Estado], references: [ID_Estado], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Estado")
+  Professor           Professor?            @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Professor")
+  Tamanho             Tamanho?              @relation(fields: [ID_Tamanho], references: [ID_Tamanho], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Tamanho")
 }
 
 model Coaching {
@@ -287,4 +277,14 @@ model Pedido_Coaching {
   Estado_Pedido                                       Estado_Pedido @relation(fields: [ID_EstadoPedido], references: [ID_EstadoPedido], onUpdate: NoAction, map: "FK_Pedido_Estado")
   Modalidade                                          Modalidade    @relation(fields: [ID_Modalidade], references: [ID_Modalidade], onUpdate: NoAction, map: "FK_Pedido_Modalidade")
   Utilizador_Pedido_Coaching_ID_ProfessorToUtilizador Utilizador    @relation("Pedido_Coaching_ID_ProfessorToUtilizador", fields: [ID_Professor], references: [ID_Utilizador], onUpdate: NoAction, map: "FK_Pedido_Professor")
+}
+
+model Anuncio_Marketplace {
+  ID_Anuncio         Int      @id @default(autoincrement())
+  ID_Artigo          Int
+  Quantidade_A_Venda Int
+  Notas_Anuncio      String?  @db.VarChar(255)
+  Estado             String   @default("Dispon?vel") @db.VarChar(50)
+  Data_Criacao       DateTime @default(now())
+  Artigo             Artigo   @relation(fields: [ID_Artigo], references: [ID_Artigo], onDelete: Cascade)
 }

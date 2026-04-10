@@ -3,3 +3,23 @@
 	gap: 24px;
 	margin: 32px 0 32px;
 }
+
+.button-container.tertiary.error.small {
+        border: none !important;
+        background: transparent;
+        box-shadow: none;
+}
+
+.button-container.tertiary.error.small:hover {
+		background-color: rgba(255, 0, 0, 0.2);
+}
+
+.button-container.tertiary.small{
+		border: none !important;
+		background: transparent;
+		box-shadow: none;
+}
+
+.button-container.tertiary.small:hover {
+		background-color: rgba(0, 255, 0, 0.2);
+}

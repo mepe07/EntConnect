@@ -1,10 +1,10 @@
 // LÓGICA: Importamos o nosso segurança para podermos usar o Token JWT dele!
 import { authService } from './auth.service';
 
-// A morada do teu Backend em NestJS
-const API_URL = 'http://localhost:3000/salas';
+// A morada do teu Backend em NestJS para os professores
+const API_URL = 'http://localhost:3000/professor';
 
-export class SalasService {
+class ProfessorService {
     
     // ==========================================
     // Função Utilitária (O Carimbo do Segurança)
@@ -13,16 +13,14 @@ export class SalasService {
         const token = authService.getToken();
         return {
             'Content-Type': 'application/json',
-            // LÓGICA: Enviamos o crachá de identificação em todos os pedidos!
-            // Se o teu NestJS estiver protegido, ele precisa disto para te deixar entrar.
             'Authorization': `Bearer ${token}` 
         };
     }
 
     // ==========================================
-    // READ: Ir buscar todas as salas ao Backend
+    // READ: Ir buscar todos
     // ==========================================
-    async getSalas() {
+    async getProfessores() {
         try {
             const response = await fetch(API_URL, {
                 method: 'GET',
@@ -30,71 +28,66 @@ export class SalasService {
             });
 
             if (!response.ok) {
-                throw new Error('Falha ao carregar as salas do servidor.');
+                throw new Error('Falha ao carregar os professores do servidor.');
             }
 
-            // Transforma a resposta do servidor num array de JavaScript
             return await response.json();
         } catch (erro) {
-            console.error('Erro no getSalas:', erro);
+            console.error('Erro no getProfessores:', erro);
             throw erro;
         }
     }
 
     // ==========================================
-    // CREATE: Enviar uma nova sala para o Backend
+    // CREATE: Criar novo
     // ==========================================
-    async createSala(dadosNovaSala: { nome: string; modalidade: string; disponivel: boolean }) {
+    async createProfessor(dadosNovoProfessor: any) {
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: this.getHeaders(),
-                // O JSON.stringify transforma o nosso objeto num texto que a internet entende
-                body: JSON.stringify(dadosNovaSala),
+                body: JSON.stringify(dadosNovoProfessor),
             });
 
             if (!response.ok) {
-                throw new Error('Falha ao criar a sala no servidor.');
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.message || 'Falha ao criar o professor no servidor.');
             }
 
             return await response.json();
         } catch (erro) {
-            console.error('Erro no createSala:', erro);
+            console.error('Erro no createProfessor:', erro);
             throw erro;
         }
     }
 
     // ==========================================
-    // DELETE: Enviar ordem para apagar ao Backend
+    // DELETE: Apagar
     // ==========================================
-    async deleteSala(id: number) {
+    async deleteProfessor(id: number) {
         try {
             const response = await fetch(`${API_URL}/${id}`, {
                 method: 'DELETE',
                 headers: this.getHeaders(),
             });
 
-            // LÓGICA DE SÉNIOR: Se a resposta não for OK, vamos ler a carta do NestJS!
             if (!response.ok) {
-                // Tentamos extrair o JSON do erro
                 const errorData = await response.json().catch(() => null);
-                
-                // Se o NestJS mandou uma mensagem bonita, usamos essa. Se não, usamos a genérica.
-                const mensagemErro = errorData?.message || 'Falha ao apagar a sala no servidor.';
-                
-                // Atiramos o erro já com a mensagem certa
-                throw new Error(mensagemErro);
+                throw new Error(errorData?.message || 'Falha ao apagar o professor no servidor.');
             }
 
             return await response.json();
         } catch (erro) {
-            console.error('Erro no deleteSala:', erro);
+            console.error('Erro no deleteProfessor:', erro);
             throw erro;
         }
     }
-    async updateSala(id: number, dadosAtualizados: { nome: string; modalidade: string; disponivel: boolean }) {
+
+    // ==========================================
+    // UPDATE: Atualizar (PATCH)
+    // ==========================================
+    async updateProfessor(id: number, dadosAtualizados: any) {
         try {
-            // LÓGICA: Enviamos o ID no URL, e usamos o método PATCH!
             const response = await fetch(`${API_URL}/${id}`, {
                 method: 'PATCH',
                 headers: this.getHeaders(),
@@ -103,17 +96,16 @@ export class SalasService {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
-                throw new Error(errorData?.message || 'Falha ao atualizar a sala.');
+                throw new Error(errorData?.message || 'Falha ao atualizar o professor.');
             }
 
-            // O Backend devolve-nos a sala já com a cara nova
             return await response.json();
         } catch (erro) {
-            console.error('Erro no updateSala:', erro);
+            console.error('Erro no updateProfessor:', erro);
             throw erro;
         }
     }
 }
 
-// LÓGICA DE SÉNIOR: Exportamos uma única instância (Singleton) para toda a app!
-export const salasService = new SalasService();
+// LÓGICA DE SÉNIOR: Exportamos a instância com o nome exato que usaste no professor.tsx!
+export const professoresService = new ProfessorService();

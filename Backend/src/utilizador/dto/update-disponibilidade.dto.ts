@@ -1,6 +1,6 @@
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { CreateDisponibilidadeDto } from './create-disponibilidade.dto';
-import { IsOptional, IsNumber } from 'class-validator';
+import { IsOptional, IsNumber, IsInt } from 'class-validator';
 
 export class UpdateDisponibilidadeDto extends PartialType(CreateDisponibilidadeDto) {
   
@@ -13,4 +13,19 @@ export class UpdateDisponibilidadeDto extends PartialType(CreateDisponibilidadeD
   @IsNumber()
   EstadoDisponibilidadeID?: number;
 
+  @ApiPropertyOptional({ 
+    example: 3, 
+    description: 'ID do Estúdio (Atribuído pela Coordenação na aprovação)' 
+  })
+  @IsOptional()
+  @IsInt()
+  IdEstudio?: number;
+
+  @ApiPropertyOptional({ 
+    example: 25.50, 
+    description: 'Valor por hora da sessão de coaching (Atribuído pela Coordenação)' 
+  })
+  @IsOptional()
+  @IsNumber()
+  ValorHora?: number;
 }

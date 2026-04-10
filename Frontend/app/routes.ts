@@ -21,8 +21,16 @@ export default [
     // NavBar diz: path: '/admin/utilizadores'
     route("admin/utilizadores", "routes/configuracoes/utilizadores.tsx"),
 
+    // Aprovar disponibilidade dos professores
+    route("/admin/professores-disponibilidade", "routes/aprovacoes.tsx"),
+        // Rota dos professores
+    route("admin/professores", "routes/professor.tsx"),
+
     // NavBar diz: path: '/relatorios/faturacao'
     route("relatorios/faturacao", "routes/faturacao.tsx"),
+
+    // Rota solta do marketplace
+    route("marketplace", "routes/marketplace.tsx"),
 
     // Rota de testes
     route("test-components", "routes/test-components.tsx"),
@@ -33,8 +41,13 @@ export default [
     // Rota das estatísticas
     route("relatorios/estatisticas", "routes/estatisticas.tsx"),
 
-    // Rota do inventário
-    route("marketplace/inventario", "routes/inventario.tsx")
+
+    // ==========================================
+    // Enc. Educacao
+    // ==========================================
+    route("/coaching/oferta", "routes/ofertaCoaching.tsx")
+
+
 
 
 ] satisfies RouteConfig;
