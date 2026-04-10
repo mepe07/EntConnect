@@ -23,6 +23,8 @@ export default [
 
     // Aprovar disponibilidade dos professores
     route("/admin/professores-disponibilidade", "routes/aprovacoes.tsx"),
+        // Rota dos professores
+    route("admin/professores", "routes/professor.tsx"),
 
     // NavBar diz: path: '/relatorios/faturacao'
     route("relatorios/faturacao", "routes/faturacao.tsx"),
@@ -44,6 +46,8 @@ export default [
     // Enc. Educacao
     // ==========================================
     route("/coaching/oferta", "routes/ofertaCoaching.tsx")
+
+
 
 
 ] satisfies RouteConfig;
