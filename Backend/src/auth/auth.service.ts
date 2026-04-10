@@ -64,7 +64,8 @@ export class AuthService {
         const payload = {
             sub: user.ID_Utilizador,
             username: user.Utilizador,
-            role: userRole
+            role: userRole,
+            idPessoa: user.ID_Pessoa
         };
 
         // Devolvemos o token e a role para o Frontend consumir

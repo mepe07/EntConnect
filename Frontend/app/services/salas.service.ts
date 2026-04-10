@@ -4,7 +4,7 @@ import { authService } from './auth.service';
 // A morada do teu Backend em NestJS
 const API_URL = 'http://localhost:3000/salas';
 
-class SalasService {
+export class SalasService {
     
     // ==========================================
     // Função Utilitária (O Carimbo do Segurança)

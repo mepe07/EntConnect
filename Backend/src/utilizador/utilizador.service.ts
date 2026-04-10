@@ -25,18 +25,20 @@ export class UtilizadorService {
       }
     });
 
-    // Em vez de enviar objetos cheios de "nulls" para o Frontend, 
-    // mapear e criar um array de "cargos" limpo.
-    return utilizadoresRaw.map((user) => {
+return utilizadoresRaw.map((user) => {
       
-      // Detetar quais os papéis desta pessoa no sistema
-      const cargos: string[] = [];
-      if (user.Pessoa?.Professor) cargos.push('Professor');
-      if (user.Pessoa?.Coordenador) cargos.push('Coordenador');
-      if (user.Pessoa?.Direcao) cargos.push('Direção');
-      if (user.Pessoa?.Enc_Educacao) cargos.push('Encarregado de Educação');
+      let cargoAtribuido = 'Sem Cargo'; 
 
-      // Construir o objeto final a ser enviado para o Frontend
+      if (user.Pessoa?.Professor) {
+        cargoAtribuido = 'Professor';
+      } else if (user.Pessoa?.Coordenador) {
+        cargoAtribuido = 'Coordenador';
+      } else if (user.Pessoa?.Direcao) {
+        cargoAtribuido = 'Direção';
+      } else if (user.Pessoa?.Enc_Educacao) {
+        cargoAtribuido = 'Encarregado de Educação';
+      }
+
       return {
         idUtilizador: user.ID_Utilizador,
         username: user.Utilizador,
@@ -45,7 +47,7 @@ export class UtilizadorService {
         email: user.Pessoa?.Email,
         contacto: user.Pessoa?.Contacto,
         nif: user.Pessoa?.NIF,
-        cargos: cargos, // Ex: ['Professor']
+        cargo: cargoAtribuido,
       };
     });
   }
@@ -58,12 +60,19 @@ export class UtilizadorService {
     })
   }
 
-    async unlockUser(id: number) {
+  async unlockUser(id: number) {
     // Vai à tabela utilizador, procura pelo ID e atualiza o campo ativo para true
     return this.prisma.utilizador.update({
       where: {ID_Utilizador: id},
       data: {Ativo: true}
     })
+  }
+
+  
+  async getAlunosByEE(idEncEducacao: number) {
+    return this.prisma.aluno.findMany({
+      where: { ID_Enc_Educacao: idEncEducacao }
+    });
   }
 
 }
