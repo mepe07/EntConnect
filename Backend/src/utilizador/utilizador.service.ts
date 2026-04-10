@@ -60,12 +60,19 @@ return utilizadoresRaw.map((user) => {
     })
   }
 
-    async unlockUser(id: number) {
+  async unlockUser(id: number) {
     // Vai à tabela utilizador, procura pelo ID e atualiza o campo ativo para true
     return this.prisma.utilizador.update({
       where: {ID_Utilizador: id},
       data: {Ativo: true}
     })
+  }
+
+  
+  async getAlunosByEE(idEncEducacao: number) {
+    return this.prisma.aluno.findMany({
+      where: { ID_Enc_Educacao: idEncEducacao }
+    });
   }
 
 }

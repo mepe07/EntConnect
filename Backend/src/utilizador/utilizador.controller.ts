@@ -49,6 +49,14 @@ export class UtilizadorController {
     return {message: `Utilizador com ID ${id} desbloqueado com sucesso.`};
   }
 
+
+  @Get('enc-educacao/:id/alunos')
+  @ApiOperation({summary: 'Obter alunos de um Encarregado de Educação'})
+  @ApiParam({ name: 'id', description: 'ID do Encarregado de Educação' })
+  async getAlunosByEE(@Param('id') id: string) {
+    return this.utilizadorService.getAlunosByEE(+id);
+  }
+
   /**
    * Obtém a lista de disponibilidades dos professores.
    * @returns A lista de disponibilidades dos professores.

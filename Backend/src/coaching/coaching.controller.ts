@@ -44,6 +44,15 @@ export class CoachingController {
     return this.coachingService.create(createCoachingDto);
   }
 
+  @Post(':id/inscrever-aluno')
+  @ApiOperation({summary: 'Inscrever aluno em sessão de coaching'})
+  async inscreverAluno(
+    @Param('id') idCoaching: string,
+    @Body() body: { idAluno: number }
+  ) {
+    return this.coachingService.inscreverAluno(+idCoaching, body.idAluno);
+  }
+
   @Get('estudios')
   @ApiOperation({
     summary: 'Listar todos os estúdios',
@@ -167,4 +176,6 @@ export class ModalidadeController {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.modalidadeService.remove(id);
   }
+
+  
 }

@@ -15,4 +15,13 @@ export class CoachingService {
       data: createCoachingDto, // Os dados para criar o coaching vêm do DTO
     });
   }
+
+  async inscreverAluno(idCoaching: number, idAluno: number) {
+    return this.prisma.coaching_Aluno.create({
+      data: {
+        ID_Coaching: idCoaching,
+        ID_Aluno: idAluno
+      }
+    });
+  }
 }
