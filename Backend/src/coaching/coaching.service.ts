@@ -8,6 +8,7 @@ export class CoachingService {
 
   constructor(private readonly prisma: PrismaService) {} // Injeta o PrismaService no construtor
   
+
   async create(createCoachingDto: CreateCoachingDto) {
     // Usa o Prisma para criar um novo registo de coaching na DB
     return this.prisma.coaching.create({
@@ -15,20 +16,12 @@ export class CoachingService {
     });
   }
 
-  // async findAll() {
-  //   // Usa o Prisma para ir buscar todos os registos de coaching na DB
-  //   return this.prisma.coaching.findMany();
-  // }
-
-  // findOne(id: number) {
-  //   return `This action returns a #${id} coaching`;
-  // }
-
-  // update(id: number, updateCoachingDto: UpdateCoachingDto) {
-  //   return `This action updates a #${id} coaching`;
-  // }
-
-  // remove(id: number) {
-  //   return `This action removes a #${id} coaching`;
-  // }
+  async inscreverAluno(idCoaching: number, idAluno: number) {
+    return this.prisma.coaching_Aluno.create({
+      data: {
+        ID_Coaching: idCoaching,
+        ID_Aluno: idAluno
+      }
+    });
+  }
 }

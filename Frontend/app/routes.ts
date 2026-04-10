@@ -21,6 +21,8 @@ export default [
     // NavBar diz: path: '/admin/utilizadores'
     route("admin/utilizadores", "routes/configuracoes/utilizadores.tsx"),
 
+    // Aprovar disponibilidade dos professores
+    route("/admin/professores-disponibilidade", "routes/aprovacoes.tsx"),
         // Rota dos professores
     route("admin/professores", "routes/professor.tsx"),
 
@@ -37,7 +39,13 @@ export default [
     route("relatorios/historico-coaching", "routes/historico.tsx"),
 
     // Rota das estatísticas
-    route("relatorios/estatisticas", "routes/estatisticas.tsx")
+    route("relatorios/estatisticas", "routes/estatisticas.tsx"),
+
+
+    // ==========================================
+    // Enc. Educacao
+    // ==========================================
+    route("/coaching/oferta", "routes/ofertaCoaching.tsx")
 
 
 
