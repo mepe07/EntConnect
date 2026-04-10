@@ -24,9 +24,6 @@ export default [
     // NavBar diz: path: '/relatorios/faturacao'
     route("relatorios/faturacao", "routes/faturacao.tsx"),
 
-    // Rota solta do marketplace
-    route("marketplace", "routes/marketplace.tsx"),
-
     // Rota de testes
     route("test-components", "routes/test-components.tsx"),
 
@@ -34,7 +31,10 @@ export default [
     route("relatorios/historico-coaching", "routes/historico.tsx"),
 
     // Rota das estatísticas
-    route("relatorios/estatisticas", "routes/estatisticas.tsx")
+    route("relatorios/estatisticas", "routes/estatisticas.tsx"),
+
+    // Rota do inventário
+    route("marketplace/inventario", "routes/inventario.tsx")
 
 
 ] satisfies RouteConfig;

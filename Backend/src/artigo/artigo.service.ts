@@ -1,26 +1,76 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service'; 
 import { CreateArtigoDto } from './dto/create-artigo.dto';
-import { UpdateArtigoDto } from './dto/update-artigo.dto';
 
 @Injectable()
 export class ArtigoService {
-  create(createArtigoDto: CreateArtigoDto) {
-    return 'This action adds a new artigo';
-  }
+    constructor(private prisma: PrismaService) { }
 
-  findAll() {
-    return `This action returns all artigo`;
-  }
+    // ============================================================================
+    // 1. O INVENTÁRIO DA ESCOLA 
+    // ============================================================================
+    async listarInventario() {
+        return this.prisma.artigo.findMany({
+            where: {
+                OR: [
+                    { ID_Coordenador: { not: null } },
+                    { ID_Direcao: { not: null } }
+                ]
+            },
+            include: { Anuncios: true }
+        });
+    }
 
-  findOne(id: number) {
-    return `This action returns a #${id} artigo`;
-  }
+    // ============================================================================
+    // 2. O BOTÃO MÁGICO 
+    // ============================================================================
+    async publicarNoMarketplace(idArtigo: number, quantidadeAVenda: number, notasAnuncio?: string) {
+        const artigo = await this.prisma.artigo.findUnique({
+            where: { ID_Artigo: idArtigo }
+        });
 
-  update(id: number, updateArtigoDto: UpdateArtigoDto) {
-    return `This action updates a #${id} artigo`;
-  }
+        if (!artigo) throw new NotFoundException('Artigo não encontrado no armazém.');
+        
+        if (artigo.Quantidade < quantidadeAVenda) {
+            throw new BadRequestException(`Stock insuficiente. Apenas tens ${artigo.Quantidade} unidades.`);
+        }
 
-  remove(id: number) {
-    return `This action removes a #${id} artigo`;
-  }
-}
+        return this.prisma.anuncio_Marketplace.create({
+            data: {
+                ID_Artigo: idArtigo,
+                Quantidade_A_Venda: quantidadeAVenda,
+                Notas_Anuncio: notasAnuncio,
+                Estado: 'Disponível'
+            }
+        });
+    }
+
+    // ============================================================================
+    // 3. A MONTRA DO MARKETPLACE 
+    // ============================================================================
+    async listarMarketplace() {
+        return this.prisma.anuncio_Marketplace.findMany({
+            where: { Estado: 'Disponível' },
+            include: {
+                Artigo: {
+                    include: {
+                        Professor: { include: { Pessoa: true } },
+                        Coordenador: { include: { Pessoa: true } },
+                        Enc_Educacao: { include: { Pessoa: true } }
+                    }
+                }
+            },
+            orderBy: { Data_Criacao: 'desc' }
+        });
+    }
+    // ============================================================================
+    // 0. CRIAR NOVO ARTIGO (A tua correção de Sénior)
+    // ============================================================================
+    async criar(data: CreateArtigoDto) {
+        return this.prisma.artigo.create({ 
+            // O Prisma aceita o nosso DTO porque as propriedades 
+            // (Nome, Quantidade, Notas) batem certo com a Base de Dados
+            data: data 
+        });
+    }
+} 

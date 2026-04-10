@@ -22,25 +22,37 @@ model Aluno {
 }
 
 model Artigo {
-  ID_Artigo       Int           @id(map: "PK__Artigo__3B15CD94B31FA6B4") @default(autoincrement())
-  Nome            String        @db.VarChar(255)
+  ID_Artigo       Int                   @id(map: "PK__Artigo__3B15CD94B31FA6B4") @default(autoincrement())
+  Nome            String                @db.VarChar(255)
   Quantidade      Int
-  Notas           String?       @db.VarChar(255)
+  Notas           String?               @db.VarChar(255)
   ID_Enc_Educacao Int?
   ID_Direcao      Int?
-  Foto            String?       @db.VarChar(255)
+  Foto            String?               @db.VarChar(255)
   ID_Cor          Int?
   ID_Estado       Int?
   ID_Tamanho      Int?
   ID_Coordenador  Int?
-  Publicado       Boolean       @default(false, map: "DF__Artigo__Publicad__540C7B00")
-  Requisitado     Boolean       @default(false, map: "DF__Artigo__Requisit__55009F39")
-  Direcao         Direcao?      @relation(fields: [ID_Direcao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Colaborador")
-  Coordenador     Coordenador?  @relation(fields: [ID_Coordenador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Coordenador")
-  Cor             Cor?          @relation(fields: [ID_Cor], references: [ID_Cor], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Cor")
-  Enc_Educacao    Enc_Educacao? @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_EncEducacao")
-  Estado          Estado?       @relation(fields: [ID_Estado], references: [ID_Estado], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Estado")
-  Tamanho         Tamanho?      @relation(fields: [ID_Tamanho], references: [ID_Tamanho], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Tamanho")
+  Requisitado     Boolean               @default(false, map: "DF__Artigo__Requisit__55009F39")
+  ID_Professor    Int?
+  Anuncios        Anuncio_Marketplace[]
+  Direcao         Direcao?              @relation(fields: [ID_Direcao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Colaborador")
+  Coordenador     Coordenador?          @relation(fields: [ID_Coordenador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Coordenador")
+  Cor             Cor?                  @relation(fields: [ID_Cor], references: [ID_Cor], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Cor")
+  Enc_Educacao    Enc_Educacao?         @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_EncEducacao")
+  Estado          Estado?               @relation(fields: [ID_Estado], references: [ID_Estado], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Estado")
+  Professor       Professor?            @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Professor")
+  Tamanho         Tamanho?              @relation(fields: [ID_Tamanho], references: [ID_Tamanho], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Tamanho")
+}
+
+model Anuncio_Marketplace {
+  ID_Anuncio         Int      @id @default(autoincrement())
+  ID_Artigo          Int
+  Quantidade_A_Venda Int
+  Notas_Anuncio      String?  @db.VarChar(255)
+  Estado             String   @default("Dispon?vel") @db.VarChar(50)
+  Data_Criacao       DateTime @default(now())
+  Artigo             Artigo   @relation(fields: [ID_Artigo], references: [ID_Artigo], onDelete: Cascade)
 }
 
 model Coaching {
@@ -87,13 +99,16 @@ model Cor {
 model Disponibilidade {
   ID_Disponibilidade      Int                    @id(map: "PK__Disponib__7E99F3FC5D9DAEFB") @default(autoincrement())
   ID_Professor            Int?
-  Dia_Semana              String                 @db.VarChar(20)
   Hora_Inicio             DateTime?              @db.DateTime
   EstadoDisponibilidadeID Int
   DataAtualizacao         DateTime               @db.Date
   AlteradoPorUtilizadorID Int
   Duracao                 Int
+  Modalidade              String                 @db.VarChar(100)
+  IdEstudio               Int?
+  ValorHora               Decimal?               @db.Decimal(10, 2)
   Estado_Disponibilidade  Estado_Disponibilidade @relation(fields: [EstadoDisponibilidadeID], references: [ID], onUpdate: NoAction, map: "FK__Disponibi__Estad__45BE5BA9")
+  Utilizador              Utilizador             @relation(fields: [AlteradoPorUtilizadorID], references: [ID_Utilizador], onUpdate: NoAction, map: "FK_Alterado_Utilizador")
   Professor               Professor?             @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Disponibilidade_Professor")
 }
 
@@ -142,6 +157,7 @@ model Pessoa {
 
 model Professor {
   ID_Pessoa       Int               @id(map: "PK__Professo__81E8E179C3CD56EA")
+  Artigo          Artigo[]
   Aula            Aula[]
   Coaching        Coaching[]
   Disponibilidade Disponibilidade[]
@@ -171,6 +187,7 @@ model Utilizador {
   Password                                                 String            @db.VarChar(100)
   Ativo                                                    Boolean           @default(true, map: "DF__Utilizado__Ativo__40F9A68C")
   Aula_Fixa                                                Aula_Fixa[]
+  Disponibilidade                                          Disponibilidade[]
   Pedido_Coaching_Pedido_Coaching_ID_EEToUtilizador        Pedido_Coaching[] @relation("Pedido_Coaching_ID_EEToUtilizador")
   Pedido_Coaching_Pedido_Coaching_ID_ProfessorToUtilizador Pedido_Coaching[] @relation("Pedido_Coaching_ID_ProfessorToUtilizador")
   Pessoa                                                   Pessoa            @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK_Utilizador_Pessoa")

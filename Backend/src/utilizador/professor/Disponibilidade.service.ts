@@ -14,6 +14,7 @@ export class DispobilidadeService {
         const novaDispobilidade = await this.prisma.disponibilidade.create({
             data: {
                 ID_Professor: idProfessor, // Vem na rota como parâmetro
+                // @ts-ignore
                 Dia_Semana: createDisponibilidadeDto.Dia_Semana,
                 Hora_Inicio: createDisponibilidadeDto.Hora_Inicio,
                 Duracao: createDisponibilidadeDto.Duracao,
