@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'; 
 import { CreateArtigoDto } from './dto/create-artigo.dto';
+import { BlobsService } from '../Infraestrutura/Blobs/blobs.service';
 
 @Injectable()
 export class ArtigoService {
-    constructor(private prisma: PrismaService) { }
-
+    constructor(private prisma: PrismaService, private blobsService: BlobsService) { }
     // ============================================================================
     // 1. CRIAR NOVO ARTIGO + LOTE DE STOCK
     // ============================================================================
@@ -18,6 +18,8 @@ export class ArtigoService {
                 Foto: data.Foto,
                 ID_Coordenador: data.ID_Coordenador,
                 ID_Direcao: data.ID_Direcao,
+                ID_Professor: data.ID_Professor,
+                ID_Enc_Educacao: data.ID_Enc_Educacao,
                 
                 // Magia: Criamos a Prateleira logo a seguir!
                 Stock_Armazem: {
@@ -175,5 +177,39 @@ export class ArtigoService {
             mensagem: 'Interesse registado com sucesso! A Direção irá analisar o pedido.',
             pedido: novoInteresse 
         };
+    }
+    // ============================================================================
+    // 7. A PONTE PARA O AZURE (Reencaminha para o BlobsService)
+    // ============================================================================
+    async guardarFotosMarketplace(containerName: string, nomePersonalizado: string, file: any) {
+        // Como o BlobsService já está injetado no construtor, 
+        // só temos de lhe passar a encomenda para as mãos!
+        return this.blobsService.guardarFotosMarketplace(containerName, nomePersonalizado, file);
+    }
+    // 8. LISTAR APENAS OS MEUS ANÚNCIOS (Dono)
+    async listarMeusAnuncios(userId: number, role: string) {
+        // Criamos o filtro dinâmico consoante o cargo
+        const filtro: any = {};
+        if (role === 'Coordenador') filtro.ID_Coordenador = userId;
+        else if (role === 'Direcao') filtro.ID_Direcao = userId;
+        else if (role === 'Professor') filtro.ID_Professor = userId;
+        else if (role === 'Enc_Educacao') filtro.ID_Enc_Educacao = userId;
+
+        return this.prisma.artigo.findMany({
+            where: filtro,
+            include: { Stock_Armazem: true }
+        });
+    }
+
+    // 9. LISTAR OS MEUS PEDIDOS (Interesses enviados)
+    async listarMeusPedidos(userId: number) {
+        return this.prisma.interesse_Artigo.findMany({
+            where: { ID_Utilizador: userId },
+            include: {
+                Stock_Armazem: {
+                    include: { Artigo: true }
+                }
+            }
+        });
     }
 } 

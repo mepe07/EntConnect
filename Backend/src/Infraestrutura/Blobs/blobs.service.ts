@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException, BadRequestException } from '@nestjs/common';
 import { BlobServiceClient } from '@azure/storage-blob';
 import 'multer'; //evitar download do multer, Finalidade: Utilizar o Express.Multer.File (Carregar filheiros locais)
+import { Express } from 'express';
 
 @Injectable()
 export class BlobsService {
@@ -85,4 +86,35 @@ export class BlobsService {
       throw new BadRequestException(`Não foi possível ler o ficheiro "${nomeFicheiro}" no contentor "${containerName}". Confirma se os nomes estão corretos no Azure.`);
     }
   }
+
+  async guardarFotosMarketplace(containerName: string, nomePersonalizado: string, file: Express.Multer.File) {
+        if (!this.blobServiceClient) {
+            throw new InternalServerErrorException('Azure não configurado.');
+        }
+
+        try {
+            const containerClient = this.blobServiceClient.getContainerClient(containerName);
+            const blobName = `${nomePersonalizado}`;
+
+            // 1. Verificar se o blob já existe
+            const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+            const exists = await blockBlobClient.exists();
+        
+            if (exists) {
+                console.warn(`O blob "${blobName}" já existe no contentor "${containerName}". Será substituído.`);
+            }
+
+            // 2. O VERDADEIRO UPLOAD: Passamos o ficheiro físico (file.buffer) primeiro!
+            await blockBlobClient.uploadData(file.buffer, {
+                blobHTTPHeaders: { blobContentType: file.mimetype }
+            });
+
+            // 3. Devolver o link público para guardarmos no nosso SQL Server
+            return blockBlobClient.url;
+
+        } catch (error) { // <-- Olha aqui a chaveta a fechar o try antes do catch!
+            console.error("Erro ao guardar fotos do marketplace:", error);
+            throw new BadRequestException(`Erro ao guardar fotos do marketplace no contentor "${containerName}".`);
+        }
+    }
 }

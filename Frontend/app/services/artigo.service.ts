@@ -100,5 +100,33 @@ export const marketplaceService = {
             throw new Error(erro.message || 'Erro ao registar interesse.');
         }
         return response.json();
+    },
+
+    // ============================================================================
+    // 7. ÁREA PESSOAL: Buscar os Meus Anúncios
+    // ============================================================================
+    async listarMeusAnuncios() {
+        const response = await fetch(`${API_URL}/meus-anuncios`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+        if (!response.ok) throw new Error('Erro ao carregar os teus anúncios.');
+        return response.json();
+    },
+
+    // ============================================================================
+    // 8. ÁREA PESSOAL: Buscar os Meus Pedidos (Interesses)
+    // ============================================================================
+    async listarMeusPedidos() {
+        const response = await fetch(`${API_URL}/meus-pedidos`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+        if (!response.ok) throw new Error('Erro ao carregar os teus pedidos.');
+        return response.json();
     }
 };
