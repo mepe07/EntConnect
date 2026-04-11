@@ -6,7 +6,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { DispobilidadeService } from './professor/Disponibilidade.service';
 import { ProfessorController } from './utilizador.controller'; 
 import { ProfessorService } from './professor/professor.service';       
-import { PrismaService } from '../prisma/prisma.service';
 
 
 @Module({
