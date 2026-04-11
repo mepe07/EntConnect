@@ -4,76 +4,82 @@ import { TableColumnTypesEnum } from '~/components/table/models/enums/table-colu
 import { ButtonTypeEnum } from '~/components/button/models/enums/button-type.enum';
 import { ButtonColorEnum } from '~/components/button/models/enums/button-color.enum';
 import { UsersService } from '../../services/users.service';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react'; 
 import type { User } from '~/models/interfaces/user.interface';
 import { InfoTypesEnum } from '~/components/models/enums/info-types.enum';
 import { SizeEnum } from '~/components/models/enums/size.enum';
 
 export function Utilizadores() {
     const usersService = new UsersService();
-
     const [users, setUsers] = useState([]);
-    
-    // Transform users data to fit the table component
+    const [modalImportOpen, setModalImportOpen] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const usersData: Record<string, any>[] = users.map((user: User) => ({
         ...user,
         ativo: user.ativo ? {value: "Sim", infoType: InfoTypesEnum.Info} : {value: "Não", infoType: InfoTypesEnum.Error},
         cargo: user.role
     }));
 
-    // #region API Calls
-        // Function to fetch users data from the API and update the state
-        async function fetchUsersData() {
-            const usersData = await usersService.getUsers();
-            setUsers(usersData);
-        }
+    async function fetchUsersData() {
+        const data = await usersService.getUsers();
+        setUsers(data);
+    }
 
-        // Extrair os cargos, remover os repetidos (Set) e filtrar vazios
-        const cargosUnicos = Array.from(new Set(usersData.map(user => user.cargo).filter(Boolean)));
+    const cargosUnicos = Array.from(new Set(usersData.map(user => user.cargo).filter(Boolean)));
+    const opcoesCargo = [
+        { value: "", label: "Todos" },
+        ...cargosUnicos.map(cargo => ({ value: cargo, label: cargo }))
+    ];
 
-        // Construir o array final de opções com o "Todos" no início
-        const opcoesCargo = [
-            { value: "", label: "Todos" },
-            ...cargosUnicos.map(cargo => ({ value: cargo, label: cargo }))
-        ];
+    function blockUnlockUser(userId: number, action: 'block' | 'unlock') {
+        const confirmMessage = action === 'block' ? 'Queres bloquear este utilizador?' : 'Queres desbloquear este utilizador?';
+        if (!window.confirm(confirmMessage)) return;
 
+        const promise = action === 'block' ? usersService.blockUser(userId) : usersService.unlockUser(userId);
+        promise.then(() => fetchUsersData());
+    }
 
+    const lidarComUploadDireto = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
 
-        /**
-         * Function to block or unblock a user based on the action parameter
-         * 
-         * @param userId: The ID of the user to be blocked or unblocked
-         * @param action: A string that indicates whether to block or unblock the user ('block' or 'unlock')
-         */
-        function blockUnlockUser(userId: number, action: 'block' | 'unlock') {
-            // Show confirmation dialog before blocking/unblocking the user
-            const confirmMessage = action === 'block' ? 'Queres bloquear este utilizador?' : 'Queres desbloquear este utilizador?';
-            if (!window.confirm(confirmMessage)) {
-                return;
-            }
+        const formData = new FormData();
+        formData.append("file", file);
 
-            // Call the appropriate service method based on the action
-            if (action === 'block') {
-                usersService.blockUser(userId).then(response => {
-                    fetchUsersData();
-                });
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch("http://localhost:3000/utilizador/importusersblob", {
+                method: "POST",
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData,
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                alert(data.mensagem || "Utilizadores importados com sucesso!");
+                setModalImportOpen(false);
+                fetchUsersData();
             } else {
-                usersService.unlockUser(userId).then(response => {
-                    fetchUsersData();
-                });
+                alert("Erro ao processar a importação.");
             }
+        } catch (error) {
+            console.error("Erro na importação:", error);
+        } finally {
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
+    };
 
-        // Get the data from the API on component mount
-        useEffect(() => {
-            fetchUsersData();
-        }, []);
-    // #endregion
+    useEffect(() => { fetchUsersData(); }, []);
 
     return (
-        <>
-            <h1>Utilizadores</h1>
-
+        <div className="utilizadores-page">
+            <div className="header-container">
+                <h1>Utilizadores</h1>
+                <button className="btn-import" onClick={() => setModalImportOpen(true)}>
+                    <i className="fa fa-upload"></i> Importar Alunos
+                </button>
+            </div>
             
             <TableComponent
                 config={{
@@ -85,28 +91,15 @@ export function Utilizadores() {
                         { key: "ativo", value: "Ativo", type: TableColumnTypesEnum.Chip }
                     ],
                     filters: [
-                        {
-                            key: "cargo",
-                            label: "Cargo",
-                            value: "",
-                            options: opcoesCargo
-                        },
-                        {
-                            key: "ativo",
-                            label: "Ativo",
-                            value: "",
-                            options: [
-                                { value: "", label: "Todos" },
-                                { value: "Sim", label: "Sim" },
-                                { value: "Não", label: "Não" }
-                            ]
+                        { key: "cargo", label: "Cargo", value: "", options: opcoesCargo },
+                        { 
+                            key: "ativo", 
+                            label: "Ativo", 
+                            value: "", 
+                            options: [{ value: "", label: "Todos" }, { value: "Sim", label: "Sim" }, { value: "Não", label: "Não" }] 
                         }
                     ],
-                    searchSettings: {
-                        placeholder: "Procurar por nome ou cargos...",
-                        label: "Pesquisa",
-                        value: ""
-                    },
+                    searchSettings: { placeholder: "Procurar por nome ou cargos...", label: "Pesquisa", value: "" },
                     actions: [
                         {
                             icon: "fa-eye",
@@ -118,13 +111,30 @@ export function Utilizadores() {
                             icon: "fa-lock",
                             tooltip: "Bloquear/Desbloquear Utilizador",
                             config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Error, size: SizeEnum.Small},
-                            onClick: (row: User) => blockUnlockUser(row.idUtilizador, ((row.ativo as unknown as { value: string }).value as string === "Sim" ? 'block' : 'unlock'))
+                            onClick: (row: User) => blockUnlockUser(row.idUtilizador, ((row.ativo as any).value === "Sim" ? 'block' : 'unlock'))
                         }
                     ]
                 }}
                 data={usersData}
             />
-            
-        </>
+
+            {modalImportOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h2>Importar Ficheiro CSV</h2>
+                        <p>Selecione o ficheiro do seu computador. O sistema irá processar os dados e atualizar a tabela.</p>
+                        
+                        <input type="file" accept=".csv" ref={fileInputRef} style={{ display: 'none' }} onChange={lidarComUploadDireto} />
+
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={() => setModalImportOpen(false)}>Cancelar</button>
+                            <button className="btn-process" onClick={() => fileInputRef.current?.click()}>
+                                <i className="fa fa-file-excel"></i> Escolher e Processar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
-} 
+}
