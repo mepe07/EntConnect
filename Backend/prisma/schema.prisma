@@ -21,109 +21,77 @@ model Aluno {
   Coaching_Aluno  Coaching_Aluno[]
 }
 
-// ============================================================================
-// 1. O CATÁLOGO MESTRE (A Ideia do Artigo)
-// ============================================================================
 model Artigo {
-  ID_Artigo           Int               @id @default(autoincrement())
-  Nome                String            @db.VarChar(255)
-  Notas               String?           @db.VarChar(255)
-  Foto                String?           @db.VarChar(255)
-  
-  // Quem registou o artigo
-  ID_Enc_Educacao     Int?
-  ID_Direcao          Int?
-  ID_Coordenador      Int?
-  ID_Professor        Int?
-
-  // As relações de dono
-  Direcao             Direcao?          @relation(fields: [ID_Direcao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction)
-  Coordenador         Coordenador?      @relation(fields: [ID_Coordenador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction)
-  Enc_Educacao        Enc_Educacao?     @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction)
-  Professor           Professor?        @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction)
-  
-  // A ligação ao Armazém: 1 Artigo pode ter vários Lotes de Stock
-  Stock_Armazem       Stock_Armazem[]
+  ID_Artigo       Int             @id @default(autoincrement())
+  Nome            String          @db.VarChar(255)
+  Notas           String?         @db.VarChar(255)
+  Foto            String?         @db.VarChar(255)
+  ID_Enc_Educacao Int?
+  ID_Direcao      Int?
+  ID_Coordenador  Int?
+  ID_Professor    Int?
+  Coordenador     Coordenador?    @relation(fields: [ID_Coordenador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction)
+  Direcao         Direcao?        @relation(fields: [ID_Direcao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction)
+  Enc_Educacao    Enc_Educacao?   @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction)
+  Professor       Professor?      @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction)
+  Stock_Armazem   Stock_Armazem[]
 }
 
-// ============================================================================
-// 2. O ARMAZÉM FÍSICO (A Prateleira Real)
-// ============================================================================
 model Stock_Armazem {
-  ID_Stock           Int      @id @default(autoincrement())
-  ID_Artigo          Int      
-  
-  // As variações físicas
+  ID_Stock           Int                @id @default(autoincrement())
+  ID_Artigo          Int
   ID_Cor             Int?
   ID_Estado          Int?
   ID_Tamanho         Int?
-  
-  // A gestão numérica
-  Quantidade_Total   Int      
-  Quantidade_Venda   Int      @default(0) 
-  Quantidade_Aluguer Int      @default(0) 
-
-  // Relações
-  Artigo             Artigo   @relation(fields: [ID_Artigo], references: [ID_Artigo], onDelete: Cascade)
-  Cor                Cor?     @relation(fields: [ID_Cor], references: [ID_Cor], onUpdate: NoAction)
-  Estado             Estado?  @relation(fields: [ID_Estado], references: [ID_Estado], onUpdate: NoAction)
-  Tamanho            Tamanho? @relation(fields: [ID_Tamanho], references: [ID_Tamanho], onUpdate: NoAction)
+  Quantidade_Total   Int
+  Quantidade_Venda   Int                @default(0)
+  Quantidade_Aluguer Int                @default(0)
   Artigo_Favorito    Artigo_Favorito[]
   Interesse_Artigo   Interesse_Artigo[]
+  Artigo             Artigo             @relation(fields: [ID_Artigo], references: [ID_Artigo], onDelete: Cascade)
+  Cor                Cor?               @relation(fields: [ID_Cor], references: [ID_Cor], onUpdate: NoAction)
+  Estado             Estado?            @relation(fields: [ID_Estado], references: [ID_Estado], onUpdate: NoAction)
+  Tamanho            Tamanho?           @relation(fields: [ID_Tamanho], references: [ID_Tamanho], onUpdate: NoAction)
 }
 
-// ============================================================================
-// 3. TABELAS DE APOIO ATUALIZADAS (Cor, Estado, Tamanho)
-// Como as características agora pertencem ao Lote Físico e não ao Catálogo,
-// temos de atualizar os Arrays de retorno para apontarem para o Stock_Armazem.
-// ============================================================================
 model Cor {
   ID_Cor        Int             @id(map: "PK__Cor__2BFE6438EB56194B") @default(autoincrement())
   Descricao     String          @db.VarChar(100)
-  Stock_Armazem Stock_Armazem[] 
+  Stock_Armazem Stock_Armazem[]
 }
 
 model Estado {
   ID_Estado     Int             @id(map: "PK__Estado__9CF493953A7052DE") @default(autoincrement())
   Descricao     String          @db.VarChar(100)
-  Stock_Armazem Stock_Armazem[] 
+  Stock_Armazem Stock_Armazem[]
 }
 
 model Tamanho {
   ID_Tamanho    Int             @id(map: "PK__Tamanho__30680064B32A374C") @default(autoincrement())
   Descricao     String          @db.VarChar(100)
-  Stock_Armazem Stock_Armazem[] 
+  Stock_Armazem Stock_Armazem[]
 }
-
-// ============================================================================
-// 4. MARKETPLACE: FAVORITOS E INTENÇÕES DE NEGÓCIO
-// ============================================================================
 
 model Artigo_Favorito {
   ID_Favorito   Int           @id @default(autoincrement())
   ID_Utilizador Int
   ID_Stock      Int
   Data_Registo  DateTime      @default(now())
-
-  // Ligações
-  Utilizador    Utilizador    @relation(fields: [ID_Utilizador], references: [ID_Utilizador], onDelete: Cascade)
   Stock_Armazem Stock_Armazem @relation(fields: [ID_Stock], references: [ID_Stock], onDelete: Cascade)
+  Utilizador    Utilizador    @relation(fields: [ID_Utilizador], references: [ID_Utilizador], onDelete: Cascade)
 
-  // Um utilizador não pode favoritar a mesma prateleira duas vezes
-  @@unique([ID_Utilizador, ID_Stock]) 
+  @@unique([ID_Utilizador, ID_Stock])
 }
 
 model Interesse_Artigo {
   ID_Interesse  Int           @id @default(autoincrement())
   ID_Utilizador Int
   ID_Stock      Int
-  Mensagem      String?       @db.VarChar(500) // Caso o utilizador queira justificar porque precisa do artigo
-  Estado        String        @default("Pendente") @db.VarChar(20) // Ex: Pendente, Aprovado, Rejeitado
+  Mensagem      String?       @db.VarChar(500)
+  Estado        String        @default("Pendente") @db.VarChar(20)
   Data_Registo  DateTime      @default(now())
-
-  // Ligações
-  Utilizador    Utilizador    @relation(fields: [ID_Utilizador], references: [ID_Utilizador], onDelete: NoAction)
   Stock_Armazem Stock_Armazem @relation(fields: [ID_Stock], references: [ID_Stock], onDelete: Cascade)
+  Utilizador    Utilizador    @relation(fields: [ID_Utilizador], references: [ID_Utilizador])
 }
 
 model Coaching {
@@ -235,18 +203,18 @@ model Sala {
 }
 
 model Utilizador {
-  ID_Utilizador                                            Int               @id(map: "PK__Utilizad__02069817600CB419") @default(autoincrement())
-  ID_Pessoa                                                Int               @unique(map: "UQ__Utilizad__81E8E178D6E729CD")
-  Utilizador                                               String            @unique(map: "UQ_Utilizador_Nome") @db.VarChar(100)
-  Password                                                 String            @db.VarChar(100)
-  Ativo                                                    Boolean           @default(true, map: "DF__Utilizado__Ativo__40F9A68C")
+  ID_Utilizador                                            Int                @id(map: "PK__Utilizad__02069817600CB419") @default(autoincrement())
+  ID_Pessoa                                                Int                @unique(map: "UQ__Utilizad__81E8E178D6E729CD")
+  Utilizador                                               String             @unique(map: "UQ_Utilizador_Nome") @db.VarChar(100)
+  Password                                                 String             @db.VarChar(100)
+  Ativo                                                    Boolean            @default(true, map: "DF__Utilizado__Ativo__40F9A68C")
+  Artigo_Favorito                                          Artigo_Favorito[]
   Aula_Fixa                                                Aula_Fixa[]
   Disponibilidade                                          Disponibilidade[]
-  Artigo_Favorito                                          Artigo_Favorito[]
   Interesse_Artigo                                         Interesse_Artigo[]
-  Pedido_Coaching_Pedido_Coaching_ID_EEToUtilizador        Pedido_Coaching[] @relation("Pedido_Coaching_ID_EEToUtilizador")
-  Pedido_Coaching_Pedido_Coaching_ID_ProfessorToUtilizador Pedido_Coaching[] @relation("Pedido_Coaching_ID_ProfessorToUtilizador")
-  Pessoa                                                   Pessoa            @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK_Utilizador_Pessoa")
+  Pedido_Coaching_Pedido_Coaching_ID_EEToUtilizador        Pedido_Coaching[]  @relation("Pedido_Coaching_ID_EEToUtilizador")
+  Pedido_Coaching_Pedido_Coaching_ID_ProfessorToUtilizador Pedido_Coaching[]  @relation("Pedido_Coaching_ID_ProfessorToUtilizador")
+  Pessoa                                                   Pessoa             @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK_Utilizador_Pessoa")
 }
 
 model Aula {
