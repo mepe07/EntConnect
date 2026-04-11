@@ -52,10 +52,7 @@ export class DispobilidadeService {
                 horario: stringHorario,
                 modalidade: disp.Modalidade,
                 alteradoPor: disp.Utilizador?.Pessoa?.Nome || 'Sistema',
-                estado: disp.Estado_Disponibilidade?.Tipo || 'Desconhecido',
-                duracao: disp.Duracao,
-                valorPorAluno: disp.ValorPorAluno,
-                maxAlunos: disp.MaxAlunos
+                estado: disp.Estado_Disponibilidade?.Tipo || 'Desconhecido'
             };
         }).filter(item => item !== null);
     }
@@ -73,7 +70,6 @@ export class DispobilidadeService {
                 AlteradoPorUtilizadorID: createDisponibilidadeDto.AlteradoPorUtilizadorID,
                 DataAtualizacao: new Date(), // Data atual
                 Modalidade: createDisponibilidadeDto.Modalidade,
-                MaxAlunos: createDisponibilidadeDto.MaxAlunos
             },
         });
 
