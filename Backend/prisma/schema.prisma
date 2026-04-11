@@ -88,7 +88,8 @@ model Disponibilidade {
   Duracao                 Int
   Modalidade              String                 @db.VarChar(100)
   IdEstudio               Int?
-  ValorHora               Decimal?               @db.Decimal(10, 2)
+  MaxAlunos               Int?                   @db.TinyInt
+  ValorPorAluno           Decimal?               @db.Decimal(10, 2)
   Estado_Disponibilidade  Estado_Disponibilidade @relation(fields: [EstadoDisponibilidadeID], references: [ID], onUpdate: NoAction, map: "FK__Disponibi__Estad__45BE5BA9")
   Utilizador              Utilizador             @relation(fields: [AlteradoPorUtilizadorID], references: [ID_Utilizador], onUpdate: NoAction, map: "FK_Alterado_Utilizador")
   Professor               Professor?             @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Disponibilidade_Professor")

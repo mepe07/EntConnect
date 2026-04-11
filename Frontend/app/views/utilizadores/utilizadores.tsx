@@ -18,7 +18,7 @@ export function Utilizadores() {
     const usersData: Record<string, any>[] = users.map((user: User) => ({
         ...user,
         ativo: user.ativo ? {value: "Sim", infoType: InfoTypesEnum.Info} : {value: "Não", infoType: InfoTypesEnum.Error},
-        cargo: user.cargo
+        cargo: user.role
     }));
 
     // #region API Calls
