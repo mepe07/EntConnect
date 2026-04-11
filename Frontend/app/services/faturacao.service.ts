@@ -1,5 +1,7 @@
 // Ficheiro: app/services/faturacao.service.ts
 
+import { authService } from './auth.service';
+
 class FaturacaoService {
     // 1. A MORADA COMPLETA: Dizemos explicitamente onde mora o NestJS
     // Nota: Removi o '/api' porque o teu NestJS (no main.ts) não tem prefixo global.
@@ -12,8 +14,16 @@ class FaturacaoService {
         
         console.log("A pedir dados a:", urlCompleto); // Este log vai ajudar-te a ver o URL final no F12
 
+        const token = authService.getToken();
+
         try {
-            const response = await fetch(urlCompleto);
+            const response = await fetch(urlCompleto, {
+                // Injetamos a mochila segura (Headers) no pedido
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                }
+            });
             
             if (!response.ok) {
                 // Se o NestJS devolver um Erro 400 (BadRequest), tentamos ler a mensagem
