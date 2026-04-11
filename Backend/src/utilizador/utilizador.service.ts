@@ -97,7 +97,7 @@ return utilizadoresRaw.map((user) => {
       // Lembra-te de importar o NotFoundException no topo se ainda não o tiveres!
       throw new NotFoundException(`Utilizador com ID ${id} não encontrado.`); 
     }
-
+    
     // 2. Vai à tabela Pessoa e coloca a foto a null (vazio)
     return this.prisma.pessoa.update({
       where: { ID_Pessoa: utilizador.ID_Pessoa },
