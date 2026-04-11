@@ -25,43 +25,53 @@ export function Header() {
     const userLetter = userInfo?.username ? userInfo.username.charAt(0).toUpperCase() : 'U';
 
     // 3. Este useEffect agora reage quando o userInfo for atualizado
-    useEffect(() => {        
-        // Se na interface for 'id', muda aqui para userInfo?.id
+    // Substitui o useEffect antigo por este:
+    useEffect(() => {
         const currentUserId = userInfo?.sub; 
         
         async function fetchFotoPerfil() {
-            if (currentUserId) {
-                try {
-                    const token = localStorage.getItem('token') || authService.getToken(); 
-                    
-                    const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/foto`, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${token}`, 
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        
-                        if (data.url) {
-                            setFotoPerfilUrl(data.url);
-                        }
-                    } else {
-                        console.error("A API rejeitou o pedido.");
+            if (!currentUserId) return;
+            
+            try {
+                const token = localStorage.getItem('token') || authService.getToken(); 
+                const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/foto`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`, 
+                        'Content-Type': 'application/json'
                     }
-                } catch (error) {
-                    console.error("Erro fatal no Fetch (Pode ser CORS):", error);
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.url) {
+                        // 🔥 TRUQUE DA CACHE NO HEADER TAMBÉM!
+                        const separador = data.url.includes('?') ? '&' : '?';
+                        const urlSemCache = `${data.url}${separador}t=${new Date().getTime()}`;
+                        
+                        setFotoPerfilUrl(urlSemCache);
+                    } else {
+                        setFotoPerfilUrl(null);
+                    }
                 }
+            } catch (error) {
+                console.error("Erro ao carregar foto no Header:", error);
             }
         }
 
+        // 1. Vai buscar a foto a primeira vez que o Header carrega
         fetchFotoPerfil();
-    }, [userInfo]); // Reage quando o estado userInfo muda
 
-    // ... (o resto do teu código do handleClickOutside e return mantém-se igual)
+        // 2. Fica à escuta (Listener) de quando o Perfil avisa que a foto mudou!
+        window.addEventListener('fotoPerfilAtualizada', fetchFotoPerfil);
+
+        // 3. Limpeza do Listener quando o utilizador sai da aplicação
+        return () => {
+            window.removeEventListener('fotoPerfilAtualizada', fetchFotoPerfil);
+        };
+        
+    }, [userInfo]); // Mantém a dependência que já tinhas
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {

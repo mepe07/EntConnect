@@ -133,7 +133,7 @@ export class UtilizadorController {
    * 1. Recebe o ficheiro via Multipart Form Data.
    * 2. Envia para o Azure Blob Storage.
    * 3. Guarda o URL gerado na tabela Pessoa (ligada ao ID_Utilizador).
-   * * @param id ID do utilizador (ID_Utilizador)
+   * @param id ID do utilizador (ID_Utilizador)
    * @param file Ficheiro de imagem capturado pelo interceptor
    */
   @Put(':id/uploadphoto')
@@ -153,36 +153,44 @@ export class UtilizadorController {
   })
   async UploadPhoto(
     @Param('id') id: string,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          // 1. Limite de 10MB (10 * 1024 * 1024 bytes)
-          new MaxFileSizeValidator({ 
-            maxSize: 10 * 1024 * 1024, 
-            message: 'A foto é demasiado pesada. O limite é 10MB.' 
-          }),
-          
-          // 2. Extensões permitidas (Regex para imagens)
-          new FileTypeValidator({ 
-            fileType: '.(png|jpeg|jpg|webp|jfif)' 
-          }),
-        ],
-      }),
-    ) file: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File, // 👈 Tiramos o ParseFilePipe daqui
   ) {
-    // Nota: Já não precisas do "if (!file)", o ParseFilePipe trata disso por ti.
+    // 1. Verifica se o ficheiro foi anexado
+    if (!file) {
+      throw new BadRequestException('Por favor, selecione uma foto.');
+    }
 
-    // Definimos o nome fixo: user + id do utilizador
+    // 2. Validação do Tipo de Ficheiro (incluindo o teu jfif)
+    const extensoesPermitidas = /image\/(jpeg|png|webp|jfif)/i;
+    
+    if (!extensoesPermitidas.test(file.mimetype)) {
+      throw new BadRequestException(
+        `Formato inválido. Extensões permitidas: .png, .jpg, .jpeg, .webp, .jfif. O teu ficheiro: ${file.mimetype}`
+      );
+    }
+
+    // 3. Validação do Tamanho (com cálculo em MB)
+    const limiteMB = 10;
+    const limiteBytes = limiteMB * 1024 * 1024;
+
+    if (file.size > limiteBytes) {
+      // Converte o tamanho do ficheiro de Bytes para MB (com 2 casas decimais)
+      const tamanhoAtualMB = (file.size / (1024 * 1024)).toFixed(2);
+      
+      throw new BadRequestException(
+        `A foto é demasiado pesada. Tamanho máximo: ${limiteMB}MB. Tamanho enviado: ${tamanhoAtualMB}MB. Extensões permitidas: .png, .jpg, .jpeg, .webp, .jfif.`
+      );
+    }
+
+    // 4. Se passou nas validações, faz o upload!
     const nomeParaAzure = `user${id}`;
 
-    // Enviamos para o serviço com o novo nome 
     const urlGerado = await this.blobsService.uploadFicheiro(
       'fotos-pessoas', 
       file, 
       nomeParaAzure
     );
 
-    // Guardamos o link final na BD (Prisma)
     return this.utilizadorService.UploadPhoto(urlGerado, +id);
   }
 
@@ -224,9 +232,22 @@ export class UtilizadorController {
     return { message: `A foto do utilizador com ID ${id} foi removida com sucesso.` };
   }
   
-
-
-
+  
+ /**
+   * Retorna a lista de aulas/ensaios de um utilizador.
+   * A lógica no serviço deteta automaticamente se é Professor ou Aluno.
+   * @param id ID do Utilizador logado
+   */
+  @Get(':id/aulas')
+  @ApiOperation({ summary: 'Obter o horário de aulas/ensaios (Professor ou Aluno)' })
+  @ApiResponse({ status: 200, description: 'Lista de aulas devolvida com sucesso.' })
+  @ApiResponse({ status: 404, description: 'Utilizador não encontrado.' })
+  async getMinhasAulas(@Param('id') id: string) {
+    
+    // Chama a função mágica que criámos no UtilizadorService
+    return this.utilizadorService.getMinhasAulas(+id);
+    
+  }
     
   @Get('enc-educacao/:id/alunos')
   @ApiOperation({summary: 'Obter alunos de um Encarregado de Educação'})
