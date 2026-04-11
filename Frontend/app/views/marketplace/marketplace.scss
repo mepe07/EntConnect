@@ -1,0 +1,201 @@
+// Ficheiro: src/views/Marketplace/Marketplace.scss
+
+.marketplace-container {
+    padding: 2rem;
+    background-color: #f8fafc;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+    .cabecalho-marketplace {
+        text-align: center;
+        margin-bottom: 3rem;
+
+        h1 {
+            color: #0f172a;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+    }
+    // A BARRA DE PESQUISA AVANÇADA
+    .painel-filtros {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        margin-bottom: 3rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+
+        .pesquisa-principal {
+            flex-grow: 1;
+            min-width: 300px;
+
+            input {
+                width: 100%;
+                padding: 0.85rem 1.2rem;
+                border: 2px solid #e2e8f0;
+                border-radius: 8px;
+                font-size: 1rem;
+                transition: all 0.2s ease;
+
+                &:focus {
+                    outline: none;
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                }
+            }
+        }
+
+        .filtros-secundarios {
+            display: flex;
+            gap: 1rem;
+
+            select {
+                padding: 0.85rem;
+                border: 2px solid #e2e8f0;
+                border-radius: 8px;
+                background: white;
+                font-size: 0.95rem;
+                color: #475569;
+                cursor: pointer;
+
+                &:focus {
+                    outline: none;
+                    border-color: #3b82f6;
+                }
+            }
+        }
+    }
+
+    .grelha-produtos {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-bottom: 4rem;
+    }
+
+    .cartao-produto {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        border: 1px solid #f1f5f9;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        position: relative; // Para o coração flutuar aqui dentro
+
+        &:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        // O BOTÃO DE FAVORITO
+        .btn-favorito {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+            &:hover {
+                transform: scale(1.1);
+            }
+
+            &.ativo {
+                color: #ef4444; // Coração ativado
+            }
+
+            &.inativo {
+                color: #cbd5e1; // Coração desativado
+            }
+        }
+
+        .imagem-produto {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+        }
+
+        .imagem-placeholder {
+            width: 100%;
+            height: 220px;
+            background-color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+        }
+
+        .detalhes-produto {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+
+            .etiquetas {
+                display: flex;
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+                flex-wrap: wrap;
+
+                span {
+                    background: #f1f5f9;
+                    color: #475569;
+                    padding: 0.25rem 0.6rem;
+                    border-radius: 6px;
+                    font-size: 0.75rem;
+                    font-weight: bold;
+                }
+            }
+
+            .titulo {
+                font-size: 1.2rem;
+                font-weight: bold;
+                color: #0f172a;
+                margin-bottom: 0.5rem;
+            }
+
+            .disponibilidade {
+                color: #059669;
+                font-weight: bold;
+                font-size: 0.9rem;
+                margin-bottom: 1.5rem;
+                flex-grow: 1;
+            }
+
+            .btn-interesse {
+                width: 100%;
+                background-color: #2563eb;
+                color: white;
+                border: none;
+                padding: 0.85rem;
+                border-radius: 8px;
+                font-size: 1rem;
+                font-weight: bold;
+                cursor: pointer;
+                transition: 0.2s;
+
+                &:hover {
+                    background-color: #1d4ed8;
+                }
+            }
+        }
+    }
+}

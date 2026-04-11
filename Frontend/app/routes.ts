@@ -30,7 +30,10 @@ export default [
     route("relatorios/faturacao", "routes/faturacao.tsx"),
 
     // Rota solta do marketplace
-    route("marketplace", "routes/marketplace.tsx"),
+    route("marketplace/inventario", "routes/inventario.tsx"),
+
+    // Rota solta do marketplace
+    route("marketplace/anuncios", "routes/marketplace.tsx"),
 
     // Rota de testes
     route("test-components", "routes/test-components.tsx"),
