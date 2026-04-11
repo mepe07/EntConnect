@@ -1,18 +1,18 @@
 // Ficheiro: app/routes/inventario.tsx
-import { Marketplace } from "../views/marketplace/marketplace"; // Confirma só se o caminho para a tua view está certo
+import { Inventario } from "../views/inventario/inventario"; // Confirma só se o caminho para a tua view está certo
 import { ProtectedRoute } from "../components/protected-route.component";
 
-const title = "Marketplace | EntConnect";
+const title = "Inventário | EntConnect";
 
-export default function MarketplaceRoute() {
+export default function InventarioRoute() {
     return (
         <>
             <title>{title}</title>
             <meta property="og:title" content={title} />
             
             {/* O nosso segurança VIP à porta da página! */}
-            <ProtectedRoute rolesPermitidas={['Coordenador', 'Direcao', 'Professor', 'Enc_Educacao']}>
-                <Marketplace />
+            <ProtectedRoute rolesPermitidas={['Coordenador', 'Direcao']}>
+                <Inventario />
             </ProtectedRoute>
         </>
     );

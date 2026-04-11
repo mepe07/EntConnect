@@ -30,7 +30,10 @@ export default [
     route("relatorios/faturacao", "routes/faturacao.tsx"),
 
     // Rota solta do marketplace
-    route("marketplace", "routes/marketplace.tsx"),
+    route("marketplace/inventario", "routes/inventario.tsx"),
+
+    // Rota solta do marketplace
+    route("marketplace/anuncios", "routes/marketplace.tsx"),
 
     // Rota de testes
     route("test-components", "routes/test-components.tsx"),
@@ -41,13 +44,11 @@ export default [
     // Rota das estatísticas
     route("relatorios/estatisticas", "routes/estatisticas.tsx"),
 
+    // Rota da oferta de coaching
+    // Rota da oferta de coaching
+    route("/coaching/oferta", "routes/ofertaCoaching.tsx"),
 
-    // ==========================================
-    // Enc. Educacao
-    // ==========================================
-    route("/coaching/oferta", "routes/ofertaCoaching.tsx")
-
-
-
+    // Rota do perfil (para todos os utilizadores)
+    route("conta", "routes/perfil.tsx")
 
 ] satisfies RouteConfig;

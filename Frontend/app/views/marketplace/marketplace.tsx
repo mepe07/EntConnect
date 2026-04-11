@@ -1,156 +1,174 @@
-import React, { useState } from 'react';
-import { InputComponent } from "~/components/input/input.component";
-import { SelectBoxComponent } from "~/components/selectbox/selectbox.component";
+// Ficheiro: src/views/Marketplace/Marketplace.tsx
+
+import React, { useEffect, useState } from 'react';
+import { marketplaceService } from '../../services/artigo.service';
+import type { LoteMarketplace } from '../../models/interfaces/artigo.interface';
 import './marketplace.scss';
 
 export function Marketplace() {
-    // ESTADOS PARA OS FILTROS
-    const [termoPesquisa, setTermoPesquisa] = useState("");
-    const [filtroCategoria, setFiltroCategoria] = useState("todas");
+    const [anuncios, setAnuncios] = useState<LoteMarketplace[]>([]);
+    const [loading, setLoading] = useState(true);
+    
+    // Estados da Pesquisa Avançada
+    const [termoPesquisa, setTermoPesquisa] = useState('');
+    const [filtroTamanho, setFiltroTamanho] = useState('');
+    const [filtroEstado, setFiltroEstado] = useState('');
 
-    // LÓGICA: A nossa base de dados fictícia do OLX Escolar
-    const anuncios = [
-        {
-            id: 1,
-            titulo: "Tutu de Ballet Clássico (Branco)",
-            categoria: "danca",
-            tamanho: "8 Anos",
-            estado: "Como Novo",
-            publicadoPor: "Sara Matos (EE)",
-            contacto: "sara.matos@exemplo.pt",
-            icone: "fa-solid fa-person-dress"
-        },
-        {
-            id: 2,
-            titulo: "Farda Oficial - Casaco de Inverno",
-            categoria: "fardas",
-            tamanho: "12 Anos",
-            estado: "Usado - Bom",
-            publicadoPor: "Rui Ferreira (EE)",
-            contacto: "rui.ferreira@exemplo.pt",
-            icone: "fa-solid fa-shirt"
-        },
-        {
-            id: 3,
-            titulo: "Sapatilhas de Meia Ponta",
-            categoria: "calcado",
-            tamanho: "Tam. 34",
-            estado: "Novo com Etiqueta",
-            publicadoPor: "Profª. Sofia (Docente)",
-            contacto: "sofia.docente@entartes.pt",
-            icone: "fa-solid fa-shoe-prints"
-        },
-        {
-            id: 4,
-            titulo: "T-shirt de Educação Física",
-            categoria: "fardas",
-            tamanho: "10 Anos",
-            estado: "Com marcas de uso",
-            publicadoPor: "Carlos Silva (EE)",
-            contacto: "carlos.silva@exemplo.pt",
-            icone: "fa-solid fa-tshirt"
+    // Estado dos Favoritos (Controla a cor do coração na interface em tempo real)
+    const [favoritos, setFavoritos] = useState<number[]>([]);
+
+    useEffect(() => {
+        carregarMarketplace();
+    }, []);
+
+    const carregarMarketplace = async () => {
+        try {
+            setLoading(true);
+            const dados = await marketplaceService.listarMarketplace();
+            setAnuncios(dados);
+        } catch (error: any) {
+            alert('Erro ao carregar o marketplace: ' + error.message);
+        } finally {
+            setLoading(false);
         }
-    ];
+    };
 
-    // LÓGICA DE FILTRAGEM MULTI-CRITÉRIO
-    const anunciosFiltrados = anuncios.filter((anuncio) => {
-        const passaPesquisa = anuncio.titulo.toLowerCase().includes(termoPesquisa.toLowerCase());
-        const passaCategoria = filtroCategoria === "todas" ? true : anuncio.categoria === filtroCategoria;
-        return passaPesquisa && passaCategoria;
+    // FUNÇÃO MAGNÉTICA REAL: Alternar Favoritos na Base de Dados
+    const toggleFavorito = async (idStock: number) => {
+        try {
+            // Vai ao SQL Server via NestJS
+            const resposta = await marketplaceService.alternarFavorito(idStock);
+            
+            // Atualiza o ecrã instantaneamente para o utilizador não ficar à espera
+            if (resposta.status === 'adicionado') {
+                setFavoritos(prev => [...prev, idStock]);
+            } else {
+                setFavoritos(prev => prev.filter(id => id !== idStock));
+            }
+        } catch (error: any) {
+            alert('Erro ao guardar favorito: ' + error.message);
+        }
+    };
+
+    // A MÁQUINA DE NEGÓCIOS REAL: Registar Intenção de "Compra/Requisição"
+    const handleInteresse = async (nomeArtigo: string, idStock: number) => {
+        const confirmacao = window.confirm(`Queres mesmo enviar um pedido à Direção para o artigo: ${nomeArtigo}?`);
+        
+        if (!confirmacao) return;
+
+        try {
+            // Envia a intenção. A quantidade física no armazém NÃO é bloqueada aqui.
+            await marketplaceService.registarInteresse(idStock, "Estou interessado neste artigo.");
+            alert('✅ Pedido registado com sucesso! A Coordenação vai analisar.');
+        } catch (error: any) {
+            alert('❌ Erro: ' + error.message);
+        }
+    };
+
+    // ==========================================
+    // LÓGICA DE FILTRAGEM AVANÇADA
+    // ==========================================
+    const anunciosFiltrados = anuncios.filter(anuncio => {
+        const matchTexto = anuncio.Artigo.Nome.toLowerCase().includes(termoPesquisa.toLowerCase());
+        const matchTamanho = filtroTamanho ? anuncio.Tamanho?.Descricao === filtroTamanho : true;
+        const matchEstado = filtroEstado ? anuncio.Estado?.Descricao === filtroEstado : true;
+        
+        return matchTexto && matchTamanho && matchEstado;
     });
+
+    // Extrair opções únicas para os Dropdowns (Sem repetir valores)
+    const tamanhosDisponiveis = Array.from(new Set(anuncios.map(a => a.Tamanho?.Descricao).filter(Boolean)));
+    const estadosDisponiveis = Array.from(new Set(anuncios.map(a => a.Estado?.Descricao).filter(Boolean)));
 
     return (
         <div className="marketplace-container">
-      
-            {/* 1. HERO HEADER: Apresentação e Botão de Ação */}
-            <div className="hero-header">
-                <div className="hero-content">
-                    <div className="icone-gigante"><i className="fa-solid fa-hand-holding-heart"></i></div>
-                    <div className="textos-hero">
-                        <h1>Mercado de Partilha</h1>
-                        <p>Dá uma nova vida às fardas e equipamentos. Entra em contacto direto com quem publicou.</p>
-                    </div>
-                </div>
-                <button className="btn-publicar">
-                    <i className="fa-solid fa-plus"></i> Publicar Anúncio
-                </button>
+            <div className="cabecalho-marketplace">
+                <h1>🏪 Marketplace Escolar</h1>
+                <p>O teu portal de equipamento, fardas e material escolar.</p>
             </div>
 
-            {/* 2. TOOLBAR: Os nossos filtros reaproveitados */}
-            <div className="toolbar">
-                <div className="toolbar-filtros">
-                    <div className="filtro-pesquisa">
-                        <InputComponent 
-                            id="pesquisa-anuncio" 
-                            placeholder="🔍 Procurar por peça (ex: Casaco)..." 
-                            value={termoPesquisa} 
-                            onChange={(e) => setTermoPesquisa(e.target.value)} 
-                        />
-                    </div>
-                    <div className="filtro-categoria">
-                        <SelectBoxComponent
-                            id="filtro-cat"
-                            selectedOption={filtroCategoria}
-                            onChange={(e) => setFiltroCategoria(e.target.value)}
-                            options={[
-                                { value: "todas", label: "Todas as Categorias" },
-                                { value: "fardas", label: "👕 Fardas Oficiais" },
-                                { value: "danca", label: "🩰 Roupas de Dança" },
-                                { value: "calcado", label: "👟 Calçado" }
-                            ]}
-                        />
-                    </div>
+            {/* PAINEL DE FILTROS AVANÇADOS */}
+            <div className="painel-filtros">
+                <div className="pesquisa-principal">
+                    <input 
+                        type="text" 
+                        placeholder="🔍 O que procuras? (Ex: T-Shirt, Caderno...)" 
+                        value={termoPesquisa}
+                        onChange={(e) => setTermoPesquisa(e.target.value)}
+                    />
+                </div>
+                <div className="filtros-secundarios">
+                    <select value={filtroTamanho} onChange={(e) => setFiltroTamanho(e.target.value)}>
+                        <option value="">Qualquer Tamanho</option>
+                        {tamanhosDisponiveis.map(t => <option key={t as string} value={t as string}>{t}</option>)}
+                    </select>
+                    
+                    <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
+                        <option value="">Qualquer Estado</option>
+                        {estadosDisponiveis.map(e => <option key={e as string} value={e as string}>{e}</option>)}
+                    </select>
                 </div>
             </div>
 
-            {/* 3. A MONTRA: Grelha de Classificados */}
-            {anunciosFiltrados.length === 0 ? (
-                <div className="empty-state">
-                    <div className="empty-icon">🧥</div>
-                    <h3>Guarda-roupa vazio!</h3>
-                    <p>Nenhum anúncio encontrado para esta pesquisa.</p>
-                </div>
+            {loading ? (
+                <p style={{ textAlign: 'center', color: '#64748b' }}>A organizar as prateleiras...</p>
             ) : (
-                <div className="produtos-grid">
-                    {anunciosFiltrados.map((anuncio) => (
-                        <div key={anuncio.id} className="cartao-anuncio">
-              
-                            {/* Espaço reservado para a fotografia da peça (usamos um ícone gigante por agora) */}
-                            <div className="foto-placeholder">
-                                <i className={anuncio.icone}></i>
-                            </div>
-
-                            <div className="anuncio-corpo">
-                                <h2>{anuncio.titulo}</h2>
-                
-                                {/* Tags de Informação (Tamanho e Estado) */}
-                                <div className="tags-info">
-                                    <span className="tag tamanho"><i className="fa-solid fa-ruler"></i> {anuncio.tamanho}</span>
-                                    <span className="tag estado"><i className="fa-solid fa-tag"></i> {anuncio.estado}</span>
-                                </div>
-
-                                {/* Informação do Anunciante */}
-                                <div className="info-vendedor">
-                                    <div className="avatar-pequeno"><i className="fa-solid fa-user"></i></div>
-                                    <div className="textos-vendedor">
-                                        <span className="label">Publicado por</span>
-                                        <strong>{anuncio.publicadoPor}</strong>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="anuncio-rodape">
-                                {/* LÓGICA SÉNIOR: Usar o href="mailto:" para abrir o cliente de email do utilizador! */}
-                                <a href={`mailto:${anuncio.contacto}?subject=Interesse no anúncio: ${anuncio.titulo}`} className="btn-contactar">
-                                    <i className="fa-regular fa-envelope"></i> Contactar
-                                </a>
-                            </div>
-
-                        </div>
-                    ))}
+                <div className="grelha-produtos">
+                    {anunciosFiltrados.length === 0 ? (
+                        <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#64748b', fontSize: '1.2rem' }}>
+                            Ups! Não encontrámos nada com esse nome. 🕵️‍♂️
+                        </p>
+                    ) : (
+                        anunciosFiltrados.map((lote) => (
+                            <CartaoMarketplace 
+                                key={lote.ID_Stock} 
+                                lote={lote} 
+                                isFavorito={favoritos.includes(lote.ID_Stock)} 
+                                onToggleFavorito={toggleFavorito} 
+                                onInteresse={handleInteresse} 
+                            />
+                        ))
+                    )}
                 </div>
             )}
+        </div>
+    );
+}
 
+// ==========================================
+// COMPONENTE AUXILIAR: O CARTÃO 
+// ==========================================
+function CartaoMarketplace({ lote, isFavorito, onToggleFavorito, onInteresse }: any) {
+    return (
+        <div className="cartao-produto">
+            {/* O Botão de Favorito no topo direito da imagem */}
+            <button 
+                className={`btn-favorito ${isFavorito ? 'ativo' : 'inativo'}`}
+                onClick={() => onToggleFavorito(lote.ID_Stock)}
+                title={isFavorito ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
+            >
+                {isFavorito ? '❤️' : '🤍'}
+            </button>
+
+            {lote.Artigo.Foto ? (
+                <img src={lote.Artigo.Foto} alt={lote.Artigo.Nome} className="imagem-produto" />
+            ) : (
+                <div className="imagem-placeholder">📦</div>
+            )}
+
+            <div className="detalhes-produto">
+                <div className="etiquetas">
+                    {lote.Estado?.Descricao && <span>{lote.Estado.Descricao}</span>}
+                    {lote.Tamanho?.Descricao && <span>{lote.Tamanho.Descricao}</span>}
+                </div>
+                <div className="titulo">{lote.Artigo.Nome}</div>
+                <div className="disponibilidade">
+                    ⚡ {lote.Quantidade_Venda} {lote.Quantidade_Venda === 1 ? 'unidade disponível' : 'unidades disponíveis'}
+                </div>
+                <button className="btn-interesse" onClick={() => onInteresse(lote.Artigo.Nome, lote.ID_Stock)}>
+                    Tenho Interesse
+                </button>
+            </div>
         </div>
     );
 } 

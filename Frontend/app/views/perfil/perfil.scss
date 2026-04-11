@@ -1,0 +1,197 @@
+.perfil-container {
+    display: flex;
+    min-height: calc(100vh - 70px);
+    background-color: #f1f5f9;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+
+    .perfil-sidebar {
+        width: 260px;
+        background: white;
+        padding: 2rem 1.5rem;
+        border-right: 1px solid #e2e8f0;
+
+        h2 {
+            font-size: 1.4rem;
+            color: #0f172a;
+            margin-bottom: 2rem;
+            padding-left: 0.5rem;
+        }
+
+        nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+
+            button {
+                background: none;
+                border: none;
+                text-align: left;
+                padding: 0.8rem 1rem;
+                font-size: 1rem;
+                color: #64748b;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: 0.2s;
+                font-weight: 500;
+
+                &:hover {
+                    background: #f8fafc;
+                    color: #0f172a;
+                }
+
+                &.ativo {
+                    background: #eff6ff;
+                    color: #2563eb;
+                    font-weight: 600;
+                }
+            }
+        }
+    }
+
+    .perfil-conteudo {
+        flex: 1;
+        padding: 2.5rem;
+
+        .mensagem-centro {
+            text-align: center;
+            color: #64748b;
+            margin-top: 4rem;
+        }
+
+        .cartao-branco {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            min-height: 400px;
+
+            h3 {
+                font-size: 1.5rem;
+                color: #1e293b;
+                margin-bottom: 1.5rem;
+            }
+
+            .texto-vazio {
+                color: #94a3b8;
+                text-align: center;
+                margin-top: 3rem;
+            }
+        }
+    }
+
+    .titulo-com-acao {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+
+        h3 {
+            margin-bottom: 0;
+        }
+    }
+
+    .tabela-custom {
+        width: 100%;
+        border-collapse: collapse;
+
+        th {
+            text-align: left;
+            padding: 1rem;
+            color: #64748b;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+    }
+
+    .etiqueta {
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+
+        &.amarela {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        &.verde {
+            background: #dcfce3;
+            color: #166534;
+        }
+
+        &.vermelha {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    }
+
+    .lista-anuncios-perfil {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+
+        .item-anuncio {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            transition: 0.2s;
+
+            &:hover {
+                border-color: #2563eb;
+                background: #f8faff;
+            }
+
+            .info {
+                display: flex;
+                flex-direction: column;
+
+                strong {
+                    font-size: 1.1rem;
+                    color: #0f172a;
+                }
+
+                span {
+                    font-size: 0.9rem;
+                    color: #64748b;
+                }
+            }
+        }
+    }
+
+    .btn-primario {
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+
+        &:hover {
+            background: #1d4ed8;
+        }
+    }
+
+    .btn-secundario {
+        background: white;
+        border: 1.5px solid #e2e8f0;
+        color: #475569;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+
+        &:hover {
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+    }
+}
