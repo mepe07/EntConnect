@@ -22,6 +22,7 @@ export interface Disponibilidade {
     modalidade: string;
     alteradoPor: string;
     estado: string;
+    maxAlunos: number;
 }
 
 /**
@@ -50,7 +51,7 @@ export default function ApproveAvailability() {
     const [modalAberto, setModalAberto] = useState<boolean>(false);
     const [linhaSelecionada, setLinhaSelecionada] = useState<any>(null);
     const [estudioSelecionado, setEstudioSelecionado] = useState<string>('');
-    const [valorHora, setValorHora] = useState<string>('');
+    const [valorPorAluno, setValorPorAluno] = useState<string>('');
 
     /**
      * Obtém a lista de disponibilidades através do serviço correspondente.
@@ -115,7 +116,7 @@ export default function ApproveAvailability() {
     function abrirModalAprovacao(row: any) {
         setLinhaSelecionada(row);
         setEstudioSelecionado('');
-        setValorHora('');
+        setValorPorAluno('');
         setModalAberto(true);
     }
 
@@ -131,12 +132,12 @@ export default function ApproveAvailability() {
      * Valida as entradas do modal e processa a aprovação da disponibilidade.
      */
     async function confirmarAprovacao() {
-        if (!estudioSelecionado || !valorHora) {
-            alert('Por favor, selecione um estúdio e insira o valor por hora.');
+        if (!estudioSelecionado || !valorPorAluno) {
+            alert('Por favor, selecione um estúdio e insira o valor por aluno.');
             return;
         }
 
-        await handleAtualizarEstado(linhaSelecionada, 1, Number(estudioSelecionado), Number(valorHora));
+        await handleAtualizarEstado(linhaSelecionada, 1, Number(estudioSelecionado), Number(valorPorAluno));
         fecharModal();
     }
 
@@ -145,10 +146,10 @@ export default function ApproveAvailability() {
      * @param row - Os dados originais da disponibilidade.
      * @param novoEstado - ID do novo estado (ex: 1 para Aprovado, 3 para Rejeitado).
      * @param idEstudio - (Opcional) ID do estúdio atribuído na aprovação.
-     * @param valorHoraNum - (Opcional) Valor por hora definido na aprovação.
+     * @param valorPorAluno - (Opcional) Valor por aluno definido na aprovação.
      */
-    async function handleAtualizarEstado(row: any, novoEstado: number, idEstudio?: number, valorHoraNum?: number) {
-        const alteradoPor = userInfo.sub || userInfo.idUtilizador; 
+    async function handleAtualizarEstado(row: any, novoEstado: number, idEstudio?: number, valorPorAluno?: number) {
+        const alteradoPor = userInfo.idUtilizador;         
         
         const [horaInicioStr, horaFimStr] = row.horario.split(' - '); 
         const [dia, mes, ano] = row.data.split('/'); 
@@ -170,7 +171,7 @@ export default function ApproveAvailability() {
                 duracaoMinutos,
                 alteradoPor,
                 idEstudio, 
-                valorHoraNum
+                valorPorAluno
             );
             
             fetchDisponibilidades(); 
@@ -196,6 +197,7 @@ export default function ApproveAvailability() {
                         { key: "data", value: "Data", type: TableColumnTypesEnum.Default },
                         { key: "horario", value: "Horário", type: TableColumnTypesEnum.Default },
                         { key: "modalidade", value: "Modalidade", type: TableColumnTypesEnum.Default },
+                        { key: "maxAlunos", value: "Máx. Alunos", type: TableColumnTypesEnum.Default },
                         { key: "alteradoPor", value: "Alterado Por", type: TableColumnTypesEnum.Default },
                         { key: "estadoChip", value: "Estado", type: TableColumnTypesEnum.Chip }
                     ],
@@ -278,13 +280,13 @@ export default function ApproveAvailability() {
                             </div>
 
                             <div className="form-group">
-                                <label>Valor por Hora (€)</label>
+                                <label>Valor por aluno (€)</label>
                                 <input 
                                     type="number"
                                     style={{ width: '100%', padding: '8px' }}
                                     placeholder="Ex: 25.50"
-                                    value={valorHora}
-                                    onChange={(e) => setValorHora(e.target.value)}
+                                    value={valorPorAluno}
+                                    onChange={(e) => setValorPorAluno(e.target.value)}
                                 />
                             </div>
 
@@ -295,7 +297,7 @@ export default function ApproveAvailability() {
                                 <button
                                     className="btn-confirmar"
                                     onClick={confirmarAprovacao}
-                                    disabled={!estudioSelecionado || !valorHora}
+                                    disabled={!estudioSelecionado || !valorPorAluno}
                                 >
                                     Confirmar Aprovação
                                 </button>
