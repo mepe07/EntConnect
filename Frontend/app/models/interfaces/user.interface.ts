@@ -7,4 +7,5 @@ export interface User {
   contacto: string;
   nif: string;
   ativo: boolean;
+  idPessoa: number;
 }

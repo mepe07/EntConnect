@@ -1,0 +1,356 @@
+@use "../../../assets/styles/variables/colors";
+
+/* =======================================================
+   ESTRUTURA PRINCIPAL
+   ======================================================= */
+.crud-container {
+	// Dá um respiro às margens internas
+	padding: 40px;
+	// Impede que a página se estique infinitamente em ecrãs Ultra-Wide
+	max-width: 1200px;
+	// O '0 auto' centra a caixa no meio do ecrã
+	margin: 0 auto;
+	// Animação suave quando a página é carregada
+	animation: fadeEntrada 0.4s ease-out;
+	/* =======================================================
+     CABEÇALHO DA PÁGINA (Título e Botão Adicionar)
+     ======================================================= */
+	.crud-header {
+		display: flex;
+		// Atira o título para a esquerda e o botão para a direita
+		justify-content: space-between;
+		// Alinha os elementos verticalmente ao centro
+		align-items: center;
+		margin-bottom: 24px;
+
+		.textos {
+			h1 {
+				font-size: 28px;
+				color: colors.$gray-8;
+				margin-bottom: 4px;
+				font-weight: 700;
+			}
+
+			p {
+				color: colors.$gray-7;
+				margin: 0;
+				font-size: 15px;
+			}
+		}
+		// Botão Principal (Call to Action)
+		.btn-principal {
+			padding: 12px 24px;
+			background-color: colors.$theme-100;
+			color: #fff;
+			border: none;
+			border-radius: 8px;
+			font-size: 15px;
+			font-weight: 600;
+			cursor: pointer;
+			display: flex;
+			gap: 8px;
+			align-items: center;
+			transition: all 0.2s ease;
+			// Sombra ligeira para dar um efeito 3D
+			box-shadow: 0 4px 15px rgba(colors.$theme-100, 0.3);
+			// Efeito quando o rato passa por cima (Hover)
+			&:hover {
+				background-color: darken(colors.$theme-100, 8%);
+				// Levanta ligeiramente o botão
+				transform: translateY(-2px);
+			}
+		}
+	}
+	/* =======================================================
+     BARRA DE FERRAMENTAS (A zona da pesquisa)
+     ======================================================= */
+	.crud-toolbar {
+		background-color: #fff;
+		padding: 16px 24px;
+		border: 1px solid colors.$gray-3;
+		border-radius: 8px;
+		margin-bottom: 24px;
+		box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+	}
+	/* =======================================================
+     TABELA DE DADOS
+     ======================================================= */
+	.tabela-wrapper {
+		background-color: #fff;
+		border: 1px solid colors.$gray-3;
+		border-radius: 8px;
+		// O overflow hidden impede que as quinas da tabela fiquem fora das bordas arredondadas do wrapper
+		overflow: hidden;
+		box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+	}
+
+	.tabela-crud {
+		width: 100%; // Tabela ocupa a largura total da caixa
+		border-collapse: collapse; // Tira os espaços em branco entre as células nativas do HTML
+		// Cabeçalho das Colunas
+		th {
+			background-color: #fafafa;
+			padding: 16px 24px;
+			text-align: left;
+			font-size: 13px;
+			text-transform: uppercase;
+			color: colors.$gray-7;
+			border-bottom: 2px solid colors.$gray-3;
+			font-weight: 700;
+		}
+		// Células de Dados
+		td {
+			padding: 16px 24px;
+			font-size: 15px;
+			color: colors.$gray-8;
+			border-bottom: 1px solid colors.$gray-3;
+			vertical-align: middle;
+
+			.text-gray {
+				color: colors.$gray-5;
+				margin-right: 6px;
+			}
+		}
+		// Tira a linha do fundo da última célula para ficar mais elegante
+		tr:last-child td {
+			border-bottom: none;
+		}
+		// A linha fica ligeiramente cinzenta quando passas o rato (Foco Visual)
+		tr:hover {
+			background-color: #fcfcfc;
+		}
+
+		.id-coluna {
+			color: colors.$gray-5;
+			font-size: 13px;
+			font-weight: 600;
+			width: 60px;
+		}
+		/* Etiquetas coloridas (Tags) */
+		.tag-estado {
+			padding: 6px 12px;
+			border-radius: 20px;
+			font-size: 12px;
+			font-weight: 700;
+			// Classes condicionadas pela lógica do React
+			&.sucesso {
+				background-color: #dcfce7;
+				color: #16a34a;
+			}
+			// Fundo verde claro, texto verde forte
+			&.aviso {
+				background-color: #fee2e2;
+				color: #dc2626;
+			}
+			// Fundo vermelho claro, texto vermelho
+		}
+		/* Botões de Apagar e Editar (Linha a Linha) */
+		.acoes-coluna {
+			text-align: right;
+			display: flex;
+			justify-content: flex-end;
+			gap: 8px; // Separa os botões uns dos outros
+
+			.btn-icone {
+				width: 36px;
+				height: 36px;
+				border-radius: 6px;
+				border: 1px solid transparent;
+				background: transparent;
+				cursor: pointer;
+				transition: all 0.2s ease;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+
+				&.editar {
+					color: colors.$theme-100;
+
+					&:hover {
+						background-color: rgba(colors.$theme-100, 0.1);
+						border-color: rgba(colors.$theme-100, 0.2);
+					}
+				}
+
+				&.apagar {
+					color: #dc2626;
+
+					&:hover {
+						background-color: #fee2e2;
+						border-color: #fca5a5;
+					}
+				}
+			}
+		}
+		// Estilo para quando a pesquisa não encontra nada
+		.tabela-vazia {
+			text-align: center;
+			padding: 40px;
+			color: colors.$gray-4;
+			font-style: italic;
+		}
+	}
+}
+
+/* =======================================================
+   O MODAL FLUTUANTE (POP-UP)
+   ======================================================= */
+.modal-overlay {
+	// Posição fixa prende a camada preta ao ecrã mesmo que faças scroll!
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	// Cor preta com 40% de transparência
+	background-color: rgba(0, 0, 0, 0.4);
+	// Borra tudo o que estiver por trás da camada preta (efeito vidro fosco)
+	backdrop-filter: blur(4px);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	// Garante que o modal fica por cima da navbar (que tem z-index mais baixos)
+	z-index: 9999;
+	animation: fadeIn 0.2s ease-out;
+
+	.modal-content {
+		background-color: #fff;
+		width: 100%;
+		// A caixa do formulário nunca passa de 600px de largura
+		max-width: 600px;
+		border-radius: 12px;
+		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+		// Faz o modal entrar "deslizando" de baixo para cima
+		animation: slideUp 0.3s ease-out;
+
+		.modal-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 24px;
+			border-bottom: 1px solid colors.$gray-3;
+
+			h2 {
+				margin: 0;
+				font-size: 20px;
+				color: colors.$gray-8;
+				font-weight: 700;
+			}
+
+			.btn-fechar {
+				background: transparent;
+				border: none;
+				font-size: 20px;
+				color: colors.$gray-5;
+				cursor: pointer;
+				transition: color 0.2s;
+
+				&:hover {
+					color: colors.$error-100;
+				}
+			}
+		}
+
+		.modal-body {
+			padding: 24px;
+			display: flex;
+			flex-direction: column;
+			gap: 20px;
+			// Grupo de Formulário (Label em cima, Input em baixo)
+			.form-group {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+				flex: 1;
+
+				label {
+					font-size: 13px;
+					font-weight: 600;
+					color: colors.$gray-7;
+					text-transform: uppercase;
+				}
+			}
+			// Linha de Formulário (Mete os Inputs lado a lado)
+			.form-row {
+				display: flex;
+				gap: 20px;
+			}
+		}
+
+		.modal-footer {
+			padding: 20px 24px;
+			background-color: #fafafa;
+			border-top: 1px solid colors.$gray-3;
+			border-radius: 0 0 12px 12px;
+			display: flex;
+			justify-content: flex-end;
+			gap: 12px;
+
+			button {
+				padding: 10px 20px;
+				border-radius: 8px;
+				font-weight: 600;
+				cursor: pointer;
+				transition: all 0.2s;
+
+				&.btn-secundario {
+					background: #fff;
+					border: 1px solid colors.$gray-4;
+					color: colors.$gray-7;
+
+					&:hover {
+						background: colors.$gray-2;
+					}
+				}
+
+				&.btn-primario {
+					background: colors.$theme-100;
+					border: 1px solid colors.$theme-100;
+					color: #fff;
+
+					&:hover {
+						background: darken(colors.$theme-100, 10%);
+						transform: translateY(-1px);
+					}
+				}
+			}
+		}
+	}
+}
+
+/* =======================================================
+   ANIMAÇÕES REUTILIZÁVEIS
+   ======================================================= */
+@keyframes fadeEntrada {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes slideUp {
+	from {
+		opacity: 0;
+		transform: translateY(30px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}

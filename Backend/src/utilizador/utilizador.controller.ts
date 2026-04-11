@@ -1,6 +1,6 @@
 import { 
   Controller, Get, Post, Put, Body, Patch, Param, Delete, 
-  UseInterceptors, UploadedFile, BadRequestException 
+  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe
 } from '@nestjs/common'; 
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -13,12 +13,15 @@ import {
 import { UtilizadorService } from './utilizador.service';
 import { DispobilidadeService } from './professor/Disponibilidade.service';
 import { UtilizadorImportService } from './ImportUsers/utilizador-import.service';
-import { BlobsService } from '../Infraestrutura/Blobs/blobs.service'; // <--- Não esqueças este!
+import { BlobsService } from '../Infraestrutura/Blobs/blobs.service'; 
 
 import { CreateUtilizadorDto } from './dto/create-utilizador.dto';
 import { UpdateUtilizadorDto } from './dto/update-utilizador.dto';
 import { CreateDisponibilidadeDto } from './dto/create-disponibilidade.dto';
 import { UpdateDisponibilidadeDto } from './dto/update-disponibilidade.dto';
+import { ProfessorService } from './professor/professor.service';
+import { CreateProfessorDto } from './dto/create-professor.dto';
+import { UpdateProfessorDto } from './dto/update-professor.dto';
 
 // Tipagem do Multer (Se não tiver o @types/multer instalado, mas ajuda o TS)
 import 'multer';
@@ -183,12 +186,26 @@ export class UtilizadorController {
     // Como estamos apenas a apagar, devolver uma mensagem simples fica muito elegante no frontend
     return { message: `A foto do utilizador com ID ${id} foi removida com sucesso.` };
   }
+ 
 
+  @Get('enc-educacao/:id/alunos')
+  @ApiOperation({summary: 'Obter alunos de um Encarregado de Educação'})
+  @ApiParam({ name: 'id', description: 'ID do Encarregado de Educação' })
+  async getAlunosByEE(@Param('id') id: string) {
+    return this.utilizadorService.getAlunosByEE(+id);
+  }
 
+  /**
+   * Obtém a lista de disponibilidades dos professores.
+   * @returns A lista de disponibilidades dos professores.
+   */
+  @Get('professor/disponibilidade')
+  @ApiOperation({summary: 'Obter disponibilidades dos professores'})
+  @ApiResponse({status:200})
+  async getDisponibilidades() {
+    return this.dispobilidadeService.getAvailabilities();
+  }
 
-  //#region Professor
-
-  
   @Post('professor/:id/adicionar-disponibilidade')
   @ApiOperation({summary: 'Criar disponibilidade para um professor'})
   @ApiParam({ 
@@ -218,6 +235,46 @@ export class UtilizadorController {
     @Body() updateDisponibilidadeDto: UpdateDisponibilidadeDto) {
       return this.dispobilidadeService.updateAvailability(+idDisponibilidade, updateDisponibilidadeDto);
     } 
+  }
 
-  //#endregion
+    // CONTROLER PARA GERIR PROFESSORES, EX: CRIAR UM PROFESSOR
+
+  @ApiTags('Professores')
+  @Controller('professor')
+  export class ProfessorController {
+  
+  constructor(private readonly professorService: ProfessorService) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Criar um novo professor (e a respetiva pessoa)' })
+  @ApiResponse({ status: 201, description: 'Professor criado com sucesso.' })
+  @ApiResponse({ status: 409, description: 'Conflito: NIF ou Email já existem.' })
+  create(@Body() createProfessorDto: CreateProfessorDto) {
+    return this.professorService.create(createProfessorDto);
+  }
+
+  // ENDPOINT PARA LISTAR (GET)
+  @Get()
+  @ApiOperation({ summary: 'Listar todos os professores com os seus dados pessoais' })
+  findAll() {
+    return this.professorService.findAll();
+  }
+
+  // ENDPOINT PARA EDITAR (PATCH)
+  @Patch(':id')
+  @ApiOperation({ summary: 'Editar os dados de um professor existente' })
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateProfessorDto: UpdateProfessorDto
+  ) {
+    return this.professorService.update(id, updateProfessorDto);
+  }
+
+  // ENDPOINT PARA REMOVER (DELETE)
+  @Delete(':id')
+  @ApiOperation({ summary: 'Remover um professor (e os seus dados pessoais)' })
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.professorService.remove(id);
+  }
 }
+

@@ -1,9 +1,10 @@
-// Ficheiro: app/views/relatorios/faturacao/faturacao.scss
+// Ficheiro: app/views/relatorios/historico/historico.scss
 
-.pagina-faturacao {
+.pagina-historico {
     padding: 32px;
-    background-color: #f1f5f9; // Um fundo ligeiramente cinza para os cards brancos saltarem
+    background-color: #f1f5f9;
     min-height: 100vh;
+    animation: fadeIn 0.4s ease-in-out;
 
     h1 {
         margin-bottom: 32px;
@@ -12,7 +13,7 @@
         color: #0f172a;
         letter-spacing: -1px;
     }
-    /* Secção de Filtros Superior */
+    /* Secção de Filtros Superior (IGUAL À FATURAÇÃO) */
     .filtros-iniciais {
         display: flex;
         gap: 24px;
@@ -25,14 +26,21 @@
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 
         .grupo-data {
-            position: relative; // Essencial para o ícone novo não "fugir"
+            position: relative;
             display: flex;
             flex-direction: column;
             gap: 10px;
 
+            label {
+                font-size: 0.9rem;
+                font-weight: 700;
+                color: #64748b;
+                text-transform: uppercase;
+            }
+
             input[type="date"] {
-                appearance: none; // Remove estilos base de alguns browsers
-                padding: 14px 45px 14px 20px; // Aumentamos o espaço à direita para o ícone
+                appearance: none;
+                padding: 14px 45px 14px 20px;
                 border: 2px solid #f1f5f9;
                 border-radius: 10px;
                 background-color: #f8fafc;
@@ -42,7 +50,7 @@
                 width: 100%;
                 outline: none;
                 cursor: pointer;
-                // O SEGREDO: Esconder o ícone nativo mas mantê-lo clicável
+
                 &::-webkit-calendar-picker-indicator {
                     position: absolute;
                     right: -7.5px;
@@ -53,9 +61,9 @@
                     height: 24px;
                     margin: 15px;
                     padding: 5px;
-                    opacity: 0; // Fica invisível
+                    opacity: 0;
                     cursor: pointer;
-                    z-index: 0; // Fica por cima para apanhar o clique
+                    z-index: 0;
                 }
 
                 &:focus {
@@ -63,30 +71,34 @@
                     background-color: #ffffff;
                 }
             }
-            // O TEU NOVO ÍCONE (Usando FontAwesome)
+
             &::after {
-                content: '\f073'; // Código Unicode do calendário no FontAwesome
-                font-family: 'Font Awesome 6 Free'; // Verifica se é esta a versão da tua app
+                content: '\f073';
+                font-family: 'Font Awesome 6 Free';
                 font-weight: 900;
                 position: absolute;
                 right: 18px;
-                bottom: 16px; // Ajusta conforme a altura do teu input
-                color: gray; // AQUI escolhes a cor que quiseres!
+                bottom: 16px;
+                color: gray;
                 font-size: 15px;
-                pointer-events: none; // O clique "atravessa" o ícone e bate no input
+                pointer-events: none;
                 z-index: 1;
             }
         }
     }
-    /* Layout Master-Detail */
+    /* Layout Master-Detail (MEDIDAS EXATAS DA FATURAÇÃO) */
     .layout-master-detail {
         display: flex;
         gap: 32px;
         align-items: flex-start;
 
         .painel-esquerdo {
-            width: 400px; // Mais largo para aguentar os cards "fortes"
+            width: 400px; // Igual à Faturação
             flex-shrink: 0;
+            background-color: transparent; // Removemos o fundo branco daqui para os cards saltarem
+            // UX de Sénior: Mantém-se fixo a fazer scroll
+            position: sticky;
+            top: 32px;
 
             h3 {
                 font-size: 18px;
@@ -101,16 +113,33 @@
             .lista-cards {
                 display: flex;
                 flex-direction: column;
-                gap: 20px;
+                gap: 20px; // Igual à Faturação
+                max-height: 65vh; // Scroll interno para a lista de alunos
+                overflow-y: auto;
+                padding-right: 10px;
+                padding-bottom: 20px;
+
+                &::-webkit-scrollbar {
+                    width: 6px;
+                }
+
+                &::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+
+                &::-webkit-scrollbar-thumb {
+                    background: #cbd5e1;
+                    border-radius: 10px;
+                }
 
                 .card-resumo {
                     display: flex;
                     align-items: center;
-                    gap: 24px;
-                    padding: 32px; // Padding reforçado
+                    gap: 24px; // Igual à Faturação
+                    padding: 32px; // Igual à Faturação
                     background-color: #ffffff;
                     border: 2px solid transparent;
-                    border-radius: 20px;
+                    border-radius: 20px; // Igual à Faturação
                     cursor: pointer;
                     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
@@ -119,7 +148,7 @@
                         transform: scale(1.02);
                         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
                     }
-
+                    // Card Selecionado (Exatamente igual à Faturação)
                     &.ativo {
                         background-color: #ffffff;
                         border-color: #3b82f6;
@@ -131,40 +160,32 @@
                     }
 
                     .foto-container {
-                        width: 80px; // Foto bem maior
+                        width: 80px; // Igual à Faturação
                         height: 80px;
                         flex-shrink: 0;
-                        position: relative;
-
-                        img {
-                            width: 100%;
-                            height: 100%;
-                            border-radius: 24px; // Quadrado arredondado moderno
-                            object-fit: cover;
-                            border: 3px solid #ffffff;
-                            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-                        }
 
                         .foto-fallback {
                             width: 100%;
                             height: 100%;
-                            border-radius: 24px;
-                            background: linear-gradient(135deg, #3b82f6, #2563eb);
+                            border-radius: 24px; // Quadrado moderno igual à Faturação
+                            background: linear-gradient(135deg, #10b981, #047857); // Gradiente Verde para Alunos
                             color: #ffffff;
                             display: flex;
                             align-items: center;
                             justify-content: center;
                             font-size: 32px;
                             font-weight: 800;
+                            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
                         }
                     }
 
                     .info-prof {
                         h4 {
                             margin: 0 0 6px 0;
-                            font-size: 24px; // Nome com impacto
+                            font-size: 24px;
                             font-weight: 800;
                             color: #0f172a;
+                            transition: color 0.2s;
                         }
 
                         .stats-resumo {
@@ -183,10 +204,11 @@
 
             .detalhe-conteudo {
                 background-color: #ffffff;
-                padding: 40px;
-                border-radius: 24px;
+                padding: 40px; // Igual à Faturação
+                border-radius: 24px; // Igual à Faturação
                 border: 1px solid #e2e8f0;
                 box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+                animation: slideIn 0.3s ease-out;
 
                 .cabecalho-detalhe {
                     display: flex;
@@ -202,14 +224,21 @@
                         gap: 24px;
 
                         .foto-grande {
-                            width: 100px;
+                            width: 100px; // Igual à Faturação
                             height: 100px;
-                            border-radius: 30px;
-                            object-fit: cover;
+                            border-radius: 30px; // Igual à Faturação
+                            background: linear-gradient(135deg, #10b981, #047857); // Gradiente Verde
+                            color: white;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 40px;
+                            font-weight: 800;
+                            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
                         }
 
                         h2 {
-                            font-size: 36px;
+                            font-size: 36px; // Igual à Faturação
                             font-weight: 900;
                             color: #0f172a;
                             margin: 0;
@@ -231,15 +260,52 @@
                             }
 
                             .valor {
-                                font-size: 32px;
+                                font-size: 32px; // Igual à Faturação
                                 font-weight: 900;
-                                color: #3b82f6;
+                                color: #3b82f6; // O azul vibrante!
                                 display: block;
                             }
                         }
                     }
                 }
             }
+
+            .empty-state {
+                text-align: center;
+                padding: 100px 20px;
+                color: #94a3b8;
+                background-color: #ffffff;
+                border-radius: 24px;
+                border: 1px solid #e2e8f0;
+
+                h3 {
+                    font-weight: 500;
+                    font-size: 1.2rem;
+                }
+            }
         }
+    }
+}
+
+// Animações
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

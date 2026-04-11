@@ -1,0 +1,303 @@
+/**
+ * Ficheiro: app/views/relatorios/estatisticas/estatisticas.scss
+ * Módulo: Dashboard de Estatísticas Financeiras
+ * Descrição: Define a estrutura de layout e UI tokens (cores, sombras, raios) para o painel de CEO.
+ * Arquitetura: Utiliza CSS Grid para o layout principal de cartões e Flexbox para alinhamentos internos.
+ */
+
+.pagina-estatisticas {
+	/* Espaçamento global de respiro e cor de fundo contrastante para destacar os cartões brancos */
+	padding: 32px;
+	background-color: #f1f5f9;
+	min-height: 100vh;
+	animation: fadeIn 0.4s ease-in-out;
+	// ====================================================================
+	// 1. CABEÇALHO E NAVEGAÇÃO TEMPORAL
+	// ====================================================================
+
+	.cabecalho-estatisticas {
+		/* Flexbox utilizado para afastar o título (esquerda) dos botões de filtro (direita) */
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 32px;
+
+		h1 {
+			font-size: 2.5rem;
+			font-weight: 800;
+			color: #0f172a;
+			letter-spacing: -1px;
+			margin: 0;
+		}
+		/* Contentor dos botões de filtro rápido (estilo "Toggle Group" / Pílula) */
+		.botoes-tempo {
+			display: flex;
+			background-color: #ffffff;
+			padding: 6px;
+			border-radius: 14px;
+			border: 1px solid #e2e8f0;
+			box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+
+			button {
+				background: transparent;
+				border: none;
+				padding: 10px 20px;
+				border-radius: 10px;
+				font-weight: 600;
+				font-size: 0.95rem;
+				color: #64748b;
+				cursor: pointer;
+				/* Transição suave para garantir fluidez ao passar o rato (Hover) */
+				transition: all 0.3s ease;
+
+				&:hover {
+					color: #0f172a;
+				}
+				/* Estado Ativo: Aplica a cor primária da marca (Azul) para indicar a seleção atual */
+				&.ativo {
+					background-color: #3b82f6;
+					color: #ffffff;
+					box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+				}
+			}
+		}
+	}
+	// ====================================================================
+	// 2. FILTROS MANUAIS DE DATA (Condicionais)
+	// ====================================================================
+
+	.filtros-iniciais {
+		display: flex;
+		gap: 24px;
+		align-items: flex-end;
+		background-color: #ffffff;
+		padding: 32px;
+		border-radius: 24px;
+		border: 1px solid #e2e8f0;
+		margin-bottom: 32px;
+		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+		/* Animação dedicada para quando o utilizador clica em "Personalizado" */
+		animation: slideDown 0.3s ease-out;
+
+		.grupo-data {
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+
+			label {
+				font-size: 0.9rem;
+				font-weight: 700;
+				color: #64748b;
+				text-transform: uppercase;
+			}
+
+			input[type="date"] {
+				padding: 12px 16px;
+				border: 2px solid #f1f5f9;
+				border-radius: 10px;
+				background-color: #f8fafc;
+				color: #1e293b;
+				font-family: inherit;
+				font-size: 16px;
+				outline: none;
+				transition: all 0.2s;
+
+				&:focus {
+					border-color: #3b82f6;
+					background-color: #ffffff;
+				}
+			}
+		}
+	}
+	// ====================================================================
+	// 3. ESTADOS DA APLICAÇÃO (Loading & Empty States)
+	// ====================================================================
+
+	.loading-state {
+		text-align: center;
+		padding: 100px 20px;
+		font-size: 1.2rem;
+		color: #64748b;
+		font-weight: 600;
+		background: #ffffff;
+		border-radius: 24px;
+		border: 1px solid #e2e8f0;
+	}
+	/* Estrutura visual quando não existem dados a apresentar no gráfico gigante */
+	.empty-state-grafico {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		height: 350px;
+		color: #94a3b8;
+
+		i {
+			font-size: 3rem;
+			margin-bottom: 16px;
+			color: #cbd5e1;
+		}
+
+		p {
+			font-size: 1.1rem;
+			font-weight: 600;
+		}
+	}
+	/* Estrutura visual para espaços vazios nas grelhas menores */
+	.empty-state-grafico-pequeno {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 100%;
+		width: 100%;
+		color: #94a3b8;
+		font-weight: 600;
+		font-size: 0.95rem;
+		background-color: #f8fafc;
+		border-radius: 12px;
+		border: 1px dashed #cbd5e1;
+	}
+	// ====================================================================
+	// 4. ESTRUTURA DOS GRÁFICOS (Layouts Base)
+	// ====================================================================
+	/* Cartão de largura total para análise macro (Área de Evolução) */
+	.card-grafico-gigante {
+		background-color: #ffffff;
+		padding: 40px;
+		border-radius: 24px;
+		border: 1px solid #e2e8f0;
+		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+		margin-bottom: 32px;
+
+		h3 {
+			font-size: 1.4rem;
+			font-weight: 800;
+			color: #0f172a;
+			margin-bottom: 30px;
+		}
+		/* Altura fixa necessária para o componente ResponsiveContainer do Recharts funcionar corretamente */
+		.grafico-container {
+			width: 100%;
+			height: 350px;
+		}
+	}
+	/* Layout em Grelha para distribuição igualitária dos cartões secundários */
+	.layout-grelha-dashboard {
+		display: grid;
+		/* Divide o espaço disponível em 3 colunas de largura idêntica (1 fração cada) */
+		grid-template-columns: repeat(3, 1fr);
+		gap: 32px;
+
+		.card-dashboard {
+			background-color: #ffffff;
+			padding: 40px;
+			border-radius: 24px;
+			border: 1px solid #e2e8f0;
+			box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+			display: flex;
+			flex-direction: column;
+
+			h3 {
+				font-size: 1.2rem;
+				font-weight: 800;
+				color: #0f172a;
+				margin-bottom: 30px;
+				display: flex;
+				align-items: center;
+				gap: 12px;
+
+				i {
+					color: #3b82f6;
+				}
+				// Ícone corporativo de secção
+			}
+			/* Key Performance Indicators (KPIs) - Indicadores Rápidos no topo do cartão */
+			.kpis-resumo {
+				display: flex;
+				gap: 20px;
+				margin-bottom: 30px;
+
+				.kpi {
+					flex: 1; // Garante que os dois blocos (Recebido/Dívida) ocupam 50% do espaço cada
+					padding: 16px 20px;
+					border-radius: 12px;
+					border: 1px solid #e2e8f0;
+
+					.label {
+						display: block;
+						font-size: 0.85rem;
+						font-weight: 700;
+						text-transform: uppercase;
+						margin-bottom: 6px;
+					}
+
+					.valor {
+						display: block;
+						font-size: 1.8rem;
+						font-weight: 900;
+					}
+					/* Modificadores de Estado (Sucesso / Alerta) */
+					&.verde {
+						background-color: #ecfdf5;
+						border-color: #a7f3d0;
+
+						.label {
+							color: #047857;
+						}
+
+						.valor {
+							color: #10b981;
+						}
+					}
+
+					&.vermelho {
+						background-color: #fef2f2;
+						border-color: #fecaca;
+
+						.label {
+							color: #b91c1c;
+						}
+
+						.valor {
+							color: #ef4444;
+						}
+					}
+				}
+			}
+			/* Ocupa o restante espaço disponível no cartão, empurrando o conteúdo para os limites */
+			.grafico-pequeno {
+				flex-grow: 1;
+				width: 100%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+		}
+	}
+}
+
+// ====================================================================
+// 5. KEYFRAMES (Motores de Animação)
+// ====================================================================
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes slideDown {
+	from {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}

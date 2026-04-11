@@ -1,0 +1,119 @@
+// Ficheiro: app/views/coaching/professores/aprovacoes.scss
+
+.pagina-aprovacoes {
+    padding: 32px;
+    background-color: #f8fafc; // Fundo cinza super claro
+    min-height: 100vh;
+
+    h1 {
+        margin-bottom: 32px;
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -1px;
+    }
+
+    // Para evitar que a borda dos botões da tabela apareça
+    .table-container {
+        button {
+            border: none !important;
+            background-color: transparent;
+            box-shadow: none;
+
+            &:hover {
+                opacity: 0.7;
+            }
+        }
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        /* Garante que fica por cima da Tabela! */
+
+        .modal-conteudo {
+            background: white;
+            color: #333; /* Força o texto a ser escuro! */
+            padding: 30px;
+            border-radius: 8px;
+            width: 450px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+
+            /* Garante que os títulos não herdam cores esquisitas */
+            h2, h3, p, label, strong {
+                color: #333;
+            }
+
+            /* Garante que as caixas de texto ficam visíveis */
+            select, input[type="number"] {
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                color: #333;
+                background: white;
+            }
+
+            .modal-cabecalho {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+
+                h2 {
+                    margin: 0;
+                    font-size: 1.2rem;
+                }
+
+                .modal-fechar {
+                    background: none;
+                    border: none;
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    color: #666;
+
+                    &:hover {
+                        color: red;
+                    }
+                }
+            }
+
+            .modal-acoes {
+                display: flex;
+                justify-content: flex-end;
+                gap: 15px;
+
+                button {
+                    padding: 10px 20px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    border: none;
+                }
+
+                .btn-cancelar {
+                    background: #eee;
+                    color: #333;
+                }
+
+                .btn-confirmar {
+                    background: #4CAF50;
+                    color: white;
+                }
+
+                .btn-confirmar:disabled {
+                    background: #ccc;
+                    cursor: not-allowed;
+                }
+            }
+        }
+    }
+}
