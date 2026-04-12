@@ -100,11 +100,46 @@ export class FaturacaoController {
     async getDashboard(
         @Query('inicio') inicioStr: string,
         @Query('fim') fimStr: string,
+        @Headers('authorization') authHeader: string // O Segurança intercepta a mochila!
     ) {
-        // 1. Validar se as datas chegaram
+
+        const partesHeader = authHeader.split(' ');
+        // Verifica se tem as duas palavras "Bearer" e o "Token"
+        if (partesHeader.length !== 2 || partesHeader[0] !== 'Bearer') {
+            throw new UnauthorizedException('O formato do token deve ser "Bearer [token]".');
+        }
+        
+        const token = partesHeader[1];
+        
+        if (token === 'null' || token === 'undefined') {
+            throw new UnauthorizedException('O Token chegou como null. Verifica o localStorage no Frontend!');
+        }
+        // 1. Verificação de Segurança
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            throw new UnauthorizedException('Acesso negado: Token não encontrado na mochila.');
+        }
         if (!inicioStr || !fimStr) {
             throw new BadRequestException("As datas de início e fim são obrigatórias.");
         }
+
+        // 3. Descodificação Manual (A forma mais crua e segura sem depender de bibliotecas externas)
+        // Um JWT tem 3 partes separadas por pontos. A parte do meio [1] é a "Payload" (os dados).
+        let userPayload;
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            
+            userPayload = JSON.parse(jsonPayload);
+        } catch (e) {
+            throw new UnauthorizedException('Token inválido ou corrompido.');
+        }
+
+        // Agora o Controller sabe TUDO sobre quem está a fazer o pedido!
+        const role = userPayload.role;
+        const userId = userPayload.sub; // No teu JWT (que me mostraste), o ID está no "sub"
 
         const dateInicio = new Date(inicioStr);
         const dateFim = new Date(fimStr);
@@ -118,7 +153,7 @@ export class FaturacaoController {
         }
 
         // 3. Chamar o serviço que acabaste de colar!
-        return this.faturacaoService.getDashboardFinanceiro(dateInicio, dateFim);
+        return this.faturacaoService.getDashboardFinanceiro(dateInicio, dateFim, role, userId);
     }
 
     @Get('previsao-financeira')

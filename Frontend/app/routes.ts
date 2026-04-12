@@ -44,9 +44,7 @@ export default [
     // Rota das estatísticas
     route("relatorios/estatisticas", "routes/estatisticas.tsx"),
 
-    // Rota da oferta de coaching
-    // Rota da oferta de coaching
-    route("coaching/oferta", "routes/ofertaCoaching.tsx"),
+    route("conta", "routes/conta.tsx"),
 
     // Rota do perfil (para todos os utilizadores)
     route("marketplace/atividades", "routes/atividades.tsx")

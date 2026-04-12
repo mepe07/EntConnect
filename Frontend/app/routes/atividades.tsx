@@ -1,17 +1,19 @@
-import { Perfil } from "../views/perfil/perfil"; 
+// Ficheiro: src/routes/atividades.tsx
+
+import { Atividades } from "../views/atividades/atividades"; // 👈 Aponta para o ficheiro e componente corretos
 import { ProtectedRoute } from "../components/protected-route.component";
 
-const title = "O Meu Perfil | EntConnect";
+const title = "Atividades do Marketplace | EntConnect";
 
-export default function PerfilRoute() {
+export default function AtividadesRoute() {
     return (
         <>
             <title>{title}</title>
             <meta property="og:title" content={title} />
             
-            {/* O Perfil é para todos os que têm conta na escola! */}
+            {/* As atividades são para todos os que têm conta e interagem com o Marketplace */}
             <ProtectedRoute rolesPermitidas={['Coordenador', 'Direcao', 'Professor', 'Enc_Educacao']}>
-                <Perfil />
+                <Atividades />
             </ProtectedRoute>
         </>
     );

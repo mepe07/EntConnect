@@ -90,13 +90,13 @@ export class FaturacaoService {
         const filtroCoaching: Prisma.CoachingWhereInput = {
             Inicio_Coaching: {
                 gte: dataInicio,
-                lte: dataFim,
+                lte: dataFim, 
             },
         };
 
         // 2. A MAGIA DO TÚNEL (RBAC) - Totalmente Tipado!
         // Se for um Professor, adicionamos a restrição ao filtro do Coaching.
-        if (role === 'Professor') {
+        if (role === 'Professor' || role === 'Enc_Educacao') {
             filtroCoaching.Professor = {
                 Pessoa: {
                     Utilizador: { 
@@ -207,16 +207,53 @@ export class FaturacaoService {
     * Este método é o "coração" do módulo de faturação. Ele busca todas as sessões de coaching dentro do intervalo de datas especificado,
     * trazendo informações detalhadas sobre cada sessão, incluindo o estado atual da aula
     */
-    async getDashboardFinanceiro(inicio: Date, fim: Date) {
-        const faturas = await this.prisma.coaching_Aluno.findMany({
-            where: {
-                Coaching: {
-                    Inicio_Coaching: {
-                        gte: inicio, 
-                        lte: fim, 
-                    }
+    async getDashboardFinanceiro(inicio: Date, fim: Date, role: string, userId: number) {
+
+    // 1. O Filtro Base (Tempo) - Comum a todos
+    const filtroCoaching: Prisma.CoachingWhereInput = {
+        Inicio_Coaching: {
+            gte: inicio,
+            lte: fim,
+        },
+    };
+
+    console.log(`[DEBUG Dashboard] A procurar dados para Role: '${role}' | UserID (JWT): ${userId}`);
+
+    // 2. A MAGIA DO TÚNEL CORRIGIDA COM BASE NO SCHEMA
+    if (role === 'Professor') {
+        // Procura as sessões de Coaching onde o Professor...
+        filtroCoaching.Professor = {
+            // ...tem uma Pessoa associada...
+            Pessoa: {
+                // ...que tem um Utilizador com o ID que veio no Token!
+                Utilizador: {
+                    ID_Utilizador: Number(userId) // O ID_Utilizador que vem do JWT!
                 }
-            },
+            }
+        };
+    }
+
+    if (role === 'Enc_Educacao') {
+        // Procura as sessões de Coaching onde o Encarregado...
+        filtroCoaching.Enc_Educacao = {
+            // ...tem uma Pessoa associada...
+            Pessoa: {
+                // ...que tem um Utilizador com o ID que veio no Token!
+                Utilizador: {
+                    ID_Utilizador: Number(userId) // O ID_Utilizador que vem do JWT!
+                }
+            }
+        };
+    }
+
+    // 3. Aplicamos o filtro na query principal
+    const condicoesFiltro: Prisma.Coaching_AlunoWhereInput = {
+        Coaching: filtroCoaching,
+    };
+
+
+        const faturas = await this.prisma.coaching_Aluno.findMany({
+            where: condicoesFiltro,
             include: {
                 Coaching: {
                     include: {
@@ -228,6 +265,8 @@ export class FaturacaoService {
                 Coaching: { Inicio_Coaching: 'asc' }
             }
         });
+
+        console.log(`[DEBUG Dashboard] O Prisma encontrou ${faturas.length} faturas!`);
 
         let totalPago = 0;
         let totalEmDivida = 0;
