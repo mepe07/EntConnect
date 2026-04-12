@@ -15,7 +15,9 @@ type TipoFiltroData = 'Hoje' | 'Semana' | 'Mes' | 'Personalizado';
 const formatarMoeda = (valor: number) => {
     return new Intl.NumberFormat('pt-PT', { 
         style: 'currency', 
-        currency: 'EUR' 
+        currency: 'EUR',
+        compactDisplay: 'short' // 
+
     }).format(valor);
 };
 
@@ -210,7 +212,7 @@ export function Estatisticas() {
                                         <BarChart data={previsao || []} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                             <XAxis dataKey="mes" stroke="#94a3b8" fontWeight="600" />
-                                            <YAxis stroke="#94a3b8" tickFormatter={(value) => formatarMoeda(value)} />
+                                            <YAxis stroke="#94a3b8" tickFormatter={(value) => formatarMoeda(value)} fontSize="15px" />
                                             <Tooltip formatter={(value: any) => [formatarMoeda(Number(value)), "Previsto"]} cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '10px' }} />
                                             <Bar dataKey="previsto" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={40} />
                                         </BarChart>

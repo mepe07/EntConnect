@@ -6,5 +6,6 @@ import { Modalidades } from "../views/infraestrutura/modalidades/modalidades";
 
 // O React Router v7 exige sempre que o ficheiro da rota tenha um "export default"
 export default function ModalidadesRoute() {
+    
     return <Modalidades />;
 } 
