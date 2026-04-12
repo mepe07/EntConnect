@@ -3,17 +3,23 @@
 
 // IMPORTANTE: Importa o decorador do Swagger
 import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, IsBoolean, IsOptional } from 'class-validator';
 
 
 export class CreateSalaDto {
   
-    // LÓGICA: O @ApiProperty diz ao Swagger: "Este campo existe e tem este aspeto!"
     @ApiProperty({ example: 'Sala Beethoven', description: 'O nome da sala' })
+    @IsString({ message: 'O nome da sala tem de ser um texto.' })
+    @IsNotEmpty({ message: 'O nome da sala não pode estar vazio.' })
     nome: string;
 
-    @ApiProperty({ example: 'Música Clássica', description: 'A modalidade principal ensinada na sala' })
-    modalidade: string;
+    // A modalidade vem do <select> do React, logo vem como ID (número ou string)
+    @ApiProperty({ example: 1, description: 'O ID da modalidade associada à sala' })
+    @IsNotEmpty({ message: 'Tem de associar uma modalidade a esta sala.' })
+    modalidade: string | number; 
 
     @ApiProperty({ example: true, description: 'Indica se a sala está pronta a ser usada' })
+    @IsBoolean({ message: 'A disponibilidade tem de ser verdadeira (true) ou falsa (false).' })
+    @IsOptional() 
     disponivel: boolean;
 }
