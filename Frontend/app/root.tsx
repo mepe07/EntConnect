@@ -75,8 +75,8 @@ export default function App() {
             {/* RETIRÁMOS A PALAVRA 'container' DAQUI! */}
             <div className="main-wrapper">
                 <NavigationMenu />
-                <div className="body-wrapper">
-                    <Outlet />
+                <div className="body-wrapper ml-[280px] pt-[76px] w-full p-6">
+                  <Outlet />
                 </div>
             </div>
         </>

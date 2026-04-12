@@ -46,6 +46,7 @@ model Stock_Armazem {
   Quantidade_Total   Int
   Quantidade_Venda   Int                @default(0)
   Quantidade_Aluguer Int                @default(0)
+  Aluguer_Artigo     Aluguer_Artigo[]
   Artigo_Favorito    Artigo_Favorito[]
   Interesse_Artigo   Interesse_Artigo[]
   Artigo             Artigo             @relation(fields: [ID_Artigo], references: [ID_Artigo], onDelete: Cascade)
@@ -311,4 +312,15 @@ model Pedido_Coaching {
   Estado_Pedido                                       Estado_Pedido @relation(fields: [ID_EstadoPedido], references: [ID_EstadoPedido], onUpdate: NoAction, map: "FK_Pedido_Estado")
   Modalidade                                          Modalidade    @relation(fields: [ID_Modalidade], references: [ID_Modalidade], onUpdate: NoAction, map: "FK_Pedido_Modalidade")
   Utilizador_Pedido_Coaching_ID_ProfessorToUtilizador Utilizador    @relation("Pedido_Coaching_ID_ProfessorToUtilizador", fields: [ID_Professor], references: [ID_Utilizador], onUpdate: NoAction, map: "FK_Pedido_Professor")
+}
+
+model Aluguer_Artigo {
+  ID_Aluguer            Int           @id @default(autoincrement())
+  ID_Stock              Int
+  ID_Utilizador         Int
+  Data_Entrega          DateTime      @default(now())
+  Data_Recolha_Prevista DateTime
+  Data_Recolha_Efetiva  DateTime?
+  Estado                String        @default("Ativo")
+  Stock_Armazem         Stock_Armazem @relation(fields: [ID_Stock], references: [ID_Stock])
 }
