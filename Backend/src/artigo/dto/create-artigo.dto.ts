@@ -1,8 +1,11 @@
+// Ficheiro: src/artigo/dto/create-artigo.dto.ts
+
 import { IsString, IsInt, IsOptional, Min, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer'; 
 
 export class CreateArtigoDto {
     // ==========================================
-    // 1. DADOS DO CATÁLOGO (Tabela Artigo)
+    // 1. DADOS DO CATÁLOGO
     // ==========================================
     @IsString({ message: 'O nome do artigo é obrigatório.' })
     @MaxLength(255)
@@ -11,27 +14,34 @@ export class CreateArtigoDto {
     @IsOptional() @IsString() @MaxLength(255) Notas?: string;
     @IsOptional() @IsString() Foto?: string;
 
-    // Chaves Estrangeiras para as categorias
-    @IsOptional() @IsInt() ID_Coordenador?: number;
-    @IsOptional() @IsInt() ID_Direcao?: number;
-    @IsOptional() @IsInt() ID_Professor?: number;
-    @IsOptional() @IsInt() ID_Enc_Educacao?: number;
+    // Converte as chaves estrangeiras de utilizadores
+    @IsOptional() @Type(() => Number) @IsInt() ID_Coordenador?: number;
+    @IsOptional() @Type(() => Number) @IsInt() ID_Direcao?: number;
+    @IsOptional() @Type(() => Number) @IsInt() ID_Professor?: number;
+    @IsOptional() @Type(() => Number) @IsInt() ID_Enc_Educacao?: number;
 
     // ==========================================
-    // 2. DADOS DO ARMAZÉM (Tabela Stock_Armazem)
+    // 2. DADOS DO ARMAZÉM (Prateleira Física)
     // ==========================================
+    @Type(() => Number) 
     @IsInt({ message: 'O stock total tem de ser um número.' }) 
     @Min(1, { message: 'O stock total tem de ser pelo menos 1.' })
     Quantidade_Total: number;
 
-    @IsInt() @Min(0)
+    @Type(() => Number)
+    @IsInt({ message: 'A quantidade de venda tem de ser um número.' }) 
+    @Min(0)
     Quantidade_Venda: number;
 
-    @IsInt() @Min(0)
+    @Type(() => Number)
+    @IsInt({ message: 'A quantidade de aluguer tem de ser um número.' }) 
+    @Min(0)
     Quantidade_Aluguer: number;
 
-    // Características do lote
-    @IsOptional() @IsInt() ID_Cor?: number;
-    @IsOptional() @IsInt() ID_Estado?: number;
-    @IsOptional() @IsInt() ID_Tamanho?: number;
+    // ==========================================
+    // 3. TABELAS AUXILIARES (Especificações)
+    // ==========================================
+    @IsOptional() @Type(() => Number) @IsInt() ID_Cor?: number;
+    @IsOptional() @Type(() => Number) @IsInt() ID_Estado?: number;
+    @IsOptional() @Type(() => Number) @IsInt() ID_Tamanho?: number;
 } 

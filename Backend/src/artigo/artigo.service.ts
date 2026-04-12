@@ -1,18 +1,20 @@
+// Ficheiro: src/artigo/artigo.service.ts
+
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'; 
 import { CreateArtigoDto } from './dto/create-artigo.dto';
-import { BlobsService } from '../Infraestrutura/Blobs/blobs.service';
+import { BlobsService } from '../Infraestrutura/Blobs/blobs.service'; // Ajusta o path se necessário
 
 @Injectable()
 export class ArtigoService {
     constructor(private prisma: PrismaService, private blobsService: BlobsService) { }
+
     // ============================================================================
     // 1. CRIAR NOVO ARTIGO + LOTE DE STOCK
     // ============================================================================
     async criar(data: CreateArtigoDto) {
         return this.prisma.artigo.create({
             data: {
-                // Preenchemos o Catálogo
                 Nome: data.Nome,
                 Notas: data.Notas,
                 Foto: data.Foto,
@@ -27,6 +29,7 @@ export class ArtigoService {
                         Quantidade_Total: data.Quantidade_Total,
                         Quantidade_Venda: data.Quantidade_Venda,
                         Quantidade_Aluguer: data.Quantidade_Aluguer,
+                        // 👉 Incluímos as tabelas auxiliares que vieram do React!
                         ID_Cor: data.ID_Cor,
                         ID_Estado: data.ID_Estado,
                         ID_Tamanho: data.ID_Tamanho
@@ -47,60 +50,52 @@ export class ArtigoService {
                     { ID_Direcao: { not: null } }
                 ]
             },
-            // Trazemos o Stock e as características penduradas nele!
             include: { 
                 Stock_Armazem: {
-                    include: {
-                        Cor: true,
-                        Estado: true,
-                        Tamanho: true
-                    }
+                    include: { Cor: true, Estado: true, Tamanho: true }
                 } 
             }
         });
     }
 
     // ============================================================================
-    // 3. O BOTÃO MÁGICO (Atualizar o Lote para Venda)
+    // 3. ATUALIZAR LOTE PARA O MARKETPLACE
     // ============================================================================
-    // Atenção: Agora recebemos o ID do Stock (A Prateleira) e não o ID do Artigo!
-    async publicarNoMarketplace(idStock: number, quantidadeAVenda: number, notasAnuncio?: string) {
-        // 1. Vamos ver se o lote físico existe
+    async publicarNoMarketplace(idStock: number, quantidadeAVenda: number, quantidadeParaAlugar: number, notasAnuncio?: string) {
         const loteFisico = await this.prisma.stock_Armazem.findUnique({
             where: { ID_Stock: idStock }
         });
 
-        if (!loteFisico) {
-            throw new NotFoundException('Lote não encontrado no armazém.');
-        }
+        if (!loteFisico) throw new NotFoundException('Lote não encontrado no armazém.');
         
-        // 2. O controlo de segurança: Não podes vender o que não tens!
-        if (loteFisico.Quantidade_Total < quantidadeAVenda) {
-            throw new BadRequestException(`Stock físico insuficiente. Apenas tens ${loteFisico.Quantidade_Total} unidades físicas.`);
+        // Regra de Ouro: A soma do que vai para venda + aluguer não pode exceder o total físico na prateleira!
+        if (loteFisico.Quantidade_Total < (quantidadeAVenda + quantidadeParaAlugar)) {
+            throw new BadRequestException(`Stock físico insuficiente. Apenas tens ${loteFisico.Quantidade_Total} unidades físicas e estás a tentar alocar ${quantidadeAVenda + quantidadeParaAlugar}.`);
         }
 
-        // 3. A atualização mágica. 
-        // Opcional: Se quiseres guardar as 'notasAnuncio', terias de adicionar 
-        // um campo 'Notas_Venda' no teu Stock_Armazem. Por agora, atualizamos só a quantidade.
         return this.prisma.stock_Armazem.update({
             where: { ID_Stock: idStock },
-            data: {
-                Quantidade_Venda: quantidadeAVenda
+            data: { 
+                Quantidade_Venda: quantidadeAVenda,
+                Quantidade_Aluguer: quantidadeParaAlugar
+                // (Opcional) Se quiseres guardar a nota, precisas de ter esse campo no Prisma
             }
         });
     }
 
     // ============================================================================
-    // 4. A MONTRA DO MARKETPLACE (A Loja Pública)
+    // 4. A MONTRA DO MARKETPLACE
     // ============================================================================
     async listarMarketplace() {
-        // O Prisma vai varrer o armazém à procura de coisas à venda
         return this.prisma.stock_Armazem.findMany({
             where: { 
-                Quantidade_Venda: { gt: 0 } // gt significa "Greater Than" (Maior que 0)
+                // A MAGIA ACONTECE AQUI: Traz se houver Venda OU Aluguer!
+                OR: [
+                    { Quantidade_Venda: { gt: 0 } },
+                    { Quantidade_Aluguer: { gt: 0 } }
+                ]
             },
             include: {
-                // Trazemos os detalhes do catálogo (Nome, Foto)
                 Artigo: {
                     include: {
                         Professor: { include: { Pessoa: true } },
@@ -109,30 +104,21 @@ export class ArtigoService {
                         Direcao: { include: { Pessoa: true } }
                     }
                 },
-                // Trazemos as características físicas do Lote à venda
-                Cor: true,
-                Estado: true,
-                Tamanho: true
+                Cor: true, Estado: true, Tamanho: true
             }
-            // Retirado o orderBy temporariamente porque 'Data_Criacao' 
-            // já não existe no Stock_Armazem. Podes adicionar um campo se precisares.
         });
     }
+
     // ============================================================================
-    // 5. SISTEMA DE FAVORITOS (O Interruptor)
+    // 5. SISTEMA DE FAVORITOS
     // ============================================================================
     async toggleFavorito(idStock: number, idUtilizador: number) {
-        // 1. Vamos ver se o coração já lá está
         const favoritoExistente = await this.prisma.artigo_Favorito.findUnique({
             where: {
-                ID_Utilizador_ID_Stock: { // A nossa chave única composta!
-                    ID_Utilizador: idUtilizador,
-                    ID_Stock: idStock
-                }
+                ID_Utilizador_ID_Stock: { ID_Utilizador: idUtilizador, ID_Stock: idStock }
             }
         });
 
-        // 2. Se já existe, o utilizador quer remover dos favoritos
         if (favoritoExistente) {
             await this.prisma.artigo_Favorito.delete({
                 where: { ID_Favorito: favoritoExistente.ID_Favorito }
@@ -140,21 +126,16 @@ export class ArtigoService {
             return { mensagem: 'Removido dos favoritos', status: 'removido' };
         }
 
-        // 3. Se não existe, o utilizador quer adicionar aos favoritos
         await this.prisma.artigo_Favorito.create({
-            data: {
-                ID_Utilizador: idUtilizador,
-                ID_Stock: idStock
-            }
+            data: { ID_Utilizador: idUtilizador, ID_Stock: idStock }
         });
         return { mensagem: 'Adicionado aos favoritos', status: 'adicionado' };
     }
 
     // ============================================================================
-    // 6. SISTEMA DE INTENÇÕES (A Proposta de Negócio)
+    // 6. SISTEMA DE INTENÇÕES
     // ============================================================================
     async registarInteresse(idStock: number, idUtilizador: number, mensagemTexto?: string) {
-        // 1. Verificamos se a prateleira ainda existe e tem unidades à venda
         const loteFisico = await this.prisma.stock_Armazem.findUnique({
             where: { ID_Stock: idStock }
         });
@@ -163,32 +144,32 @@ export class ArtigoService {
             throw new BadRequestException('Lamentamos, mas este artigo já não está disponível na montra.');
         }
 
-        // 2. Registamos a intenção sem mexer no stock físico!
         const novoInteresse = await this.prisma.interesse_Artigo.create({
             data: {
                 ID_Utilizador: idUtilizador,
                 ID_Stock: idStock,
                 Mensagem: mensagemTexto,
-                Estado: 'Pendente' // Fica à espera que a Direção aprove
+                Estado: 'Pendente'
             }
         });
 
         return { 
-            mensagem: 'Interesse registado com sucesso! A Direção irá analisar o pedido.',
+            mensagem: 'Interesse registado com sucesso!',
             pedido: novoInteresse 
         };
     }
+
     // ============================================================================
-    // 7. A PONTE PARA O AZURE (Reencaminha para o BlobsService)
+    // 7. A PONTE PARA O AZURE
     // ============================================================================
     async guardarFotosMarketplace(containerName: string, nomePersonalizado: string, file: any) {
-        // Como o BlobsService já está injetado no construtor, 
-        // só temos de lhe passar a encomenda para as mãos!
         return this.blobsService.guardarFotosMarketplace(containerName, nomePersonalizado, file);
     }
-    // 8. LISTAR APENAS OS MEUS ANÚNCIOS (Dono)
+
+    // ============================================================================
+    // 8. LISTAR APENAS OS MEUS ANÚNCIOS
+    // ============================================================================
     async listarMeusAnuncios(userId: number, role: string) {
-        // Criamos o filtro dinâmico consoante o cargo
         const filtro: any = {};
         if (role === 'Coordenador') filtro.ID_Coordenador = userId;
         else if (role === 'Direcao') filtro.ID_Direcao = userId;
@@ -197,19 +178,104 @@ export class ArtigoService {
 
         return this.prisma.artigo.findMany({
             where: filtro,
-            include: { Stock_Armazem: true }
+            include: { Stock_Armazem: { include: { Cor: true, Estado: true, Tamanho: true } } }
         });
     }
 
-    // 9. LISTAR OS MEUS PEDIDOS (Interesses enviados)
+    // ============================================================================
+    // 9. LISTAR OS MEUS PEDIDOS
+    // ============================================================================
     async listarMeusPedidos(userId: number) {
         return this.prisma.interesse_Artigo.findMany({
             where: { ID_Utilizador: userId },
             include: {
-                Stock_Armazem: {
-                    include: { Artigo: true }
-                }
+                Stock_Armazem: { include: { Artigo: true, Cor: true, Estado: true, Tamanho: true } }
             }
         });
+    }
+    
+    // ============================================================================
+    // 10. SISTEMA DE ALUGUER / EMPRÉSTIMO (A SAÍDA)
+    // ============================================================================
+    /**
+     * Regista a saída de um artigo do armazém para um utilizador.
+     * @param idStock ID da prateleira (lote) de onde sai a peça
+     * @param idUtilizador ID de quem está a levar a peça
+     * @param dataRecolhaPrevistaStr Data em formato de texto (YYYY-MM-DD) enviada pelo Frontend
+     */
+    async alugarArtigo(idStock: number, idUtilizador: number, dataRecolhaPrevistaStr: string) {
+        // 1. Verificamos se o lote físico existe no armazém
+        const loteFisico = await this.prisma.stock_Armazem.findUnique({
+            where: { ID_Stock: idStock }
+        });
+
+        // Prevenção de erros: Se a prateleira não existe, barramos a operação
+        if (!loteFisico) {
+            throw new BadRequestException('Lamentamos, mas esta prateleira não existe ou foi removida.');
+        }
+
+        // Prevenção de negócio: Apenas permitimos aluguer se a quantidade destinada a aluguer for maior que 0
+        if (loteFisico.Quantidade_Aluguer <= 0) {
+            throw new BadRequestException('Este artigo não tem unidades disponíveis para aluguer de momento.');
+        }
+
+        // 2. Tradução de Dados: O JavaScript recebe a data em texto, temos de a converter num Objeto Data real
+        const dataPrevista = new Date(dataRecolhaPrevistaStr);
+
+        // Prevenção de negócio: Não faz sentido entregar ontem
+        if (dataPrevista < new Date()) {
+            throw new BadRequestException('A data de devolução prevista não pode ser no passado.');
+        }
+
+        // 3. Registamos o empréstimo no nosso "livro de ponto" (Tabela Aluguer_Artigo)
+        const novoAluguer = await this.prisma.aluguer_Artigo.create({
+            data: {
+                ID_Stock: idStock,
+                ID_Utilizador: idUtilizador,
+                Data_Recolha_Prevista: dataPrevista,
+                Estado: 'Ativo' // A peça saiu e está ativamente nas mãos de alguém
+            }
+        });
+
+        return {
+            mensagem: 'Reserva de aluguer registada com sucesso!',
+            aluguer: novoAluguer
+        };
+    }
+
+    // ============================================================================
+    // 11. SISTEMA DE ALUGUER / EMPRÉSTIMO (O REGRESSO)
+    // ============================================================================
+    /**
+     * Regista a devolução de um artigo que estava alugado.
+     * @param idAluguer ID único do registo de aluguer
+     */
+    async devolverArtigo(idAluguer: number) {
+        // 1. Procuramos o registo do aluguer
+        const aluguerAtual = await this.prisma.aluguer_Artigo.findUnique({
+            where: { ID_Aluguer: idAluguer }
+        });
+
+        if (!aluguerAtual) {
+            throw new NotFoundException('Registo de aluguer não encontrado.');
+        }
+
+        if (aluguerAtual.Estado === 'Devolvido') {
+            throw new BadRequestException('Esta peça já foi devolvida anteriormente. Não a podes devolver duas vezes!');
+        }
+
+        // 2. Fechamos o ciclo: Atualizamos o estado e carimbamos a data de hoje como a data de entrega real
+        const aluguerAtualizado = await this.prisma.aluguer_Artigo.update({
+            where: { ID_Aluguer: idAluguer },
+            data: {
+                Estado: 'Devolvido',
+                Data_Recolha_Efetiva: new Date() // O relógio do servidor carimba o momento exato do regresso
+            }
+        });
+
+        return {
+            mensagem: 'Peça devolvida com sucesso! O armazém agradece.',
+            aluguer: aluguerAtualizado
+        };
     }
 } 

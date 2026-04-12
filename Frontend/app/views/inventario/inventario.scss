@@ -73,7 +73,7 @@
 		border-radius: 12px;
 		box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
 		border: 1px solid #e2e8f0;
-		overflow: hidden; // Corta a foto nas pontas arredondadas do cartão
+		overflow: hidden;
 		display: flex;
 		flex-direction: column;
 		transition: transform 0.2s, box-shadow 0.2s;
@@ -82,14 +82,14 @@
 			transform: translateY(-4px);
 			box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
 		}
-		// Estilos para a foto
+
 		.imagem-artigo {
 			width: 100%;
 			height: 200px;
 			object-fit: cover;
 			border-bottom: 1px solid #e2e8f0;
 		}
-		// Se não houver foto, mostramos esta caixa
+
 		.imagem-placeholder {
 			width: 100%;
 			height: 200px;
@@ -100,7 +100,7 @@
 			font-size: 4rem;
 			border-bottom: 1px solid #e2e8f0;
 		}
-		// A área de texto do cartão
+
 		.corpo-artigo {
 			padding: 1.5rem;
 			flex-grow: 1;
@@ -110,9 +110,16 @@
 			font-size: 1.25rem;
 			font-weight: bold;
 			color: #1e293b;
-			margin-bottom: 1rem;
+			margin-bottom: 0.5rem;
 			border-bottom: 2px solid #f1f5f9;
 			padding-bottom: 0.5rem;
+		}
+
+		.notas-artigo {
+			font-size: 0.85rem;
+			color: #64748b;
+			margin-bottom: 1.5rem;
+			min-height: 20px;
 		}
 
 		.lote-stock {
@@ -125,13 +132,42 @@
 			.lote-detalhes {
 				display: flex;
 				justify-content: space-between;
-				margin-bottom: 0.5rem;
+				margin-bottom: 0.8rem;
 				font-size: 0.9rem;
 				color: #475569;
+
+				.especificacoes {
+					font-weight: 500;
+					color: #0f172a;
+				}
+			}
+
+			.lote-badges {
+				display: flex;
+				gap: 0.5rem;
+				flex-wrap: wrap;
+				margin-bottom: 1rem;
 			}
 
 			.badge-qtd {
-				display: inline-block;
+				padding: 0.25rem 0.5rem;
+				border-radius: 4px;
+				font-size: 0.8rem;
+				font-weight: bold;
+				background: #e2e8f0;
+				color: #334155;
+			}
+
+			.badge-venda {
+				padding: 0.25rem 0.5rem;
+				border-radius: 4px;
+				font-size: 0.8rem;
+				font-weight: bold;
+				background: #dcfce7;
+				color: #166534;
+			}
+
+			.badge-aluguer {
 				padding: 0.25rem 0.5rem;
 				border-radius: 4px;
 				font-size: 0.8rem;
@@ -140,23 +176,11 @@
 				color: #1e40af;
 			}
 
-			.badge-venda {
-				display: inline-block;
-				padding: 0.25rem 0.5rem;
-				border-radius: 4px;
-				font-size: 0.8rem;
-				font-weight: bold;
-				background: #dcfce7;
-				color: #166534;
-				margin-left: 0.5rem;
-			}
-
 			.btn-magico {
-				margin-top: 1rem;
 				width: 100%;
 				background-color: #10b981;
 				color: white;
-				padding: 0.5rem;
+				padding: 0.6rem;
 				border: none;
 				border-radius: 6px;
 				font-weight: bold;
@@ -165,11 +189,6 @@
 
 				&:hover {
 					background-color: #059669;
-				}
-
-				&:disabled {
-					background-color: #9ca3af;
-					cursor: not-allowed;
 				}
 			}
 		}
@@ -205,6 +224,26 @@
 			margin-bottom: 2rem;
 		}
 
+		.seccao-titulo {
+			color: #2563eb;
+			border-bottom: 1px solid #e2e8f0;
+			padding-bottom: 0.5rem;
+			margin-top: 2rem;
+			margin-bottom: 1rem;
+		}
+
+		.linha-dupla {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 1rem;
+		}
+
+		.linha-tripla {
+			display: grid;
+			grid-template-columns: 1fr 1fr 1fr;
+			gap: 1rem;
+		}
+
 		.form-grupo {
 			margin-bottom: 1.5rem;
 
@@ -215,17 +254,75 @@
 				margin-bottom: 0.5rem;
 			}
 
-			input, textarea {
+			input, textarea, select {
 				width: 100%;
 				padding: 0.75rem;
 				border: 1px solid #cbd5e1;
 				border-radius: 6px;
 				font-family: inherit;
+				background-color: white;
 
 				&:focus {
 					outline: none;
 					border-color: #3b82f6;
 					box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+				}
+			}
+
+			.input-ficheiro {
+				padding: 0.5rem;
+				background: #f8fafc;
+				border: 1px dashed #94a3b8;
+				cursor: pointer;
+
+				&::file-selector-button {
+					background: #e2e8f0;
+					border: none;
+					padding: 0.5rem 1rem;
+					border-radius: 4px;
+					font-weight: bold;
+					color: #475569;
+					cursor: pointer;
+					margin-right: 1rem;
+					transition: 0.2s;
+
+					&:hover {
+						background: #cbd5e1;
+					}
+				}
+			}
+
+			.preview-container {
+				margin-top: 1rem;
+				border-radius: 8px;
+				border: 2px dashed #cbd5e1;
+				padding: 0.5rem;
+				position: relative;
+
+				img {
+					width: 100%;
+					height: 180px;
+					object-fit: contain;
+					background-color: #f1f5f9;
+					border-radius: 4px;
+				}
+
+				.btn-remover-foto {
+					position: absolute;
+					top: 1rem;
+					right: 1rem;
+					background: rgba(239, 68, 68, 0.9);
+					color: white;
+					border: none;
+					padding: 0.4rem 0.8rem;
+					border-radius: 4px;
+					font-size: 0.8rem;
+					font-weight: bold;
+					cursor: pointer;
+
+					&:hover {
+						background: rgb(220, 38, 38);
+					}
 				}
 			}
 		}

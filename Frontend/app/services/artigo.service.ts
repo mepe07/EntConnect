@@ -30,14 +30,17 @@ export const marketplaceService = {
     },
 
     // A MONTRA: Agora atualiza a prateleira física (idStock)
-    async publicarAnuncio(idStock: number, quantidadeAVenda: number) {
+    async publicarAnuncio(idStock: number, quantidadeAVenda: number, quantidadeAAlugar: number) {
         const response = await fetch(`${API_URL}/${idStock}/publicar`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${getToken()}`
             },
-            body: JSON.stringify({ Quantidade_A_Venda: quantidadeAVenda })
+            body: JSON.stringify({ 
+                Quantidade_A_Venda: quantidadeAVenda,
+                Quantidade_Para_Alugar: quantidadeAAlugar 
+            })
         });
 
         if (!response.ok) {
@@ -48,20 +51,23 @@ export const marketplaceService = {
         return response.json();
     },
 
-    // A CRIAÇÃO: O novo estafeta leva a caixa dupla (Catálogo + Armazém)
-    async criarArtigo(novoArtigo: any) {
+    // ============================================================================
+    // CRIAR ARTIGO COM FOTOGRAFIA FÍSICA
+    // ============================================================================
+    async criarArtigo(dadosFormData: FormData) {
         const response = await fetch(`${API_URL}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                // 🚨 ATENÇÃO SÉNIOR: NÃO coloques 'Content-Type': 'application/json' aqui!
+                // O browser vai colocar o 'multipart/form-data' automaticamente por usarmos FormData.
                 'Authorization': `Bearer ${getToken()}`
             },
-            body: JSON.stringify(novoArtigo)
+            body: dadosFormData // Passamos a caixa de cartão diretamente!
         });
 
         if (!response.ok) {
             const erro = await response.json();
-            throw new Error(erro.message || 'Erro ao criar o artigo no armazém.');
+            throw new Error(erro.message || 'Erro ao criar o artigo no inventário.');
         }
         return response.json();
     },
@@ -127,6 +133,26 @@ export const marketplaceService = {
             }
         });
         if (!response.ok) throw new Error('Erro ao carregar os teus pedidos.');
+        return response.json();
+    },
+    // ============================================================================
+    // 9. ALUGUER: Pedir um artigo emprestado
+    // ============================================================================
+    async alugarArtigo(idStock: number, dataRecolhaPrevista: string) {
+        const response = await fetch(`${API_URL}/${idStock}/alugar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            },
+            // A chave 'data_recolha_prevista' TEM de ser igual ao que o Controller espera!
+            body: JSON.stringify({ data_recolha_prevista: dataRecolhaPrevista })
+        });
+
+        if (!response.ok) {
+            const erro = await response.json();
+            throw new Error(erro.message || 'Erro ao processar o pedido de aluguer.');
+        }
         return response.json();
     }
 };

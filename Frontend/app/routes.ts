@@ -46,9 +46,9 @@ export default [
 
     // Rota da oferta de coaching
     // Rota da oferta de coaching
-    route("/coaching/oferta", "routes/ofertaCoaching.tsx"),
+    route("coaching/oferta", "routes/ofertaCoaching.tsx"),
 
     // Rota do perfil (para todos os utilizadores)
-    route("conta", "routes/perfil.tsx")
+    route("marketplace/atividades", "routes/atividades.tsx")
 
 ] satisfies RouteConfig;
