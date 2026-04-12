@@ -147,14 +147,14 @@ return utilizadoresRaw.map((user) => {
     const idPessoa = utilizador.ID_Pessoa;
 
     // =======================================================
-    // CENÁRIO A: O UTILIZADOR É O PROFESSOR / COREÓGRAFO
+    // SE FOR O PROFESSOR (A procurar pelo ID_Professor = 1)
     // =======================================================
     if (utilizador.Pessoa.Professor) {
       const aulasProfessor = await this.prisma.aula.findMany({
-        where: { ID_Professor: idPessoa },
+        where: { ID_Professor: idPessoa }, // 👈 Procura as aulas do prof logado
         include: {
-          Coaching: { include: { Sala: true } },
-          Aula_Aluno: { include: { Aluno: true } }
+          Coaching: { include: { Sala: true } }, 
+          Aula_Aluno: { include: { Aluno: true } } 
         },
         orderBy: { Data_Aula: 'asc' }
       });
@@ -163,6 +163,7 @@ return utilizadoresRaw.map((user) => {
         const dataStr = aula.Data_Aula.toLocaleDateString('pt-PT');
         const horaInicio = aula.Data_Aula.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
         
+        // Pega na Duracao (60) que está no Coaching ID 27
         const duracaoMinutos = aula.Coaching?.Duracao || 60;
         const horaFimObj = new Date(aula.Data_Aula.getTime() + duracaoMinutos * 60000);
         const horaFim = horaFimObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
@@ -170,8 +171,7 @@ return utilizadoresRaw.map((user) => {
         const nomesClientes = aula.Aula_Aluno.map(aa => aa.Aluno.Nome).join(', ');
 
         return {
-          // Ajustado para o mundo da dança
-          sessao: aula.Resumo_Aula || 'Aula Privada / Ensaio',
+          sessao: aula.Resumo_Aula || 'Aula Privada / Ensaio', // "Coreografia Hip Hop - Parte 1"
           cliente: nomesClientes || 'Sem aluno associado',
           data: dataStr,
           horario: `${horaInicio} - ${horaFim}`,
@@ -181,7 +181,7 @@ return utilizadoresRaw.map((user) => {
     } 
     
     // =======================================================
-    // CENÁRIO B: O UTILIZADOR É O ALUNO (OU ENC. EDUCAÇÃO)
+    // SE FOR O ALUNO/PAI (A procurar se o Aluno 10 lhe pertence)
     // =======================================================
     else if (utilizador.Pessoa.Enc_Educacao) {
       const aulasCliente = await this.prisma.aula.findMany({
@@ -214,7 +214,6 @@ return utilizadoresRaw.map((user) => {
           .join(', ');
 
         return {
-          // Ajustado para o mundo da dança
           sessao: aula.Resumo_Aula ? aula.Resumo_Aula : `Aula de Dança - ${meusAlunosNestaAula}`,
           coach: aula.Professor?.Pessoa?.Nome || 'Professor a definir',
           data: dataStr,

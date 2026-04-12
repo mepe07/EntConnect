@@ -1,19 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { marketplaceService } from '../../services/artigo.service';
 import { authService } from '~/services/auth.service'; // Ajusta o caminho se necessário
 import './perfil.scss';
 
-// 1. Atualizado para incluir 'minhas_aulas'
-type AbaTipo = 'dados_pessoais' | 'minhas_aulas' | 'favoritos' | 'pedidos' | 'anuncios';
+// 1. Tipo simplificado apenas com as abas que precisas
+type AbaTipo = 'dados_pessoais' | 'minhas_aulas';
 
 export function Perfil() {
-    // Definimos a aba 'dados_pessoais' como a inicial por defeito
+    // Aba inicial
     const [abaAtiva, setAbaAtiva] = useState<AbaTipo>('dados_pessoais');
     
-    // Estados dos Dados
-    const [meusPedidos, setMeusPedidos] = useState<any[]>([]);
-    const [meusAnuncios, setMeusAnuncios] = useState<any[]>([]);
-    const [minhasAulas, setMinhasAulas] = useState<any[]>([]); // Novo estado para as aulas
+    // Estado das Aulas
+    const [minhasAulas, setMinhasAulas] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
     // Estados para a Foto de Perfil
@@ -58,20 +55,14 @@ export function Perfil() {
     };
 
     const carregarDados = async () => {
-        if (abaAtiva === 'favoritos' || abaAtiva === 'dados_pessoais') return;
+        if (abaAtiva === 'dados_pessoais') return;
 
         setLoading(true);
         try {
             const token = localStorage.getItem('token') || authService.getToken();
             const headers = { 'Authorization': `Bearer ${token}` };
 
-            if (abaAtiva === 'pedidos') {
-                const dados = await marketplaceService.listarMeusPedidos();
-                setMeusPedidos(dados);
-            } else if (abaAtiva === 'anuncios') {
-                const dados = await marketplaceService.listarMeusAnuncios();
-                setMeusAnuncios(dados);
-            } else if (abaAtiva === 'minhas_aulas') {
+            if (abaAtiva === 'minhas_aulas') {
                 // Chamada para o teu endpoint de aulas
                 const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/aulas`, { headers });
                 if (response.ok) {
@@ -80,7 +71,7 @@ export function Perfil() {
                 }
             }
         } catch (error: any) {
-            console.error("Erro ao carregar dados do perfil:", error);
+            console.error("Erro ao carregar as aulas:", error);
         } finally {
             setLoading(false);
         }
@@ -123,12 +114,6 @@ export function Perfil() {
         }
     };
 
-    const renderEtiquetaEstado = (estado: string) => {
-        const classe = estado.toLowerCase() === 'aprovado' ? 'verde' : 
-            estado.toLowerCase() === 'rejeitado' ? 'vermelha' : 'amarela';
-        return <span className={`etiqueta ${classe}`}>{estado}</span>;
-    };
-
     return (
         <div className="perfil-container">
             <aside className="perfil-sidebar">
@@ -137,25 +122,15 @@ export function Perfil() {
                     <button className={abaAtiva === 'dados_pessoais' ? 'ativo' : ''} onClick={() => setAbaAtiva('dados_pessoais')}>
                         👤 O Meu Perfil
                     </button>
-                    {/* Novo botão na navegação lateral */}
                     <button className={abaAtiva === 'minhas_aulas' ? 'ativo' : ''} onClick={() => setAbaAtiva('minhas_aulas')}>
-                        🎓 As Minhas Aulas
-                    </button>
-                    <button className={abaAtiva === 'favoritos' ? 'ativo' : ''} onClick={() => setAbaAtiva('favoritos')}>
-                        ❤️ Favoritos
-                    </button>
-                    <button className={abaAtiva === 'pedidos' ? 'ativo' : ''} onClick={() => setAbaAtiva('pedidos')}>
-                        📋 Os Meus Pedidos
-                    </button>
-                    <button className={abaAtiva === 'anuncios' ? 'ativo' : ''} onClick={() => setAbaAtiva('anuncios')}>
-                        🏪 Os Meus Anúncios
+                        📅 O Meu Horário
                     </button>
                 </nav>
             </aside>
 
             <main className="perfil-conteudo">
                 {loading ? (
-                    <div className="mensagem-centro">A organizar os teus pertences...</div>
+                    <div className="mensagem-centro">A organizar as tuas aulas...</div>
                 ) : (
                     <div className="cartao-branco">
 
@@ -207,7 +182,7 @@ export function Perfil() {
                         {/* Secção de Aulas Privadas / Coaching de Dança */}
                         {abaAtiva === 'minhas_aulas' && (
                             <section>
-                                <h3>O Meu Horário de Aulas</h3>
+                                <h3>As Minhas Aulas</h3>
                                 {minhasAulas.length === 0 ? (
                                     <p className="texto-vazio">Ainda não tens aulas privadas ou ensaios agendados.</p>
                                 ) : (
@@ -215,7 +190,6 @@ export function Perfil() {
                                         <thead>
                                             <tr>
                                                 <th>Foco / Coreografia</th>
-                                                {/* Se vier um 'coach' do backend, sabemos que quem vê é o Aluno. Logo a coluna mostra Professor(a) */}
                                                 <th>{minhasAulas[0].coach ? 'Professor(a)' : 'Aluno(a)'}</th>
                                                 <th>Data</th>
                                                 <th>Horário</th>
@@ -238,65 +212,6 @@ export function Perfil() {
                                             ))}
                                         </tbody>
                                     </table>
-                                )}
-                            </section>
-                        )}
-
-                        {abaAtiva === 'favoritos' && (
-                            <section>
-                                <h3>Os Teus Favoritos</h3>
-                                <p className="texto-vazio">Ainda estamos a ligar os cabos aos favoritos. Brevemente aqui! 🚧</p>
-                            </section>
-                        )}
-
-                        {abaAtiva === 'pedidos' && (
-                            <section>
-                                <h3>Pedidos de Interesse</h3>
-                                {meusPedidos.length === 0 ? (
-                                    <p className="texto-vazio">Ainda não demonstraste interesse em nada. Explora o Marketplace!</p>
-                                ) : (
-                                    <table className="tabela-custom">
-                                        <thead>
-                                            <tr>
-                                                <th>Artigo</th>
-                                                <th>Data</th>
-                                                <th>Estado</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {meusPedidos.map(p => (
-                                                <tr key={p.ID_Interesse}>
-                                                    <td>{p.Stock_Armazem?.Artigo?.Nome}</td>
-                                                    <td>{new Date(p.Data_Registo).toLocaleDateString('pt-PT')}</td>
-                                                    <td>{renderEtiquetaEstado(p.Estado)}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                )}
-                            </section>
-                        )}
-
-                        {abaAtiva === 'anuncios' && (
-                            <section>
-                                <div className="titulo-com-acao">
-                                    <h3>O Que Tenho à Venda</h3>
-                                    <button className="btn-primario">➕ Novo Anúncio</button>
-                                </div>
-                                {meusAnuncios.length === 0 ? (
-                                    <p className="texto-vazio">Não tens nada à venda. Que tal começares hoje?</p>
-                                ) : (
-                                    <div className="lista-anuncios-perfil">
-                                        {meusAnuncios.map(a => (
-                                            <div key={a.ID_Artigo} className="item-anuncio">
-                                                <div className="info">
-                                                    <strong>{a.Nome}</strong>
-                                                    <span>Stock: {a.Stock_Armazem?.[0]?.Quantidade_Venda || 0} unidades</span>
-                                                </div>
-                                                <button className="btn-secundario">Gerir Interessados</button>
-                                            </div>
-                                        ))}
-                                    </div>
                                 )}
                             </section>
                         )}

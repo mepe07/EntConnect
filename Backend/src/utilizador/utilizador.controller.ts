@@ -243,12 +243,11 @@ export class UtilizadorController {
   @ApiResponse({ status: 200, description: 'Lista de aulas devolvida com sucesso.' })
   @ApiResponse({ status: 404, description: 'Utilizador não encontrado.' })
   async getMinhasAulas(@Param('id') id: string) {
-    
-    // Chama a função mágica que criámos no UtilizadorService
     return this.utilizadorService.getMinhasAulas(+id);
-    
   }
     
+
+
   @Get('enc-educacao/:id/alunos')
   @ApiOperation({summary: 'Obter alunos de um Encarregado de Educação'})
   @ApiParam({ name: 'id', description: 'ID do Encarregado de Educação' })
