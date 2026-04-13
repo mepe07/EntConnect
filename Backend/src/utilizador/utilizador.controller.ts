@@ -1,6 +1,6 @@
 import { 
   Controller, Get, Post, Put, Body, Patch, Param, Delete, 
-  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe
+  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator
 } from '@nestjs/common'; 
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -68,39 +68,63 @@ export class UtilizadorController {
   }
 
   /**
-   * Importa um lote de utilizadores a partir de um ficheiro CSV.
-   * * O ficheiro já deve ter sido previamente carregado para o contentor 'importar-csv' no Azure Blob Storage.
-   * * O sistema irá ler o ficheiro linha a linha, criar a Pessoa e o respetivo Utilizador associado.
-   * @param {string} nomeFicheiro - O nome exato do ficheiro CSV armazenado no Azure (ex: "Alunos.csv").
-   * @returns Retorna um objeto contendo uma mensagem de sucesso e a lista dos registos importados.
-   * @throws {BadRequestException} Se o nome do ficheiro não for enviado ou se o ficheiro não existir no Azure.
+   * FLUXO DIRETO: Importa um lote de utilizadores a partir de um ficheiro CSV local.
+   * 1. Recebe o ficheiro via Multipart Form Data.
+   * 2. Faz upload temporário para o Azure Blob Storage ('importar-csv').
+   * 3. O sistema lê o ficheiro, cria as Pessoas e os Utilizadores.
+   * 4. O ficheiro é imediatamente apagado do Azure para não acumular lixo.
+   * @param file - O ficheiro CSV capturado pelo interceptor.
    */
   @Post('importusersblob')
-  @ApiOperation({ summary: 'Importar utilizadores lendo um CSV do contentor "importar-csv" no Azure' })
+  @UseInterceptors(FileInterceptor('file')) // Dizemos ao Nest para capturar o ficheiro
+  @ApiConsumes('multipart/form-data') // Atualizamos o Swagger para mostrar o botão de upload
+  @ApiOperation({ summary: 'Upload direto, importação e limpeza do Azure num só passo' })
   @ApiBody({
-    description: 'Nome do ficheiro CSV que já se encontra no Azure Blob Storage (Contentor: importar-csv)',
+    description: 'Ficheiro CSV com os dados dos utilizadores a importar',
     schema: {
       type: 'object',
-      properties: {
-        nomeFicheiro: { 
+      properties: { 
+        file: { 
           type: 'string', 
-          example: 'Alunos.csv' 
-        }
+          format: 'binary' 
+        } 
       }
     }
   })
-  @ApiResponse({ status: 201, description: 'Os utilizadores foram importados do Azure e criados com sucesso.' })
-  @ApiResponse({ status: 400, description: 'Ficheiro não especificado ou não encontrado no Azure.' })
-  @ApiResponse({ status: 500, description: 'Erro interno ao comunicar com o Blob Storage ou gravar na base de dados.' })
-  async importarDoBlob(@Body('nomeFicheiro') nomeFicheiro: string) {
+  @ApiResponse({ status: 201, description: 'Os utilizadores foram importados e o ficheiro temporário foi apagado do Azure.' })
+  @ApiResponse({ status: 400, description: 'Ficheiro não especificado ou formato inválido.' })
+  @ApiResponse({ status: 500, description: 'Erro interno ao processar a importação.' })
+  async importarDoBlob(@UploadedFile() file: Express.Multer.File) {
     
-    // Tratamento de Erro: Verifica se o utilizador se esqueceu de enviar o nome
-    if (!nomeFicheiro || nomeFicheiro.trim() === '') {
-      throw new BadRequestException('Por favor, envie o "nomeFicheiro" (formato JSON) no corpo do pedido.');
+    // Tratamento de Erro: Verifica se o utilizador anexou mesmo um ficheiro
+    if (!file) {
+      throw new BadRequestException('Por favor, selecione um ficheiro CSV para importar.');
     }
 
-    // Retiramos o 'importar-csv' daqui, o serviço já sabe qual é o contentor
-    return this.importService.importarDeBlob(nomeFicheiro);
+    // Guardamos os nomes para o Azure
+    const nomeFicheiroCompleto = file.originalname;
+    const nomeSemExtensao = nomeFicheiroCompleto.split('.').slice(0, -1).join('.');
+
+    try {
+      // PASSO 1: Enviar para o Azure
+      await this.blobsService.uploadFicheiro('importar-csv', file, nomeSemExtensao || 'import_temp');
+
+      // PASSO 2: O teu serviço lê o ficheiro do Azure e processa tudo na Base de Dados
+      const resultadoImportacao = await this.importService.importarDeBlob(nomeFicheiroCompleto);
+
+      // PASSO 3: Limpeza imediata! Apagar do Azure.
+      await this.blobsService.apagarFicheiro('importar-csv', nomeFicheiroCompleto);
+
+      // Devolvemos a mensagem de sucesso (que o teu serviço já cria tão bem)
+      return resultadoImportacao;
+
+    } catch (error) {
+      // SEGURANÇA: Se a importação rebentar a meio (ex: CSV mal formatado), 
+      // tentamos apagar o ficheiro à mesma para ele não ficar lá perdido!
+      await this.blobsService.apagarFicheiro('importar-csv', file.originalname);
+      
+      throw error; // Re-lança o erro para aparecer no Frontend
+    }
   }
 
   
@@ -109,11 +133,11 @@ export class UtilizadorController {
    * 1. Recebe o ficheiro via Multipart Form Data.
    * 2. Envia para o Azure Blob Storage.
    * 3. Guarda o URL gerado na tabela Pessoa (ligada ao ID_Utilizador).
-   * * @param id ID do utilizador (ID_Utilizador)
+   * @param id ID do utilizador (ID_Utilizador)
    * @param file Ficheiro de imagem capturado pelo interceptor
    */
   @Put(':id/uploadphoto')
-  @UseInterceptors(FileInterceptor('file')) // 'file' é o nome do campo no Postman/Swagger
+  @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Faz upload de uma foto para o Azure e guarda o URL na BD' })
   @ApiBody({
@@ -122,32 +146,53 @@ export class UtilizadorController {
       properties: {
         file: {
           type: 'string',
-          format: 'binary', // Isto ativa o botão "Choose File" no Swagger
+          format: 'binary',
         },
       },
     },
   })
   async UploadPhoto(
-  @Param('id') id: string,
-  @UploadedFile() file: Express.Multer.File,
-) {
-  if (!file) {
-    throw new BadRequestException('Selecione uma foto.');
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File, // 👈 Tiramos o ParseFilePipe daqui
+  ) {
+    // 1. Verifica se o ficheiro foi anexado
+    if (!file) {
+      throw new BadRequestException('Por favor, selecione uma foto.');
+    }
+
+    // 2. Validação do Tipo de Ficheiro (incluindo o teu jfif)
+    const extensoesPermitidas = /image\/(jpeg|png|webp|jfif)/i;
+    
+    if (!extensoesPermitidas.test(file.mimetype)) {
+      throw new BadRequestException(
+        `Formato inválido. Extensões permitidas: .png, .jpg, .jpeg, .webp, .jfif. O teu ficheiro: ${file.mimetype}`
+      );
+    }
+
+    // 3. Validação do Tamanho (com cálculo em MB)
+    const limiteMB = 10;
+    const limiteBytes = limiteMB * 1024 * 1024;
+
+    if (file.size > limiteBytes) {
+      // Converte o tamanho do ficheiro de Bytes para MB (com 2 casas decimais)
+      const tamanhoAtualMB = (file.size / (1024 * 1024)).toFixed(2);
+      
+      throw new BadRequestException(
+        `A foto é demasiado pesada. Tamanho máximo: ${limiteMB}MB. Tamanho enviado: ${tamanhoAtualMB}MB. Extensões permitidas: .png, .jpg, .jpeg, .webp, .jfif.`
+      );
+    }
+
+    // 4. Se passou nas validações, faz o upload!
+    const nomeParaAzure = `user${id}`;
+
+    const urlGerado = await this.blobsService.uploadFicheiro(
+      'fotos-pessoas', 
+      file, 
+      nomeParaAzure
+    );
+
+    return this.utilizadorService.UploadPhoto(urlGerado, +id);
   }
-
-  // Definimos o nome fixo: user + id do utilizador
-  const nomeParaAzure = `user${id}`;
-
-  // Enviamos para o serviço com o novo nome 
-  const urlGerado = await this.blobsService.uploadFicheiro(
-    'fotos-pessoas', //'fotos-pessoas' COMO PRIMEIRO ARGUMENTO (CONTAINER NAME)
-    file, 
-    nomeParaAzure
-  );
-
-  // Guardamos o link final na BD (Prisma)
-  return this.utilizadorService.UploadPhoto(urlGerado, +id);
-}
 
 
 // src/utilizador/utilizador.controller.ts
@@ -186,7 +231,22 @@ export class UtilizadorController {
     // Como estamos apenas a apagar, devolver uma mensagem simples fica muito elegante no frontend
     return { message: `A foto do utilizador com ID ${id} foi removida com sucesso.` };
   }
- 
+  
+  
+ /**
+   * Retorna a lista de aulas/ensaios de um utilizador.
+   * A lógica no serviço deteta automaticamente se é Professor ou Aluno.
+   * @param id ID do Utilizador logado
+   */
+  @Get(':id/aulas')
+  @ApiOperation({ summary: 'Obter o horário de aulas/ensaios (Professor ou Aluno)' })
+  @ApiResponse({ status: 200, description: 'Lista de aulas devolvida com sucesso.' })
+  @ApiResponse({ status: 404, description: 'Utilizador não encontrado.' })
+  async getMinhasAulas(@Param('id') id: string) {
+    return this.utilizadorService.getMinhasAulas(+id);
+  }
+    
+
 
   @Get('enc-educacao/:id/alunos')
   @ApiOperation({summary: 'Obter alunos de um Encarregado de Educação'})

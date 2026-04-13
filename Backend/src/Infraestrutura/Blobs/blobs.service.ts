@@ -87,6 +87,30 @@ export class BlobsService {
     }
   }
 
+  // src/Infraestrutura/Blobs/blobs.service.ts
+
+  /**
+   * Apaga um ficheiro do Azure Blob Storage
+   */
+  async apagarFicheiro(containerName: string, nomeFicheiro: string): Promise<void> {
+    if (!this.blobServiceClient) {
+      throw new InternalServerErrorException('A ligação ao Azure não está configurada no servidor.');
+    }
+
+    try {
+      const containerClient = this.blobServiceClient.getContainerClient(containerName);
+      const blockBlobClient = containerClient.getBlockBlobClient(nomeFicheiro);
+
+      // O Azure tem um método super seguro que só apaga se o ficheiro existir mesmo
+      await blockBlobClient.deleteIfExists();
+      console.log(`🗑️ Ficheiro ${nomeFicheiro} apagado com sucesso do Azure!`);
+      
+    } catch (error) {
+      console.error("Erro ao apagar ficheiro no Azure:", error);
+      // Não fazemos throw aqui para não rebentar com o request, caso o ficheiro já não exista
+    }
+  }
+  
   async guardarFotosMarketplace(containerName: string, nomePersonalizado: string, file: Express.Multer.File) {
         if (!this.blobServiceClient) {
             throw new InternalServerErrorException('Azure não configurado.');
