@@ -2,9 +2,16 @@
 @use "../../assets/styles/variables/colors";
 
 .navigation-menu {
+    /* NAVBAR Fixa (Abaixo do Header) */
+    position: fixed;
+    top: 76px; /* Começa exatamente onde o Header de 76px acaba */
+    left: 0;
+    z-index: 90; /* Fica abaixo do Header (que tem z-index 100) */
+
     width: 280px;
     min-width: 280px;
-    height: 100vh;
+    height: calc(100vh - 76px); /* O ecrã todo MENOS a altura do header */
+    
     background-color: colors.$gray-8;
     color: colors.$gray-1;
     padding: 2rem 0;
