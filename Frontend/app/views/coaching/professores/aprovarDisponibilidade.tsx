@@ -59,7 +59,19 @@ export default function ApproveAvailability() {
     async function fetchDisponibilidades() {
         try {
             const data = await disponibilidadesService.getAvailability();
-            setDisponibilidades(data);
+
+            // Ordenar por data (ascendente)
+            const dadosOrdenados = data.sort((a, b) => {
+                const [diaA, mesA, anoA] = a.data.split('/').map(Number);
+                const [diaB, mesB, anoB] = b.data.split('/').map(Number);
+
+                const dateA = new Date(`${anoA}-${mesA}-${diaA}`).getTime();
+                const dateB = new Date(`${anoB}-${mesB}-${diaB}`).getTime();
+
+                return dateA - dateB;
+            });
+
+            setDisponibilidades(dadosOrdenados);
         } catch (error) {
             console.error('Erro ao carregar disponibilidades:', error);
         }
