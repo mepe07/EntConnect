@@ -1,37 +1,50 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString, IsOptional, IsDateString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, IsOptional, IsDateString, IsInt } from 'class-validator';
 
 export class CreateDisponibilidadeDto {
   
-  @ApiProperty({ example: 'Segunda-feira', description: 'Dia da semana' })
-  @IsNotEmpty()
-  @IsString()
-  Dia_Semana: string;
+  @ApiPropertyOptional({ example: 1, description: 'ID do Professor' })
+  @IsOptional()
+  @IsInt()
+  ID_Professor?: number;
 
-  // Usamos IsDateString porque o Frontend envia datas/horas em formato de texto (ISO)
-  @ApiProperty({ example: '2024-05-10T09:00:00Z', description: 'Hora de início' })
-  @IsNotEmpty() 
+  @ApiPropertyOptional({ example: '2026-05-10T09:00:00Z', description: 'Hora de início' })
+  @IsOptional() 
   @IsDateString()
-  Hora_Inicio: string;
+  Hora_Inicio?: string;
 
-  @ApiProperty({ 
-    example: 60, 
-    description: 'Duração da disponibilidade em minutos' 
-  })
-  @IsNotEmpty() // Adiciona também aqui por segurança, já que é obrigatório na BD!
-  @IsNumber()
-  Duracao: number;
+  @ApiProperty({ example: 1, description: 'ID do Estado da Disponibilidade (ex: 1 para Pendente)' })
+  @IsNotEmpty()
+  @IsInt()
+  EstadoDisponibilidadeID: number;
 
   @ApiProperty({ example: 1, description: 'ID do Utilizador que está a criar/alterar' })
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   AlteradoPorUtilizadorID: number;
 
-  @ApiProperty({ 
-    example: 'Salsa',
-    description: 'Modalidade da disponibilidade' 
-  })
+  @ApiProperty({ example: 60, description: 'Duração da disponibilidade em minutos' })
+  @IsNotEmpty()
+  @IsInt()
+  Duracao: number;
+
+  @ApiProperty({ example: 'Ballet', description: 'Modalidade da disponibilidade' })
   @IsNotEmpty()
   @IsString()
   Modalidade: string;
+
+  @ApiPropertyOptional({ example: 3, description: 'ID do Estúdio atribuído' })
+  @IsOptional()
+  @IsInt()
+  IdEstudio?: number;
+
+  @ApiPropertyOptional({ example: 25, description: 'Valor cobrado por aluno' })
+  @IsOptional()
+  @IsNumber()
+  ValorPorAluno?: number;
+
+  @ApiPropertyOptional({ example: 4, description: 'Número máximo de alunos permitidos' })
+  @IsOptional()
+  @IsInt()
+  MaxAlunos?: number;
 }

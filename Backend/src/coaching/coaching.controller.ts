@@ -10,6 +10,7 @@ import { get } from 'http';
 import { ModalidadeService } from './modalidade/modalidade.service';
 import { CreateModalidadeDto } from './dto/create-modalidade.dto';
 import { UpdateModalidadeDto } from './dto/update-modalidade.dto';
+import { InscreverAlunoDto } from './dto/inscrever-aluno.dto';
 //#endregion
 
 @ApiTags('Coaching') // Tag para agrupar os endpoints relacionados a Coaching no Swagger
@@ -44,13 +45,14 @@ export class CoachingController {
     return this.coachingService.create(createCoachingDto);
   }
 
-  @Post(':id/inscrever-aluno')
+
+  @Post('disponibilidade/:id/inscrever-aluno')
   @ApiOperation({summary: 'Inscrever aluno em sessão de coaching'})
   async inscreverAluno(
-    @Param('id') idCoaching: string,
-    @Body() body: { idAluno: number }
+    @Param('id') idDisponibilidade: string,
+    @Body() body: InscreverAlunoDto
   ) {
-    return this.coachingService.inscreverAluno(+idCoaching, body.idAluno);
+    return this.coachingService.inscreverAluno(+idDisponibilidade, body);
   }
 
   @Get('estudios')

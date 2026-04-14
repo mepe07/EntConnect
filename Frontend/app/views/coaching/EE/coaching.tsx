@@ -11,15 +11,17 @@ import type { User } from '../../../models/interfaces/user.interface';
 import { DisponibilidadesService } from '../../../services/disponibilidades.service';
 import { InputComponent } from '~/components/input/input.component';
 import { SelectBoxComponent } from '~/components/selectbox/selectbox.component';
+import { EEService } from '~/services/EE.service';
 
 interface Disponibilidade {
     idDisponibilidade: number;
     nomeProfessor: string;
     data: string;
-    diaSemana: string;
     horario: string;
     modalidade: string;
     estado: string;
+    valorPorAluno: number;
+    maxAlunos: number;
 }
 
 interface Aluno {
@@ -36,12 +38,12 @@ export default function CoachingEE() {
 
     // Validar o role do utilizador 
     const userInfo = authService.getUserInfo() as User;
-    console.log('Informações do utilizador:', userInfo);
     if (userInfo.role !== 'Enc_Educacao') {
         return null;
     }
 
     const disponibilidadesService = new DisponibilidadesService();
+    const eeService = new EEService();
     const [disponibilidades, setDisponibilidades] = useState<Disponibilidade[]>([]);
     const [alunos, setAlunos] = useState<Aluno[]>([]);
     const [modalAberto, setModalAberto] = useState(false);
@@ -75,18 +77,10 @@ export default function CoachingEE() {
     }
 
     async function fetchAlunos() {
-        try {
             const userInfo = authService.getUserInfo() as User;
             const idEE = userInfo.idPessoa;
-            const response = await fetch(`http://localhost:3000/utilizador/enc-educacao/${idEE}/alunos`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const data = await response.json();
+            const data = await eeService.getAlunosByEE(idEE);
             setAlunos(data);
-        } catch (error) {
-            console.error('Não foram encontrados alunos associados ao EE:', error);
-        }
     }
 
     async function handleInscreverAluno() {
@@ -94,6 +88,7 @@ export default function CoachingEE() {
             alert('Por favor selecione uma sessão e um aluno.');
             return;
         }
+
 
         try {
             const response = await fetch(
@@ -104,6 +99,8 @@ export default function CoachingEE() {
                     body: JSON.stringify({ idAluno: alunoSelecionado })
                 }
             );
+
+            console.log('Resposta da inscrição:', response);
 
             if (!response.ok) {
                 throw new Error('Falha na inscrição');
@@ -144,7 +141,7 @@ export default function CoachingEE() {
             <div className="cabecalho">
                 <div>
                     <h1>Oferta de Coaching</h1>
-                    <p>Consulte as sessões de coaching disponíveis e inscreva um dos seus educandos.</p>
+                    <p>Consulte as sessões de coaching disponíveis e inscreva os seus educandos.</p>
                 </div>
             </div>
 
@@ -175,10 +172,10 @@ export default function CoachingEE() {
                     columns: [
                         { key: 'nomeProfessor', value: 'Professor', type: TableColumnTypesEnum.Default },
                         { key: 'data', value: 'Data', type: TableColumnTypesEnum.Default },
-                        { key: 'diaSemana', value: 'Dia da Semana', type: TableColumnTypesEnum.Default },
                         { key: 'horario', value: 'Horário', type: TableColumnTypesEnum.Default },
                         { key: 'modalidade', value: 'Modalidade', type: TableColumnTypesEnum.Default },
-                        { key: 'estadoChip', value: 'Estado', type: TableColumnTypesEnum.Chip }
+                        { key: 'valorPorAluno', value: 'Valor por Aluno', type: TableColumnTypesEnum.Default },
+                        { key: 'maxAlunos', value: 'Máximo de Alunos', type: TableColumnTypesEnum.Default }
                     ],
                     searchSettings: {
                         placeholder: 'Procurar por professor ou modalidade...',
@@ -189,7 +186,7 @@ export default function CoachingEE() {
                         {
                             icon: 'fa-solid fa-user-plus',
                             tooltip: 'Adicionar Aluno',
-                            config: { type: ButtonTypeEnum.Secondary, color: ButtonColorEnum.Theme, size: SizeEnum.Small },
+                            config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Theme, size: SizeEnum.Regular },
                             onClick: (row: any) => abrirModal(row)
                         }
                     ]
