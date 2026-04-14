@@ -46,6 +46,7 @@ model Stock_Armazem {
   Quantidade_Total   Int
   Quantidade_Venda   Int                @default(0)
   Quantidade_Aluguer Int                @default(0)
+  Aluguer_Artigo     Aluguer_Artigo[]
   Artigo_Favorito    Artigo_Favorito[]
   Interesse_Artigo   Interesse_Artigo[]
   Artigo             Artigo             @relation(fields: [ID_Artigo], references: [ID_Artigo], onDelete: Cascade)
@@ -96,20 +97,17 @@ model Interesse_Artigo {
 
 model Coaching {
   ID_Coaching        Int              @id(map: "PK__Coaching__67C45CE807C5C68F") @default(autoincrement())
-  ID_Direcao         Int?
-  ID_Enc_Educacao    Int?
   ID_Professor       Int?
   ID_Estado_Coaching Int?
   ID_Sala            Int?
   ID_Coordenador     Int?
-  Preco              Decimal?         @db.Decimal(10, 2)
-  Valor_em_Falta     Decimal?         @db.Decimal(10, 2)
+  ValorPorAluno      Decimal?         @db.Decimal(10, 2)
   Inicio_Coaching    DateTime?        @db.DateTime
   Duracao            Int              @default(0, map: "DF__Coaching__Duraca__42E1EEFE")
+  ID_Disponibilidade Int?
   Aula               Aula[]
-  Direcao            Direcao?         @relation(fields: [ID_Direcao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Colaborador")
   Coordenador        Coordenador?     @relation(fields: [ID_Coordenador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Coordenador")
-  Enc_Educacao       Enc_Educacao?    @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_EncEducacao")
+  Disponibilidade    Disponibilidade? @relation(fields: [ID_Disponibilidade], references: [ID_Disponibilidade], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Disponibilidade")
   Estado_Coaching    Estado_Coaching? @relation(fields: [ID_Estado_Coaching], references: [ID_Estado_Coaching], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Estado_Coaching")
   Professor          Professor?       @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Professor")
   Sala               Sala?            @relation(fields: [ID_Sala], references: [ID_Sala], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Sala")
@@ -117,14 +115,15 @@ model Coaching {
 }
 
 model Coaching_Aluno {
-  ID_Coaching      Int
-  ID_Aluno         Int
-  Observacoes      String?   @db.VarChar(500)
-  Data_Inscricao   DateTime? @default(now(), map: "DF__Coaching___Data___17F790F9") @db.DateTime
-  Montante_a_Pagar Decimal?  @db.Decimal(10, 2)
-  Pago             Boolean?  @default(false, map: "DF__Coaching_A__Pago__41EDCAC5")
-  Aluno            Aluno     @relation(fields: [ID_Aluno], references: [ID_aluno], onDelete: Cascade, onUpdate: NoAction, map: "FK_CoachingAluno_Aluno")
-  Coaching         Coaching  @relation(fields: [ID_Coaching], references: [ID_Coaching], onDelete: Cascade, onUpdate: NoAction, map: "FK_CoachingAluno_Coaching")
+  ID_Coaching     Int
+  ID_Aluno        Int
+  Observacoes     String?       @db.VarChar(500)
+  Data_Inscricao  DateTime?     @default(now(), map: "DF__Coaching___Data___17F790F9") @db.DateTime
+  ValorEmFalta    Decimal?      @db.Decimal(10, 2)
+  ID_Enc_Educacao Int?
+  Aluno           Aluno         @relation(fields: [ID_Aluno], references: [ID_aluno], onDelete: Cascade, onUpdate: NoAction, map: "FK_CoachingAluno_Aluno")
+  Coaching        Coaching      @relation(fields: [ID_Coaching], references: [ID_Coaching], onDelete: Cascade, onUpdate: NoAction, map: "FK_CoachingAluno_Coaching")
+  Enc_Educacao    Enc_Educacao? @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_CoachingAluno_EncEducacao")
 
   @@id([ID_Coaching, ID_Aluno], map: "PK_Coaching_Aluno")
 }
@@ -141,17 +140,18 @@ model Disponibilidade {
   IdEstudio               Int?
   MaxAlunos               Int?                   @db.TinyInt
   ValorPorAluno           Decimal?               @db.Decimal(10, 2)
+  Coaching                Coaching[]
   Estado_Disponibilidade  Estado_Disponibilidade @relation(fields: [EstadoDisponibilidadeID], references: [ID], onUpdate: NoAction, map: "FK__Disponibi__Estad__45BE5BA9")
   Utilizador              Utilizador             @relation(fields: [AlteradoPorUtilizadorID], references: [ID_Utilizador], onUpdate: NoAction, map: "FK_Alterado_Utilizador")
   Professor               Professor?             @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Disponibilidade_Professor")
 }
 
 model Enc_Educacao {
-  ID_Pessoa Int        @id(map: "PK__Enc_Educ__81E8E179BA40BDD1")
-  Aluno     Aluno[]
-  Artigo    Artigo[]
-  Coaching  Coaching[]
-  Pessoa    Pessoa     @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK__Enc_Educa__ID_Pe__25518C17")
+  ID_Pessoa      Int              @id(map: "PK__Enc_Educ__81E8E179BA40BDD1")
+  Aluno          Aluno[]
+  Artigo         Artigo[]
+  Coaching_Aluno Coaching_Aluno[]
+  Pessoa         Pessoa           @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK__Enc_Educa__ID_Pe__25518C17")
 }
 
 model Estado_Coaching {
@@ -250,11 +250,10 @@ model Coordenador {
 }
 
 model Direcao {
-  ID_Pessoa Int        @id(map: "PK__Direcao__81E8E17987895FBF")
+  ID_Pessoa Int      @id(map: "PK__Direcao__81E8E17987895FBF")
   Artigo    Artigo[]
   Aula      Aula[]
-  Coaching  Coaching[]
-  Pessoa    Pessoa     @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK__Direcao__ID_Pess__2CF2ADDF")
+  Pessoa    Pessoa   @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK__Direcao__ID_Pess__2CF2ADDF")
 }
 
 model sysdiagrams {
@@ -311,4 +310,15 @@ model Pedido_Coaching {
   Estado_Pedido                                       Estado_Pedido @relation(fields: [ID_EstadoPedido], references: [ID_EstadoPedido], onUpdate: NoAction, map: "FK_Pedido_Estado")
   Modalidade                                          Modalidade    @relation(fields: [ID_Modalidade], references: [ID_Modalidade], onUpdate: NoAction, map: "FK_Pedido_Modalidade")
   Utilizador_Pedido_Coaching_ID_ProfessorToUtilizador Utilizador    @relation("Pedido_Coaching_ID_ProfessorToUtilizador", fields: [ID_Professor], references: [ID_Utilizador], onUpdate: NoAction, map: "FK_Pedido_Professor")
+}
+
+model Aluguer_Artigo {
+  ID_Aluguer            Int           @id @default(autoincrement())
+  ID_Stock              Int
+  ID_Utilizador         Int
+  Data_Entrega          DateTime      @default(now())
+  Data_Recolha_Prevista DateTime
+  Data_Recolha_Efetiva  DateTime?
+  Estado                String        @default("Ativo")
+  Stock_Armazem         Stock_Armazem @relation(fields: [ID_Stock], references: [ID_Stock])
 }
