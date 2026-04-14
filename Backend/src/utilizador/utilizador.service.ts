@@ -97,7 +97,7 @@ return utilizadoresRaw.map((user) => {
       // Lembra-te de importar o NotFoundException no topo se ainda não o tiveres!
       throw new NotFoundException(`Utilizador com ID ${id} não encontrado.`); 
     }
-
+    
     // 2. Vai à tabela Pessoa e coloca a foto a null (vazio)
     return this.prisma.pessoa.update({
       where: { ID_Pessoa: utilizador.ID_Pessoa },
@@ -124,6 +124,108 @@ return utilizadoresRaw.map((user) => {
     };
   }
   
+  
+  async getMinhasAulas(id: number) {
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: id },
+      include: {
+        Pessoa: {
+          include: {
+            Professor: true,
+            Enc_Educacao: {
+              include: { Aluno: true }
+            }
+          }
+        }
+      }
+    });
+
+    if (!utilizador || !utilizador.Pessoa) {
+      throw new NotFoundException(`Utilizador não encontrado.`);
+    }
+
+    const idPessoa = utilizador.ID_Pessoa;
+
+    // =======================================================
+    // SE FOR O PROFESSOR (A procurar pelo ID_Professor = 1)
+    // =======================================================
+    if (utilizador.Pessoa.Professor) {
+      const aulasProfessor = await this.prisma.aula.findMany({
+        where: { ID_Professor: idPessoa }, // 👈 Procura as aulas do prof logado
+        include: {
+          Coaching: { include: { Sala: true } }, 
+          Aula_Aluno: { include: { Aluno: true } } 
+        },
+        orderBy: { Data_Aula: 'asc' }
+      });
+
+      return aulasProfessor.map(aula => {
+        const dataStr = aula.Data_Aula.toLocaleDateString('pt-PT');
+        const horaInicio = aula.Data_Aula.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+        
+        // Pega na Duracao (60) que está no Coaching ID 27
+        const duracaoMinutos = aula.Coaching?.Duracao || 60;
+        const horaFimObj = new Date(aula.Data_Aula.getTime() + duracaoMinutos * 60000);
+        const horaFim = horaFimObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+
+        const nomesClientes = aula.Aula_Aluno.map(aa => aa.Aluno.Nome).join(', ');
+
+        return {
+          sessao: aula.Resumo_Aula || 'Aula Privada / Ensaio', // "Coreografia Hip Hop - Parte 1"
+          cliente: nomesClientes || 'Sem aluno associado',
+          data: dataStr,
+          horario: `${horaInicio} - ${horaFim}`,
+          formato: aula.Coaching?.Sala?.Nome || 'Estúdio a definir' 
+        };
+      });
+    } 
+    
+    // =======================================================
+    // SE FOR O ALUNO/PAI (A procurar se o Aluno 10 lhe pertence)
+    // =======================================================
+    else if (utilizador.Pessoa.Enc_Educacao) {
+      const aulasCliente = await this.prisma.aula.findMany({
+        where: {
+          Aula_Aluno: {
+            some: {
+              Aluno: { ID_Enc_Educacao: idPessoa }
+            }
+          }
+        },
+        include: {
+          Professor: { include: { Pessoa: true } },
+          Coaching: { include: { Sala: true } },
+          Aula_Aluno: { include: { Aluno: true } }
+        },
+        orderBy: { Data_Aula: 'asc' }
+      });
+
+      return aulasCliente.map(aula => {
+        const dataStr = aula.Data_Aula.toLocaleDateString('pt-PT');
+        const horaInicio = aula.Data_Aula.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+        
+        const duracaoMinutos = aula.Coaching?.Duracao || 60;
+        const horaFimObj = new Date(aula.Data_Aula.getTime() + duracaoMinutos * 60000);
+        const horaFim = horaFimObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+
+        const meusAlunosNestaAula = aula.Aula_Aluno
+          .filter(aa => aa.Aluno.ID_Enc_Educacao === idPessoa)
+          .map(aa => aa.Aluno.Nome)
+          .join(', ');
+
+        return {
+          sessao: aula.Resumo_Aula ? aula.Resumo_Aula : `Aula de Dança - ${meusAlunosNestaAula}`,
+          coach: aula.Professor?.Pessoa?.Nome || 'Professor a definir',
+          data: dataStr,
+          horario: `${horaInicio} - ${horaFim}`,
+          formato: aula.Coaching?.Sala?.Nome || 'Estúdio a definir'
+        };
+      });
+    }
+
+    return [];
+  }
+
   // create(createUtilizadorDto: CreateUtilizadorDto) {
   //   return 'This action adds a new utilizador';
   // }
