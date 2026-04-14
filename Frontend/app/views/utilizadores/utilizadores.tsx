@@ -102,13 +102,13 @@ export function Utilizadores() {
                     searchSettings: { placeholder: "Procurar por nome ou cargos...", label: "Pesquisa", value: "" },
                     actions: [
                         {
-                            icon: "fa-eye",
+                            icon: "fa-solid fa-eye",
                             tooltip: "Ver Utilizador",
                             config: { type: ButtonTypeEnum.Tertiary, size: SizeEnum.Small },
                             onClick: (row: User) => alert(`Queres ver o utilizador ${row.nome}?`)
                         },
                         {
-                            icon: "fa-lock",
+                            icon: "fa-solid fa-lock",
                             tooltip: "Bloquear/Desbloquear Utilizador",
                             config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Error, size: SizeEnum.Small},
                             onClick: (row: User) => blockUnlockUser(row.idUtilizador, ((row.ativo as any).value === "Sim" ? 'block' : 'unlock'))
