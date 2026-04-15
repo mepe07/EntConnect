@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class FaturacaoService {
@@ -82,17 +83,38 @@ export class FaturacaoService {
     * Este método é o "coração" do módulo de faturação. Ele busca todas as sessões de coaching dentro do intervalo de datas especificado,
     * trazendo informações detalhadas sobre cada sessão, incluindo o estado atual da aula
     */
-    async obterRelatorioFaturacaoGeral(dataInicio: Date, dataFim: Date) {
-        // 1. A Query com os saltos (includes) que estudámos
-        const inscricoes = await this.prisma.coaching_Aluno.findMany({
-            where: {
-                Coaching: {
-                    Inicio_Coaching: {
-                        gte: dataInicio,
-                        lte: dataFim,
-                    },
-                },
+    async obterRelatorioFaturacaoGeral(dataInicio: Date, dataFim: Date, role: string, userId: number) {
+        
+        // 1. Criamos o filtro específico para o Coaching usando o Molde do Prisma!
+        // Adeus 'any', olá TypeScript auto-complete.
+        const filtroCoaching: Prisma.CoachingWhereInput = {
+            Inicio_Coaching: {
+                gte: dataInicio,
+                lte: dataFim, 
             },
+        };
+
+        // 2. A MAGIA DO TÚNEL (RBAC) - Totalmente Tipado!
+        // Se for um Professor, adicionamos a restrição ao filtro do Coaching.
+        if (role === 'Professor' || role === 'Enc_Educacao') {
+            filtroCoaching.Professor = {
+                Pessoa: {
+                    Utilizador: { 
+                        // Adeus 'some'! A relação é 1-para-1, vamos diretos ao assunto:
+                        ID_Utilizador: userId 
+                    }
+                }
+            };
+        }
+
+        // 3. Criamos o filtro final que vai entrar no findMany
+        const condicoesFiltro: Prisma.Coaching_AlunoWhereInput = {
+            Coaching: filtroCoaching,
+        };
+
+        // 4. A Query final ao Prisma (Sem erros de linter e super segura)
+        const inscricoes = await this.prisma.coaching_Aluno.findMany({
+            where: condicoesFiltro,
             include: {
                 Aluno: true,
                 Coaching: {
@@ -104,7 +126,7 @@ export class FaturacaoService {
             },
         });
 
-        // 2. Mapeamento para o DTO limpo que o React espera
+        // 5. Mapeamento para o DTO (Isto mantém-se intacto)
         return inscricoes.map((item) => {
             return {
                 idCoaching: item.ID_Coaching,
@@ -112,7 +134,6 @@ export class FaturacaoService {
                 nomeProfessor: item.Coaching.Professor?.Pessoa?.Nome || 'Professor não atribuído',
                 fotoProfessorUrl: item.Coaching.Professor?.Pessoa?.Foto || null,
                 nomeAluno: item.Aluno.Nome,
-                // Garantimos que o valor é um número para não dar erro no Frontend
                 valorTotal: Number(item.Montante_a_Pagar) || 0,
                 estaPago: item.Pago,
                 duracaoMinutos: item.Coaching.Duracao,
@@ -186,16 +207,53 @@ export class FaturacaoService {
     * Este método é o "coração" do módulo de faturação. Ele busca todas as sessões de coaching dentro do intervalo de datas especificado,
     * trazendo informações detalhadas sobre cada sessão, incluindo o estado atual da aula
     */
-    async getDashboardFinanceiro(inicio: Date, fim: Date) {
-        const faturas = await this.prisma.coaching_Aluno.findMany({
-            where: {
-                Coaching: {
-                    Inicio_Coaching: {
-                        gte: inicio, 
-                        lte: fim, 
-                    }
+    async getDashboardFinanceiro(inicio: Date, fim: Date, role: string, userId: number) {
+
+    // 1. O Filtro Base (Tempo) - Comum a todos
+    const filtroCoaching: Prisma.CoachingWhereInput = {
+        Inicio_Coaching: {
+            gte: inicio,
+            lte: fim,
+        },
+    };
+
+    console.log(`[DEBUG Dashboard] A procurar dados para Role: '${role}' | UserID (JWT): ${userId}`);
+
+    // 2. A MAGIA DO TÚNEL CORRIGIDA COM BASE NO SCHEMA
+    if (role === 'Professor') {
+        // Procura as sessões de Coaching onde o Professor...
+        filtroCoaching.Professor = {
+            // ...tem uma Pessoa associada...
+            Pessoa: {
+                // ...que tem um Utilizador com o ID que veio no Token!
+                Utilizador: {
+                    ID_Utilizador: Number(userId) // O ID_Utilizador que vem do JWT!
                 }
-            },
+            }
+        };
+    }
+
+    if (role === 'Enc_Educacao') {
+        // Procura as sessões de Coaching onde o Encarregado...
+        filtroCoaching.Enc_Educacao = {
+            // ...tem uma Pessoa associada...
+            Pessoa: {
+                // ...que tem um Utilizador com o ID que veio no Token!
+                Utilizador: {
+                    ID_Utilizador: Number(userId) // O ID_Utilizador que vem do JWT!
+                }
+            }
+        };
+    }
+
+    // 3. Aplicamos o filtro na query principal
+    const condicoesFiltro: Prisma.Coaching_AlunoWhereInput = {
+        Coaching: filtroCoaching,
+    };
+
+
+        const faturas = await this.prisma.coaching_Aluno.findMany({
+            where: condicoesFiltro,
             include: {
                 Coaching: {
                     include: {
@@ -207,6 +265,8 @@ export class FaturacaoService {
                 Coaching: { Inicio_Coaching: 'asc' }
             }
         });
+
+        console.log(`[DEBUG Dashboard] O Prisma encontrou ${faturas.length} faturas!`);
 
         let totalPago = 0;
         let totalEmDivida = 0;
