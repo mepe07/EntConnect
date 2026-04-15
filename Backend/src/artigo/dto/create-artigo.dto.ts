@@ -6,7 +6,7 @@ export class CreateArtigoDto {
     // ==========================================
     @IsString({ message: 'O nome do artigo é obrigatório.' })
     @MaxLength(255)
-    Nome: string;
+    Nome!: string; // Adicionado '!' para indicar que será inicializado externamente
 
     @IsOptional() @IsString() @MaxLength(255) Notas?: string;
     @IsOptional() @IsString() Foto?: string;
@@ -22,13 +22,13 @@ export class CreateArtigoDto {
     // ==========================================
     @IsInt({ message: 'O stock total tem de ser um número.' }) 
     @Min(1, { message: 'O stock total tem de ser pelo menos 1.' })
-    Quantidade_Total: number;
+    Quantidade_Total!: number;
 
     @IsInt() @Min(0)
-    Quantidade_Venda: number;
+    Quantidade_Venda!: number;
 
     @IsInt() @Min(0)
-    Quantidade_Aluguer: number;
+    Quantidade_Aluguer!: number;
 
     // Características do lote
     @IsOptional() @IsInt() ID_Cor?: number;

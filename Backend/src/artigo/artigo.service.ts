@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'; 
 import { CreateArtigoDto } from './dto/create-artigo.dto';
 import { BlobsService } from '../Infraestrutura/Blobs/blobs.service';
@@ -9,33 +9,53 @@ export class ArtigoService {
     // ============================================================================
     // 1. CRIAR NOVO ARTIGO + LOTE DE STOCK
     // ============================================================================
-    async criar(data: CreateArtigoDto) {
-        return this.prisma.artigo.create({
-            data: {
-                // Preenchemos o Catálogo
-                Nome: data.Nome,
-                Notas: data.Notas,
-                Foto: data.Foto,
-                ID_Coordenador: data.ID_Coordenador,
-                ID_Direcao: data.ID_Direcao,
-                ID_Professor: data.ID_Professor,
-                ID_Enc_Educacao: data.ID_Enc_Educacao,
-                
-                // Magia: Criamos a Prateleira logo a seguir!
-                Stock_Armazem: {
-                    create: {
-                        Quantidade_Total: data.Quantidade_Total,
-                        Quantidade_Venda: data.Quantidade_Venda,
-                        Quantidade_Aluguer: data.Quantidade_Aluguer,
-                        ID_Cor: data.ID_Cor,
-                        ID_Estado: data.ID_Estado,
-                        ID_Tamanho: data.ID_Tamanho
-                    }
-                }
-            }
-        });
-    }
+async criar(data: CreateArtigoDto) {
+  // 1. Desestruturamos para facilitar a leitura e uso
+  const {
+    Nome, Notas, Foto, ID_Coordenador, ID_Direcao, ID_Professor, ID_Enc_Educacao,
+    Quantidade_Total, Quantidade_Venda, Quantidade_Aluguer,
+    ID_Cor, ID_Estado, ID_Tamanho
+  } = data;
 
+  // 2. Validação simples de integridade de dados (opcional mas recomendada)
+  if (Quantidade_Venda + Quantidade_Aluguer > Quantidade_Total) {
+    throw new Error('A soma de venda e aluguer não pode ser superior ao stock total.');
+  }
+
+  try {
+    return await this.prisma.artigo.create({
+      data: {
+        // Dados do Artigo [cite: 46, 49, 51, 53]
+        Nome,
+        Notas,
+        Foto,
+        ID_Coordenador,
+        ID_Direcao,
+        ID_Professor,
+        ID_Enc_Educacao,
+
+        // Criação aninhada do Stock_Armazem [cite: 65, 366]
+        Stock_Armazem: {
+          create: {
+            Quantidade_Total,
+            Quantidade_Venda,
+            Quantidade_Aluguer,
+            ID_Cor,
+            ID_Estado,
+            ID_Tamanho,
+          },
+        },
+      },
+      // Incluímos o retorno do stock para confirmar que a ligação foi feita
+      include: {
+        Stock_Armazem: true,
+      },
+    });
+}   catch (error) {
+    const mensagem = error instanceof Error ? error.message : 'Erro desconhecido';
+    throw new Error(`Erro ao criar artigo: ${mensagem}`);
+}
+}
     // ============================================================================
     // 2. LISTAR O NOVO INVENTÁRIO
     // ============================================================================
