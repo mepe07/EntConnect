@@ -36,15 +36,14 @@ export class EEService {
     /**
      * Inscreve um aluno numa sessão de Coaching
      */
-    async inscreverAlunoCoaching(idCoaching: number, idAluno: number) {
-        const response = await fetch(`${this._apiUrl}/coaching/${idCoaching}/inscrever-aluno`, {
+    async inscreverAlunoCoaching(idDisponibilidade: number, payload: any) {
+        const response = await fetch(`${this._apiUrl}/coaching/disponibilidade/${idDisponibilidade}/inscrever-aluno`, {
             method: 'POST',
-            headers: this.getHeaders(), // 👈 Usa a função que criaste
-            body: JSON.stringify({ idAluno })
+            headers: this.getHeaders(),
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
-            // Se o backend devolver uma mensagem de erro específica (ex: "Turma Cheia"), tentamos lê-la
             const errorData = await response.json().catch(() => null);
             throw new Error(errorData?.message || `Erro ao inscrever aluno: ${response.statusText}`);
         }
