@@ -48,6 +48,9 @@ export default [
     // Rota da oferta de coaching
     route("/coaching/oferta", "routes/ofertaCoaching.tsx"),
 
+    // Rota das marcações de coaching (Para o EE)
+    route("coaching/marcacoes", "routes/marcacoes.tsx"),
+
     // Rota do perfil (para todos os utilizadores)
     route("conta", "routes/perfil.tsx")
 

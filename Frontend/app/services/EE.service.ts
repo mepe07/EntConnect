@@ -50,4 +50,29 @@ export class EEService {
 
         return await response.json();
     }
+
+    async removerAlunoCoaching(idAluno: number, idCoaching: number) {
+        const response = await fetch(`${this._apiUrl}/coaching/remover-aluno/${idAluno}/coaching/${idCoaching}`, {
+            method: 'DELETE',
+            headers: this.getHeaders()
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Erro ao remover aluno: ${response.statusText}`);
+        }
+        return await response.json();
+    }
+
+    async getMarcacoesByEE(idEE: number) {
+        const response = await fetch(`${this._apiUrl}/utilizador/${idEE}/EE/marcacoes`, {
+            method: 'GET',
+            headers: this.getHeaders()
+        });
+        if (!response.ok) {
+            throw new Error(`Erro ao buscar marcações: ${response.statusText}`);
+        }
+        return await response.json();
+    }
+    
+    
 }

@@ -22,6 +22,7 @@ import { UpdateDisponibilidadeDto } from './dto/update-disponibilidade.dto';
 import { ProfessorService } from './professor/professor.service';
 import { CreateProfessorDto } from './dto/create-professor.dto';
 import { UpdateProfessorDto } from './dto/update-professor.dto';
+import { MarcacoesService } from './EE/marcacoes.service';
 
 // Tipagem do Multer (Se não tiver o @types/multer instalado, mas ajuda o TS)
 import 'multer';
@@ -33,6 +34,7 @@ export class UtilizadorController {
     private readonly utilizadorService: UtilizadorService,
     private readonly importService: UtilizadorImportService,
     private readonly dispobilidadeService: DispobilidadeService,
+    private readonly marcacoesService: MarcacoesService,
     private readonly blobsService: BlobsService,
   ) {}
 
@@ -65,6 +67,13 @@ export class UtilizadorController {
   async unlockUser(@Param('id') id: string) {
     await this.utilizadorService.unlockUser(+id);
     return {message: `Utilizador com ID ${id} desbloqueado com sucesso.`};
+  }
+
+  @Get(':id/EE/marcacoes')
+  @ApiOperation({summary: 'Obter marcações por EE'})
+  @ApiResponse({status:200})
+  async getMarcacoesbyEE(@Param('id') id: string) {
+    return this.marcacoesService.getMarcacoesbyEE(+id);
   }
 
   /**
