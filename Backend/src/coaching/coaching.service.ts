@@ -20,7 +20,7 @@ export class CoachingService {
   async inscreverAluno(idDisponibilidade: number, body: any) {
     
     let coaching = await this.prisma.coaching.findFirst({
-      where: { ID_Disponibilidade: idDisponibilidade },
+      //where: { ID_Disponibilidade: idDisponibilidade },
     });
 
     if (!coaching) {
@@ -30,10 +30,10 @@ export class CoachingService {
           ID_Estado_Coaching: body.idEstadoCoaching,
           ID_Sala: body.idSala,
           ID_Coordenador: body.idCoordenador,
-          ValorPorAluno: body.valorPorAluno,
+          //ValorPorAluno: body.valorPorAluno,
           Inicio_Coaching: new Date(body.inicio_Coaching), 
           Duracao: body.duracao,
-          ID_Disponibilidade: idDisponibilidade, 
+          //ID_Disponibilidade: idDisponibilidade, 
         },
       })
     }
@@ -44,8 +44,8 @@ export class CoachingService {
         ID_Aluno: body.idAluno,
         Observacoes: body.obs || null,
         Data_Inscricao: new Date(),
-        ValorEmFalta: body.valorEmFalta,
-        ID_Enc_Educacao: body.idEncEducacao,
+        //ValorEmFalta: body.valorEmFalta,
+        //ID_Enc_Educacao: body.idEncEducacao,
       },
     });
 

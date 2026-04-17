@@ -1,18 +1,34 @@
+// ==========================================
+// VARIÁVEIS DE DESIGN
+// ==========================================
+$fonte-base: 'Inter', 'Segoe UI', sans-serif;
+$cor-texto-escuro: #0f172a;
+$cor-texto-medio: #334155;
+$cor-texto-claro: #64748b;
+$cor-borda: #e2e8f0;
+$cor-primaria: #004d40;
+$cor-primaria-hover: #00332c;
+$cor-azul-destaque: #2563eb;
+$cor-fundo-app: #f1f5f9;
+
 .perfil-container {
     display: flex;
     min-height: calc(100vh - 70px);
-    background-color: #f1f5f9;
-    font-family: 'Inter', 'Segoe UI', sans-serif;
+    background-color: $cor-fundo-app;
+    font-family: $fonte-base;
 
+    /* ============================
+       SIDEBAR
+       ============================ */
     .perfil-sidebar {
         width: 260px;
         background: white;
         padding: 2rem 1.5rem;
-        border-right: 1px solid #e2e8f0;
+        border-right: 1px solid $cor-borda;
 
         h2 {
             font-size: 1.4rem;
-            color: #0f172a;
+            color: $cor-texto-escuro;
             margin-bottom: 2rem;
             padding-left: 0.5rem;
         }
@@ -28,7 +44,7 @@
                 text-align: left;
                 padding: 0.8rem 1rem;
                 font-size: 1rem;
-                color: #64748b;
+                color: $cor-texto-claro;
                 border-radius: 8px;
                 cursor: pointer;
                 transition: 0.2s;
@@ -36,25 +52,28 @@
 
                 &:hover {
                     background: #f8fafc;
-                    color: #0f172a;
+                    color: $cor-texto-escuro;
                 }
 
                 &.ativo {
                     background: #eff6ff;
-                    color: #2563eb;
+                    color: $cor-azul-destaque;
                     font-weight: 600;
                 }
             }
         }
     }
 
+    /* ============================
+       CONTEÚDO PRINCIPAL
+       ============================ */
     .perfil-conteudo {
         flex: 1;
         padding: 2.5rem;
 
         .mensagem-centro {
             text-align: center;
-            color: #64748b;
+            color: $cor-texto-claro;
             margin-top: 4rem;
         }
 
@@ -70,128 +89,409 @@
                 color: #1e293b;
                 margin-bottom: 1.5rem;
             }
-
-            .texto-vazio {
-                color: #94a3b8;
-                text-align: center;
-                margin-top: 3rem;
-            }
         }
     }
 
-    .titulo-com-acao {
+    /* ============================
+       HEADER (FOTO E NOME)
+       ============================ */
+    .perfil-header-topo {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 2rem;
-
-        h3 {
-            margin-bottom: 0;
-        }
+        margin-bottom: 1rem;
     }
 
-    .tabela-custom {
-        width: 100%;
-        border-collapse: collapse;
-
-        th {
-            text-align: left;
-            padding: 1rem;
-            color: #64748b;
-            border-bottom: 2px solid #f1f5f9;
-        }
-
-        td {
-            padding: 1rem;
-            border-bottom: 1px solid #f1f5f9;
-            color: #334155;
-        }
+    .perfil-info-principal {
+        display: flex;
+        align-items: flex-start; //Fixa o alinhamento no topo para o botão não descer
+        gap: 25px;
+        margin-top: 20px;
     }
 
-    .etiqueta {
-        padding: 0.3rem 0.8rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
+    .foto-moldura {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        background-color: #eee;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        border: 3px solid $cor-primaria;
+        flex-shrink: 0;
 
-        &.amarela {
-            background: #fef3c7;
-            color: #d97706;
-        }
-
-        &.verde {
-            background: #dcfce3;
-            color: #166534;
-        }
-
-        &.vermelha {
-            background: #fee2e2;
-            color: #991b1b;
-        }
+        img { width: 100%; height: 100%; object-fit: cover; }
+        i { font-size: 45px; color: #ccc; }
     }
 
-    .lista-anuncios-perfil {
+    .info-texto {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        padding-top: 2px; // Diminuído de 5px para 2px
 
-        .item-anuncio {
+        .nome-principal {
+            color: #000000 !important;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0; // Garante que não há margem no título
+        }
+
+        .nome-meta {
+            color: $cor-texto-claro;
+            font-size: 0.95rem;
+            margin: 0; // Removido o 2px 0
+            font-weight: 500;
+        }
+
+        .email-utilizador {
+            font-size: 0.9rem;
+            color: $cor-texto-medio;
+            margin-bottom: 4px; // Reduzido de 10px para 4px
+        }
+
+        .aviso-tamanho {
+            font-size: 0.8rem;
+            color: $cor-texto-claro;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 1.2rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            transition: 0.2s;
+            gap: 6px;
+            margin-bottom: 8px; // Reduzido de 15px para 8px
+            i { color: $cor-azul-destaque; }
+        }
 
-            &:hover {
-                border-color: #2563eb;
-                background: #f8faff;
+        .btn-link-foto {
+            margin-top: -15px; // Pequeno ajuste para dar um respiro visual controlado
+        }
+    }
+
+    .divisor-perfil {
+        margin: 30px 0;
+        border: 0;
+        border-top: 1px solid #eee;
+    }
+
+    /* ============================
+       GRID LAYOUT (CARTÕES)
+       ============================ */
+    .perfil-grid-layout {
+        display: flex;
+        gap: 40px;
+        margin-top: 10px;
+
+        .cartao-edicao, .cartao-info-extra {
+            background: white;
+            border: 1px solid $cor-borda;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+
+            h4 {
+                font-size: 0.9rem;
+                color: $cor-texto-escuro;
+                margin-bottom: 1.5rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 1px;
             }
+        }
 
-            .info {
-                display: flex;
-                flex-direction: column;
+        .coluna-formulario {
+            flex: 1.2;
+            max-width: 500px;
+        }
 
-                strong {
-                    font-size: 1.1rem;
-                    color: #0f172a;
+        .coluna-detalhes {
+            flex: 1;
+
+            .cartao-info-extra {
+                background-color: #f8fafc;
+                
+                .item-info {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 1.2rem;
+                    .label { color: $cor-texto-claro; font-size: 0.9rem; font-weight: 500; }
+                    .valor-cargo { font-weight: 600; color: $cor-texto-escuro; }
                 }
 
-                span {
-                    font-size: 0.9rem;
-                    color: #64748b;
+                hr { border: 0; border-top: 1px solid $cor-borda; margin: 1.5rem 0; }
+                .texto-seguranca { font-size: 0.85rem; color: $cor-texto-claro; margin-bottom: 1.5rem; line-height: 1.5; }
+            }
+        }
+    }
+
+    /* ============================
+       FORMULÁRIO E INPUTS
+       ============================ */
+    .form-pessoal {
+        display: grid;
+        gap: 1.5rem;
+
+        .campo {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+
+            label { font-weight: 600; font-size: 0.85rem; color: #475569; }
+
+            input {
+                &.input-erro {
+                    border-color: #ef4444 !important; // Vermelho vivo
+                    background-color: #fef2f2;
+                }
+            }
+
+            .legenda-erro {
+                color: #dc2626; // Vermelho escuro
+                font-size: 0.75rem;
+                font-weight: 600;
+                margin-top: 2px;
+                display: block;
+                animation: fadeIn 0.2s ease-in-out;
+            }
+
+            input {
+                font-family: $fonte-base;
+                padding: 12px;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                font-size: 0.95rem;
+                
+                // Força o texto a preto sempre
+                color: #000000 !important;
+                -webkit-text-fill-color: #000000 !important;
+                opacity: 1 !important;
+                transition: 0.2s;
+
+                &:disabled {
+                    background-color: #f1f5f9;
+                    border-color: #e2e8f0;
+                    cursor: not-allowed;
+                }
+
+                &:focus {
+                    border-color: $cor-primaria;
+                    outline: none;
+                    box-shadow: 0 0 0 3px rgba(0, 77, 64, 0.1);
                 }
             }
         }
     }
 
-    .btn-primario {
-        background: #2563eb;
+    /* ============================
+       BOTÕES
+       ============================ */
+    .btn-editar, .btn-link-foto {
+        padding: 10px 20px;
+        background-color: $cor-primaria;
         color: white;
         border: none;
-        padding: 0.6rem 1.2rem;
         border-radius: 6px;
         cursor: pointer;
         font-weight: 600;
+        transition: 0.2s;
+        &:hover { background-color: $cor-primaria-hover; transform: translateY(-1px); }
+    }
 
-        &:hover {
-            background: #1d4ed8;
-        }
+    .btn-link-foto {
+        align-self: flex-start; // Mantém alinhado à esquerda na coluna
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
     }
 
     .btn-secundario {
         background: white;
-        border: 1.5px solid #e2e8f0;
-        color: #475569;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
+        border: 1.5px solid $cor-borda;
+        color: $cor-texto-medio;
+        padding: 0.7rem 1rem;
+        border-radius: 8px;
         cursor: pointer;
-        font-weight: 500;
-
-        &:hover {
-            border-color: #2563eb;
-            color: #2563eb;
-        }
+        font-weight: 600;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        transition: 0.2s;
+        &:hover { border-color: $cor-azul-destaque; color: $cor-azul-destaque; background: #f0f7ff; }
     }
+
+    .btn-cancelar {
+        background: none;
+        border: none;
+        color: #dc2626;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        padding: 0;
+        margin-top: 5px;
+        &:hover { text-decoration: underline; }
+    }
+
+    /* ============================
+       TABELAS E ETIQUETAS
+       ============================ */
+    .tabela-custom {
+        width: 100%;
+        border-collapse: collapse;
+        th { text-align: left; padding: 1.2rem 1rem; color: $cor-texto-claro; border-bottom: 2px solid #f1f5f9; font-size: 0.9rem; }
+        td { padding: 1.2rem 1rem; border-bottom: 1px solid #f1f5f9; color: $cor-texto-medio; }
+    }
+
+    .etiqueta {
+        padding: 0.4rem 0.9rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        &.verde { background: #dcfce3; color: #166534; }
+        &.amarela { background: #fef3c7; color: #d97706; }
+        &.vermelha { background: #fee2e2; color: #991b1b; }
+    }
+
+    /* ==========================================
+   MODAIS (FOTO E PASSWORD)
+   ========================================== */
+    .modal-corte-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.9); // Azul escuro profundo
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        backdrop-filter: blur(4px); // Efeito premium de desfoque no fundo
+    }
+
+    .modal-corte-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        width: 480px;
+        max-width: 95vw;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            
+            h3 { 
+                color: $cor-texto-escuro; 
+                margin-bottom: 5px; 
+                font-size: 1.25rem; 
+                font-weight: 700; 
+            }
+            
+            p { 
+                color: $cor-texto-claro; 
+                font-size: 0.9rem; 
+            }
+        }
+
+        /* Área do Editor de Imagem */
+        .cropper-wrapper {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #334155;
+            
+            // Fundo Quadriculado Profissional (Estilo Photoshop)
+            background-image: 
+                linear-gradient(45deg, #475569 25%, transparent 25%),
+                linear-gradient(-45deg, #475569 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #475569 75%),
+                linear-gradient(-45deg, transparent 75%, #475569 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+
+        /* Controlos de Zoom e Inputs */
+        .controles-corte {
+            margin-top: 1.5rem;
+
+            .zoom-slider {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 1.5rem;
+                padding: 0 10px;
+
+                input[type="range"] {
+                    flex: 1;
+                    accent-color: $cor-primaria;
+                    cursor: pointer;
+                }
+                
+                i { color: $cor-texto-claro; font-size: 0.9rem; }
+            }
+        }
+
+        /* Contentor de Botões Reutilizável */
+        .botoes-modal {
+            display: flex;
+            gap: 12px;
+            margin-top: 2rem;
+            width: 100%;
+
+            button {
+                flex: 1; 
+                padding: 12px 20px;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 0.95rem;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                border: none;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .btn-modal-cancelar {
+                background-color: #f1f5f9;
+                color: #475569;
+                
+                &:hover {
+                    background-color: #e2e8f0;
+                    color: #0f172a;
+                }
+            }
+
+            .btn-modal-confirmar {
+                background-color: $cor-primaria;
+                color: white;
+                box-shadow: 0 4px 6px -1px rgba(0, 77, 64, 0.2);
+
+                &:hover {
+                    background-color: $cor-primaria-hover;
+                    transform: translateY(-1px);
+                    box-shadow: 0 10px 15px -3px rgba(0, 77, 64, 0.3);
+                }
+
+                &:disabled {
+                    background-color: #94a3b8;
+                    cursor: not-allowed;
+                    transform: none;
+                    box-shadow: none;
+                }
+            }
+        }
+
+        .input-file-escondido { display: none; }
+
+    }
+
+    // Animação suave para o erro aparecer
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
 }
