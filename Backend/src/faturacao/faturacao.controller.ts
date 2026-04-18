@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, BadRequestException, Headers, UnauthorizedException } from '@nestjs/common';
+/*import { Controller, Get, Post, Body, Patch, Param, Delete, Query, BadRequestException, Headers, UnauthorizedException } from '@nestjs/common';
 import { FaturacaoService } from './faturacao.service';
 import { CreateFaturacaoDto } from './dto/create-faturacao.dto';
 import { UpdateFaturacaoDto } from './dto/update-faturacao.dto';
@@ -163,4 +163,4 @@ export class FaturacaoController {
         // porque calcula automaticamente a partir do dia em que o pedido é feito.
         return this.faturacaoService.getPrevisaoFinanceira();
     }
-}
+}*/

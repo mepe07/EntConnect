@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+/*import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -83,7 +83,7 @@ export class FaturacaoService {
     * Este método é o "coração" do módulo de faturação. Ele busca todas as sessões de coaching dentro do intervalo de datas especificado,
     * trazendo informações detalhadas sobre cada sessão, incluindo o estado atual da aula
     */
-    async obterRelatorioFaturacaoGeral(dataInicio: Date, dataFim: Date, role: string, userId: number) {
+    /*async obterRelatorioFaturacaoGeral(dataInicio: Date, dataFim: Date, role: string, userId: number) {
         
         // 1. Criamos o filtro específico para o Coaching usando o Molde do Prisma!
         // Adeus 'any', olá TypeScript auto-complete.
@@ -146,7 +146,7 @@ export class FaturacaoService {
     * Este método vai buscar todas as sessões de coaching dentro do intervalo de datas especificado, 
     * trazendo informações detalhadas sobre cada sessão, incluindo o estado atual da aula
     */
-    async getHistoricoCoaching(dataInicio: Date, dataFim: Date) {
+    /*async getHistoricoCoaching(dataInicio: Date, dataFim: Date) {
 
         const aulasBD = await this.prisma.coaching_Aluno.findMany({
             where: {
@@ -206,7 +206,7 @@ export class FaturacaoService {
     /* Relatório de Dashboard Financeiro:
     * Este método é o "coração" do módulo de faturação. Ele busca todas as sessões de coaching dentro do intervalo de datas especificado,
     * trazendo informações detalhadas sobre cada sessão, incluindo o estado atual da aula
-    */
+    *//*
     async getDashboardFinanceiro(inicio: Date, fim: Date, role: string, userId: number) {
 
     // 1. O Filtro Base (Tempo) - Comum a todos
@@ -344,7 +344,7 @@ export class FaturacaoService {
      * Implementa 'Zero-Filling' para garantir que meses sem faturação agendada
      * são devolvidos com valor 0, mantendo a integridade visual do gráfico.
      * * @returns {Promise<Array<{mes: string, previsto: number}>>} Array formatado para o Recharts
-     */
+     *//*
     async getPrevisaoFinanceira() {
         const hoje = new Date();
         
@@ -414,4 +414,4 @@ export class FaturacaoService {
         return { message: "Em construção..." };
     }
 
-}
+}*/

@@ -1,0 +1,53 @@
+// Ficheiro: Backend/src/marketplace/dto/criar-anuncio-marketplace.dto.ts
+
+import { Type } from 'class-transformer';
+import { IsEnum, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { TipoAnuncio } from '../enums/tipo-anuncio.enum';
+
+export class CriarAnuncioMarketplaceDto {
+    @IsString({ message: 'O titulo do anúncio é obrigatório.' })
+    @MaxLength(255)
+    titulo: string;
+
+    @IsOptional()
+    @IsString()
+    @MaxLength(1000)
+    descricao?: string;
+
+    @IsOptional()
+    @IsString()
+    foto?: string;
+
+    @IsEnum(TipoAnuncio)
+    tipoAnuncio: TipoAnuncio;
+
+    @Type(() => Number)
+    @IsInt({ message: 'A quantidade total tem de ser um número inteiro.' })
+    @Min(1)
+    quantidadeTotal: number;
+
+    @Type(() => Number)
+    @IsInt({ message: 'A quantidade disponível tem de ser um número inteiro.' })
+    @Min(1)
+    quantidadeDisponivel: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    idCor?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    idEstado?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    idTamanho?: number;
+
+    @IsOptional()
+    @IsString()
+    @MaxLength(255)
+    notasInternas?: string;
+}
