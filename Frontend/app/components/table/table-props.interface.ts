@@ -1,8 +1,10 @@
 import type { ButtonComponentProps } from "../button/button-props.interface";
 import type { TableColumnTypesEnum } from "./models/enums/table-column-types.enum";
 
-export interface TableAction extends ButtonComponentProps {
-  show?: (row: Record<string, any>) => boolean;
+// Usamos Omit para remover o onClick original do botão e substituir pelo nosso que recebe a row
+export interface TableAction extends Omit<ButtonComponentProps, 'onClick'> {
+  show?: (row: any) => boolean;
+  onClick: (row: any) => void | Promise<void>;
 }
 
 export interface TableComponentProps {
@@ -12,5 +14,5 @@ export interface TableComponentProps {
     filters?: { key: string; label?: string; value: string; options: { value: string; label: string }[] }[],
     actions?: TableAction[]
   };
-  data: Record<string, any>[];
+  data: any[];
 }
