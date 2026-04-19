@@ -58,16 +58,25 @@ export default function CoachingEE() {
     const [filtroProfessor, setFiltroProfessor] = useState('');
     const [observacoes, setObservacoes] = useState('');
 
-    const tableData = disponibilidades.map((disp) => {
-        let infoType = InfoTypesEnum.Info;
-        if (disp.estado === 'Aprovado') infoType = InfoTypesEnum.Success;
-        if (disp.estado === 'Rejeitado') infoType = InfoTypesEnum.Error;
-        if (disp.estado === 'Pendente') infoType = InfoTypesEnum.Warning;
+    const tableData = disponibilidades
+    .filter((disp) => disp.maxAlunos > 0)
+    .map((disp) => ({ ...disp }))
+    .sort((a, b) => {
+        // Preparar as datas para comparação
+        // Transforma "10/05/2024" em [10, 05, 2024]
+        const [diaA, mesA, anoA] = a.data.split('/');
+        const [diaB, mesB, anoB] = b.data.split('/');
+        
+        // Cria datas reais para comparação
+        const dataA = new Date(`${anoA}-${mesA}-${diaA}`);
+        const dataB = new Date(`${anoB}-${mesB}-${diaB}`);
 
-        return {
-            ...disp,
-            estadoChip: { value: disp.estado || 'Desconhecido', infoType }
-        };
+        // Ordenar por Data (Ascendente: do mais antigo para o mais recente)
+        if (dataA < dataB) return -1; // 'a' vem primeiro
+        if (dataA > dataB) return 1;  // 'b' vem primeiro
+
+        // Ordenar por Horário (Ascendente: do mais cedo para o mais tarde)
+        return a.modalidade.localeCompare(b.modalidade);
     });
 
     async function fetchDisponibilidades() {
@@ -210,7 +219,7 @@ export default function CoachingEE() {
                         { key: 'horario', value: 'Horário', type: TableColumnTypesEnum.Default },
                         { key: 'modalidade', value: 'Modalidade', type: TableColumnTypesEnum.Default },
                         { key: 'valorPorAluno', value: 'Valor p/ Aluno', type: TableColumnTypesEnum.Default },
-                        { key: 'maxAlunos', value: 'Máx. de Alunos', type: TableColumnTypesEnum.Default }
+                        { key: 'maxAlunos', value: 'Vagas Disp.', type: TableColumnTypesEnum.Default }
                     ],
                     searchSettings: {
                         placeholder: 'Procurar por professor ou modalidade...',

@@ -137,7 +137,7 @@ export default function VerMarcacoes() {
                         { key: 'valor', value: 'Valor a pagar', type: TableColumnTypesEnum.Default }
                     ],
                     searchSettings: {
-                        placeholder: 'Procurar por aluno, professor ou modalidade...',
+                        placeholder: 'Procurar por palavra-chave...',
                         label: 'Pesquisa',
                         value: ''
                     },
