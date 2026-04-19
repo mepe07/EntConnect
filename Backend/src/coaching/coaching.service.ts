@@ -16,12 +16,43 @@ export class CoachingService {
     });
   }
 
-  async inscreverAluno(idCoaching: number, idAluno: number) {
-    return this.prisma.coaching_Aluno.create({
-      data: {
-        ID_Coaching: idCoaching,
-        ID_Aluno: idAluno
-      }
+
+  async inscreverAluno(idDisponibilidade: number, body: any) {
+    
+    let coaching = await this.prisma.coaching.findFirst({
+      where: { ID_Disponibilidade: idDisponibilidade },
     });
+
+    if (!coaching) {
+      coaching = await this.prisma.coaching.create({
+        data: {
+          ID_Professor: body.idProfessor,
+          ID_Estado_Coaching: body.idEstadoCoaching,
+          ID_Sala: body.idSala,
+          ID_Coordenador: body.idCoordenador,
+          ValorPorAluno: body.valorPorAluno,
+          Inicio_Coaching: new Date(body.inicio_Coaching), 
+          Duracao: body.duracao,
+          ID_Disponibilidade: idDisponibilidade, 
+        },
+      })
+    }
+
+    const novaInscricao = await this.prisma.coaching_Aluno.create({
+      data: {
+        ID_Coaching: coaching.ID_Coaching,
+        ID_Aluno: body.idAluno,
+        Observacoes: body.obs || null,
+        Data_Inscricao: new Date(),
+        ValorEmFalta: body.valorEmFalta,
+        ID_Enc_Educacao: body.idEncEducacao,
+      },
+    });
+
+    return {
+      message: 'Aluno inscrito com sucesso!',
+      inscricao: novaInscricao
+    };
+  
   }
 }

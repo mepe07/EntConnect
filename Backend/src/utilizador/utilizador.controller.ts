@@ -25,6 +25,7 @@ import { UpdateProfessorDto } from './dto/update-professor.dto';
 
 // Tipagem do Multer (Se não tiver o @types/multer instalado, mas ajuda o TS)
 import 'multer';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @ApiTags('Utilizadores')
 @Controller('utilizador')
@@ -253,6 +254,19 @@ export class UtilizadorController {
   @ApiParam({ name: 'id', description: 'ID do Encarregado de Educação' })
   async getAlunosByEE(@Param('id') id: string) {
     return this.utilizadorService.getAlunosByEE(+id);
+  }
+
+  @Patch(':id/password')
+  @ApiOperation({ summary: 'Atualizar a password de um utilizador' })
+  @ApiParam({ name: 'id', description: 'ID do utilizador', type: Number })
+  @ApiResponse({ status: 200, description: 'Password atualizada com sucesso.' })
+  @ApiResponse({ status: 404, description: 'Utilizador não encontrado.' })
+  async updatePassword(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updatePasswordDto: UpdatePasswordDto,
+  ) {
+    await this.utilizadorService.updatePassword(id, updatePasswordDto.password);
+    return { message: `Password do utilizador ${id} atualizada com sucesso.` };
   }
 
   /**
