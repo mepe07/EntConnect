@@ -78,12 +78,14 @@ export class MarketplaceController {
     }
 
     @Patch('anuncios/:id')
+    @UseInterceptors(FileInterceptor('foto'))
     atualizarAnuncio(
         @Param('id') idArtigo: string,
         @Body() dto: AtualizarAnuncioMarketplaceDto,
         @Request() req: { user: UtilizadorAutenticado },
+        @UploadedFile() file?: Express.Multer.File,
     ) {
-        return this.marketplaceService.atualizarAnuncio(+idArtigo, dto, req.user);
+        return this.marketplaceService.atualizarAnuncio(+idArtigo, dto, req.user, file);
     }
 
     @Patch('anuncios/:id/estado')

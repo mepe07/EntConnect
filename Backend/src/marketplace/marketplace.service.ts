@@ -119,7 +119,7 @@ export class MarketplaceService {
         // 1. Segurança: Apenas a Coordenadora passa daqui
         garantirAcessoAoInventarioDaEscola(utilizador.role);
 
-        const prisma = this.prisma as any; // (Nota mental: depois corre 'npx prisma generate' para tirares este any)
+        const prisma = this.prisma as any;
 
         // 2. Query limpa e focada na lógica de negócio
         return prisma.artigo.findMany({
@@ -159,21 +159,28 @@ export class MarketplaceService {
     // ========================================================================
 
     async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutenticado, file?: Express.Multer.File) {
-        let urlFoto: string | null = null;
+        let urlFoto: string | null = dto.foto ?? null;
         if (file) {
             const nomeFicheiro = `anuncio_${utilizador.sub}_${Date.now()}`;
             urlFoto = await this.blobsService.guardarFotosMarketplace('marketplace', nomeFicheiro, file);
         }
+
+        const distribuicao = this.resolverDistribuicaoStock({
+            tipoAnuncio: dto.tipoAnuncio,
+            quantidadeDisponivel: dto.quantidadeDisponivel,
+            quantidadeVenda: dto.quantidadeVenda,
+            quantidadeAluguer: dto.quantidadeAluguer,
+            quantidadeTotal: dto.quantidadeTotal,
+        });
 
         return this.prisma.$transaction(async (tx) => {
             const novoArtigo = await tx.artigo.create({
                 data: {
                     Nome: dto.titulo,
                     Descricao: dto.descricao,
-                    // CORREÇÃO: O DTO recebe 'notasInternas', mas a BD chama-se 'Notas'
-                    Notas: dto.notasInternas, 
+                    Notas: dto.notasInternas,
                     Foto: urlFoto,
-                    Tipo_Anuncio: dto.tipoAnuncio,
+                    Tipo_Anuncio: distribuicao.tipoAnuncio,
                     Origem_Registo: "utilizador",
                     Publicado_No_Marketplace: true,
                     Estado_Anuncio: "ativo",
@@ -187,7 +194,9 @@ export class MarketplaceService {
                 data: {
                     ID_Artigo: novoArtigo.ID_Artigo,
                     Quantidade_Total: dto.quantidadeTotal,
-                    // CORREÇÃO: Mapear os IDs que vêm do DTO
+                    Quantidade_Venda: distribuicao.quantidadeVenda,
+                    Quantidade_Aluguer: distribuicao.quantidadeAluguer,
+                    ID_Cor: dto.idCor ? Number(dto.idCor) : null,
                     ID_Tamanho: dto.idTamanho ? Number(dto.idTamanho) : null,
                     ID_Estado: dto.idEstado ? Number(dto.idEstado) : null,
                 },
@@ -216,17 +225,20 @@ export class MarketplaceService {
             throw new BadRequestException('O artigo do inventário não tem stock associado.');
         }
 
-        this.validarQuantidades(stockPrincipal.Quantidade_Total, dto.quantidadeDisponivel);
+        const distribuicao = this.resolverDistribuicaoStock({
+            tipoAnuncio: dto.tipoAnuncio,
+            quantidadeDisponivel: dto.quantidadeDisponivel,
+            quantidadeVenda: dto.quantidadeVenda,
+            quantidadeAluguer: dto.quantidadeAluguer,
+            quantidadeTotal: stockPrincipal.Quantidade_Total,
+        });
 
         return prisma.$transaction(async (tx: any) => {
             await tx.stock_Armazem.update({
                 where: { ID_Stock: stockPrincipal.ID_Stock },
                 data: {
-                    Quantidade_Venda: this.calcularQuantidadeVenda(dto.tipoAnuncio, dto.quantidadeDisponivel),
-                    Quantidade_Aluguer: this.calcularQuantidadeAluguer(
-                        dto.tipoAnuncio,
-                        dto.quantidadeDisponivel,
-                    ),
+                    Quantidade_Venda: distribuicao.quantidadeVenda,
+                    Quantidade_Aluguer: distribuicao.quantidadeAluguer,
                 },
             });
 
@@ -237,7 +249,7 @@ export class MarketplaceService {
                     Descricao: dto.descricao ?? artigo.Descricao ?? null,
                     Foto: dto.foto ?? artigo.Foto ?? null,
                     Origem_Registo: OrigemRegisto.INVENTARIO_ESCOLA,
-                    Tipo_Anuncio: dto.tipoAnuncio,
+                    Tipo_Anuncio: distribuicao.tipoAnuncio,
                     Estado_Anuncio: EstadoAnuncio.ATIVO,
                     Publicado_No_Marketplace: true,
                     Data_Atualizacao: new Date(),
@@ -255,6 +267,7 @@ export class MarketplaceService {
         idArtigo: number,
         dto: AtualizarAnuncioMarketplaceDto,
         utilizador: UtilizadorAutenticado,
+        file?: Express.Multer.File,
     ) {
         const prisma = this.prisma as any;
         const artigo = await this.obterArtigoOuFalhar(idArtigo);
@@ -266,18 +279,32 @@ export class MarketplaceService {
         }
 
         const quantidadeTotalFinal = dto.quantidadeTotal ?? stockPrincipal.Quantidade_Total;
-        const quantidadeDisponivelFinal = dto.quantidadeDisponivel ?? this.obterQuantidadeDisponivelAtual(artigo, stockPrincipal);
         const tipoFinal = dto.tipoAnuncio ?? artigo.Tipo_Anuncio;
 
-        this.validarQuantidades(quantidadeTotalFinal, quantidadeDisponivelFinal);
+        const distribuicao = this.resolverDistribuicaoStock({
+            tipoAnuncio: tipoFinal,
+            quantidadeDisponivel: dto.quantidadeDisponivel,
+            quantidadeVenda: dto.quantidadeVenda,
+            quantidadeAluguer: dto.quantidadeAluguer,
+            quantidadeTotal: quantidadeTotalFinal,
+            quantidadeVendaAtual: stockPrincipal.Quantidade_Venda,
+            quantidadeAluguerAtual: stockPrincipal.Quantidade_Aluguer,
+            permitirManterDistribuicaoAtual: true,
+        });
+
+        let urlFotoFinal = dto.foto ?? artigo.Foto ?? null;
+        if (file) {
+            const nomeFicheiro = `anuncio_${idArtigo}_${Date.now()}`;
+            urlFotoFinal = await this.blobsService.guardarFotosMarketplace('marketplace', nomeFicheiro, file);
+        }
 
         return prisma.$transaction(async (tx: any) => {
             await tx.stock_Armazem.update({
                 where: { ID_Stock: stockPrincipal.ID_Stock },
                 data: {
                     Quantidade_Total: quantidadeTotalFinal,
-                    Quantidade_Venda: this.calcularQuantidadeVenda(tipoFinal, quantidadeDisponivelFinal),
-                    Quantidade_Aluguer: this.calcularQuantidadeAluguer(tipoFinal, quantidadeDisponivelFinal),
+                    Quantidade_Venda: distribuicao.quantidadeVenda,
+                    Quantidade_Aluguer: distribuicao.quantidadeAluguer,
                     ID_Cor: dto.idCor ?? stockPrincipal.ID_Cor ?? null,
                     ID_Estado: dto.idEstado ?? stockPrincipal.ID_Estado ?? null,
                     ID_Tamanho: dto.idTamanho ?? stockPrincipal.ID_Tamanho ?? null,
@@ -289,9 +316,9 @@ export class MarketplaceService {
                 data: {
                     Nome: dto.titulo ?? artigo.Nome,
                     Descricao: dto.descricao ?? artigo.Descricao ?? null,
-                    Foto: dto.foto ?? artigo.Foto ?? null,
+                    Foto: urlFotoFinal,
                     Notas: dto.notasInternas ?? artigo.Notas ?? null,
-                    Tipo_Anuncio: tipoFinal,
+                    Tipo_Anuncio: distribuicao.tipoAnuncio,
                     Data_Atualizacao: new Date(),
                 },
                 include: this.includeBaseArtigo(),
@@ -566,16 +593,101 @@ export class MarketplaceService {
         }
     }
 
-    private calcularQuantidadeVenda(tipo: string, quantidadeDisponivel: number) {
-        if (tipo === TipoAnuncio.VENDA) return quantidadeDisponivel;
-        if (tipo === TipoAnuncio.AMBOS) return quantidadeDisponivel;
-        return 0;
+    private resolverDistribuicaoStock(params: {
+        tipoAnuncio: TipoAnuncio;
+        quantidadeTotal: number;
+        quantidadeDisponivel?: number;
+        quantidadeVenda?: number;
+        quantidadeAluguer?: number;
+        quantidadeVendaAtual?: number;
+        quantidadeAluguerAtual?: number;
+        permitirManterDistribuicaoAtual?: boolean;
+    }) {
+        const {
+            tipoAnuncio,
+            quantidadeTotal,
+            quantidadeDisponivel,
+            quantidadeVenda,
+            quantidadeAluguer,
+            quantidadeVendaAtual = 0,
+            quantidadeAluguerAtual = 0,
+            permitirManterDistribuicaoAtual = false,
+        } = params;
+
+        const recebeuDistribuicaoExplicita =
+            quantidadeVenda !== undefined || quantidadeAluguer !== undefined;
+
+        if (recebeuDistribuicaoExplicita) {
+            const vendaFinal = quantidadeVenda ?? 0;
+            const aluguerFinal = quantidadeAluguer ?? 0;
+            const totalAlocado = vendaFinal + aluguerFinal;
+
+            if (totalAlocado <= 0) {
+                throw new BadRequestException(
+                    'Indica pelo menos 1 unidade para venda ou aluguer.',
+                );
+            }
+
+            this.validarQuantidades(quantidadeTotal, totalAlocado);
+
+            return {
+                tipoAnuncio: this.derivarTipoAnuncio(vendaFinal, aluguerFinal),
+                quantidadeVenda: vendaFinal,
+                quantidadeAluguer: aluguerFinal,
+                quantidadeDisponivel: totalAlocado,
+            };
+        }
+
+        if (quantidadeDisponivel === undefined) {
+            if (permitirManterDistribuicaoAtual) {
+                const totalAtual = quantidadeVendaAtual + quantidadeAluguerAtual;
+                if (totalAtual <= 0) {
+                    throw new BadRequestException(
+                        'O anúncio não tem distribuição atual válida para manter.',
+                    );
+                }
+
+                this.validarQuantidades(quantidadeTotal, totalAtual);
+
+                return {
+                    tipoAnuncio: this.derivarTipoAnuncio(quantidadeVendaAtual, quantidadeAluguerAtual),
+                    quantidadeVenda: quantidadeVendaAtual,
+                    quantidadeAluguer: quantidadeAluguerAtual,
+                    quantidadeDisponivel: totalAtual,
+                };
+            }
+
+            throw new BadRequestException(
+                'Indica a quantidade disponível ou a distribuição por venda/aluguer.',
+            );
+        }
+
+        this.validarQuantidades(quantidadeTotal, quantidadeDisponivel);
+
+        if (tipoAnuncio === TipoAnuncio.AMBOS) {
+            throw new BadRequestException(
+                'Para anúncios com tipo "ambos", indica quantidades separadas para venda e aluguer.',
+            );
+        }
+
+        return {
+            tipoAnuncio,
+            quantidadeVenda: tipoAnuncio === TipoAnuncio.VENDA ? quantidadeDisponivel : 0,
+            quantidadeAluguer: tipoAnuncio === TipoAnuncio.ALUGUER ? quantidadeDisponivel : 0,
+            quantidadeDisponivel,
+        };
     }
 
-    private calcularQuantidadeAluguer(tipo: string, quantidadeDisponivel: number) {
-        if (tipo === TipoAnuncio.ALUGUER) return quantidadeDisponivel;
-        if (tipo === TipoAnuncio.AMBOS) return quantidadeDisponivel;
-        return 0;
+    private derivarTipoAnuncio(quantidadeVenda: number, quantidadeAluguer: number): TipoAnuncio {
+        if (quantidadeVenda > 0 && quantidadeAluguer > 0) {
+            return TipoAnuncio.AMBOS;
+        }
+
+        if (quantidadeAluguer > 0) {
+            return TipoAnuncio.ALUGUER;
+        }
+
+        return TipoAnuncio.VENDA;
     }
 
     private montarCamposLegacyPorRole(role: string, idPessoa: number) {
@@ -626,7 +738,7 @@ export class MarketplaceService {
         }
 
         if (artigo.Tipo_Anuncio === TipoAnuncio.AMBOS) {
-            return Math.max(stockPrincipal.Quantidade_Venda, stockPrincipal.Quantidade_Aluguer);
+            return stockPrincipal.Quantidade_Venda + stockPrincipal.Quantidade_Aluguer;
         }
 
         return stockPrincipal.Quantidade_Venda;

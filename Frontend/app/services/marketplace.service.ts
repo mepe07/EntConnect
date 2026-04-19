@@ -97,16 +97,24 @@ export const marketplaceService = {
         formData.append('titulo', dados.titulo);
         formData.append('tipoAnuncio', dados.tipoAnuncio);
         formData.append('quantidadeTotal', String(dados.quantidadeTotal));
-        formData.append('quantidadeDisponivel', String(dados.quantidadeTotal));
-    
+
+        if (dados.quantidadeDisponivel !== undefined) {
+            formData.append('quantidadeDisponivel', String(dados.quantidadeDisponivel));
+        }
+
+        if (dados.quantidadeVenda !== undefined) {
+            formData.append('quantidadeVenda', String(dados.quantidadeVenda));
+        }
+
+        if (dados.quantidadeAluguer !== undefined) {
+            formData.append('quantidadeAluguer', String(dados.quantidadeAluguer));
+        }
+
         if (dados.descricao) formData.append('descricao', dados.descricao);
-    
-        // CORREÇÃO: Usar 'notasInternas' para bater certo com o DTO do Backend
         if (dados.notasInternas) formData.append('notasInternas', dados.notasInternas);
-    
-        // CORREÇÃO: Enviar os IDs de Estado e Tamanho
         if (dados.idEstado) formData.append('idEstado', String(dados.idEstado));
         if (dados.idTamanho) formData.append('idTamanho', String(dados.idTamanho));
+        if (dados.idCor) formData.append('idCor', String(dados.idCor));
 
         if (dados.ficheiroFoto) {
             formData.append('foto', dados.ficheiroFoto);
@@ -115,7 +123,7 @@ export const marketplaceService = {
         const response = await fetch(`${API_URL}/anuncios`, {
             method: 'POST',
             headers: {
-                Authorization: `Bearer ${getToken()}`, 
+                Authorization: `Bearer ${getToken()}`,
             },
             body: formData,
         });
@@ -136,10 +144,29 @@ export const marketplaceService = {
     },
 
     async atualizarAnuncio(idArtigo: number, dados: Partial<CriarAnuncioPayload>): Promise<Anuncio> {
+        const usarMultipart = !!dados.ficheiroFoto;
+
         const response = await fetch(`${API_URL}/anuncios/${idArtigo}`, {
             method: 'PATCH',
-            headers: getHeaders(),
-            body: JSON.stringify(dados),
+            headers: usarMultipart
+                ? { Authorization: `Bearer ${getToken()}` }
+                : getHeaders(),
+            body: usarMultipart
+                ? (() => {
+                    const formData = new FormData();
+
+                    Object.entries(dados).forEach(([key, value]) => {
+                        if (value === undefined || value === null || key === 'ficheiroFoto') return;
+                        formData.append(key, String(value));
+                    });
+
+                    if (dados.ficheiroFoto) {
+                        formData.append('foto', dados.ficheiroFoto);
+                    }
+
+                    return formData;
+                })()
+                : JSON.stringify(dados),
         });
 
         if (!response.ok) return parseError(response, 'Erro ao atualizar o anúncio.');

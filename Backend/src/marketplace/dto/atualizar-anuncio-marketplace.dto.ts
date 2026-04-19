@@ -38,6 +38,18 @@ export class AtualizarAnuncioMarketplaceDto {
     @IsOptional()
     @Type(() => Number)
     @IsInt()
+    @Min(0)
+    quantidadeVenda?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(0)
+    quantidadeAluguer?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
     idCor?: number;
 
     @IsOptional()

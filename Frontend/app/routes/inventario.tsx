@@ -9,7 +9,7 @@ export default function InventarioRoute() {
         <>
             <title>{title}</title>
             <meta property="og:title" content={title} />
-            <ProtectedRoute rolesPermitidas={['Coordenador', 'Admin']}>
+            <ProtectedRoute rolesPermitidas={['Coordenador']}>
                 <Inventario />
             </ProtectedRoute>
         </>

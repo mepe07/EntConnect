@@ -97,16 +97,27 @@ export function Inventario() {
         }
     };
 
-    const confirmarPublicacao = async (tipo: TipoAnuncio, quantidade: number, descricao: string) => {
+    const confirmarPublicacao = async ({
+        tipoAnuncio,
+        quantidadeVenda,
+        quantidadeAluguer,
+        descricao,
+    }: {
+        tipoAnuncio: TipoAnuncio;
+        quantidadeVenda: number;
+        quantidadeAluguer: number;
+        descricao: string;
+    }) => {
         if (!itemSelecionado) return;
         try {
             await marketplaceService.publicarInventarioDaEscola({
                 idArtigo: itemSelecionado.ID_Artigo,
                 titulo: itemSelecionado.Nome,
                 foto: itemSelecionado.Foto,
-                tipoAnuncio: tipo,
-                quantidadeDisponivel: quantidade,
-                descricao: descricao,
+                tipoAnuncio,
+                quantidadeVenda,
+                quantidadeAluguer,
+                descricao,
             });
             setResumoFluxo(`Publicaste '${itemSelecionado.Nome}' no Marketplace.`);
             setMostrarModalPublicar(false);

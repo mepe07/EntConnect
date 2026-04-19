@@ -58,13 +58,14 @@ function getTamanho(anuncio: Anuncio) {
     }
 
 function getNomeCriador(anuncio: Anuncio) {
-    // 1. Verificamos se é da escola
     if (anuncio.Origem_Registo === OrigemRegisto.INVENTARIO_ESCOLA) {
         return 'Escola 50+10';
     }
 
-    const relacaoCriador = (anuncio as any).Utilizador_Artigo_ID_Utilizador_CriadorToUtilizador;
-    
+    const relacaoCriador =
+        anuncio.Utilizador_Criador ??
+        anuncio.Utilizador_Artigo_ID_Utilizador_CriadorToUtilizador;
+
     return relacaoCriador?.Pessoa?.Nome || 'Utilizador';
 }
 
@@ -79,7 +80,7 @@ function formatarData(valor?: string) {
 
 export function Marketplace() {
     const utilizador = authService.getUserInfo() as User;
-    const isCoordenadora = utilizador?.role === 'Coordenador' || utilizador?.role === 'Admin';
+    const isCoordenadora = utilizador?.role === 'Coordenador';
 
     const [vista, setVista] = useState<Vista>('montra');
     const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
