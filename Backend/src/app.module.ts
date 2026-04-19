@@ -3,23 +3,21 @@ import { PrismaModule } from './prisma/prisma.module';
 import { CoachingModule } from './coaching/coaching.module';
 import { UtilizadorModule } from './utilizador/utilizador.module';
 import { FaturacaoModule } from './faturacao/faturacao.module';
-import { ArtigoModule } from './artigo/artigo.module';
 import { AuthModule } from './auth/auth.module';
-import { InfraestruturaModule } from './Infraestrutura/infraestrutura.module'; //Azure blobs
+import { InfraestruturaModule } from './Infraestrutura/infraestrutura.module';
 import { SalasModule } from './salas/salas.module';
+import { MarketplaceModule } from './marketplace/marketplace.module';
 
 @Module({
-  //módulos
   imports: [
-            PrismaModule, 
-            CoachingModule, 
-            UtilizadorModule, 
-            FaturacaoModule, 
-            ArtigoModule, 
-            AuthModule, 
-            InfraestruturaModule,
-            SalasModule
-          ],
-
+    PrismaModule,
+    CoachingModule,
+    UtilizadorModule,
+    FaturacaoModule,
+    MarketplaceModule,
+    AuthModule,
+    InfraestruturaModule,
+    SalasModule,
+  ],
 })
 export class AppModule {}
