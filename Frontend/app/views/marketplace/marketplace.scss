@@ -82,13 +82,10 @@
     }
 
     .marketplace-layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 320px;
-        gap: 20px;
+        display: block;
     }
 
-    .marketplace-main,
-    .marketplace-side {
+    .marketplace-main {
         padding: 20px;
     }
 
@@ -503,7 +500,6 @@
     }
 
     @media (max-width: 1100px) {
-        .marketplace-layout,
         .detalhe-anuncio .detalhe-grid {
             grid-template-columns: 1fr;
         }

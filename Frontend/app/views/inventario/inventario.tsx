@@ -258,14 +258,6 @@ export function Inventario() {
                         </div>
                     )}
                 </div>
-
-                <aside className="inventario-side card-base">
-                    <h3>Notas da vista</h3>
-                    <div className="caixa-lateral">Esta área deve parecer um backoffice privado da coordenadora, não uma extensão visual da montra pública.</div>
-                    <div className="caixa-lateral">O foco é gerir stock interno, estado da peça e publicação rápida para o Marketplace.</div>
-                    <h3>Fluxo validado</h3>
-                    <div className="caixa-lateral">{resumoFluxo}</div>
-                </aside>
             </div>
 
             {/* CHAMADAS CORRETAS DOS MODAIS ISOLADOS */}

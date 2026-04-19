@@ -392,14 +392,6 @@ export function Marketplace() {
                         </div>
                     )}
                 </div>
-
-                <aside className="marketplace-side card-base">
-                    <h3>Notas da vista</h3>
-                    <div className="caixa-lateral">O objetivo aqui foi manter o mesmo estilo do inventário: mais escolar, mais direto e menos “plataforma enterprise”.</div>
-                    <div className="caixa-lateral">A grelha continua a ter fotos, mas com uma apresentação simples e credível para estudantes e coordenação.</div>
-                    <h3>Fluxo validado</h3>
-                    <div className="caixa-lateral">{mensagemFluxo}</div>
-                </aside>
             </div>
 
             {/* A INJEÇÃO LIMPA DO NOVO MODAL */}
