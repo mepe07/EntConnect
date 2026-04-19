@@ -18,6 +18,8 @@ export default [
     // NavBar diz: path: '/admin/modalidades'
     route("admin/modalidades", "routes/modalidade.tsx"),
 
+    route("admin/coaching", "routes/gerirCoaching.tsx"),
+
     // NavBar diz: path: '/admin/utilizadores'
     route("admin/utilizadores", "routes/configuracoes/utilizadores.tsx"),
 

@@ -138,4 +138,109 @@ export class CoachingService {
 
     return { message: 'Aluno removido com sucesso!' };
   }
+
+  async getSessoesFuturasAdmin() {
+    const now = new Date();
+    const futureSessions = await this.prisma.coaching.findMany({
+      where: {
+        Inicio_Coaching: {
+          gte: now,
+        },
+      },
+      include: {
+        Professor: {
+          include: {
+            Pessoa: true,
+          },
+        },
+        Disponibilidade: true,
+        Estado_Coaching: true,
+        Coaching_Aluno: {
+          include: {
+            Aluno: true,
+          },
+        },
+      },
+      orderBy: {
+        Inicio_Coaching: 'asc',
+      },
+    });
+
+    return futureSessions.map(session => ({
+      idCoaching: session.ID_Coaching,
+      nomeProfessor: session.Professor?.Pessoa?.Nome || 'N/A',
+      data: session.Inicio_Coaching ? session.Inicio_Coaching.toLocaleDateString('pt-PT') : 'N/A',
+      horario: session.Inicio_Coaching && session.Duracao 
+        ? `${session.Inicio_Coaching.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} - ${(new Date(session.Inicio_Coaching.getTime() + session.Duracao * 60000)).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
+        : 'N/A',
+      modalidade: session.Disponibilidade?.Modalidade || 'N/A',
+      estado: session.Estado_Coaching?.Tipo || 'N/A',
+      alunos: session.Coaching_Aluno.map(ca => ({
+        idAluno: ca.ID_Aluno,
+        nome: ca.Aluno.Nome,
+      })),
+    }));
+  }
+
+  async getKpisAdmin() {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const next24h = new Date(now);
+    next24h.setHours(next24h.getHours() + 24);
+
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+    // Próximas 24h
+    const proximas24h = await this.prisma.coaching.count({
+      where: {
+        Inicio_Coaching: {
+          gte: now,
+          lte: next24h,
+        },
+      },
+    });
+
+    // Sessões marcadas (futuras)
+    const marcadas = await this.prisma.coaching.count({
+      where: {
+        Inicio_Coaching: {
+          gte: now,
+        },
+      },
+    });
+
+    // Por validar (assumindo que estado 'Pendente' é por validar)
+    const porValidar = await this.prisma.coaching.count({
+      where: {
+        Inicio_Coaching: {
+          gte: now,
+        },
+        Estado_Coaching: {
+          Tipo: 'Pendente',
+        },
+      },
+    });
+
+    // Realizadas no mês
+    const realizadasMes = await this.prisma.coaching.count({
+      where: {
+        Inicio_Coaching: {
+          gte: monthStart,
+          lte: monthEnd,
+        },
+        Estado_Coaching: {
+          Tipo: 'Realizada', // Assumindo que existe este estado
+        },
+      },
+    });
+
+    return {
+      proximas24h,
+      marcadas,
+      porValidar,
+      realizadasMes,
+    };
+  }
 }

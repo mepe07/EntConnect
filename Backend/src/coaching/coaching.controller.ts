@@ -144,6 +144,18 @@ export class CoachingController {
   async unlockStudio(@Param('id') id: string) {
     return this.gestaoEstudiosService.unlockStudio(+id);
   }
+
+  @Get('admin/sessoes-futuras')
+  @ApiOperation({ summary: 'Obter sessões futuras para gestão do admin' })
+  async getSessoesFuturasAdmin() {
+    return this.coachingService.getSessoesFuturasAdmin();
+  }
+
+  @Get('admin/kpis')
+  @ApiOperation({ summary: 'Obter KPIs para o dashboard do admin' })
+  async getKpisAdmin() {
+    return this.coachingService.getKpisAdmin();
+  }
 }
 
 // END POINT para as Modalidades - Retirar isto daqui e colocar num novo controller chamado modalidade.controller.ts para organizar melhor o código.
