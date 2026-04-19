@@ -35,14 +35,14 @@ import {
  * - o módulo chama-se Marketplace;
  * - a tabela física principal continua a ser `Artigo`;
  * - não é criada uma tabela `Marketplace_Anuncio`;
- * - o dono canónico do anúncio passa a ser `ID_Utilizador_Criador`;
- * - as colunas antigas por role podem continuar numa fase de transição,
- *   para não rebentar dados antigos nem fluxos que ainda existam fora deste módulo.
+ * - o dono canónico do anúncio é `ID_Utilizador_Criador`;
+ * - o legado por role no `Artigo` foi removido deste módulo;
+ * - o inventário da escola passa a ser gerido por permissão (`Coordenador`) e não por colunas separadas.
  *
  * Nota técnica importante:
- * enquanto não correres `prisma generate` com o schema novo, o cliente Prisma local
- * não vai conhecer os campos novos. Por isso, neste pacote o acesso ao Prisma foi
- * mantido via `any` em alguns pontos para te deixar integrar e refatorar em casa.
+ * enquanto não correres `prisma generate` com o schema atualizado, o cliente Prisma local
+ * não vai refletir automaticamente o novo contrato. Por isso, neste pacote o acesso ao
+ * Prisma foi mantido via `any` em alguns pontos para te deixar integrar e refatorar em casa.
  */
 @Injectable()
 export class MarketplaceService {
@@ -63,7 +63,7 @@ export class MarketplaceService {
             Publicado_No_Marketplace: filtros.publicado ?? true,
             Estado_Anuncio:
                 filtros.estado ?? {
-                    in: [EstadoAnuncio.ATIVO, EstadoAnuncio.RESERVADO, EstadoAnuncio.CONCLUIDO],
+                    in: [EstadoAnuncio.ATIVO],
                 },
         };
 
@@ -100,15 +100,33 @@ export class MarketplaceService {
         return artigo;
     }
 
+    async listarAnunciosModeracao(utilizador: UtilizadorAutenticado) {
+        garantirPermissaoDeModeracao(utilizador.role);
+
+        const prisma = this.prisma as any;
+
+        return prisma.artigo.findMany({
+            where: {
+                Estado_Anuncio: {
+                    in: [
+                        EstadoAnuncio.ATIVO,
+                        EstadoAnuncio.RESERVADO,
+                        EstadoAnuncio.CONCLUIDO,
+                        EstadoAnuncio.REMOVIDO,
+                    ],
+                },
+            },
+            include: this.includeBaseArtigo(),
+            orderBy: [{ Data_Atualizacao: 'desc' }, { ID_Artigo: 'desc' }],
+        });
+    }
+
     async listarMeusAnuncios(utilizador: UtilizadorAutenticado) {
         const prisma = this.prisma as any;
 
         return prisma.artigo.findMany({
             where: {
-                OR: [
-                    { ID_Utilizador_Criador: utilizador.sub },
-                    this.criarFiltroLegacyPorRole(utilizador.role, utilizador.idPessoa),
-                ],
+                ID_Utilizador_Criador: utilizador.sub,
             },
             include: this.includeBaseArtigo(),
             orderBy: [{ Data_Atualizacao: 'desc' }, { ID_Artigo: 'desc' }],
@@ -144,10 +162,6 @@ export class MarketplaceService {
             where: {
                 Origem_Registo: OrigemRegisto.INVENTARIO_ESCOLA,
                 Publicado_No_Marketplace: false,
-                OR: [
-                    { ID_Utilizador_Criador: utilizador.sub },
-                    { ID_Coordenador: utilizador.idPessoa },
-                ],
             },
             include: this.includeBaseArtigo(),
             orderBy: [{ Data_Atualizacao: 'desc' }, { ID_Artigo: 'desc' }],
@@ -159,28 +173,21 @@ export class MarketplaceService {
     // ========================================================================
 
     async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutenticado, file?: Express.Multer.File) {
-        let urlFoto: string | null = dto.foto ?? null;
+        let urlFoto: string | null = null;
         if (file) {
             const nomeFicheiro = `anuncio_${utilizador.sub}_${Date.now()}`;
             urlFoto = await this.blobsService.guardarFotosMarketplace('marketplace', nomeFicheiro, file);
         }
-
-        const distribuicao = this.resolverDistribuicaoStock({
-            tipoAnuncio: dto.tipoAnuncio,
-            quantidadeDisponivel: dto.quantidadeDisponivel,
-            quantidadeVenda: dto.quantidadeVenda,
-            quantidadeAluguer: dto.quantidadeAluguer,
-            quantidadeTotal: dto.quantidadeTotal,
-        });
 
         return this.prisma.$transaction(async (tx) => {
             const novoArtigo = await tx.artigo.create({
                 data: {
                     Nome: dto.titulo,
                     Descricao: dto.descricao,
-                    Notas: dto.notasInternas,
+                    // CORREÇÃO: O DTO recebe 'notasInternas', mas a BD chama-se 'Notas'
+                    Notas: dto.notasInternas, 
                     Foto: urlFoto,
-                    Tipo_Anuncio: distribuicao.tipoAnuncio,
+                    Tipo_Anuncio: dto.tipoAnuncio,
                     Origem_Registo: "utilizador",
                     Publicado_No_Marketplace: true,
                     Estado_Anuncio: "ativo",
@@ -194,9 +201,7 @@ export class MarketplaceService {
                 data: {
                     ID_Artigo: novoArtigo.ID_Artigo,
                     Quantidade_Total: dto.quantidadeTotal,
-                    Quantidade_Venda: distribuicao.quantidadeVenda,
-                    Quantidade_Aluguer: distribuicao.quantidadeAluguer,
-                    ID_Cor: dto.idCor ? Number(dto.idCor) : null,
+                    // CORREÇÃO: Mapear os IDs que vêm do DTO
                     ID_Tamanho: dto.idTamanho ? Number(dto.idTamanho) : null,
                     ID_Estado: dto.idEstado ? Number(dto.idEstado) : null,
                 },
@@ -293,6 +298,7 @@ export class MarketplaceService {
         });
 
         let urlFotoFinal = dto.foto ?? artigo.Foto ?? null;
+
         if (file) {
             const nomeFicheiro = `anuncio_${idArtigo}_${Date.now()}`;
             urlFotoFinal = await this.blobsService.guardarFotosMarketplace('marketplace', nomeFicheiro, file);
@@ -340,7 +346,7 @@ export class MarketplaceService {
             where: { ID_Artigo: idArtigo },
             data: {
                 Estado_Anuncio: dto.estado,
-                Publicado_No_Marketplace: dto.estado !== EstadoAnuncio.ARQUIVADO && dto.estado !== EstadoAnuncio.REMOVIDO,
+                Publicado_No_Marketplace: dto.estado === EstadoAnuncio.ATIVO,
                 Motivo_Moderacao:
                     dto.estado === EstadoAnuncio.REMOVIDO && podeModerarMarketplace(utilizador.role)
                         ? dto.motivo ?? artigo.Motivo_Moderacao ?? null
@@ -389,6 +395,10 @@ export class MarketplaceService {
         const artigo = await this.obterArtigoOuFalhar(idArtigo);
 
         if (dto.acao === AcaoModeracao.REMOVER) {
+            if (artigo.Estado_Anuncio === EstadoAnuncio.REMOVIDO) {
+                throw new BadRequestException('O anúncio já se encontra removido.');
+            }
+
             return prisma.artigo.update({
                 where: { ID_Artigo: idArtigo },
                 data: {
@@ -403,15 +413,34 @@ export class MarketplaceService {
             });
         }
 
-        if (artigo.Estado_Anuncio !== EstadoAnuncio.REMOVIDO) {
-            throw new BadRequestException('Só é possível reativar anúncios que estejam removidos.');
+        if (dto.acao === AcaoModeracao.REATIVAR) {
+            if (artigo.Estado_Anuncio !== EstadoAnuncio.REMOVIDO) {
+                throw new BadRequestException('Só é possível reativar anúncios que estejam removidos.');
+            }
+
+            return prisma.artigo.update({
+                where: { ID_Artigo: idArtigo },
+                data: {
+                    Estado_Anuncio: EstadoAnuncio.ATIVO,
+                    Publicado_No_Marketplace: true,
+                    ID_Utilizador_Moderador: utilizador.sub,
+                    Motivo_Moderacao: dto.motivo ?? artigo.Motivo_Moderacao ?? null,
+                    Data_Moderacao: new Date(),
+                    Data_Atualizacao: new Date(),
+                },
+                include: this.includeBaseArtigo(),
+            });
+        }
+
+        if (artigo.Estado_Anuncio === EstadoAnuncio.ARQUIVADO) {
+            throw new BadRequestException('O anúncio já se encontra arquivado.');
         }
 
         return prisma.artigo.update({
             where: { ID_Artigo: idArtigo },
             data: {
-                Estado_Anuncio: EstadoAnuncio.ATIVO,
-                Publicado_No_Marketplace: true,
+                Estado_Anuncio: EstadoAnuncio.ARQUIVADO,
+                Publicado_No_Marketplace: false,
                 ID_Utilizador_Moderador: utilizador.sub,
                 Motivo_Moderacao: dto.motivo ?? artigo.Motivo_Moderacao ?? null,
                 Data_Moderacao: new Date(),
@@ -578,10 +607,6 @@ export class MarketplaceService {
                 },
             },
 
-            Coordenador: { include: { Pessoa: true } },
-            Direcao: { include: { Pessoa: true } },
-            Professor: { include: { Pessoa: true } },
-            Enc_Educacao: { include: { Pessoa: true } },
         };
     }
 
@@ -690,29 +715,11 @@ export class MarketplaceService {
         return TipoAnuncio.VENDA;
     }
 
-    private montarCamposLegacyPorRole(role: string, idPessoa: number) {
-        if (role === 'Coordenador') return { ID_Coordenador: idPessoa };
-        if (role === 'Direcao') return { ID_Direcao: idPessoa };
-        if (role === 'Professor') return { ID_Professor: idPessoa };
-        if (role === 'Enc_Educacao') return { ID_Enc_Educacao: idPessoa };
-        return {};
-    }
-
-    private criarFiltroLegacyPorRole(role: string, idPessoa: number) {
-        if (role === 'Coordenador') return { ID_Coordenador: idPessoa };
-        if (role === 'Direcao') return { ID_Direcao: idPessoa };
-        if (role === 'Professor') return { ID_Professor: idPessoa };
-        if (role === 'Enc_Educacao') return { ID_Enc_Educacao: idPessoa };
-        return { ID_Artigo: -1 };
-    }
-
     private ehDonoDoAnuncio(artigo: any, utilizador: UtilizadorAutenticado): boolean {
-        if (artigo.ID_Utilizador_Criador && artigo.ID_Utilizador_Criador === utilizador.sub) {
-            return true;
-        }
-
-        const filtrosLegacy = this.criarFiltroLegacyPorRole(utilizador.role, utilizador.idPessoa);
-        return Object.entries(filtrosLegacy).some(([campo, valor]) => artigo[campo] === valor);
+        return Boolean(
+            artigo.ID_Utilizador_Criador &&
+            artigo.ID_Utilizador_Criador === utilizador.sub,
+        );
     }
 
     private garantirAcessoAoAnuncio(artigo: any, utilizador: UtilizadorAutenticado) {

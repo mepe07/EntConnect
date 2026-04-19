@@ -11,8 +11,7 @@ export enum EstadoAnuncio {
     RESERVADO = 'reservado',
     CONCLUIDO = 'concluido',
     ARQUIVADO = 'arquivado',
-    REMOVIDO_PELO_DONO = 'removido_pelo_dono',
-    REMOVIDO_PELA_MODERACAO = 'removido_pela_moderacao',
+    REMOVIDO = 'removido',
 }
 
 export enum OrigemRegisto {

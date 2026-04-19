@@ -38,6 +38,11 @@ export class MarketplaceController {
         return this.marketplaceService.listarAnuncios(filtros);
     }
 
+    @Get('anuncios/moderacao')
+    listarAnunciosModeracao(@Request() req: { user: UtilizadorAutenticado }) {
+        return this.marketplaceService.listarAnunciosModeracao(req.user);
+    }
+
     @Get('anuncios/:id')
     obterAnuncio(@Param('id') idArtigo: string) {
         return this.marketplaceService.obterAnuncio(+idArtigo);

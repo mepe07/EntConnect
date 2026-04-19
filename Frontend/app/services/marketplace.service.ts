@@ -60,6 +60,16 @@ export const marketplaceService = {
         return response.json();
     },
 
+    async listarAnunciosModeracao(): Promise<Anuncio[]> {
+        const response = await fetch(`${API_URL}/anuncios/moderacao`, {
+            method: 'GET',
+            headers: getHeaders(),
+        });
+
+        if (!response.ok) return parseError(response, 'Erro ao carregar a fila de moderação.');
+        return response.json();
+    },
+
     async listarMeusAnuncios(): Promise<Anuncio[]> {
         const response = await fetch(`${API_URL}/meus-anuncios`, {
             method: 'GET',
@@ -194,7 +204,7 @@ export const marketplaceService = {
         return response.json();
     },
 
-    async moderarAnuncio(idArtigo: number, acao: 'remover' | 'reativar', motivo?: string): Promise<Anuncio> {
+    async moderarAnuncio(idArtigo: number, acao: 'remover' | 'reativar' | 'arquivar', motivo?: string): Promise<Anuncio> {
         const response = await fetch(`${API_URL}/anuncios/${idArtigo}/moderar`, {
             method: 'POST',
             headers: getHeaders(),

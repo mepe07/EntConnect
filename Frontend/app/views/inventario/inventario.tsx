@@ -28,7 +28,7 @@ function formatarData(valor?: string) {
 const ESTADO_LABEL: Record<string, string> = {
     [EstadoAnuncio.ATIVO]: 'Ativo', [EstadoAnuncio.RESERVADO]: 'Reservado',
     [EstadoAnuncio.CONCLUIDO]: 'Concluído', [EstadoAnuncio.ARQUIVADO]: 'Arquivado',
-    [EstadoAnuncio.REMOVIDO_PELO_DONO]: 'Removido pelo dono', [EstadoAnuncio.REMOVIDO_PELA_MODERACAO]: 'Removido pela moderação',
+    [EstadoAnuncio.REMOVIDO]: 'Removido',
 };
 
 type Vista = 'lista' | 'detalhe' | 'publicados';
