@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString } from 'class-validator';
 
 export class InscreverAlunoDto {
   
@@ -48,6 +48,7 @@ export class InscreverAlunoDto {
   duracao!: number;
 
   @ApiProperty({ description: 'Observações sobre a inscrição', example: 'Aluno com presença regular' })
+  @IsString()
   obs?: string;
 
   @ApiProperty({ description: 'Valor em falta', example: 100 })
