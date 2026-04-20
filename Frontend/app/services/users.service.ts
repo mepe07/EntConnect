@@ -1,3 +1,14 @@
+export interface CreateUtilizadorPayload {
+    nome: string;
+    username: string;
+    email: string;
+    contacto?: string;
+    nif?: string;
+    dataNascimento: string;
+    cargo: string;
+    password: string;
+}
+
 export class UtilizadorService {
     private _apiUrl = 'http://localhost:3000';
 
@@ -9,6 +20,28 @@ export class UtilizadorService {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
         });
+        return await response.json();
+    }
+
+    /**
+     * Cria um novo utilizador.
+     */
+    async createUser(payload: CreateUtilizadorPayload) {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${this._apiUrl}/utilizador`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error?.message ?? 'Erro ao criar o utilizador.');
+        }
+
         return await response.json();
     }
 
@@ -34,12 +67,6 @@ export class UtilizadorService {
         return await response.json();
     }
 
-    /**
-     * Atualiza a password de um utilizador com base no seu ID.
-     * 
-     * @param userId O ID do utilizador.
-     * @param newPassword A nova password em texto simples (o backend faz o hash com bcrypt).
-     */
     /**
      * Obtém o URL da foto de perfil de um utilizador.
      */

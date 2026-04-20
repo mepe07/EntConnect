@@ -197,6 +197,14 @@ export class UtilizadorController {
     await this.utilizadorService.RemovePhoto(+id);
     return { message: `A foto do utilizador com ID ${id} foi removida com sucesso.` };
   }
+
+  @Post()
+  @ApiOperation({ summary: 'Criar um novo utilizador manualmente' })
+  @ApiResponse({ status: 201, description: 'Utilizador criado com sucesso.' })
+  @ApiResponse({ status: 409, description: 'Username ou email já existem.' })
+  async createUser(@Body() createUtilizadorDto: CreateUtilizadorDto) {
+    return this.utilizadorService.createUser(createUtilizadorDto);
+  }
   
   @Get(':id/aulas')
   @ApiOperation({ summary: 'Obter o horário de aulas/ensaios (Professor ou Aluno)' })
