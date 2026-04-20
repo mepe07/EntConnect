@@ -14,7 +14,7 @@ export class DisponibilidadesService {
         return await response.json();
     };
 
-    async atualizarEstado(idDisponibilidade: number, novoEstado: number, horaInicio: string, duracao: number, alteradoPor: number, idEstudio?: number, valorHora?: number) {
+    async atualizarEstado(idDisponibilidade: number, novoEstado: number, horaInicio: string, duracao: number, alteradoPor: number, idEstudio?: number, valorPorAluno?: number) {
         
         const bodyRequest = {
             Hora_Inicio: horaInicio, // Agora já recebe "2026-04-06T14:00:00.000Z"
@@ -22,7 +22,7 @@ export class DisponibilidadesService {
             AlteradoPorUtilizadorID: alteradoPor,
             EstadoDisponibilidadeID: novoEstado,
             IdEstudio: idEstudio,
-            ValorHora: valorHora
+            ValorPorAluno: valorPorAluno
         };
 
         const response = await fetch(`${this._apiUrl}/utilizador/professor/disponibilidade/${idDisponibilidade}/atualizar-disponibilidade`, {

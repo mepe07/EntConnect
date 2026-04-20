@@ -1,325 +1,303 @@
-// Ficheiro: src/views/Inventario/Inventario.tsx
-
-import React, { useEffect, useState } from 'react';
-import { marketplaceService } from '../../services/artigo.service';
-import type { Artigo } from '../../models/interfaces/artigo.interface';
-import { ModalPublicar } from './partials/ModalPublicar'; // 👈 O nosso novo componente isolado!
+import React, { useEffect, useMemo, useState } from 'react';
+import { marketplaceService } from '../../services/marketplace.service';
+import {
+    type Anuncio,
+    type CriarItemInventarioPayload,
+    EstadoAnuncio,
+    OrigemRegisto,
+    TipoAnuncio,
+} from '../../types/marketplace.types';
 import './inventario.scss';
 
+// AS IMPORTAÇÕES ESTÃO CORRETAS AGORA
+import { ModalCriarItem } from './partials/modalCriarItem';
+import { ModalPublicar } from './partials/modalPublicar';
+
+function getStockPrincipal(item: Anuncio) { return item.Stock_Armazem?.[0]; }
+function getQuantidadeTotal(item: Anuncio) { return getStockPrincipal(item)?.Quantidade_Total ?? 0; }
+function getQuantidadeVenda(item: Anuncio) { return getStockPrincipal(item)?.Quantidade_Venda ?? 0; }
+function getQuantidadeAluguer(item: Anuncio) { return getStockPrincipal(item)?.Quantidade_Aluguer ?? 0; }
+function getCor(item: Anuncio) { return getStockPrincipal(item)?.Cor?.Descricao ?? '--'; }
+function getTamanho(item: Anuncio) { return getStockPrincipal(item)?.Tamanho?.Descricao ?? '--'; }
+function getEstadoPeca(item: Anuncio) { return getStockPrincipal(item)?.Estado?.Descricao ?? '--'; }
+function formatarData(valor?: string) {
+    if (!valor) return '--';
+    try { return new Date(valor).toLocaleString('pt-PT'); } catch { return valor; }
+}
+
+const ESTADO_LABEL: Record<string, string> = {
+    [EstadoAnuncio.ATIVO]: 'Ativo', [EstadoAnuncio.RESERVADO]: 'Reservado',
+    [EstadoAnuncio.CONCLUIDO]: 'Concluído', [EstadoAnuncio.ARQUIVADO]: 'Arquivado',
+    [EstadoAnuncio.REMOVIDO]: 'Removido',
+};
+
+type Vista = 'lista' | 'detalhe' | 'publicados';
+
 export function Inventario() {
-    const [artigos, setArtigos] = useState<Artigo[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isGavetaAberta, setIsGavetaAberta] = useState(false);
+    const [vista, setVista] = useState<Vista>('lista');
+    const [inventario, setInventario] = useState<Anuncio[]>([]);
+    const [itemSelecionado, setItemSelecionado] = useState<Anuncio | null>(null);
+    const [pesquisa, setPesquisa] = useState('');
+    const [filtroPublicacao, setFiltroPublicacao] = useState('todos');
+    const [loading, setLoading] = useState(false);
+    const [erro, setErro] = useState('');
+    const [resumoFluxo, setResumoFluxo] = useState('Sem ações executadas ainda.');
     
-    const [termoPesquisa, setTermoPesquisa] = useState('');
+    // Controlo de Modais
+    const [mostrarModalPublicar, setMostrarModalPublicar] = useState(false);
+    const [mostrarModalCriar, setMostrarModalCriar] = useState(false);
     
-    // O estado do formulário de NOVO ARTIGO
-    const [formData, setFormData] = useState({
-        Nome: '', Notas: '', 
-        Quantidade_Total: 1, Quantidade_Venda: 0, Quantidade_Aluguer: 0,
-        ID_Cor: '', ID_Estado: '', ID_Tamanho: ''
+    const [formCriar, setFormCriar] = useState<CriarItemInventarioPayload>({
+        titulo: '', descricao: '', quantidade: 0, foto: ''
     });
 
-    // Estados para a Fotografia
-    const [fotoFicheiro, setFotoFicheiro] = useState<File | null>(null);
-    const [fotoPreview, setFotoPreview] = useState<string | null>(null);
-
-    // Estado para controlar a janela flutuante (Modal) de atualização da montra
-    const [loteAtivoParaPublicar, setLoteAtivoParaPublicar] = useState<any>(null);
-
-    useEffect(() => {
-        carregarArmazem();
-    }, []);
-
-    const carregarArmazem = async () => {
+    const carregarInventario = async () => {
+        setLoading(true); setErro('');
         try {
-            setLoading(true);
-            const dados = await marketplaceService.listarInventario();
-            setArtigos(dados);
+            const dados = await marketplaceService.listarInventarioDaEscola();
+            setInventario(dados);
+            if (!itemSelecionado && dados.length > 0) setItemSelecionado(dados[0]);
         } catch (error: any) {
-            alert('Erro: ' + error.message);
+            setErro(error.message || 'Erro ao carregar o inventário da escola.');
         } finally {
             setLoading(false);
         }
     };
 
-    // ==========================================
-    // LÓGICA DE ATUALIZAÇÃO DA MONTRA (MODAL)
-    // ==========================================
-    const abrirModalPublicar = (lote: any, nomeArtigo: string) => {
-        setLoteAtivoParaPublicar({
-            idStock: lote.ID_Stock,
-            nome: nomeArtigo,
-            maximoTotal: lote.Quantidade_Total,
-            atualVenda: lote.Quantidade_Venda,
-            atualAluguer: lote.Quantidade_Aluguer
+    useEffect(() => { carregarInventario(); }, []);
+
+    const inventarioFiltrado = useMemo(() => {
+        return inventario.filter((item) => {
+            const texto = [item.Nome, item.Descricao, getCor(item), getTamanho(item)].join(' ').toLowerCase();
+            const okPesquisa = texto.includes(pesquisa.toLowerCase());
+            const okPublicacao = filtroPublicacao === 'todos' || (filtroPublicacao === 'publicado' && item.Publicado_No_Marketplace) || (filtroPublicacao === 'nao_publicado' && !item.Publicado_No_Marketplace);
+            return okPesquisa && okPublicacao;
         });
+    }, [inventario, pesquisa, filtroPublicacao]);
+
+    const publicados = inventarioFiltrado.filter((item) => item.Publicado_No_Marketplace);
+
+    const abrirDetalhe = (item: Anuncio) => {
+        setItemSelecionado(item);
+        setVista('detalhe');
     };
 
-    const confirmarPublicacao = async (qtdVenda: number, qtdAluguer: number) => {
-        if (!loteAtivoParaPublicar) return;
-
+    const adicionarNovoItem = async () => {
+        if (!formCriar.titulo || formCriar.quantidade === 0) {
+            alert('Preenche o título e uma quantidade.');
+            return;
+        }
         try {
-            await marketplaceService.publicarAnuncio(loteAtivoParaPublicar.idStock, qtdVenda, qtdAluguer);
-            alert('Sucesso! A montra foi atualizada.');
-            setLoteAtivoParaPublicar(null); // Fecha a janela
-            carregarArmazem(); // Recarrega os dados fresquinhos do backend
-        } catch (error: any) {
-            alert('Erro ao publicar: ' + error.message);
+            await marketplaceService.criarItemInventario(formCriar);
+            setMostrarModalCriar(false);
+            setFormCriar({ titulo: '', descricao: '', quantidade: 0, foto: '' });
+            carregarInventario();
+        } catch (err: any) {
+            alert(err.message);
         }
     };
 
-    // ==========================================
-    // LÓGICA DE CRIAÇÃO DE NOVO ARTIGO (GAVETA)
-    // ==========================================
-    const handleSubmeterFormulario = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const confirmarPublicacao = async ({
+        tipoAnuncio,
+        quantidadeVenda,
+        quantidadeAluguer,
+        descricao,
+    }: {
+        tipoAnuncio: TipoAnuncio;
+        quantidadeVenda: number;
+        quantidadeAluguer: number;
+        descricao: string;
+    }) => {
+        if (!itemSelecionado) return;
         try {
-            const dadosCaixa = new FormData();
-
-            dadosCaixa.append('Nome', formData.Nome);
-            if (formData.Notas) dadosCaixa.append('Notas', formData.Notas);
-            dadosCaixa.append('Quantidade_Total', formData.Quantidade_Total.toString());
-            dadosCaixa.append('Quantidade_Venda', formData.Quantidade_Venda.toString());
-            dadosCaixa.append('Quantidade_Aluguer', formData.Quantidade_Aluguer.toString());
-
-            if (formData.ID_Cor) dadosCaixa.append('ID_Cor', formData.ID_Cor);
-            if (formData.ID_Estado) dadosCaixa.append('ID_Estado', formData.ID_Estado);
-            if (formData.ID_Tamanho) dadosCaixa.append('ID_Tamanho', formData.ID_Tamanho);
-
-            if (fotoFicheiro) {
-                dadosCaixa.append('foto', fotoFicheiro);
-            }
-
-            await marketplaceService.criarArtigo(dadosCaixa);
-            alert('Artigo adicionado ao catálogo com sucesso!');
-            
-            fecharELimparGaveta();
-            carregarArmazem(); 
+            await marketplaceService.publicarInventarioDaEscola({
+                idArtigo: itemSelecionado.ID_Artigo,
+                titulo: itemSelecionado.Nome,
+                foto: itemSelecionado.Foto,
+                tipoAnuncio,
+                quantidadeVenda,
+                quantidadeAluguer,
+                descricao,
+            });
+            setResumoFluxo(`Publicaste '${itemSelecionado.Nome}' no Marketplace.`);
+            setMostrarModalPublicar(false);
+            setVista('publicados');
+            await carregarInventario();
         } catch (error: any) {
-            alert(error.message);
+            window.alert(error.message || 'Não foi possível publicar no Marketplace.');
         }
     };
-
-    const fecharELimparGaveta = () => {
-        setIsGavetaAberta(false);
-        setFormData({ 
-            Nome: '', Notas: '', 
-            Quantidade_Total: 1, Quantidade_Venda: 0, Quantidade_Aluguer: 0,
-            ID_Cor: '', ID_Estado: '', ID_Tamanho: '' 
-        });
-        setFotoFicheiro(null);
-        setFotoPreview(null);
-    };
-
-    // ==========================================
-    // FILTRAGEM DE PESQUISA
-    // ==========================================
-    const artigosFiltrados = artigos.filter(artigo => {
-        const termo = termoPesquisa.toLowerCase();
-        const nomeMatch = artigo.Nome.toLowerCase().includes(termo);
-        const notasMatch = artigo.Notas ? artigo.Notas.toLowerCase().includes(termo) : false;
-        return nomeMatch || notasMatch;
-    });
 
     return (
-        <div className="inventario-moderno">
-            <div className="cabecalho-armazem">
+        <div className="inventario-page">
+            <div className="inventario-topo">
                 <div>
-                    <h1>📦 Armazém Central</h1>
-                    <p>Gestão de catálogo e lotes físicos da escola.</p>
+                    <span className="inventario-pill">Área privada da coordenadora</span>
+                    <h1>Inventário da escola</h1>
+                    <p>Gestão prática de lotes, quantidades e publicação para o Marketplace.</p>
                 </div>
-                <button className="btn-adicionar" onClick={() => setIsGavetaAberta(true)}>
-                    + Novo Artigo
-                </button>
+                <div className="inventario-acoes-topo">
+                    <button className="btn-secundario" onClick={carregarInventario}>Atualizar</button>
+                    <button className="btn-principal" onClick={() => setVista('publicados')}>Ver publicados</button>
+                    <button className="btn-principal" onClick={() => setMostrarModalCriar(true)}>
+                        <i className="fa-solid fa-plus"></i> Novo Item
+                    </button>
+                </div>
             </div>
 
-            <div className="barra-pesquisa">
-                <input 
-                    type="text" 
-                    placeholder="🔍 Pesquisar por nome ou notas..." 
-                    value={termoPesquisa}
-                    onChange={(e) => setTermoPesquisa(e.target.value)}
-                />
+            <div className="inventario-resumos">
+                <div className="resumo-box"><span>Lotes</span><strong>{inventario.length}</strong></div>
+                <div className="resumo-box"><span>Publicados</span><strong>{inventario.filter((item) => item.Publicado_No_Marketplace).length}</strong></div>
+                <div className="resumo-box"><span>Origem</span><strong>Escola</strong></div>
+                <div className="resumo-box"><span>Fluxo</span><strong>{resumoFluxo === 'Sem ações executadas ainda.' ? 'Pronto' : 'Atualizado'}</strong></div>
             </div>
 
-            {loading ? (
-                <p style={{ textAlign: 'center', color: '#64748b' }}>A organizar as caixas...</p>
-            ) : (
-                <div className="grelha-artigos">
-                    {artigosFiltrados.length === 0 ? (
-                        <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#64748b' }}>
-                            Nenhum artigo encontrado com essa pesquisa.
-                        </p>
-                    ) : (
-                        artigosFiltrados.map(artigo => (
-                            <div key={artigo.ID_Artigo} className="cartao-artigo">
-                                {artigo.Foto ? (
-                                    <img src={artigo.Foto} alt={artigo.Nome} className="imagem-artigo" />
-                                ) : (
-                                    <div className="imagem-placeholder">📦</div>
-                                )}
+            <div className="inventario-layout">
+                <div className="inventario-main card-base">
+                    <div className="inventario-barra">
+                        <div>
+                            <h2>Gestão do inventário</h2>
+                            <p>Vista operacional da coordenadora com foco em detalhe, stock e publicação rápida.</p>
+                        </div>
+                        <div className="tabs">
+                            <button className={vista === 'lista' ? 'ativo' : ''} onClick={() => setVista('lista')}>Lista</button>
+                            <button className={vista === 'detalhe' ? 'ativo' : ''} onClick={() => setVista('detalhe')}>Detalhe</button>
+                            <button className={vista === 'publicados' ? 'ativo' : ''} onClick={() => setVista('publicados')}>Publicados</button>
+                        </div>
+                    </div>
 
-                                <div className="corpo-artigo">
-                                    <div className="titulo-artigo">{artigo.Nome}</div>
-                                    {artigo.Notas && <p className="notas-artigo">{artigo.Notas}</p>}
-                                    
-                                    {(!artigo.Stock_Armazem || artigo.Stock_Armazem.length === 0) ? (
-                                        <p style={{ color: '#ef4444', fontStyle: 'italic', fontSize: '0.9rem' }}>Sem stock físico.</p>
-                                    ) : (
-                                        artigo.Stock_Armazem.map(lote => (
-                                            <div key={lote.ID_Stock} className="lote-stock">
-                                                <div className="lote-detalhes">
-                                                    <span>Prateleira #{lote.ID_Stock}</span>
-                                                    <span className="especificacoes">
-                                                        {lote.Cor?.Descricao ? `${lote.Cor.Descricao} ` : ''} 
-                                                        {lote.Estado?.Descricao ? `| ${lote.Estado.Descricao} ` : ''}
-                                                        {lote.Tamanho?.Descricao ? `| [${lote.Tamanho.Descricao}]` : ''}
-                                                    </span>
-                                                </div>
-                                                <div className="lote-badges">
-                                                    <span className="badge-qtd">Físico: {lote.Quantidade_Total}</span>
-                                                    {lote.Quantidade_Venda > 0 && <span className="badge-venda">Venda: {lote.Quantidade_Venda}</span>}
-                                                    {lote.Quantidade_Aluguer > 0 && <span className="badge-aluguer">Aluguer: {lote.Quantidade_Aluguer}</span>}
-                                                </div>
-                                                <button 
-                                                    className="btn-magico"
-                                                    onClick={() => abrirModalPublicar(lote, artigo.Nome)}
-                                                >
-                                                    🏪 Atualizar Montra
-                                                </button>
+                    <div className="inventario-filtros">
+                        <input value={pesquisa} onChange={(e) => setPesquisa(e.target.value)} placeholder="Pesquisar lote, cor ou tamanho" />
+                        <select value={filtroPublicacao} onChange={(e) => setFiltroPublicacao(e.target.value)}>
+                            <option value="todos">Todos</option>
+                            <option value="publicado">Publicado</option>
+                            <option value="nao_publicado">Não publicado</option>
+                        </select>
+                    </div>
+
+                    {erro ? <div className="mensagem-erro">{erro}</div> : null}
+                    {loading ? <div className="estado-vazio">A carregar inventário...</div> : null}
+
+                    {!loading && vista === 'lista' && (
+                        <div className="lista-lotes">
+                            {inventarioFiltrado.length === 0 ? <div className="estado-vazio">Não existem artigos para mostrar.</div> : inventarioFiltrado.map((item) => (
+                                <div key={item.ID_Artigo} className="linha-lote">
+                                    <div className="linha-lote-principal">
+                                        <img src={item.Foto || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1200&auto=format&fit=crop'} alt={item.Nome} />
+                                        <div>
+                                            <div className="linha-topo">
+                                                <span className={`badge-estado estado-${item.Estado_Anuncio}`}>{ESTADO_LABEL[item.Estado_Anuncio] || item.Estado_Anuncio}</span>
+                                                {item.Publicado_No_Marketplace ? <span className="badge-outline">Publicado na montra</span> : <span className="badge-outline">Só inventário</span>}
                                             </div>
-                                        ))
-                                    )}
+                                            <strong>{item.Nome}</strong>
+                                            <p>{getEstadoPeca(item)} · {getCor(item)} · Tamanho {getTamanho(item)} · Quantidade {getQuantidadeTotal(item)}</p>
+                                            <small>Atualizado: {formatarData(item.Data_Atualizacao || item.Data_Criacao)}</small>
+                                        </div>
+                                    </div>
+                                    <div className="linha-acoes">
+                                        <button className="btn-secundario" onClick={() => abrirDetalhe(item)}>Ver detalhe</button>
+                                        <button className="btn-principal" onClick={() => { setItemSelecionado(item); setMostrarModalPublicar(true); }}>Publicar</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {!loading && vista === 'detalhe' && itemSelecionado && (
+                        <div className="detalhe-lote">
+                            <button className="btn-link" onClick={() => setVista('lista')}>← Voltar à lista</button>
+                            <div className="detalhe-grid">
+                                <div className="detalhe-principal">
+                                    <img className="detalhe-imagem" src={itemSelecionado.Foto || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1200&auto=format&fit=crop'} alt={itemSelecionado.Nome} />
+                                    <div className="detalhe-etiquetas">
+                                        <span className={`badge-estado estado-${itemSelecionado.Estado_Anuncio}`}>{ESTADO_LABEL[itemSelecionado.Estado_Anuncio] || itemSelecionado.Estado_Anuncio}</span>
+                                        {itemSelecionado.Publicado_No_Marketplace ? <span className="badge-outline">Publicado no Marketplace</span> : <span className="badge-outline">Inventário interno</span>}
+                                    </div>
+                                    <h2>{itemSelecionado.Nome}</h2>
+                                    <p>{itemSelecionado.Descricao || itemSelecionado.Notas || 'Sem notas adicionais neste lote.'}</p>
+
+                                    <div className="detalhe-resumo">
+                                        <div><span>Tamanho</span><strong>{getTamanho(itemSelecionado)}</strong></div>
+                                        <div><span>Cor</span><strong>{getCor(itemSelecionado)}</strong></div>
+                                        <div><span>Estado da peça</span><strong>{getEstadoPeca(itemSelecionado)}</strong></div>
+                                        <div><span>Quantidade total</span><strong>{getQuantidadeTotal(itemSelecionado)}</strong></div>
+                                    </div>
+                                </div>
+
+                                <div className="detalhe-lateral">
+                                    <div className="bloco-lateral">
+                                        <h3>Distribuição atual</h3>
+                                        <div className="linhas-info">
+                                            <div><span>Para venda</span><strong>{getQuantidadeVenda(itemSelecionado)}</strong></div>
+                                            <div><span>Para aluguer</span><strong>{getQuantidadeAluguer(itemSelecionado)}</strong></div>
+                                            <div><span>Atualizado</span><strong>{formatarData(itemSelecionado.Data_Atualizacao || itemSelecionado.Data_Criacao)}</strong></div>
+                                        </div>
+                                    </div>
+                                    <div className="bloco-lateral">
+                                        <h3>Ações do lote</h3>
+                                        <div className="acoes-lateral">
+                                            <button className="btn-principal" onClick={() => setMostrarModalPublicar(true)}>{itemSelecionado.Publicado_No_Marketplace ? 'Rever publicação' : 'Publicar no Marketplace'}</button>
+                                            <button className="btn-secundario" onClick={() => setVista('publicados')}>Ver publicados</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        ))
+                        </div>
+                    )}
+
+                    {!loading && vista === 'publicados' && (
+                        <div className="lista-lotes">
+                            {publicados.length === 0 ? <div className="estado-vazio">Ainda não existem publicações ativas vindas do inventário.</div> : publicados.map((item) => (
+                                <div key={item.ID_Artigo} className="linha-lote linha-publicada">
+                                    <div className="linha-lote-principal">
+                                        <img src={item.Foto || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1200&auto=format&fit=crop'} alt={item.Nome} />
+                                        <div>
+                                            <div className="linha-topo">
+                                                <span className={`badge-estado estado-${item.Estado_Anuncio}`}>{ESTADO_LABEL[item.Estado_Anuncio] || item.Estado_Anuncio}</span>
+                                                <span className="badge-outline">Publicado na montra</span>
+                                            </div>
+                                            <strong>{item.Nome}</strong>
+                                            <p>Venda: {getQuantidadeVenda(item)} · Aluguer: {getQuantidadeAluguer(item)} · Quantidade total: {getQuantidadeTotal(item)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="linha-acoes">
+                                        <button className="btn-secundario" onClick={() => abrirDetalhe(item)}>Ver detalhe</button>
+                                        <button className="btn-principal" onClick={() => { setItemSelecionado(item); setMostrarModalPublicar(true); }}>Rever publicação</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     )}
                 </div>
+            </div>
+
+            {/* CHAMADAS CORRETAS DOS MODAIS ISOLADOS */}
+            
+            {mostrarModalCriar && (
+                <ModalCriarItem
+                    form={formCriar}
+                    setForm={setFormCriar}
+                    onClose={() => setMostrarModalCriar(false)}
+                    onGuardar={adicionarNovoItem}
+                />
             )}
 
-            {/* ========================================== */}
-            {/* O NOSSO NOVO COMPONENTE DE MODAL (ISOLADO) */}
-            {/* ========================================== */}
-            <ModalPublicar 
-                isOpen={!!loteAtivoParaPublicar}
-                onClose={() => setLoteAtivoParaPublicar(null)}
-                onConfirm={confirmarPublicacao}
-                loteInfo={loteAtivoParaPublicar}
-            />
-
-            {/* ========================================== */}
-            {/* A GAVETA DE NOVO ARTIGO */}
-            {/* ========================================== */}
-            {isGavetaAberta && (
-                <>
-                    <div className="gaveta-overlay" onClick={fecharELimparGaveta}></div>
-                    <div className="gaveta-conteudo">
-                        <h2>Adicionar ao Armazém</h2>
-                        <form onSubmit={handleSubmeterFormulario}>
-                            
-                            <h4 className="seccao-titulo">1. O Catálogo</h4>
-                            
-                            <div className="form-grupo">
-                                <label>Nome do Artigo</label>
-                                <input required type="text" placeholder="Ex: Cadeira Ergonómica" 
-                                    value={formData.Nome} onChange={e => setFormData({ ...formData, Nome: e.target.value })} />
-                            </div>
-
-                            <div className="form-grupo">
-                                <label>Fotografia (Do teu Computador/Telemóvel)</label>
-                                <input 
-                                    type="file" 
-                                    accept="image/*" 
-                                    className="input-ficheiro"
-                                    onChange={(e) => {
-                                        if (e.target.files && e.target.files[0]) {
-                                            const ficheiro = e.target.files[0];
-                                            setFotoFicheiro(ficheiro);
-                                            setFotoPreview(URL.createObjectURL(ficheiro)); 
-                                        }
-                                    }} 
-                                />
-                                {fotoPreview && (
-                                    <div className="preview-container">
-                                        <img src={fotoPreview} alt="Preview do Upload" />
-                                        <button type="button" className="btn-remover-foto" onClick={() => {
-                                            setFotoFicheiro(null);
-                                            setFotoPreview(null);
-                                        }}>Remover Foto</button>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="form-grupo">
-                                <label>Notas (Opcional)</label>
-                                <textarea rows={2} placeholder="Ex: Material da sala B" 
-                                    value={formData.Notas} onChange={e => setFormData({ ...formData, Notas: e.target.value })} />
-                            </div>
-
-                            <h4 className="seccao-titulo">2. Primeiro Lote de Stock</h4>
-                            <div className="form-grupo">
-                                <label>Stock Físico Real (Total na Prateleira)</label>
-                                <input required type="number" min="1" 
-                                    value={formData.Quantidade_Total} onChange={e => setFormData({ ...formData, Quantidade_Total: parseInt(e.target.value) || 0 })} />
-                            </div>
-                            
-                            <div className="linha-dupla">
-                                <div className="form-grupo">
-                                    <label>Qtd. Venda</label>
-                                    <input required type="number" min="0" 
-                                        value={formData.Quantidade_Venda} onChange={e => setFormData({ ...formData, Quantidade_Venda: parseInt(e.target.value) || 0 })} />
-                                </div>
-                                <div className="form-grupo">
-                                    <label>Qtd. Aluguer</label>
-                                    <input required type="number" min="0" 
-                                        value={formData.Quantidade_Aluguer} onChange={e => setFormData({ ...formData, Quantidade_Aluguer: parseInt(e.target.value) || 0 })} />
-                                </div>
-                            </div>
-
-                            <h4 className="seccao-titulo">3. Especificações da Peça</h4>
-                            <div className="linha-tripla">
-                                <div className="form-grupo">
-                                    <label>Estado</label>
-                                    <select value={formData.ID_Estado} onChange={e => setFormData({ ...formData, ID_Estado: e.target.value })}>
-                                        <option value="">(Não Especificar)</option>
-                                        <option value="1">Novo</option>
-                                        <option value="2">Como Novo</option>
-                                        <option value="3">Usado - Bom</option>
-                                        <option value="4">Com Marcas de Uso</option>
-                                    </select>
-                                </div>
-                                <div className="form-grupo">
-                                    <label>Tamanho</label>
-                                    <select value={formData.ID_Tamanho} onChange={e => setFormData({ ...formData, ID_Tamanho: e.target.value })}>
-                                        <option value="">(Não Especificar)</option>
-                                        <option value="1">XS</option>
-                                        <option value="2">S</option>
-                                        <option value="3">M</option>
-                                        <option value="4">L</option>
-                                        <option value="5">XL</option>
-                                    </select>
-                                </div>
-                                <div className="form-grupo">
-                                    <label>Cor</label>
-                                    <select value={formData.ID_Cor} onChange={e => setFormData({ ...formData, ID_Cor: e.target.value })}>
-                                        <option value="">(Não Especificar)</option>
-                                        <option value="1">Azul</option>
-                                        <option value="2">Branco</option>
-                                        <option value="3">Preto</option>
-                                        <option value="4">Cinzento</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="gaveta-botoes">
-                                <button type="button" className="btn-cancelar" onClick={fecharELimparGaveta}>Cancelar</button>
-                                <button type="submit" className="btn-guardar">Salvar Registo</button>
-                            </div>
-                        </form>
-                    </div>
-                </>
+            {mostrarModalPublicar && itemSelecionado && (
+                <ModalPublicar
+                    isOpen={mostrarModalPublicar}
+                    onClose={() => setMostrarModalPublicar(false)}
+                    onConfirm={confirmarPublicacao}
+                    loteInfo={{
+                        idStock: itemSelecionado.Stock_Armazem?.[0]?.ID_Stock || 0,
+                        nome: itemSelecionado.Nome,
+                        descricaoOriginal: itemSelecionado.Descricao || '',
+                        maximoTotal: getQuantidadeTotal(itemSelecionado),
+                        atualVenda: getQuantidadeVenda(itemSelecionado),
+                        atualAluguer: getQuantidadeAluguer(itemSelecionado),
+                    }}
+                />
             )}
+
         </div>
     );
 } 

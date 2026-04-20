@@ -10,6 +10,7 @@ import { get } from 'http';
 import { ModalidadeService } from './modalidade/modalidade.service';
 import { CreateModalidadeDto } from './dto/create-modalidade.dto';
 import { UpdateModalidadeDto } from './dto/update-modalidade.dto';
+import { InscreverAlunoDto } from './dto/inscrever-aluno.dto';
 //#endregion
 
 @ApiTags('Coaching') // Tag para agrupar os endpoints relacionados a Coaching no Swagger
@@ -44,13 +45,23 @@ export class CoachingController {
     return this.coachingService.create(createCoachingDto);
   }
 
-  @Post(':id/inscrever-aluno')
+  @Delete('remover-aluno/:idAluno/coaching/:idCoaching')
+  @ApiOperation({ summary: 'Remover aluno de sessão de coaching' })
+  async removerAluno(
+    @Param('idAluno') idAluno: number,
+    @Param('idCoaching') idCoaching: number
+  ) {
+    return this.coachingService.removerAluno(idAluno, idCoaching);
+  }
+
+
+  @Post('disponibilidade/:id/inscrever-aluno')
   @ApiOperation({summary: 'Inscrever aluno em sessão de coaching'})
   async inscreverAluno(
-    @Param('id') idCoaching: string,
-    @Body() body: { idAluno: number }
+    @Param('id') idDisponibilidade: string,
+    @Body() body: InscreverAlunoDto
   ) {
-    return this.coachingService.inscreverAluno(+idCoaching, body.idAluno);
+    return this.coachingService.inscreverAluno(+idDisponibilidade, body);
   }
 
   @Get('estudios')
@@ -133,9 +144,21 @@ export class CoachingController {
   async unlockStudio(@Param('id') id: string) {
     return this.gestaoEstudiosService.unlockStudio(+id);
   }
+
+  @Get('admin/sessoes-futuras')
+  @ApiOperation({ summary: 'Obter sessões futuras para gestão do admin' })
+  async getSessoesFuturasAdmin() {
+    return this.coachingService.getSessoesFuturasAdmin();
+  }
+
+  @Get('admin/kpis')
+  @ApiOperation({ summary: 'Obter KPIs para o dashboard do admin' })
+  async getKpisAdmin() {
+    return this.coachingService.getKpisAdmin();
+  }
 }
 
-// END POINT para as Modalidades
+// END POINT para as Modalidades - Retirar isto daqui e colocar num novo controller chamado modalidade.controller.ts para organizar melhor o código.
 
 @ApiTags('Modalidades') // Cria a secção "Modalidades" no Swagger
 @Controller('modalidade') // O URL vai ser http://localhost:3000/modalidade

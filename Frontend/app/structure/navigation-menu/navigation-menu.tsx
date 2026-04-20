@@ -6,127 +6,127 @@ import { authService } from '~/services/auth.service';
 import type { MenuConfig } from '../../models/interfaces/menu.interface';
 import type { User } from '../../models/interfaces/user.interface';
 
-    // ============================================================================
-    // DICIONÁRIO DE ROTAS (Configuration-Driven UI)
-    // Centraliza a estrutura de navegação consoante o nível de acesso do utilizador.
-    // ============================================================================
-    const MENU_CONFIG: MenuConfig = {
+// ============================================================================
+// DICIONÁRIO DE ROTAS (Configuration-Driven UI)
+// Centraliza a estrutura de navegação consoante o nível de acesso do utilizador.
+// ============================================================================
+const MENU_CONFIG: MenuConfig = {
     
-        // --- Perfil: Coordenadora ---
-        admin: [
-            { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
-            { titulo: 'Gestão Utilizadores', path: '/admin/utilizadores', icone: 'fa-solid fa-users' },
-            {
-                titulo: 'Infraestrutura',
-                icone: 'fa-solid fa-building',
-                submenu: [
-                    { titulo: 'Gestão de Estúdios', path: '/admin/salas' },
-                    { titulo: 'Gestão de Modalidades', path: '/admin/modalidades' },
-                ]
-            },
-            {
-                titulo: 'Aulas & Coaching',
-                icone: 'fa-solid fa-chalkboard-user',
-                submenu: [
-                    { titulo: 'Gerir Horário Aulas', path: '/admin/horarios' },
-                    { titulo: 'Gerir Coaching', path: '/admin/coaching' },
-                    { titulo: 'Calendário Geral', path: '/admin/calendario' },
-                ]
-            },
-            {
-                titulo: 'Professores',
-                icone: 'fa-solid fa-user-tie',
-                submenu: [
-                    { titulo: 'Gerir Professores', path: '/admin/professores' },
-                    { titulo: 'Disponibilidades', path: '/admin/professores-disponibilidade' },
-                ]
-            },
-            {
-                titulo: 'Marketplace & Inventário',
-                icone: 'fa-solid fa-store',
-                submenu: [
-                    { titulo: 'Gerir Inventário', path: '/marketplace/inventario' },
-                    { titulo: 'MarketPlace', path: '/marketplace/anuncios' },
-                    { titulo: 'Atividades Marketplace', path: '/marketplace/atividades' },
-                ]
-            },
-            {
-                titulo: 'Relatórios',
-                icone: 'fa-solid fa-file-invoice-dollar',
-                submenu: [
-                    { titulo: 'Faturação', path: '/relatorios/faturacao' },
-                    { titulo: 'Histórico Coaching', path: '/relatorios/historico-coaching' },
-                    { titulo: 'Estatísticas', path: '/relatorios/estatisticas' },
-                ]
-            },
-            { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' }
-        ],
+    // --- Perfil: Coordenação ---
+    coordenacao: [
+        { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
+        { titulo: 'Gestão Utilizadores', path: '/admin/utilizadores', icone: 'fa-solid fa-users' },
+        {
+            titulo: 'Infraestrutura',
+            icone: 'fa-solid fa-building',
+            submenu: [
+                { titulo: 'Gestão de Estúdios', path: '/admin/salas' },
+                { titulo: 'Gestão de Modalidades', path: '/admin/modalidades' },
+            ]
+        },
+        {
+            titulo: 'Aulas & Coaching',
+            icone: 'fa-solid fa-chalkboard-user',
+            submenu: [
+                { titulo: 'Gerir Horário Aulas', path: '/admin/horarios' },
+                { titulo: 'Gerir Coaching', path: '/admin/coaching' },
+                { titulo: 'Calendário Geral', path: '/admin/calendario' },
+            ]
+        },
+        {
+            titulo: 'Professores',
+            icone: 'fa-solid fa-user-tie',
+            submenu: [
+                { titulo: 'Gerir Professores', path: '/admin/professores' },
+                { titulo: 'Disponibilidades', path: '/admin/professores-disponibilidade' },
+            ]
+        },
+        {
+            titulo: 'Marketplace & Inventário',
+            icone: 'fa-solid fa-store',
+            submenu: [
+                { titulo: 'Gerir Inventário', path: '/marketplace/inventario' },
+                { titulo: 'Marketplace', path: '/marketplace/anuncios' },
+                { titulo: 'Atividades Marketplace', path: '/marketplace/atividades' },
+            ]
+        },
+        {
+            titulo: 'Relatórios',
+            icone: 'fa-solid fa-file-invoice-dollar',
+            submenu: [
+                { titulo: 'Faturação', path: '/relatorios/faturacao' },
+                { titulo: 'Histórico Coaching', path: '/relatorios/historico-coaching' },
+                { titulo: 'Estatísticas', path: '/relatorios/estatisticas' },
+            ]
+        },
+        { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' }
+    ],
 
-        // --- Perfil: Professor ---
-        professor: [
-            { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
-            {
-                titulo: 'Agenda',
-                icone: 'fa-regular fa-calendar-days',
-                submenu: [
-                    { titulo: 'Disponibilidades', path: '/agenda/disponibilidades' },
-                    { titulo: 'Agendamentos', path: '/agenda/agendamentos' },
-                    { titulo: 'Propostas de Coaching', path: '/agenda/propostas' },
-                    { titulo: 'Confirmações', path: '/agenda/confirmacoes' },
-                ]
-            },
-            {
-                titulo: 'Relatórios',
-                icone: 'fa-solid fa-file-invoice-dollar',
-                submenu: [
-                    { titulo: 'Faturação', path: '/relatorios/faturacao' },
-                    { titulo: 'Coaching', path: '/relatorios/coaching' },
-                    { titulo: 'Estatísticas', path: '/relatorios/estatisticas' },
-                ]
-            },
-            {
-                titulo: 'Marketplace',
-                icone: 'fa-solid fa-store',
-                submenu: [
-                    { titulo: 'MarketPlace', path: '/marketplace/anuncios' },
-                    { titulo: 'Atividades Marketplace', path: '/marketplace/atividades' },
-                ]
-            },
-            { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' } // 👈 Intacto!
-        ],
+    // --- Perfil: Professor ---
+    professor: [
+        { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
+        {
+            titulo: 'Agenda',
+            icone: 'fa-regular fa-calendar-days',
+            submenu: [
+                { titulo: 'Disponibilidades', path: '/agenda/disponibilidades' },
+                { titulo: 'Agendamentos', path: '/agenda/agendamentos' },
+                { titulo: 'Propostas de Coaching', path: '/agenda/propostas' },
+                { titulo: 'Confirmações', path: '/agenda/confirmacoes' },
+            ]
+        },
+        {
+            titulo: 'Relatórios',
+            icone: 'fa-solid fa-file-invoice-dollar',
+            submenu: [
+                { titulo: 'Faturação', path: '/relatorios/faturacao' },
+                { titulo: 'Coaching', path: '/relatorios/coaching' },
+                { titulo: 'Estatísticas', path: '/relatorios/estatisticas' },
+            ]
+        },
+        {
+            titulo: 'Marketplace',
+            icone: 'fa-solid fa-store',
+            submenu: [
+                { titulo: 'Marketplace', path: '/marketplace/anuncios' },
+                { titulo: 'Atividades Marketplace', path: '/marketplace/atividades' },
+            ]
+        },
+        { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' } // 👈 Intacto!
+    ],
 
-        // --- Perfil: Encarregado de Educação ---
-        encarregado: [
-            { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
-            {
-                titulo: 'Coaching',
-                icone: 'fa-solid fa-handshake-angle',
-                submenu: [
-                    { titulo: 'Ver Oferta', path: '/coaching/oferta' },
-                    { titulo: 'Nova Proposta', path: '/coaching/nova-proposta' },
-                    { titulo: 'Marcações', path: '/coaching/marcacoes' },
-                    { titulo: 'Confirmações', path: '/coaching/confirmacoes' },
-                ]
-            },
-            {
-                titulo: 'Relatórios',
-                icone: 'fa-solid fa-file-invoice-dollar',
-                submenu: [
-                    { titulo: 'Faturação', path: '/relatorios/faturacao' },
-                    { titulo: 'Estatísticas', path: '/relatorios/estatisticas' },
-                ]
-            },
-            {
-                titulo: 'Marketplace',
-                icone: 'fa-solid fa-store',
-                submenu: [
-                    { titulo: 'MarketPlace', path: '/marketplace/anuncios' },
-                    { titulo: 'Atividades Marketplace', path: '/marketplace/atividades' },
-                ]
-            },
-            { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' } // 👈 Intacto!
-        ]
-    };
+    // --- Perfil: Encarregado de Educação ---
+    encarregado: [
+        { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
+        {
+            titulo: 'Coaching',
+            icone: 'fa-solid fa-handshake-angle',
+            submenu: [
+                { titulo: 'Ver Oferta', path: '/coaching/oferta' },
+                { titulo: 'Nova Proposta', path: '/coaching/nova-proposta' },
+                { titulo: 'Marcações', path: '/coaching/marcacoes' },
+                { titulo: 'Confirmações', path: '/coaching/confirmacoes' },
+            ]
+        },
+        {
+            titulo: 'Relatórios',
+            icone: 'fa-solid fa-file-invoice-dollar',
+            submenu: [
+                { titulo: 'Faturação', path: '/relatorios/faturacao' },
+                { titulo: 'Estatísticas', path: '/relatorios/estatisticas' },
+            ]
+        },
+        {
+            titulo: 'Marketplace',
+            icone: 'fa-solid fa-store',
+            submenu: [
+                { titulo: 'Marketplace', path: '/marketplace/anuncios' },
+                { titulo: 'Atividades Marketplace', path: '/marketplace/atividades' },
+            ]
+        },
+        { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' }
+    ]
+};
 
 // ============================================================================
 // COMPONENTE PRINCIPAL
@@ -158,12 +158,24 @@ export function NavigationMenu() {
     let menuAtivo = MENU_CONFIG.encarregado; 
     
     // Mapeamento do dicionário consoante a role do utilizador
-    if (roleDoUser === 'Direcao' || roleDoUser === 'Coordenador' || roleDoUser === 'Admin') {
-        menuAtivo = MENU_CONFIG.admin;
+    if (roleDoUser === 'Direcao' || roleDoUser === 'Coordenador') {
+        menuAtivo = MENU_CONFIG.coordenacao;
     } else if (roleDoUser === 'Professor') {
         menuAtivo = MENU_CONFIG.professor;
-    } else if (roleDoUser === 'EncEducacao') {
+    } else if (roleDoUser === 'EncEducacao' || roleDoUser === 'Enc_Educacao') {
         menuAtivo = MENU_CONFIG.encarregado;
+    }
+
+    if ((roleDoUser === 'Direcao' || roleDoUser === 'Professor' || roleDoUser === 'Enc_Educacao' || roleDoUser === 'EncEducacao') && Array.isArray(menuAtivo)) {
+        menuAtivo = menuAtivo.map((item: any) => {
+            if (item.titulo === 'Marketplace & Inventário' && item.submenu) {
+                return {
+                    ...item,
+                    submenu: item.submenu.filter((subItem: any) => subItem.path !== '/marketplace/inventario'),
+                };
+            }
+            return item;
+        });
     }
 
     // Avalia se as rotas atuais correspondem ao menu para aplicar estilos ativos

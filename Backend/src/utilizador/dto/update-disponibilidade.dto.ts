@@ -22,10 +22,10 @@ export class UpdateDisponibilidadeDto extends PartialType(CreateDisponibilidadeD
   IdEstudio?: number;
 
   @ApiPropertyOptional({ 
-    example: 25.50, 
-    description: 'Valor por hora da sessão de coaching (Atribuído pela Coordenação)' 
+    example: 25, 
+    description: 'Valor cobrado por aluno' 
   })
   @IsOptional()
   @IsNumber()
-  ValorHora?: number;
+  ValorPorAluno?: number;
 }

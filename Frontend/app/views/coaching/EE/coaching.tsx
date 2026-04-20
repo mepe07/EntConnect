@@ -11,15 +11,22 @@ import type { User } from '../../../models/interfaces/user.interface';
 import { DisponibilidadesService } from '../../../services/disponibilidades.service';
 import { InputComponent } from '~/components/input/input.component';
 import { SelectBoxComponent } from '~/components/selectbox/selectbox.component';
+import { EEService } from '~/services/EE.service';
 
 interface Disponibilidade {
     idDisponibilidade: number;
     nomeProfessor: string;
     data: string;
-    diaSemana: string;
     horario: string;
     modalidade: string;
     estado: string;
+    valorPorAluno: number;
+    maxAlunos: number;
+    idProfessor: number;
+    idEstudio: number;
+    duracao: number;
+    idCoordenador: number;
+    alunosInscritosIds: number[]; // ID dos alunos já inscritos nessa disponibilidade
 }
 
 interface Aluno {
@@ -36,12 +43,12 @@ export default function CoachingEE() {
 
     // Validar o role do utilizador 
     const userInfo = authService.getUserInfo() as User;
-    console.log('Informações do utilizador:', userInfo);
     if (userInfo.role !== 'Enc_Educacao') {
         return null;
     }
 
     const disponibilidadesService = new DisponibilidadesService();
+    const eeService = new EEService();
     const [disponibilidades, setDisponibilidades] = useState<Disponibilidade[]>([]);
     const [alunos, setAlunos] = useState<Aluno[]>([]);
     const [modalAberto, setModalAberto] = useState(false);
@@ -49,17 +56,27 @@ export default function CoachingEE() {
     const [alunoSelecionado, setAlunoSelecionado] = useState<number | null>(null);
     const [filtroModalidade, setFiltroModalidade] = useState('');
     const [filtroProfessor, setFiltroProfessor] = useState('');
+    const [observacoes, setObservacoes] = useState('');
 
-    const tableData = disponibilidades.map((disp) => {
-        let infoType = InfoTypesEnum.Info;
-        if (disp.estado === 'Aprovado') infoType = InfoTypesEnum.Success;
-        if (disp.estado === 'Rejeitado') infoType = InfoTypesEnum.Error;
-        if (disp.estado === 'Pendente') infoType = InfoTypesEnum.Warning;
+    const tableData = disponibilidades
+    .filter((disp) => disp.maxAlunos > 0)
+    .map((disp) => ({ ...disp }))
+    .sort((a, b) => {
+        // Preparar as datas para comparação
+        // Transforma "10/05/2024" em [10, 05, 2024]
+        const [diaA, mesA, anoA] = a.data.split('/');
+        const [diaB, mesB, anoB] = b.data.split('/');
+        
+        // Cria datas reais para comparação
+        const dataA = new Date(`${anoA}-${mesA}-${diaA}`);
+        const dataB = new Date(`${anoB}-${mesB}-${diaB}`);
 
-        return {
-            ...disp,
-            estadoChip: { value: disp.estado || 'Desconhecido', infoType }
-        };
+        // Ordenar por Data (Ascendente: do mais antigo para o mais recente)
+        if (dataA < dataB) return -1; // 'a' vem primeiro
+        if (dataA > dataB) return 1;  // 'b' vem primeiro
+
+        // Ordenar por Horário (Ascendente: do mais cedo para o mais tarde)
+        return a.modalidade.localeCompare(b.modalidade);
     });
 
     async function fetchDisponibilidades() {
@@ -67,6 +84,8 @@ export default function CoachingEE() {
             const data = await disponibilidadesService.getAvailability();
 
             const approved = data.filter((disp: Disponibilidade) => disp.estado === 'Aprovado');
+
+            console.log('Disponibilidades aprovadas:', approved);
             
             setDisponibilidades(approved);
         } catch (error) {
@@ -75,18 +94,10 @@ export default function CoachingEE() {
     }
 
     async function fetchAlunos() {
-        try {
             const userInfo = authService.getUserInfo() as User;
             const idEE = userInfo.idPessoa;
-            const response = await fetch(`http://localhost:3000/utilizador/enc-educacao/${idEE}/alunos`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const data = await response.json();
+            const data = await eeService.getAlunosByEE(idEE);
             setAlunos(data);
-        } catch (error) {
-            console.error('Não foram encontrados alunos associados ao EE:', error);
-        }
     }
 
     async function handleInscreverAluno() {
@@ -96,24 +107,42 @@ export default function CoachingEE() {
         }
 
         try {
-            const response = await fetch(
-                `http://localhost:3000/coaching/${disponibilidadeSelecionada.idDisponibilidade}/inscrever-aluno`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ idAluno: alunoSelecionado })
-                }
-            );
+            // 1. Formatar a Data e Hora para o backend (ISO 8601)
+            // Assumindo que a data vem 'DD/MM/YYYY' e o horario 'HH:mm - HH:mm'
+            const [dia, mes, ano] = disponibilidadeSelecionada.data.split('/');
+            const [horaInicioStr] = disponibilidadeSelecionada.horario.split(' - ');
+            const inicioCoachingFormatado = new Date(`${ano}-${mes}-${dia}T${horaInicioStr}:00`).toISOString();
 
-            if (!response.ok) {
-                throw new Error('Falha na inscrição');
-            }
+            // 2. Construir o Payload para respeitar o DTO esperado no backend
+            const payload = {
+                idAluno: alunoSelecionado,
+                idEncEducacao: userInfo.idPessoa, // Vem do login
+                idProfessor: disponibilidadeSelecionada.idProfessor,
+                idEstadoCoaching: 7, // Código fixo para "Pendente"
+                idSala: disponibilidadeSelecionada.idEstudio, 
+                valorPorAluno: disponibilidadeSelecionada.valorPorAluno,
+                inicio_Coaching: inicioCoachingFormatado,
+                duracao: disponibilidadeSelecionada.duracao,
+                idCoordenador: disponibilidadeSelecionada.idCoordenador,
+                valorEmFalta: disponibilidadeSelecionada.valorPorAluno, // Inicialmente devem tudo
+                obs: observacoes // Opcional
+            };
+
+            // 3. Chamar o Service
+            await eeService.inscreverAlunoCoaching(
+                disponibilidadeSelecionada.idDisponibilidade, 
+                payload
+            );
 
             alert('Aluno inscrito com sucesso!');
             fecharModal();
-        } catch (error) {
+            
+            // Opcional: Voltar a carregar as disponibilidades para atualizar lotação
+            fetchDisponibilidades(); 
+            
+        } catch (error: any) {
             console.error('Erro ao inscrever aluno:', error);
-            alert('Não foi possível inscrever o aluno.');
+            alert(error.message || 'Não foi possível inscrever o aluno.');
         }
     }
 
@@ -124,6 +153,7 @@ export default function CoachingEE() {
     }
 
     function fecharModal() {
+        setObservacoes('');
         setModalAberto(false);
         setDisponibilidadeSelecionada(null);
         setAlunoSelecionado(null);
@@ -137,14 +167,25 @@ export default function CoachingEE() {
     const professoresUnicos = Array.from(new Set(tableData.map((item) => item.nomeProfessor).filter(Boolean)));
     const modalidadesUnicas = Array.from(new Set(tableData.map((item) => item.modalidade).filter(Boolean)));
 
-    const alunosOptions = alunos.map((aluno) => ({ value: aluno.ID_aluno.toString(), label: aluno.Nome }));
+    const alunosOptions = alunos
+        .filter(aluno => {
+            // Se o modal não estiver aberto, devolve todos
+            if (!disponibilidadeSelecionada) return true; 
+            
+            // Se estiver aberto, só devolvemos o aluno se o ID dele NÃO existir no array de inscritos
+            return !disponibilidadeSelecionada.alunosInscritosIds.includes(aluno.ID_aluno);
+        })
+        .map(aluno => ({ 
+            value: aluno.ID_aluno.toString(), 
+            label: aluno.Nome 
+        }));
 
     return (
         <div className="pagina-coaching-ee">
             <div className="cabecalho">
                 <div>
                     <h1>Oferta de Coaching</h1>
-                    <p>Consulte as sessões de coaching disponíveis e inscreva um dos seus educandos.</p>
+                    <p>Consulte as sessões de coaching disponíveis e inscreva os seus educandos.</p>
                 </div>
             </div>
 
@@ -175,10 +216,10 @@ export default function CoachingEE() {
                     columns: [
                         { key: 'nomeProfessor', value: 'Professor', type: TableColumnTypesEnum.Default },
                         { key: 'data', value: 'Data', type: TableColumnTypesEnum.Default },
-                        { key: 'diaSemana', value: 'Dia da Semana', type: TableColumnTypesEnum.Default },
                         { key: 'horario', value: 'Horário', type: TableColumnTypesEnum.Default },
                         { key: 'modalidade', value: 'Modalidade', type: TableColumnTypesEnum.Default },
-                        { key: 'estadoChip', value: 'Estado', type: TableColumnTypesEnum.Chip }
+                        { key: 'valorPorAluno', value: 'Valor p/ Aluno', type: TableColumnTypesEnum.Default },
+                        { key: 'maxAlunos', value: 'Vagas Disp.', type: TableColumnTypesEnum.Default }
                     ],
                     searchSettings: {
                         placeholder: 'Procurar por professor ou modalidade...',
@@ -189,7 +230,7 @@ export default function CoachingEE() {
                         {
                             icon: 'fa-solid fa-user-plus',
                             tooltip: 'Adicionar Aluno',
-                            config: { type: ButtonTypeEnum.Secondary, color: ButtonColorEnum.Theme, size: SizeEnum.Small },
+                            config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Theme, size: SizeEnum.Regular },
                             onClick: (row: any) => abrirModal(row)
                         }
                     ]
@@ -217,6 +258,7 @@ export default function CoachingEE() {
                                 <p><strong>Data:</strong> {disponibilidadeSelecionada.data}</p>
                                 <p><strong>Horário:</strong> {disponibilidadeSelecionada.horario}</p>
                                 <p><strong>Modalidade:</strong> {disponibilidadeSelecionada.modalidade}</p>
+                                <p><strong>Valor a pagar:</strong> {disponibilidadeSelecionada.valorPorAluno.toFixed(2)}€</p>
                             </div>
 
                             <div className="form-group">
@@ -226,6 +268,18 @@ export default function CoachingEE() {
                                     selectedOption={alunoSelecionado?.toString() || ''}
                                     onChange={(e) => setAlunoSelecionado(e.target.value ? Number(e.target.value) : null)}
                                     options={[{ value: '', label: 'Selecione um aluno' }, ...alunosOptions]}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Observações (Opcional)</label>
+                                <textarea
+                                    className="input-observacoes"
+                                    rows={3}
+                                    placeholder="Escreva aqui alguma observação que ache relevante"
+                                    value={observacoes}
+                                    onChange={(e) => setObservacoes(e.target.value)}
+                                    style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', resize: 'vertical', color: '#333' }}
                                 />
                             </div>
 

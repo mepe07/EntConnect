@@ -17,14 +17,19 @@ export class DispobilidadeService {
         // 1. Ir buscar os dados crus com os JOINs necessários
         const disponibilidadesRaw = await this.prisma.disponibilidade.findMany({
             include: {
-                Professor: {
-                    include: { Pessoa: true }
-                },
+                Professor: { include: { Pessoa: true } },
                 Estado_Disponibilidade: true,
-                Utilizador: {
-                    include: { Pessoa: true }
+                Utilizador: { include: { Pessoa: true } },
+                
+                // Vai buscar as sessões de coaching desta disponibilidade e os seus alunos
+                Coaching: { 
+                    include: { 
+                        Coaching_Aluno: { 
+                            select: { ID_Aluno: true } 
+                        } 
+                    } 
                 }
-                }
+            }
         });
 
         // 2. Mapear (traduzir) para o contrato que o Frontend espera
@@ -44,6 +49,10 @@ export class DispobilidadeService {
 
             const strindData = horaInicio.toLocaleDateString('pt-PT');
 
+            const alunosJaInscritos = disp.Coaching.flatMap(
+                coaching => coaching.Coaching_Aluno.map(ca => ca.ID_Aluno)
+            );
+
             // Return para o Frontend
             return {
                 idDisponibilidade: disp.ID_Disponibilidade,
@@ -52,7 +61,14 @@ export class DispobilidadeService {
                 horario: stringHorario,
                 modalidade: disp.Modalidade,
                 alteradoPor: disp.Utilizador?.Pessoa?.Nome || 'Sistema',
-                estado: disp.Estado_Disponibilidade?.Tipo || 'Desconhecido'
+                estado: disp.Estado_Disponibilidade?.Tipo || 'Desconhecido',
+                duracao: disp.Duracao,
+                maxAlunos: disp.MaxAlunos,
+                idProfessor: disp.ID_Professor,
+                idEstudio: disp.IdEstudio,
+                valorPorAluno: disp.ValorPorAluno ? Number(disp.ValorPorAluno) : 0,
+                idCoordenador: disp.AlteradoPorUtilizadorID,
+                alunosInscritosIds: alunosJaInscritos
             };
         }).filter(item => item !== null);
     }
@@ -70,6 +86,7 @@ export class DispobilidadeService {
                 AlteradoPorUtilizadorID: createDisponibilidadeDto.AlteradoPorUtilizadorID,
                 DataAtualizacao: new Date(), // Data atual
                 Modalidade: createDisponibilidadeDto.Modalidade,
+                MaxAlunos: createDisponibilidadeDto.MaxAlunos
             },
         });
 
