@@ -12,8 +12,8 @@ import type { User } from '../../models/interfaces/user.interface';
 // ============================================================================
 const MENU_CONFIG: MenuConfig = {
     
-    // --- Perfil: Coordenadora ---
-    admin: [
+    // --- Perfil: Coordenação ---
+    coordenacao: [
         { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
         { titulo: 'Gestão Utilizadores', path: '/admin/utilizadores', icone: 'fa-solid fa-users' },
         {
@@ -46,7 +46,8 @@ const MENU_CONFIG: MenuConfig = {
             icone: 'fa-solid fa-store',
             submenu: [
                 { titulo: 'Gerir Inventário', path: '/marketplace/inventario' },
-                { titulo: 'Gerir Anúncios', path: '/marketplace/anuncios' },
+                { titulo: 'Marketplace', path: '/marketplace/anuncios' },
+                { titulo: 'Atividades Marketplace', path: '/marketplace/atividades' },
             ]
         },
         {
@@ -87,11 +88,11 @@ const MENU_CONFIG: MenuConfig = {
             titulo: 'Marketplace',
             icone: 'fa-solid fa-store',
             submenu: [
-                { titulo: 'Catálogo', path: '/marketplace/catalogo' },
-                { titulo: 'Os Meus Anúncios', path: '/marketplace/meus-anuncios' },
+                { titulo: 'Marketplace', path: '/marketplace/anuncios' },
+                { titulo: 'Atividades Marketplace', path: '/marketplace/atividades' },
             ]
         },
-        { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' }
+        { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' } // 👈 Intacto!
     ],
 
     // --- Perfil: Encarregado de Educação ---
@@ -119,8 +120,8 @@ const MENU_CONFIG: MenuConfig = {
             titulo: 'Marketplace',
             icone: 'fa-solid fa-store',
             submenu: [
-                { titulo: 'Catálogo', path: '/marketplace/catalogo' },
-                { titulo: 'Os Meus Anúncios', path: '/marketplace/meus-anuncios' },
+                { titulo: 'Marketplace', path: '/marketplace/anuncios' },
+                { titulo: 'Atividades Marketplace', path: '/marketplace/atividades' },
             ]
         },
         { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' }
@@ -157,12 +158,24 @@ export function NavigationMenu() {
     let menuAtivo = MENU_CONFIG.encarregado; 
     
     // Mapeamento do dicionário consoante a role do utilizador
-    if (roleDoUser === 'Direcao' || roleDoUser === 'Coordenador' || roleDoUser === 'Admin') {
-        menuAtivo = MENU_CONFIG.admin;
+    if (roleDoUser === 'Direcao' || roleDoUser === 'Coordenador') {
+        menuAtivo = MENU_CONFIG.coordenacao;
     } else if (roleDoUser === 'Professor') {
         menuAtivo = MENU_CONFIG.professor;
-    } else if (roleDoUser === 'EncEducacao') {
+    } else if (roleDoUser === 'EncEducacao' || roleDoUser === 'Enc_Educacao') {
         menuAtivo = MENU_CONFIG.encarregado;
+    }
+
+    if ((roleDoUser === 'Direcao' || roleDoUser === 'Professor' || roleDoUser === 'Enc_Educacao' || roleDoUser === 'EncEducacao') && Array.isArray(menuAtivo)) {
+        menuAtivo = menuAtivo.map((item: any) => {
+            if (item.titulo === 'Marketplace & Inventário' && item.submenu) {
+                return {
+                    ...item,
+                    submenu: item.submenu.filter((subItem: any) => subItem.path !== '/marketplace/inventario'),
+                };
+            }
+            return item;
+        });
     }
 
     // Avalia se as rotas atuais correspondem ao menu para aplicar estilos ativos

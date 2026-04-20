@@ -61,16 +61,29 @@ class FaturacaoService {
         }
     }
     async getDashboardFinanceiro(inicio: string, fim: string) {
-        // Aponta exatamente para o nome da rota que criámos no faturacao.controller.ts do NestJS
         const urlCompleto = `${this.API_URL}/dashboard-financeiro?inicio=${inicio}&fim=${fim}`;
         console.log("A pedir estatísticas a:", urlCompleto);
 
+        // 1. Ir buscar o token (A nossa prova de identidade)
+        const token = authService.getToken();
+
         try {
-            const response = await fetch(urlCompleto);
+            // 2. ENVIAR O TOKEN: Precisamos de passar o objeto de configuração
+            const response = await fetch(urlCompleto, {
+                method: 'GET',
+                headers: {
+                    // Aqui dizemos ao servidor quem somos
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
             if (!response.ok) {
+                // Se o servidor responder 401, a mensagem "Token não encontrado na mochila" aparecerá aqui
                 const erroDoServidor = await response.json().catch(() => null);
                 throw new Error(erroDoServidor?.message || `Erro HTTP: ${response.status}`);
             }
+
             return await response.json();
         } catch (erro) {
             console.error("O Estafeta das estatísticas caiu da mota:", erro);

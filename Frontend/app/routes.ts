@@ -18,6 +18,8 @@ export default [
     // NavBar diz: path: '/admin/modalidades'
     route("admin/modalidades", "routes/modalidade.tsx"),
 
+    route("admin/coaching", "routes/gerirCoaching.tsx"),
+
     // NavBar diz: path: '/admin/utilizadores'
     route("admin/utilizadores", "routes/configuracoes/utilizadores.tsx"),
 
@@ -35,6 +37,9 @@ export default [
     // Rota solta do marketplace
     route("marketplace/anuncios", "routes/marketplace.tsx"),
 
+    // Rota solta do marketplace
+    route("marketplace/atividades", "routes/atividades.tsx"),
+
     // Rota de testes
     route("test-components", "routes/test-components.tsx"),
 
@@ -48,7 +53,10 @@ export default [
     // Rota da oferta de coaching
     route("/coaching/oferta", "routes/ofertaCoaching.tsx"),
 
+    // Rota das marcações de coaching (Para o EE)
+    route("coaching/marcacoes", "routes/marcacoes.tsx"),
+
     // Rota do perfil (para todos os utilizadores)
-    route("conta", "routes/perfil.tsx")
+    route("conta", "routes/conta.tsx"),
 
 ] satisfies RouteConfig;

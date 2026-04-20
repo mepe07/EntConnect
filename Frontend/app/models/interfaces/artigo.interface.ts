@@ -18,10 +18,11 @@ export interface Artigo {
     Stock_Armazem: LoteStock[];
 }
 
-// 👉 A NOSSA NOVA INTERFACE PARA A MONTRA
+
 export interface LoteMarketplace {
     ID_Stock: number;
     Quantidade_Venda: number;
+    Quantidade_Aluguer: number;
     Cor?: { Descricao: string };
     Estado?: { Descricao: string };
     Tamanho?: { Descricao: string };
