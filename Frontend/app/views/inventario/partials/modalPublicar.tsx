@@ -4,7 +4,12 @@ import { TipoAnuncio } from '../../../types/marketplace.types';
 interface ModalPublicarProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (tipo: TipoAnuncio, quantidade: number, descricao: string) => void;
+    onConfirm: (dados: {
+        tipoAnuncio: TipoAnuncio;
+        quantidadeVenda: number;
+        quantidadeAluguer: number;
+        descricao: string;
+    }) => void;
     loteInfo: {
         idStock: number;
         nome: string;
@@ -38,17 +43,19 @@ export function ModalPublicar({ isOpen, onClose, onConfirm, loteInfo }: ModalPub
         if (ultrapassouLimite || totalAlocado === 0) return;
 
         let tipoFinal = TipoAnuncio.VENDA;
-        let quantidadeFinal = venda;
 
         if (venda > 0 && aluguer > 0) {
             tipoFinal = TipoAnuncio.AMBOS;
-            quantidadeFinal = Math.max(venda, aluguer); 
         } else if (aluguer > 0 && venda === 0) {
             tipoFinal = TipoAnuncio.ALUGUER;
-            quantidadeFinal = aluguer;
         }
 
-        onConfirm(tipoFinal, quantidadeFinal, descricao);
+        onConfirm({
+            tipoAnuncio: tipoFinal,
+            quantidadeVenda: venda,
+            quantidadeAluguer: aluguer,
+            descricao,
+        });
     };
 
     return (

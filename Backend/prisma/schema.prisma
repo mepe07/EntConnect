@@ -155,9 +155,9 @@ model Cor {
 }
 
 model Direcao {
-  ID_Pessoa Int    @id(map: "PK__Direcao__81E8E17987895FBF")
+  ID_Pessoa Int      @id(map: "PK__Direcao__81E8E17987895FBF")
   Aula      Aula[]
-  Pessoa    Pessoa @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK__Direcao__ID_Pess__2CF2ADDF")
+  Pessoa    Pessoa   @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK__Direcao__ID_Pess__2CF2ADDF")
 }
 
 model Disponibilidade {
