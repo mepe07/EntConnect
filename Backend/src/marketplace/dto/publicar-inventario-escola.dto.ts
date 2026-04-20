@@ -27,8 +27,21 @@ export class PublicarInventarioEscolaDto {
     @IsEnum(TipoAnuncio)
     tipoAnuncio: TipoAnuncio;
 
+    @IsOptional()
     @Type(() => Number)
-    @IsInt({ message: 'A quantidade disponível é obrigatória.' })
+    @IsInt({ message: 'A quantidade disponível tem de ser um número inteiro.' })
     @Min(1)
-    quantidadeDisponivel: number;
+    quantidadeDisponivel?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt({ message: 'A quantidade para venda tem de ser um número inteiro.' })
+    @Min(0)
+    quantidadeVenda?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt({ message: 'A quantidade para aluguer tem de ser um número inteiro.' })
+    @Min(0)
+    quantidadeAluguer?: number;
 }

@@ -12,8 +12,8 @@ import type { User } from '../../models/interfaces/user.interface';
 // ============================================================================
 const MENU_CONFIG: MenuConfig = {
     
-    // --- Perfil: Coordenadora ---
-    admin: [
+    // --- Perfil: Coordenação ---
+    coordenacao: [
         { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
         { titulo: 'Gestão Utilizadores', path: '/admin/utilizadores', icone: 'fa-solid fa-users' },
         {
@@ -96,7 +96,7 @@ const MENU_CONFIG: MenuConfig = {
     ],
 
     // --- Perfil: Encarregado de Educação ---
-    Enc_Educacao: [
+    encarregado: [
         { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
         {
             titulo: 'Coaching',
@@ -158,8 +158,8 @@ export function NavigationMenu() {
     let menuAtivo = MENU_CONFIG.encarregado; 
     
     // Mapeamento do dicionário consoante a role do utilizador
-    if (roleDoUser === 'Direcao' || roleDoUser === 'Coordenador' || roleDoUser === 'Admin') {
-        menuAtivo = MENU_CONFIG.admin;
+    if (roleDoUser === 'Direcao' || roleDoUser === 'Coordenador') {
+        menuAtivo = MENU_CONFIG.coordenacao;
     } else if (roleDoUser === 'Professor') {
         menuAtivo = MENU_CONFIG.professor;
     } else if (roleDoUser === 'EncEducacao' || roleDoUser === 'Enc_Educacao') {

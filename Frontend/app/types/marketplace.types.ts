@@ -11,8 +11,7 @@ export enum EstadoAnuncio {
     RESERVADO = 'reservado',
     CONCLUIDO = 'concluido',
     ARQUIVADO = 'arquivado',
-    REMOVIDO_PELO_DONO = 'removido_pelo_dono',
-    REMOVIDO_PELA_MODERACAO = 'removido_pela_moderacao',
+    REMOVIDO = 'removido',
 }
 
 export enum OrigemRegisto {
@@ -78,8 +77,9 @@ export interface Anuncio {
     Motivo_Moderacao?: string | null;
     Data_Criacao?: string;
     Data_Atualizacao?: string;
-    Utilizador_Artigo_ID_Utilizador_CriadorToUtilizador?: UtilizadorResumo;
+    Utilizador_Criador?: UtilizadorResumo;
     Utilizador_Moderador?: UtilizadorResumo;
+    Utilizador_Artigo_ID_Utilizador_CriadorToUtilizador?: UtilizadorResumo; // legado Prisma
     Stock_Armazem?: StockArmazem[];
 }
 
@@ -107,10 +107,13 @@ export interface CriarAnuncioPayload {
     titulo: string;
     descricao?: string;
     foto?: string;
+    ficheiroFoto?: File;
     tipoAnuncio: TipoAnuncio;
     quantidadeTotal: number;
-    quantidadeDisponivel: number;
-    notas?: string;
+    quantidadeDisponivel?: number;
+    quantidadeVenda?: number;
+    quantidadeAluguer?: number;
+    notasInternas?: string;
     idCor?: number;
     idEstado?: number;
     idTamanho?: number;
@@ -122,7 +125,9 @@ export interface PublicarInventarioEscolaPayload {
     descricao?: string;
     foto?: string;
     tipoAnuncio: TipoAnuncio;
-    quantidadeDisponivel: number;
+    quantidadeDisponivel?: number; // legado: manter temporariamente para compatibilidade
+    quantidadeVenda?: number;
+    quantidadeAluguer?: number;
 }
 
 export interface RegistarInteressePayload {
