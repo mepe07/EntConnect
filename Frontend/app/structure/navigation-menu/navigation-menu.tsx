@@ -190,7 +190,9 @@ export function NavigationMenu() {
     return (
         <nav className="navigation-menu">
             <ul>
-                {menuAtivo.map((item, index) => {
+                {/* {menuAtivo.map((item, index) => { */}
+                {(menuAtivo || []).map((item, index) => {
+                    
                     
                     // Caso A: Item de navegação simples (sem submenu)
                     if (item.path && !item.submenu) {
