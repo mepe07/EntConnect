@@ -38,10 +38,6 @@ model Artigo {
   Nome                                                  String          @db.VarChar(255)
   Notas                                                 String?         @db.VarChar(255)
   Foto                                                  String?         @db.VarChar(255)
-  ID_Enc_Educacao                                       Int?
-  ID_Direcao                                            Int?
-  ID_Coordenador                                        Int?
-  ID_Professor                                          Int?
   ID_Utilizador_Criador                                 Int?
   ID_Utilizador_Moderador                               Int?
   Origem_Registo                                        String          @default("utilizador") @db.VarChar(30)
@@ -53,10 +49,6 @@ model Artigo {
   Data_Moderacao                                        DateTime?       @db.DateTime
   Data_Criacao                                          DateTime        @default(now(), map: "DF__Artigo__Data_Cri__0D44F85C") @db.DateTime
   Data_Atualizacao                                      DateTime        @db.DateTime
-  Coordenador                                           Coordenador?    @relation(fields: [ID_Coordenador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction)
-  Direcao                                               Direcao?        @relation(fields: [ID_Direcao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction)
-  Enc_Educacao                                          Enc_Educacao?   @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction)
-  Professor                                             Professor?      @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction)
   Utilizador_Artigo_ID_Utilizador_CriadorToUtilizador   Utilizador?     @relation("Artigo_ID_Utilizador_CriadorToUtilizador", fields: [ID_Utilizador_Criador], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction)
   Utilizador_Artigo_ID_Utilizador_ModeradorToUtilizador Utilizador?     @relation("Artigo_ID_Utilizador_ModeradorToUtilizador", fields: [ID_Utilizador_Moderador], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction)
   Stock_Armazem                                         Stock_Armazem[]
@@ -152,7 +144,6 @@ model Coaching_Aluno {
 
 model Coordenador {
   ID_Pessoa Int        @id(map: "PK_Coordenador")
-  Artigo    Artigo[]
   Coaching  Coaching[]
   Pessoa    Pessoa     @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK_Coordenador_Pessoa")
 }
@@ -164,10 +155,9 @@ model Cor {
 }
 
 model Direcao {
-  ID_Pessoa Int      @id(map: "PK__Direcao__81E8E17987895FBF")
-  Artigo    Artigo[]
+  ID_Pessoa Int    @id(map: "PK__Direcao__81E8E17987895FBF")
   Aula      Aula[]
-  Pessoa    Pessoa   @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK__Direcao__ID_Pess__2CF2ADDF")
+  Pessoa    Pessoa @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK__Direcao__ID_Pess__2CF2ADDF")
 }
 
 model Disponibilidade {
@@ -191,7 +181,6 @@ model Disponibilidade {
 model Enc_Educacao {
   ID_Pessoa      Int              @id(map: "PK__Enc_Educ__81E8E179BA40BDD1")
   Aluno          Aluno[]
-  Artigo         Artigo[]
   Coaching_Aluno Coaching_Aluno[]
   Pessoa         Pessoa           @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK__Enc_Educa__ID_Pe__25518C17")
 }
@@ -277,7 +266,6 @@ model Pessoa {
 
 model Professor {
   ID_Pessoa       Int               @id(map: "PK__Professo__81E8E179C3CD56EA")
-  Artigo          Artigo[]
   Aula            Aula[]
   Coaching        Coaching[]
   Disponibilidade Disponibilidade[]

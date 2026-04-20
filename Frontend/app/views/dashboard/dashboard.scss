@@ -1,240 +1,347 @@
 @use "../../assets/styles/variables/colors";
 
 .dashboard-wrapper {
-	padding: 40px;
-	max-width: 1400px;
-	margin: 0 auto;
-	animation: fadeIn 0.4s ease-in-out;
-	/* 1. CABEÇALHO */
-	.dashboard-boas-vindas {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-end;
-		margin-bottom: 32px;
+    padding: 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+    animation: fadeIn 0.4s ease-in-out;
 
-		h1 {
-			font-size: 32px;
-			color: colors.$gray-8;
-			margin-bottom: 8px;
-			font-weight: 700;
-		}
+    /* =========================================================================
+       1. CABEÇALHO
+       ========================================================================= */
+    .dashboard-boas-vindas {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 32px;
 
-		p {
-			color: colors.$gray-7;
-			margin: 0;
-			font-size: 16px;
-		}
+        h1 {
+            font-size: 32px;
+            color: colors.$gray-8;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
 
-		.data-hoje {
-			font-weight: 600;
-			color: colors.$theme-100;
-			text-transform: capitalize;
-			background: rgba(colors.$theme-100, 0.1);
-			padding: 8px 16px;
-			border-radius: 8px;
-		}
-	}
-	/* 2. KPIs EM GRID */
-	.kpi-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-		gap: 20px;
-		margin-bottom: 32px;
+        p {
+            color: colors.$gray-7;
+            margin: 0;
+            font-size: 16px;
+        }
 
-		.kpi-card {
-			background: #fff;
-			border: 1px solid colors.$gray-3;
-			border-radius: 12px;
-			padding: 24px;
-			display: flex;
-			align-items: center;
-			gap: 20px;
-			box-shadow: 0 4px 15px rgba(0,0,0,0.02);
-			transition: transform 0.2s;
+        .data-hoje {
+            font-weight: 600;
+            color: colors.$theme-100;
+            text-transform: capitalize;
+            background: rgba(colors.$theme-100, 0.1);
+            padding: 8px 16px;
+            border-radius: 8px;
+        }
+    }
 
-			&:hover {
-				transform: translateY(-4px);
-			}
+    /* =========================================================================
+       2. KPIs EM GRID
+       ========================================================================= */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+        margin-bottom: 32px;
 
-			.icone {
-				width: 56px;
-				height: 56px;
-				border-radius: 12px;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				font-size: 24px;
+        .kpi-card {
+            background: #fff;
+            border: 1px solid colors.$gray-3;
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            transition: transform 0.2s;
 
-				&.azul {
-					background: #e0f2fe;
-					color: #0284c7;
-				}
+            &:hover {
+                transform: translateY(-4px);
+            }
 
-				&.verde {
-					background: #dcfce7;
-					color: #16a34a;
-				}
+            .icone {
+                width: 56px;
+                height: 56px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
 
-				&.vermelho {
-					background: #fee2e2;
-					color: #dc2626;
-				}
+                &.azul { background: #e0f2fe; color: #0284c7; }
+                &.verde { background: #dcfce7; color: #16a34a; }
+                &.vermelho { background: #fee2e2; color: #dc2626; }
+                &.roxo { background: #f3e8ff; color: #9333ea; }
+            }
 
-				&.roxo {
-					background: #f3e8ff;
-					color: #9333ea;
-				}
-			}
+            .info {
+                span {
+                    font-size: 13px;
+                    color: colors.$gray-7;
+                    text-transform: uppercase;
+                    font-weight: 600;
+                }
 
-			.info {
-				span {
-					font-size: 13px;
-					color: colors.$gray-7;
-					text-transform: uppercase;
-					font-weight: 600;
-				}
+                h3 {
+                    font-size: 24px;
+                    color: colors.$gray-8;
+                    margin: 4px 0 0 0;
+                    font-weight: 800;
+                }
+            }
+        }
+    }
 
-				h3 {
-					font-size: 24px;
-					color: colors.$gray-8;
-					margin: 4px 0 0 0;
-					font-weight: 800;
-				}
-			}
-		}
-	}
-	/* 3. CONTEÚDO PRINCIPAL */
-	.conteudo-principal {
-		display: grid;
-		grid-template-columns: 2fr 1fr; /* Esquerda ocupa o dobro da direita */
-		gap: 24px;
+    /* =========================================================================
+       3. CONTEÚDO PRINCIPAL
+       ========================================================================= */
+    .conteudo-principal {
+        display: grid;
+        grid-template-columns: 2fr 1fr; /* Esquerda ocupa o dobro da direita */
+        gap: 24px;
 
-		.painel-grafico, .painel-agenda {
-			background: #fff;
-			border: 1px solid colors.$gray-3;
-			border-radius: 12px;
-			box-shadow: 0 4px 15px rgba(0,0,0,0.02);
-			overflow: hidden;
+        .painel-grafico, .painel-agenda {
+            background: #fff;
+            border: 1px solid colors.$gray-3;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            overflow: hidden;
 
-			.painel-header {
-				padding: 20px 24px;
-				border-bottom: 1px solid colors.$gray-3;
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
+            .painel-header {
+                padding: 20px 24px;
+                border-bottom: 1px solid colors.$gray-3;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
 
-				h2 {
-					font-size: 18px;
-					color: colors.$gray-8;
-					margin: 0;
-					font-weight: 700;
-				}
+                h2 {
+                    font-size: 18px;
+                    color: colors.$gray-8;
+                    margin: 0;
+                    font-weight: 700;
+                }
 
-				.btn-link {
-					background: none;
-					border: none;
-					color: colors.$theme-100;
-					cursor: pointer;
-					font-weight: 600;
-				}
-			}
+                .btn-link {
+                    background: none;
+                    border: none;
+                    color: colors.$theme-100;
+                    cursor: pointer;
+                    font-weight: 600;
+                }
 
-			.painel-corpo {
-				padding: 24px;
-			}
-		}
-		/* Estilos específicos das Ações Rápidas */
-		.acoes-rapidas {
-			display: flex;
-			gap: 16px;
+                /* Lápis de Edição / Check Guardar */
+                .btn-icone-acao {
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    font-size: 18px;
+                    padding: 6px 10px;
+                    border-radius: 6px;
+                    transition: all 0.2s ease;
 
-			.btn-acao {
-				flex: 1;
-				padding: 16px;
-				background: colors.$gray-1;
-				border: 1px dashed colors.$gray-4;
-				border-radius: 8px;
-				color: colors.$gray-8;
-				font-weight: 600;
-				cursor: pointer;
-				transition: all 0.2s;
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				gap: 12px;
+                    &:hover { background-color: colors.$gray-1; }
+                    .fa-check { color: #16a34a; } 
+                    .fa-pen { color: colors.$gray-5; } 
+                }
+            }
 
-				i {
-					font-size: 24px;
-					color: colors.$theme-100;
-				}
+            .painel-corpo {
+                padding: 24px;
+            }
+        }
 
-				&:hover {
-					background: colors.$theme-80;
-					color: #fff;
-					border-color: colors.$theme-100;
-				}
-			}
-		}
-		/* Estilos específicos da Agenda */
-		.lista-agenda {
-			list-style: none;
-			padding: 0;
-			margin: 0;
+        /* -----------------------------------------------------
+           AÇÕES RÁPIDAS (Modo Grelha vs Lista Edição)
+           ----------------------------------------------------- */
+        .acoes-rapidas {
+            display: block; 
+            width: 100%;
 
-			li {
-				display: flex;
-				gap: 16px;
-				margin-bottom: 20px;
+            /* MIXIN: Define o visual base do quadrado, usado nos dois modos */
+            @mixin quadrado-com-texto {
+                background-color: #f8fafc; // Fundo cinza clarinho
+                border: 1px solid #cbd5e1; // Borda visível para não se perder no fundo
+                border-radius: 12px;
+                padding: 16px 8px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 12px; 
+                cursor: pointer;
+                position: relative; 
+                transition: all 0.2s ease-in-out;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+                min-height: 110px; // Altura fixa
 
-				&:last-child {
-					margin-bottom: 0;
-				}
+                i.icone-principal {
+                    font-size: 28px;
+                    color: colors.$theme-100;
+                    transition: transform 0.2s;
+                }
 
-				.hora {
-					font-weight: 700;
-					color: colors.$theme-100;
-					font-size: 14px;
-					background: rgba(colors.$theme-100, 0.1);
-					padding: 6px 10px;
-					border-radius: 6px;
-					height: fit-content;
-				}
+                span.texto-acao {
+                    color: #334155; 
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    text-align: center;
+                    line-height: 1.2;
+                }
 
-				.detalhe {
-					display: flex;
-					flex-direction: column;
+                &:hover {
+                    background-color: #f1f5f9;
+                    border-color: colors.$theme-100; // Borda verde no hover
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
 
-					strong {
-						color: colors.$gray-8;
-						font-size: 15px;
-						margin-bottom: 4px;
-					}
+                    i.icone-principal { transform: scale(1.1); }
+                    span.texto-acao { color: #0f172a; }
+                }
 
-					span {
-						color: colors.$gray-4;
-						font-size: 13px;
-					}
-				}
-			}
-		}
-	}
+                &:active {
+                    transform: scale(0.96);
+                }
+            }
 
-	@media (max-width: 1024px) {
-		.conteudo-principal {
-			grid-template-columns: 1fr;
-		}
-		/* Em ecrãs pequenos, fica tudo numa coluna */
-	}
+            /* Grelha partilhada para ambos os modos */
+            .grelha-botoes-acoes, .lista-edicao-acoes {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+                gap: 16px;
+                width: 100%;
+            }
+
+            /* MODO DE VISUALIZAÇÃO */
+            .grelha-botoes-acoes {
+                .btn-acao {
+                    @include quadrado-com-texto;
+                    width: 100%;
+                }
+
+                .texto-vazio-acoes {
+                    grid-column: 1 / -1; 
+                    color: colors.$gray-5;
+                    font-size: 0.95rem;
+                    font-style: italic;
+                    text-align: center;
+                    padding: 20px 0;
+                }
+            }
+
+            /* MODO DE EDIÇÃO (Quadrados c/ botão olho e transparência) */
+            .lista-edicao-acoes {
+                .item-edicao {
+                    @include quadrado-com-texto;
+
+                    // Botão flutuante do olho
+                    .btn-toggle-olho {
+                        position: absolute;
+                        top: -8px;
+                        right: -8px;
+                        background: #fff;
+                        border: 1px solid #cbd5e1;
+                        border-radius: 50%;
+                        width: 28px;
+                        height: 28px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 12px;
+                        color: #64748b;
+                        cursor: pointer;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        z-index: 10;
+                        transition: all 0.2s;
+
+                        &:hover {
+                            color: colors.$theme-100;
+                            transform: scale(1.1);
+                        }
+                    }
+
+                    /* --- ESTADOS DE VISIBILIDADE --- */
+                    &.ativo {
+                        opacity: 1; // Fica escuro normal
+                    }
+
+                    &.inativo {
+                        opacity: 0.45; // Fica transparente/claro
+                        background-color: #f8fafc;
+                        border-color: #e2e8f0;
+                        filter: grayscale(80%); // Remove a cor viva do ícone
+                        
+                        i.icone-principal { color: #94a3b8; }
+                        
+                        span.texto-acao { 
+                            text-decoration: line-through; 
+                            color: #94a3b8; 
+                        }
+                        
+                        .btn-toggle-olho { 
+                            color: #ef4444; // Olho fica vermelho se estiver fechado
+                        }
+                    }
+                }
+            }
+        }
+
+        /* -----------------------------------------------------
+           Estilos específicos da Agenda
+           ----------------------------------------------------- */
+        .lista-agenda {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+
+            li {
+                display: flex;
+                gap: 16px;
+                margin-bottom: 20px;
+
+                &:last-child { margin-bottom: 0; }
+
+                .hora {
+                    font-weight: 700;
+                    color: colors.$theme-100;
+                    font-size: 14px;
+                    background: rgba(colors.$theme-100, 0.1);
+                    padding: 6px 10px;
+                    border-radius: 6px;
+                    height: fit-content;
+                }
+
+                .detalhe {
+                    display: flex;
+                    flex-direction: column;
+
+                    strong {
+                        color: colors.$gray-8;
+                        font-size: 15px;
+                        margin-bottom: 4px;
+                    }
+
+                    span {
+                        color: colors.$gray-4;
+                        font-size: 13px;
+                    }
+                }
+            }
+        }
+    }
+
+    /* Responsividade */
+    @media (max-width: 1024px) {
+        .conteudo-principal {
+            grid-template-columns: 1fr;
+        }
+    }
 }
 
+/* Animação inicial */
 @keyframes fadeIn {
-	from {
-		opacity: 0;
-		transform: translateY(10px);
-	}
-
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
