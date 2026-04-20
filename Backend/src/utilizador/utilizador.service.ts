@@ -6,6 +6,7 @@ import { NotFoundException } from '@nestjs/common'; //exceção
 import { UpdatePessoalDto } from './dto/update-pessoal.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
+
 // Serviço para lidar com operações simples CRUD relacionados com utilizadores.
 
 @Injectable()
@@ -69,6 +70,25 @@ return utilizadoresRaw.map((user) => {
       where: {ID_Utilizador: id},
       data: {Ativo: true}
     })
+  }
+
+  async updatePassword(id: number, plainPassword: string) {
+    // Verifica se o utilizador existe
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: id },
+    });
+ 
+    if (!utilizador) {
+      throw new NotFoundException(`Utilizador com ID ${id} não encontrado.`);
+    }
+ 
+    // Faz o hash da nova password antes de guardar
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+ 
+    return this.prisma.utilizador.update({
+      where: { ID_Utilizador: id },
+      data: { Password: hashedPassword },
+    });
   }
 
     async UploadPhoto(url: string, id: number) {

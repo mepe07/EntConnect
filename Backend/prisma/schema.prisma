@@ -44,21 +44,24 @@ model Artigo {
   ID_Professor                                          Int?
   ID_Utilizador_Criador                                 Int?
   ID_Utilizador_Moderador                               Int?
-  Origem_Registo                                        String          @default("utilizador", map: "DF__Artigo__Origem_R__078C1F06") @db.VarChar(30)
-  Tipo_Anuncio                                          String          @default("venda", map: "DF__Artigo__Tipo_Anu__0880433F") @db.VarChar(30)
-  Estado_Anuncio                                        String          @default("ativo", map: "DF__Artigo__Estado_A__09746778") @db.VarChar(30)
-  Motivo_Estado                                         String?         @db.VarChar(500)
-  Publicado_No_Marketplace                              Boolean         @default(false, map: "DF__Artigo__Publicad__0A688BB1")
+  Origem_Registo                                        String          @default("utilizador") @db.VarChar(30)
+  Tipo_Anuncio                                          String          @default("venda") @db.VarChar(20)
+  Estado_Anuncio                                        String          @default("ativo") @db.VarChar(30)
+  Motivo_Moderacao                                      String?         @db.VarChar(500)
+  Publicado_No_Marketplace                              Boolean         @default(false)
   Descricao                                             String?         @db.VarChar(1000)
-  Notas_Internas                                        String?         @db.VarChar(255)
+  Data_Moderacao                                        DateTime?       @db.DateTime
+  Data_Criacao                                          DateTime        @default(now(), map: "DF__Artigo__Data_Cri__0D44F85C") @db.DateTime
+  Data_Atualizacao                                      DateTime        @db.DateTime
   Coordenador                                           Coordenador?    @relation(fields: [ID_Coordenador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction)
   Direcao                                               Direcao?        @relation(fields: [ID_Direcao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction)
   Enc_Educacao                                          Enc_Educacao?   @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction)
   Professor                                             Professor?      @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction)
-  Utilizador_Artigo_ID_Utilizador_CriadorToUtilizador   Utilizador?     @relation("Artigo_ID_Utilizador_CriadorToUtilizador", fields: [ID_Utilizador_Criador], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Utilizador_Criador")
-  Utilizador_Artigo_ID_Utilizador_ModeradorToUtilizador Utilizador?     @relation("Artigo_ID_Utilizador_ModeradorToUtilizador", fields: [ID_Utilizador_Moderador], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction, map: "FK_Artigo_Utilizador_Moderador")
+  Utilizador_Artigo_ID_Utilizador_CriadorToUtilizador   Utilizador?     @relation("Artigo_ID_Utilizador_CriadorToUtilizador", fields: [ID_Utilizador_Criador], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction)
+  Utilizador_Artigo_ID_Utilizador_ModeradorToUtilizador Utilizador?     @relation("Artigo_ID_Utilizador_ModeradorToUtilizador", fields: [ID_Utilizador_Moderador], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction)
   Stock_Armazem                                         Stock_Armazem[]
 
+  @@index([ID_Utilizador_Criador], map: "IX_Artigo_ID_Utilizador_Criador")
   @@index([Origem_Registo], map: "IX_Artigo_Origem_Registo")
   @@index([Publicado_No_Marketplace, Estado_Anuncio], map: "IX_Artigo_Publicado_Estado")
 }

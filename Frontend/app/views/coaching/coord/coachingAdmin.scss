@@ -1,0 +1,226 @@
+/* ==========================================================================
+   ESTILOS GLOBAIS DA PÁGINA (WRAPPER E CABEÇALHO)
+   ========================================================================== */
+.dashboard-wrapper {
+    padding: 24px 32px;
+    background-color: #f8f9fa; /* Fundo cinza super claro para destacar os cards */
+    min-height: 100vh;
+
+    .dashboard-boas-vindas {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+            color: #1e293b;
+        }
+
+        p {
+            margin: 8px 0 0;
+            color: #64748b;
+            font-size: 1rem;
+        }
+    }
+}
+
+/* ==========================================================================
+   CARDS DE INDICADORES (KPIs)
+   ========================================================================== */
+.kpi-grid {
+    display: grid;
+    /* Adapta-se automaticamente ao tamanho do ecrã: */
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+
+    .kpi-card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+        border: 1px solid #f1f5f9;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+        &:hover {
+            transform: translateY(-4px); /* Sobe ligeiramente quando passas o rato */
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .icone {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+
+            /* Cores específicas de cada Card */
+            &.azul { background-color: #e0f2fe; color: #0284c7; }
+            &.verde { background-color: #dcfce7; color: #16a34a; }
+            &.amarelo { background-color: #fef3c7; color: #d97706; }
+            &.roxo { background-color: #f3e8ff; color: #9333ea; }
+        }
+
+        .info {
+            display: flex;
+            flex-direction: column;
+
+            span {
+                font-size: 0.85rem;
+                color: #64748b;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            h3 {
+                margin: 6px 0 0;
+                font-size: 1.75rem;
+                font-weight: 700;
+                color: #0f172a;
+            }
+        }
+    }
+}
+
+/* ==========================================================================
+   MODAL DE GESTÃO DE ALUNOS
+   ========================================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(15, 23, 42, 0.6); /* Fundo escuro azulado */
+    backdrop-filter: blur(4px); /* Efeito de desfocagem do fundo (moderno) */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; 
+
+    .modal-conteudo {
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 32px;
+        width: 100%;
+        max-width: 550px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        max-height: 90vh;
+        overflow-y: auto; /* Permite scroll se a lista de alunos for gigante */
+
+        .modal-cabecalho {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 16px;
+
+            h2 { 
+                margin: 0; 
+                font-size: 1.5rem; 
+                color: #1e293b; 
+            }
+
+            .btn-fechar-icon {
+                background: none; 
+                border: none; 
+                font-size: 1.25rem; 
+                cursor: pointer;
+                color: #94a3b8;
+                transition: color 0.2s;
+                
+                &:hover { color: #ef4444; }
+            }
+        }
+
+        .detalhes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            background-color: #f8fafc;
+            padding: 16px;
+            border-radius: 8px;
+
+            .detalhe-item {
+                display: flex; 
+                flex-direction: column;
+
+                span { 
+                    font-size: 0.85rem; 
+                    color: #64748b; 
+                    margin-bottom: 4px; 
+                }
+                strong { 
+                    color: #334155; 
+                    font-size: 1rem; 
+                }
+            }
+        }
+
+        /* Lista de alunos inscritos */
+        h3 {
+            font-size: 1.1rem;
+            color: #334155;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 8px;
+        }
+
+        .lista-alunos-modal {
+            > div {
+                transition: background-color 0.2s;
+                border-radius: 6px;
+
+                &:hover {
+                    background-color: #f8fafc;
+                }
+
+                span {
+                    font-weight: 500;
+                    color: #475569;
+                }
+
+                button {
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    transition: background-color 0.2s;
+
+                    &:hover {
+                        background-color: #fee2e2;
+                    }
+                }
+            }
+        }
+
+        .modal-acoes {
+            display: flex; 
+            justify-content: flex-end;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+
+            .btn-fechar {
+                padding: 10px 24px; 
+                background-color: #f1f5f9; 
+                color: #475569;
+                border: none; 
+                border-radius: 6px; 
+                cursor: pointer; 
+                font-weight: 600;
+                transition: background-color 0.2s;
+
+                &:hover { 
+                    background-color: #e2e8f0; 
+                }
+            }
+        }
+    }
+}

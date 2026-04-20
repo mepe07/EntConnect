@@ -1,0 +1,164 @@
+.ver-marcacoes-container {
+    padding: 32px;
+    background-color: #f8fafc;
+    min-height: 100vh;
+
+    .cabecalho {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 24px;
+
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            color: #0f172a;
+            font-weight: 800;
+        }
+
+        p {
+            margin: 0;
+            color: #475569;
+            font-size: 1rem;
+            max-width: 720px;
+        }
+    }
+
+    table button {
+        border: none !important;
+    }
+
+
+    .filtros {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+
+        .filtro-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
+            label {
+                font-size: 0.95rem;
+                color: #334155;
+                font-weight: 600;
+            }
+        }
+    }
+
+    table {
+
+        // Tudo alinhado ao centro
+        th,
+        td {
+            text-align: center !important;
+        }
+    }
+
+    td.row-actions {
+        display: flex !important;
+        justify-content: center !important; // Centra os botões na horizontal
+        align-items: center !important; // Centra na vertical
+        gap: 16px !important;
+        min-height: 100%;
+        height: 100%;
+    }
+}
+
+/* --- ESTILOS DO MODAL DE DETALHES --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Fundo escuro semi-transparente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    /* Garante que fica por cima de tudo */
+
+    .modal-conteudo {
+        background-color: #ffffff;
+        border-radius: 8px;
+        padding: 24px;
+        width: 100%;
+        max-width: 500px;
+        /* Largura máxima do modal */
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+
+        .modal-cabecalho {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+
+            h2 {
+                margin: 0;
+                font-size: 1.25rem;
+                color: #333;
+            }
+
+            .btn-fechar-icon {
+                background: none;
+                border: none;
+                font-size: 1.2rem;
+                cursor: pointer;
+                color: #666;
+
+                &:hover {
+                    color: #f00;
+                }
+            }
+        }
+
+        .detalhes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            /* Duas colunas */
+            gap: 16px;
+            margin-bottom: 24px;
+
+            .detalhe-item {
+                display: flex;
+                flex-direction: column;
+
+                span {
+                    font-size: 0.85rem;
+                    color: #777;
+                    margin-bottom: 4px;
+                }
+
+                strong {
+                    font-size: 1rem;
+                    color: #222;
+
+                }
+            }
+        }
+
+        .modal-acoes {
+            display: flex;
+            justify-content: flex-end;
+
+            .btn-fechar {
+                padding: 8px 16px;
+                background-color: #184235;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-weight: bold;
+
+                &:hover {
+                    background-color: #D06666;
+                }
+            }
+        }
+    }
+}

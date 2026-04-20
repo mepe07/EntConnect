@@ -26,7 +26,11 @@ import { UpdateProfessorDto } from './dto/update-professor.dto';
 import { UpdatePessoalDto } from './dto/update-pessoal.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 // Tipagem do Multer
+import { MarcacoesService } from './EE/marcacoes.service';
+
+// Tipagem do Multer (Se não tiver o @types/multer instalado, mas ajuda o TS)
 import 'multer';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 // ============================================================================
 // CONTROLADOR DE UTILIZADORES
@@ -38,6 +42,7 @@ export class UtilizadorController {
     private readonly utilizadorService: UtilizadorService,
     private readonly importService: UtilizadorImportService,
     private readonly dispobilidadeService: DispobilidadeService,
+    private readonly marcacoesService: MarcacoesService,
     private readonly blobsService: BlobsService,
   ) {}
 
@@ -73,6 +78,21 @@ export class UtilizadorController {
     return {message: `Utilizador com ID ${id} desbloqueado com sucesso.`};
   }
 
+  @Get(':id/EE/marcacoes')
+  @ApiOperation({summary: 'Obter marcações por EE'})
+  @ApiResponse({status:200})
+  async getMarcacoesbyEE(@Param('id') id: string) {
+    return this.marcacoesService.getMarcacoesbyEE(+id);
+  }
+
+  /**
+   * FLUXO DIRETO: Importa um lote de utilizadores a partir de um ficheiro CSV local.
+   * 1. Recebe o ficheiro via Multipart Form Data.
+   * 2. Faz upload temporário para o Azure Blob Storage ('importar-csv').
+   * 3. O sistema lê o ficheiro, cria as Pessoas e os Utilizadores.
+   * 4. O ficheiro é imediatamente apagado do Azure para não acumular lixo.
+   * @param file - O ficheiro CSV capturado pelo interceptor.
+   */
   @Post('importusersblob')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
@@ -221,6 +241,23 @@ export class UtilizadorController {
     return this.utilizadorService.getAlunosByEE(+id);
   }
 
+  @Patch(':id/password')
+  @ApiOperation({ summary: 'Atualizar a password de um utilizador' })
+  @ApiParam({ name: 'id', description: 'ID do utilizador', type: Number })
+  @ApiResponse({ status: 200, description: 'Password atualizada com sucesso.' })
+  @ApiResponse({ status: 404, description: 'Utilizador não encontrado.' })
+  async updatePassword(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updatePasswordDto: UpdatePasswordDto,
+  ) {
+    await this.utilizadorService.updatePassword(id, updatePasswordDto.password);
+    return { message: `Password do utilizador ${id} atualizada com sucesso.` };
+  }
+
+  /**
+   * Obtém a lista de disponibilidades dos professores.
+   * @returns A lista de disponibilidades dos professores.
+   */
   @Get('professor/disponibilidade')
   @ApiOperation({summary: 'Obter disponibilidades dos professores'})
   @ApiResponse({status:200})
