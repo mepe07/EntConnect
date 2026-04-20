@@ -15,7 +15,7 @@ export default function MarketplaceRoute() {
             <meta property="og:title" content={title} />
             
             {/* Proteção de rota baseada nas roles enviadas pelo JWT */}
-            <ProtectedRoute rolesPermitidas={['Coordenador', 'Admin', 'Direcao', 'Professor', 'Enc_Educacao']}>
+            <ProtectedRoute rolesPermitidas={['Coordenador', 'Direcao', 'Professor', 'Enc_Educacao']}>
                 <Marketplace />
             </ProtectedRoute>
         </>

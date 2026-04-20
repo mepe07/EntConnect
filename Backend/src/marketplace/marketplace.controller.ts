@@ -38,6 +38,11 @@ export class MarketplaceController {
         return this.marketplaceService.listarAnuncios(filtros);
     }
 
+    @Get('anuncios/moderacao')
+    listarAnunciosModeracao(@Request() req: { user: UtilizadorAutenticado }) {
+        return this.marketplaceService.listarAnunciosModeracao(req.user);
+    }
+
     @Get('anuncios/:id')
     obterAnuncio(@Param('id') idArtigo: string) {
         return this.marketplaceService.obterAnuncio(+idArtigo);
@@ -78,12 +83,14 @@ export class MarketplaceController {
     }
 
     @Patch('anuncios/:id')
+    @UseInterceptors(FileInterceptor('foto'))
     atualizarAnuncio(
         @Param('id') idArtigo: string,
         @Body() dto: AtualizarAnuncioMarketplaceDto,
         @Request() req: { user: UtilizadorAutenticado },
+        @UploadedFile() file?: Express.Multer.File,
     ) {
-        return this.marketplaceService.atualizarAnuncio(+idArtigo, dto, req.user);
+        return this.marketplaceService.atualizarAnuncio(+idArtigo, dto, req.user, file);
     }
 
     @Patch('anuncios/:id/estado')
