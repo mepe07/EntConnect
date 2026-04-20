@@ -38,15 +38,36 @@ export class ProfessorService {
     }
   }
     
-  // MÉTODO PARA LISTAR TODOS (GET)
-  async findAll() {
-    return this.prisma.professor.findMany({
-      // O include é OBRIGATÓRIO aqui! 
-      // Se não o meteres, o Prisma só devolve o ID_Pessoa e esconde o Nome, Email, etc.
-      include: {
-        Pessoa: true, 
+// MÉTODO PARA LISTAR COM PAGINAÇÃO (20 por página)
+  async findAll(page: number = 1) {
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
+    // Fazemos as duas operações ao mesmo tempo para ser mais rápido
+    const [professores, totalProfessores] = await Promise.all([
+      this.prisma.professor.findMany({
+        take: limit,
+        skip: skip,
+        include: {
+          Pessoa: true,
+        },
+        orderBy: {
+          Pessoa: {
+            Nome: 'asc', // Opcional: lista por ordem alfabética
+          },
+        },
+      }),
+      this.prisma.professor.count(),
+    ]);
+
+    return {
+      data: professores,
+      meta: {
+        total: totalProfessores,
+        page: page,
+        lastPage: Math.ceil(totalProfessores / limit),
       },
-    });
+    };
   }
 
   // MÉTODO PARA EDITAR (PATCH)
