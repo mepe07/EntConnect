@@ -9,6 +9,78 @@
 	margin: 0 auto;
 	animation: fadeEntrada 0.4s ease-out;
 
+	// Grupo de botões no cabeçalho
+	.header-acoes {
+		display: flex;
+		gap: 10px;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+	
+	// Input genérico para o modal de criação
+	.input-campo {
+		width: 100%;
+		padding: 10px 12px;
+		border: 1px solid colors.$gray-3;
+		border-radius: 6px;
+		font-size: 14px;
+		color: colors.$gray-8;
+		outline: none;
+		transition: border-color 0.2s;
+		box-sizing: border-box;
+		background-color: #fff;
+		font-family: inherit;
+	
+		&:focus {
+			border-color: colors.$theme-60;
+			box-shadow: 0 0 0 3px rgba(colors.$theme-100, 0.08);
+		}
+	
+		&.input-erro {
+			border-color: colors.$error-100;
+	
+			&:focus {
+				box-shadow: 0 0 0 3px rgba(colors.$error-100, 0.1);
+			}
+		}
+	}
+	
+	select.input-campo {
+		appearance: none;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+		background-repeat: no-repeat;
+		background-position: right 10px center;
+		padding-right: 32px;
+		cursor: pointer;
+	}
+	
+	// Mensagem de erro por campo
+	.campo-erro {
+		font-size: 12px;
+		color: colors.$error-100;
+		font-weight: 500;
+		margin-top: 2px;
+	
+		&::before {
+			content: '⚠ ';
+		}
+	}
+	
+	// Loading state no modal de importação
+	.import-loading {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 10px 14px;
+		background-color: colors.$theme-20;
+		border: 1px solid colors.$theme-40;
+		border-radius: 8px;
+		color: colors.$theme-100;
+		font-size: 14px;
+		font-weight: 500;
+		margin-top: 8px;
+	}
+
 	/* CABEÇALHO */
 	.crud-header {
 		display: flex;
