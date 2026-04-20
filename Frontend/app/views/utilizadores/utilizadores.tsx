@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { InputComponent } from '~/components/input/input.component';
+import { ButtonComponent } from '~/components/button/button.component';
 import { UtilizadorService } from '~/services/users.service';
 import './utilizadores.scss';
 
@@ -24,13 +25,44 @@ const cargoLabel: Record<string, string> = {
     'Encarregado de Educação': 'Enc. Educação',
 };
 
+const CARGOS_DISPONIVEIS = [
+    'Professor',
+    'Coordenador',
+    'Direção',
+    'Encarregado de Educação',
+];
+
+interface NovoUtilizadorForm {
+    nome: string;
+    username: string;
+    email: string;
+    contacto: string;
+    nif: string;
+    dataNascimento: string;
+    cargo: string;
+    password: string;
+    confirmarPassword: string;
+}
+
+const FORM_VAZIO: NovoUtilizadorForm = {
+    nome: '',
+    username: '',
+    email: '',
+    contacto: '',
+    nif: '',
+    dataNascimento: '',
+    cargo: '',
+    password: '',
+    confirmarPassword: '',
+};
+
 export function Utilizadores() {
     const [utilizadores, setUtilizadores] = useState<Utilizador[]>([]);
     const [termoPesquisa, setTermoPesquisa] = useState('');
     const [loading, setLoading] = useState(true);
 
     // ==========================================
-    // ESTADO DO MODAL
+    // ESTADO DO MODAL VER/EDITAR
     // ==========================================
     const [modalAberto, setModalAberto] = useState(false);
     const [utilizadorSelecionado, setUtilizadorSelecionado] = useState<Utilizador | null>(null);
@@ -50,6 +82,20 @@ export function Utilizadores() {
     const [erroFoto, setErroFoto] = useState('');
     const inputFotoRef = useRef<HTMLInputElement>(null);
 
+    // Import de Utilizadores
+    const [modalImportOpen, setModalImportOpen] = useState(false);
+    const [loadingImport, setLoadingImport] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // ==========================================
+    // ESTADO DO MODAL CRIAR UTILIZADOR
+    // ==========================================
+    const [modalCriarAberto, setModalCriarAberto] = useState(false);
+    const [formNovo, setFormNovo] = useState<NovoUtilizadorForm>(FORM_VAZIO);
+    const [mostrarPasswordNovo, setMostrarPasswordNovo] = useState(false);
+    const [errosCriar, setErrosCriar] = useState<Partial<NovoUtilizadorForm>>({});
+    const [loadingCriar, setLoadingCriar] = useState(false);
+
     // ==========================================
     // CARREGAR DADOS
     // ==========================================
@@ -63,9 +109,7 @@ export function Utilizadores() {
             const dados = await utilizadorService.getUsers();
             setUtilizadores(dados);
 
-            // 🔥 carregar fotos
             const fotos: Record<number, string | null> = {};
-
             await Promise.all(
                 dados.map(async (u: Utilizador) => {
                     try {
@@ -76,7 +120,6 @@ export function Utilizadores() {
                     }
                 })
             );
-
             setFotosUtilizadores(fotos);
         } catch {
             alert('Não foi possível ligar ao servidor!');
@@ -89,7 +132,7 @@ export function Utilizadores() {
         useState<Record<number, string | null>>({});
 
     // ==========================================
-    // MODAL
+    // MODAL VER / EDITAR
     // ==========================================
     const abrirModal = async (utilizador: Utilizador) => {
         setUtilizadorSelecionado(utilizador);
@@ -102,7 +145,6 @@ export function Utilizadores() {
         setErroFoto('');
         setModalAberto(true);
 
-        // Carrega a foto atual do utilizador
         try {
             const resultado = await utilizadorService.getFoto(utilizador.idUtilizador);
             setFotoAtual(resultado.url ?? null);
@@ -117,6 +159,80 @@ export function Utilizadores() {
         setFotoAtual(null);
         setFotoPreview(null);
         setFicheiroFoto(null);
+    };
+
+    // ==========================================
+    // MODAL CRIAR UTILIZADOR
+    // ==========================================
+    const abrirModalCriar = () => {
+        setFormNovo(FORM_VAZIO);
+        setErrosCriar({});
+        setMostrarPasswordNovo(false);
+        setModalCriarAberto(true);
+    };
+
+    const fecharModalCriar = () => {
+        setModalCriarAberto(false);
+    };
+
+    const handleFormNovo = (campo: keyof NovoUtilizadorForm, valor: string) => {
+        setFormNovo(prev => ({ ...prev, [campo]: valor }));
+        // Limpa o erro do campo ao editar
+        if (errosCriar[campo]) {
+            setErrosCriar(prev => ({ ...prev, [campo]: '' }));
+        }
+    };
+
+    const validarFormNovo = (): boolean => {
+        const erros: Partial<NovoUtilizadorForm> = {};
+
+        if (!formNovo.nome.trim()) erros.nome = 'O nome é obrigatório.';
+        if (!formNovo.username.trim()) erros.username = 'O username é obrigatório.';
+        if (!formNovo.email.trim()) {
+            erros.email = 'O email é obrigatório.';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formNovo.email)) {
+            erros.email = 'Introduz um email válido.';
+        }
+        if (!formNovo.cargo) erros.cargo = 'Seleciona um cargo.';
+        if (!formNovo.dataNascimento) erros.dataNascimento = 'A data de nascimento é obrigatória.';
+        if (!formNovo.password) {
+            erros.password = 'A password é obrigatória.';
+        } else if (formNovo.password.length < 6) {
+            erros.password = 'A password deve ter pelo menos 6 caracteres.';
+        }
+        if (!formNovo.confirmarPassword) {
+            erros.confirmarPassword = 'Confirma a password.';
+        } else if (formNovo.password !== formNovo.confirmarPassword) {
+            erros.confirmarPassword = 'As passwords não coincidem.';
+        }
+
+        setErrosCriar(erros);
+        return Object.keys(erros).length === 0;
+    };
+
+    const handleCriarUtilizador = async () => {
+        if (!validarFormNovo()) return;
+
+        setLoadingCriar(true);
+        try {
+            await utilizadorService.createUser({
+                nome: formNovo.nome.trim(),
+                username: formNovo.username.trim(),
+                email: formNovo.email.trim(),
+                contacto: formNovo.contacto.trim() || undefined,
+                nif: formNovo.nif.trim() || undefined,
+                dataNascimento: formNovo.dataNascimento,
+                cargo: formNovo.cargo,
+                password: formNovo.password,
+            });
+            alert('Utilizador criado com sucesso!');
+            fecharModalCriar();
+            carregarUtilizadores();
+        } catch (error: any) {
+            alert(error?.message || 'Erro ao criar o utilizador. Tenta novamente.');
+        } finally {
+            setLoadingCriar(false);
+        }
     };
 
     // ==========================================
@@ -141,14 +257,12 @@ export function Utilizadores() {
 
         setFicheiroFoto(file);
 
-        // Preview local antes de fazer upload
         const reader = new FileReader();
         reader.onload = (ev) => setFotoPreview(ev.target?.result as string);
         reader.readAsDataURL(file);
     };
 
     const handleUploadFoto = async () => {
-        // 1. Verificações de segurança
         if (!ficheiroFoto || !utilizadorSelecionado) {
             setErroFoto('Seleciona uma foto primeiro.');
             return;
@@ -158,38 +272,24 @@ export function Utilizadores() {
         setErroFoto('');
 
         try {
-            // 2. Criar o FormData
-            const formData = new FormData();
-            formData.append('file', ficheiroFoto);
-
-            // 3. Obter o token (importante se o teu service não o fizer automaticamente)
-            const token = localStorage.getItem('token');
-
-            // 4. Chamada ao serviço
-            // Nota: Se o teu service já define os headers, passamos apenas os dados.
-            // Se o erro persistir, garante que o service NÃO define 'Content-Type' para multipart
             const resultado = await utilizadorService.uploadFoto(
-                utilizadorSelecionado.idUtilizador, 
+                utilizadorSelecionado.idUtilizador,
                 ficheiroFoto
             );
 
-            // 5. Sucesso: Atualizar estados locais
             const novaUrl = `${resultado.url}?t=${new Date().getTime()}`;
-            
             setFotoAtual(novaUrl);
             setFotoPreview(null);
             setFicheiroFoto(null);
 
-            // 6. Sincronizar a miniatura na tabela de utilizadores
             setFotosUtilizadores(prev => ({
                 ...prev,
                 [utilizadorSelecionado.idUtilizador]: novaUrl
             }));
 
-            alert("Foto de perfil atualizada com sucesso!");
-
+            alert('Foto de perfil atualizada com sucesso!');
         } catch (error: any) {
-            console.error("Erro no upload:", error);
+            console.error('Erro no upload:', error);
             setErroFoto(error.message || 'Erro ao carregar a imagem para o servidor.');
         } finally {
             setLoadingFoto(false);
@@ -248,6 +348,7 @@ export function Utilizadores() {
             await utilizadorService.updatePassword(utilizadorSelecionado!.idUtilizador, novaPassword);
             setNovaPassword('');
             setConfirmarPassword('');
+            alert('Password atualizada com sucesso!');
         } catch {
             setErroPassword('Erro ao atualizar a password. Tenta novamente.');
         } finally {
@@ -282,6 +383,44 @@ export function Utilizadores() {
     };
 
     // ==========================================
+    // IMPORT DE UTILIZADORES
+    // ==========================================
+    const lidarComUploadDireto = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setLoadingImport(true);
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:3000/utilizador/importusersblob', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData,
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert(data.mensagem || 'Utilizadores importados com sucesso!');
+                setModalImportOpen(false);
+                carregarUtilizadores();
+            } else {
+                const err = await response.json().catch(() => ({}));
+                alert(err?.message || 'Erro ao processar a importação.');
+            }
+        } catch (error) {
+            console.error('Erro na importação:', error);
+            alert('Erro ao fazer upload. Tenta novamente.');
+        } finally {
+            setLoadingImport(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    // ==========================================
     // FILTRO
     // ==========================================
     const utilizadoresFiltrados = utilizadores.filter(u =>
@@ -291,7 +430,6 @@ export function Utilizadores() {
         u.cargo?.toLowerCase().includes(termoPesquisa.toLowerCase())
     );
 
-    // Foto a mostrar no modal: preview local tem prioridade sobre a foto guardada
     const fotoModalSrc = fotoPreview ?? fotoAtual;
 
     // ==========================================
@@ -305,6 +443,18 @@ export function Utilizadores() {
                 <div className="textos">
                     <h1>Gestão de Utilizadores</h1>
                     <p>Consulta, edita e gere o acesso dos utilizadores ao sistema.</p>
+                </div>
+                <div className="header-acoes">
+                    <ButtonComponent
+                        label="Criar Utilizador"
+                        icon="fa-solid fa-user-plus"
+                        onClick={abrirModalCriar}
+                    />
+                    <ButtonComponent
+                        label="Importar Utilizadores"
+                        icon="fa-solid fa-upload"
+                        onClick={() => setModalImportOpen(true)}
+                    />
                 </div>
             </div>
 
@@ -595,6 +745,253 @@ export function Utilizadores() {
                                 {loadingSave
                                     ? <><i className="fa-solid fa-spinner fa-spin"></i> A guardar...</>
                                     : <><i className="fa-solid fa-floppy-disk"></i> Guardar Alterações</>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ==========================================
+                MODAL CRIAR UTILIZADOR
+            ========================================== */}
+            {modalCriarAberto && (
+                <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) fecharModalCriar(); }}>
+                    <div className="modal-content">
+
+                        <div className="modal-header">
+                            <div className="modal-header-info">
+                                <div className="modal-avatar" style={{ cursor: 'default' }}>
+                                    <i className="fa-solid fa-user-plus" style={{ fontSize: '22px' }}></i>
+                                </div>
+                                <div>
+                                    <h2>Novo Utilizador</h2>
+                                    <span className="tag-estado small aviso">A criar</span>
+                                </div>
+                            </div>
+                            <button className="btn-fechar" onClick={fecharModalCriar}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div className="modal-body">
+
+                            {/* DADOS PESSOAIS */}
+                            <div className="secao-titulo">
+                                <i className="fa-solid fa-circle-info"></i> Dados do Utilizador
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Nome Completo *</label>
+                                    <input
+                                        type="text"
+                                        className={`input-campo ${errosCriar.nome ? 'input-erro' : ''}`}
+                                        placeholder="Ex: João Silva"
+                                        value={formNovo.nome}
+                                        onChange={(e) => handleFormNovo('nome', e.target.value)}
+                                    />
+                                    {errosCriar.nome && (
+                                        <span className="campo-erro">{errosCriar.nome}</span>
+                                    )}
+                                </div>
+                                <div className="form-group">
+                                    <label>Username *</label>
+                                    <input
+                                        type="text"
+                                        className={`input-campo ${errosCriar.username ? 'input-erro' : ''}`}
+                                        placeholder="Ex: joao.silva"
+                                        value={formNovo.username}
+                                        onChange={(e) => handleFormNovo('username', e.target.value)}
+                                    />
+                                    {errosCriar.username && (
+                                        <span className="campo-erro">{errosCriar.username}</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Email *</label>
+                                    <input
+                                        type="email"
+                                        className={`input-campo ${errosCriar.email ? 'input-erro' : ''}`}
+                                        placeholder="Ex: joao@exemplo.com"
+                                        value={formNovo.email}
+                                        onChange={(e) => handleFormNovo('email', e.target.value)}
+                                    />
+                                    {errosCriar.email && (
+                                        <span className="campo-erro">{errosCriar.email}</span>
+                                    )}
+                                </div>
+                                <div className="form-group">
+                                    <label>Contacto</label>
+                                    <input
+                                        type="text"
+                                        className="input-campo"
+                                        placeholder="Ex: 912345678"
+                                        value={formNovo.contacto}
+                                        onChange={(e) => handleFormNovo('contacto', e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>NIF</label>
+                                    <input
+                                        type="text"
+                                        className="input-campo"
+                                        placeholder="Ex: 123456789"
+                                        value={formNovo.nif}
+                                        onChange={(e) => handleFormNovo('nif', e.target.value)}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Data de Nascimento *</label>
+                                    <input
+                                        type="date"
+                                        className={`input-campo ${errosCriar.dataNascimento ? 'input-erro' : ''}`}
+                                        value={formNovo.dataNascimento}
+                                        onChange={(e) => handleFormNovo('dataNascimento', e.target.value)}
+                                    />
+                                    {errosCriar.dataNascimento && (
+                                        <span className="campo-erro">{errosCriar.dataNascimento}</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Cargo *</label>
+                                    <select
+                                        className={`input-campo ${errosCriar.cargo ? 'input-erro' : ''}`}
+                                        value={formNovo.cargo}
+                                        onChange={(e) => handleFormNovo('cargo', e.target.value)}
+                                    >
+                                        <option value="">Seleciona um cargo...</option>
+                                        {CARGOS_DISPONIVEIS.map(c => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
+                                    {errosCriar.cargo && (
+                                        <span className="campo-erro">{errosCriar.cargo}</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="separador"></div>
+
+                            {/* PASSWORD */}
+                            <div className="secao-titulo">
+                                <i className="fa-solid fa-key"></i> Definir Password
+                            </div>
+
+                            <div className="form-group password-group">
+                                <label>Password *</label>
+                                <div className="password-wrapper">
+                                    <input
+                                        type={mostrarPasswordNovo ? 'text' : 'password'}
+                                        className={`${errosCriar.password ? 'input-erro' : ''}`}
+                                        placeholder="Mínimo 6 caracteres"
+                                        value={formNovo.password}
+                                        onChange={(e) => handleFormNovo('password', e.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="btn-toggle-password"
+                                        onClick={() => setMostrarPasswordNovo(!mostrarPasswordNovo)}
+                                        title={mostrarPasswordNovo ? 'Ocultar password' : 'Mostrar password'}
+                                    >
+                                        <i className={`fa-solid ${mostrarPasswordNovo ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                    </button>
+                                </div>
+                                {errosCriar.password && (
+                                    <span className="campo-erro">{errosCriar.password}</span>
+                                )}
+                            </div>
+
+                            <div className="form-group password-group">
+                                <label>Confirmar Password *</label>
+                                <div className="password-wrapper">
+                                    <input
+                                        type={mostrarPasswordNovo ? 'text' : 'password'}
+                                        className={`${errosCriar.confirmarPassword ? 'input-erro' : ''}`}
+                                        placeholder="Repete a password"
+                                        value={formNovo.confirmarPassword}
+                                        onChange={(e) => handleFormNovo('confirmarPassword', e.target.value)}
+                                    />
+                                </div>
+                                {errosCriar.confirmarPassword && (
+                                    <span className="campo-erro">{errosCriar.confirmarPassword}</span>
+                                )}
+                            </div>
+
+                        </div>
+
+                        <div className="modal-footer">
+                            <button className="btn-secundario" onClick={fecharModalCriar} disabled={loadingCriar}>
+                                Cancelar
+                            </button>
+                            <button
+                                className="btn-primario"
+                                onClick={handleCriarUtilizador}
+                                disabled={loadingCriar}
+                            >
+                                {loadingCriar
+                                    ? <><i className="fa-solid fa-spinner fa-spin"></i> A criar...</>
+                                    : <><i className="fa-solid fa-user-plus"></i> Criar Utilizador</>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* INPUT HIDDEN PARA IMPORT */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                style={{ display: 'none' }}
+                onChange={lidarComUploadDireto}
+            />
+
+            {/* MODAL DE IMPORT */}
+            {modalImportOpen && (
+                <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget && !loadingImport) setModalImportOpen(false); }}>
+                    <div className="modal-content" style={{ maxWidth: '400px' }}>
+                        <div className="modal-header">
+                            <div className="modal-header-info">
+                                <div>
+                                    <h2><i className="fa-solid fa-upload"></i> Importar Utilizadores</h2>
+                                </div>
+                            </div>
+                            <button className="btn-fechar" onClick={() => setModalImportOpen(false)} disabled={loadingImport}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            <p>Seleciona um ficheiro Excel ou CSV com os dados dos utilizadores para importar.</p>
+                            {loadingImport && (
+                                <div className="import-loading">
+                                    <i className="fa-solid fa-spinner fa-spin"></i>
+                                    <span>A importar utilizadores...</span>
+                                </div>
+                            )}
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn-secundario" onClick={() => setModalImportOpen(false)} disabled={loadingImport}>
+                                Cancelar
+                            </button>
+                            <button
+                                className="btn-primario"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={loadingImport}
+                            >
+                                {loadingImport
+                                    ? <><i className="fa-solid fa-spinner fa-spin"></i> A importar...</>
+                                    : <><i className="fa-solid fa-folder-open"></i> Selecionar Ficheiro</>
                                 }
                             </button>
                         </div>

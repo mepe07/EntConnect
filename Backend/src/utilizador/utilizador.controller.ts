@@ -1,6 +1,6 @@
 import { 
   Controller, Get, Post, Put, Body, Patch, Param, Delete, 
-  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator
+  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator,Query
 } from '@nestjs/common'; 
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -241,6 +241,14 @@ export class UtilizadorController {
     // Como estamos apenas a apagar, devolver uma mensagem simples fica muito elegante no frontend
     return { message: `A foto do utilizador com ID ${id} foi removida com sucesso.` };
   }
+
+  @Post()
+  @ApiOperation({ summary: 'Criar um novo utilizador manualmente' })
+  @ApiResponse({ status: 201, description: 'Utilizador criado com sucesso.' })
+  @ApiResponse({ status: 409, description: 'Username ou email já existem.' })
+  async createUser(@Body() createUtilizadorDto: CreateUtilizadorDto) {
+    return this.utilizadorService.createUser(createUtilizadorDto);
+  }
   
   
  /**
@@ -336,11 +344,13 @@ export class UtilizadorController {
     return this.professorService.create(createProfessorDto);
   }
 
-  // ENDPOINT PARA LISTAR (GET)
+// ENDPOINT PARA LISTAR COM PAGINAÇÃO
   @Get()
-  @ApiOperation({ summary: 'Listar todos os professores com os seus dados pessoais' })
-  findAll() {
-    return this.professorService.findAll();
+  @ApiOperation({ summary: 'Listar professores com paginação (20 por página)' })
+  findAll(@Query('page') page: string) {
+    // Se não enviar página, assume a 1. O "+" converte string para número.
+    const paginaAtual = page ? +page : 1;
+    return this.professorService.findAll(paginaAtual);
   }
 
   // ENDPOINT PARA EDITAR (PATCH)

@@ -17,26 +17,22 @@ class ProfessorService {
         };
     }
 
-    // ==========================================
-    // READ: Ir buscar todos
-    // ==========================================
-    async getProfessores() {
-        try {
-            const response = await fetch(API_URL, {
-                method: 'GET',
-                headers: this.getHeaders(),
-            });
-
-            if (!response.ok) {
-                throw new Error('Falha ao carregar os professores do servidor.');
-            }
-
-            return await response.json();
-        } catch (erro) {
-            console.error('Erro no getProfessores:', erro);
-            throw erro;
-        }
+// Altera o método getProfessores para aceitar a página
+async getProfessores(page: number = 1) {
+    try {
+        // Adicionamos o parâmetro ?page= à URL
+        const response = await fetch(`${API_URL}?page=${page}`, {
+            method: 'GET',
+            headers: this.getHeaders(),
+        });
+        
+        if (!response.ok) throw new Error('Falha ao carregar os professores.');
+        
+        return await response.json(); // Agora isto devolve { data: [], meta: {} }
+    } catch (erro) {
+        throw erro;
     }
+}
 
     // ==========================================
     // CREATE: Criar novo

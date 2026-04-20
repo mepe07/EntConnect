@@ -1,9 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { CreateUtilizadorDto } from './dto/create-utilizador.dto';
 import { UpdateUtilizadorDto } from './dto/update-utilizador.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import { NotFoundException } from '@nestjs/common'; //exceção
-import * as bcrypt from 'bcrypt'
+import * as bcrypt from 'bcrypt';
 
 // Serviço para lidar com operações simples CRUD relacionados com utilizadores.
 
@@ -27,7 +26,7 @@ export class UtilizadorService {
       }
     });
 
-return utilizadoresRaw.map((user) => {
+    return utilizadoresRaw.map((user) => {
       
       let cargoAtribuido = 'Sem Cargo'; 
 
@@ -52,6 +51,61 @@ return utilizadoresRaw.map((user) => {
         cargo: cargoAtribuido,
       };
     });
+  }
+
+  async createUser(createUtilizadorDto: CreateUtilizadorDto) {
+    const { nome, username, email, contacto, nif, dataNascimento, cargo, password } = createUtilizadorDto;
+
+    // 1. Verificar se username ou email já existem
+    const existente = await this.prisma.utilizador.findFirst({
+      where: {
+        OR: [
+          { Utilizador: username },
+          { Pessoa: { Email: email } },
+        ],
+      },
+    });
+
+    if (existente) {
+      throw new ConflictException('Já existe um utilizador com esse username ou email.');
+    }
+
+    // 2. Hash da password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 3. Construir os dados do cargo dinamicamente
+    const dadosCargo =
+      cargo === 'Professor'                  ? { Professor: { create: {} } } :
+      cargo === 'Coordenador'                ? { Coordenador: { create: {} } } :
+      cargo === 'Direção'                    ? { Direcao: { create: {} } } :
+      cargo === 'Encarregado de Educação'    ? { Enc_Educacao: { create: {} } } :
+      {};
+
+    // 4. Criar Pessoa + Utilizador
+    const novoUtilizador = await this.prisma.utilizador.create({
+      data: {
+        Utilizador: username,
+        Password: hashedPassword,
+        Ativo: true,
+        Pessoa: {
+          create: {
+            Nome: nome,
+            Email: email,
+            Contacto: contacto ?? '',
+            NIF: nif ?? '',
+            Data_Nascimento: new Date(dataNascimento),
+            ...dadosCargo,
+          },
+        },
+      },
+      include: { Pessoa: true },
+    });
+
+    return {
+      id: novoUtilizador.ID_Utilizador,
+      username: novoUtilizador.Utilizador,
+      mensagem: `Utilizador "${nome}" criado com sucesso.`,
+    };
   }
 
   async blockUser(id: number) {
@@ -89,7 +143,7 @@ return utilizadoresRaw.map((user) => {
     });
   }
 
-    async UploadPhoto(url: string, id: number) {
+  async UploadPhoto(url: string, id: number) {
     return this.prisma.utilizador.update({
       where: { ID_Utilizador: id },
       data: {
@@ -99,7 +153,6 @@ return utilizadoresRaw.map((user) => {
           },
         },
       },
-      //Para te devolver os dados da pessoa e confirmares a foto no Postman
       include: {
         Pessoa: true, 
       }
@@ -114,7 +167,6 @@ return utilizadoresRaw.map((user) => {
     });
 
     if (!utilizador) {
-      // Lembra-te de importar o NotFoundException no topo se ainda não o tiveres!
       throw new NotFoundException(`Utilizador com ID ${id} não encontrado.`); 
     }
     
@@ -126,7 +178,6 @@ return utilizadoresRaw.map((user) => {
   }
 
   async getFotoPerfil(id: number) {
-    // Procura o utilizador pelo ID e inclui os dados da Pessoa associada
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: id },
       include: { Pessoa: true } 
@@ -136,14 +187,12 @@ return utilizadoresRaw.map((user) => {
       throw new NotFoundException('Utilizador não encontrado.');
     }
 
-    // Retorna apenas o URL (verifica se o nome da coluna no teu Prisma é mesmo "Foto" ou "UrlPhoto")
     return {
       id: id,
-      url: utilizador.Pessoa.Foto || null, // Devolve null se a pessoa ainda não tiver foto
+      url: utilizador.Pessoa.Foto || null,
       mensagem: utilizador.Pessoa.Foto ? 'Foto encontrada.' : 'Este utilizador não tem foto de perfil.'
     };
   }
-  
   
   async getMinhasAulas(id: number) {
     const utilizador = await this.prisma.utilizador.findUnique({
@@ -166,12 +215,9 @@ return utilizadoresRaw.map((user) => {
 
     const idPessoa = utilizador.ID_Pessoa;
 
-    // =======================================================
-    // SE FOR O PROFESSOR (A procurar pelo ID_Professor = 1)
-    // =======================================================
     if (utilizador.Pessoa.Professor) {
       const aulasProfessor = await this.prisma.aula.findMany({
-        where: { ID_Professor: idPessoa }, // 👈 Procura as aulas do prof logado
+        where: { ID_Professor: idPessoa },
         include: {
           Coaching: { include: { Sala: true } }, 
           Aula_Aluno: { include: { Aluno: true } } 
@@ -183,7 +229,6 @@ return utilizadoresRaw.map((user) => {
         const dataStr = aula.Data_Aula.toLocaleDateString('pt-PT');
         const horaInicio = aula.Data_Aula.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
         
-        // Pega na Duracao (60) que está no Coaching ID 27
         const duracaoMinutos = aula.Coaching?.Duracao || 60;
         const horaFimObj = new Date(aula.Data_Aula.getTime() + duracaoMinutos * 60000);
         const horaFim = horaFimObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
@@ -191,7 +236,7 @@ return utilizadoresRaw.map((user) => {
         const nomesClientes = aula.Aula_Aluno.map(aa => aa.Aluno.Nome).join(', ');
 
         return {
-          sessao: aula.Resumo_Aula || 'Aula Privada / Ensaio', // "Coreografia Hip Hop - Parte 1"
+          sessao: aula.Resumo_Aula || 'Aula Privada / Ensaio',
           cliente: nomesClientes || 'Sem aluno associado',
           data: dataStr,
           horario: `${horaInicio} - ${horaFim}`,
@@ -200,9 +245,6 @@ return utilizadoresRaw.map((user) => {
       });
     } 
     
-    // =======================================================
-    // SE FOR O ALUNO/PAI (A procurar se o Aluno 10 lhe pertence)
-    // =======================================================
     else if (utilizador.Pessoa.Enc_Educacao) {
       const aulasCliente = await this.prisma.aula.findMany({
         where: {
@@ -246,30 +288,9 @@ return utilizadoresRaw.map((user) => {
     return [];
   }
 
-  // create(createUtilizadorDto: CreateUtilizadorDto) {
-  //   return 'This action adds a new utilizador';
-  // }
-
-  // findAll() {
-  //   return `This action returns all utilizador`;
-  // }
-
-  // findOne(id: number) {
-  //   return `This action returns a #${id} utilizador`;
-  // }
-
-  // update(id: number, updateUtilizadorDto: UpdateUtilizadorDto) {
-  //   return `This action updates a #${id} utilizador`;
-  // }
-
-  // remove(id: number) {
-  //   return `This action removes a #${id} utilizador`;
-  // }
-  
   async getAlunosByEE(idEncEducacao: number) {
     return this.prisma.aluno.findMany({
       where: { ID_Enc_Educacao: idEncEducacao }
     });
   }
-
 }
