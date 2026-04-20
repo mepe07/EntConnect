@@ -19,6 +19,8 @@ interface Professor {
 export function Professores() {
     const [professores, setProfessores] = useState<Professor[]>([]);
     const [termoPesquisa, setTermoPesquisa] = useState('');
+    const [paginaAtual, setPaginaAtual] = useState(1);
+    const [ultimaPagina, setUltimaPagina] = useState(1);
 
     // ==========================================
     // ESTADOS DO FORMULÁRIO (DTO)
@@ -37,14 +39,17 @@ export function Professores() {
     // ==========================================
     useEffect(() => {
         carregarProfessores();
-    }, []);
+    }, [paginaAtual]);
 
     const carregarProfessores = async () => {
         try {
-            const dados = await professoresService.getProfessores();
-            setProfessores(dados);
+            const resposta = await professoresService.getProfessores(paginaAtual);
+            // Agora os professores estão dentro de .data
+            setProfessores(resposta.data);
+            // Guardamos o limite de páginas que vem do backend meta.lastPage
+            setUltimaPagina(resposta.meta.lastPage);
         } catch (erro) {
-            alert("Erro ao carregar a lista de professores.");
+            alert("Erro ao carregar a lista.");
         }
     };
 
@@ -202,6 +207,27 @@ export function Professores() {
                         )}
                     </tbody>
                 </table>
+                <div className="paginacao-container">
+                    <button
+                        className="btn-paginacao"
+                        disabled={paginaAtual === 1}
+                        onClick={() => setPaginaAtual(prev => prev - 1)}
+                    >
+                        <i className="fa-solid fa-chevron-left"></i> Anterior
+                    </button>
+
+                    <span className="info-paginas">
+                        Página <strong>{paginaAtual}</strong> de {ultimaPagina}
+                    </span>
+
+                    <button
+                        className="btn-paginacao"
+                        disabled={paginaAtual === ultimaPagina}
+                        onClick={() => setPaginaAtual(prev => prev + 1)}
+                    >
+                        Próximo <i className="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
             </div>
 
             {/* ========================================== */}
