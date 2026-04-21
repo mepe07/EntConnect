@@ -958,9 +958,10 @@ export function Utilizadores() {
             />
 
             {/* MODAL DE IMPORT */}
+            {/* MODAL DE IMPORT */}
             {modalImportOpen && (
                 <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget && !loadingImport) setModalImportOpen(false); }}>
-                    <div className="modal-content" style={{ maxWidth: '400px' }}>
+                    <div className="modal-content" style={{ maxWidth: '480px' }}> {/* Ligeiramente mais largo para acomodar a caixa */}
                         <div className="modal-header">
                             <div className="modal-header-info">
                                 <div>
@@ -971,8 +972,28 @@ export function Utilizadores() {
                                 <i className="fa-solid fa-xmark"></i>
                             </button>
                         </div>
+                        
                         <div className="modal-body">
                             <p>Seleciona um ficheiro Excel ou CSV com os dados dos utilizadores para importar.</p>
+                            
+                            {/* CAIXA DE DOWNLOAD DO MODELO EXCEL */}
+                            <div className="box-modelo-excel">
+                                <div className="info-modelo">
+                                    <i className="fa-solid fa-file-excel icone-excel"></i>
+                                    <div>
+                                        <strong>Precisas de um modelo?</strong>
+                                        <span>Descarrega o ficheiro base para preencheres os dados corretamente.</span>
+                                    </div>
+                                </div>
+                                <a 
+                                    href="/modelo_utilizadores.xlsx" 
+                                    download="Modelo_Importacao_Utilizadores.xlsx" 
+                                    className="btn-download-modelo"
+                                >
+                                    <i className="fa-solid fa-download"></i> Descarregar
+                                </a>
+                            </div>
+
                             {loadingImport && (
                                 <div className="import-loading">
                                     <i className="fa-solid fa-spinner fa-spin"></i>
@@ -980,6 +1001,7 @@ export function Utilizadores() {
                                 </div>
                             )}
                         </div>
+
                         <div className="modal-footer">
                             <button className="btn-secundario" onClick={() => setModalImportOpen(false)} disabled={loadingImport}>
                                 Cancelar
