@@ -1,4 +1,18 @@
 // Ficheiro: src/auth/auth.guard.ts
+
+/* O que é um Guard?
+
+Guards são classes que implementam a interface CanActivate do NestJS.
+
+Eles são usados para determinar se uma requisição pode ou não acessar um determinado endpoint.
+Por exemplo, podemos usar um guard para verificar se o utilizador está autenticado antes de permitir o acesso a um recurso.
+
+!!!!!!
+Diferente do roles.guard.ts, que verifica se o utilizador tem a role necessária para acessar um endpoint específico,
+o auth.guard.ts verifica se o utilizador está autenticado, ou seja, se ele tem um token válido.
+
+*/
+
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
