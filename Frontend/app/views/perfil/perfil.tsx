@@ -1,49 +1,78 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { authService } from '~/services/auth.service'; // Ajusta o caminho se necessário
+import Cropper from 'react-easy-crop';
+import { authService } from '~/services/auth.service';
 import './perfil.scss';
+import { getCroppedImg } from '../utils/cropImage';
 
-// 1. Tipo simplificado apenas com as abas que precisas
 type AbaTipo = 'dados_pessoais' | 'minhas_aulas';
 
 export function Perfil() {
-    // Aba inicial
+    // ==========================================
+    // ESTADOS DE NAVEGAÇÃO E DADOS GERAIS
+    // ==========================================
     const [abaAtiva, setAbaAtiva] = useState<AbaTipo>('dados_pessoais');
-    
-    // Estado das Aulas
     const [minhasAulas, setMinhasAulas] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
-    // Estados para a Foto de Perfil
+    // ==========================================
+    // ESTADOS DA FOTO E MODAL DE CORTE
+    // ==========================================
     const [fotoUrl, setFotoUrl] = useState<string | null>(null);
     const [loadingFoto, setLoadingFoto] = useState(false);
+    const [modalCorteAberto, setModalCorteAberto] = useState(false);
+    const [imagemOriginal, setImagemOriginal] = useState<string | null>(null);
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Obter o ID do utilizador atual
+    // ==========================================
+    // ESTADOS DOS DADOS PESSOAIS E CONTA
+    // ==========================================
+    const [nif, setNif] = useState('');
+    const [contacto, setContacto] = useState('');
+    const [nome, setNome] = useState('');
+    const [email, setEmail] = useState('');
+    const [ativo, setAtivo] = useState(true);
+    const [cargo, setCargo] = useState('Utilizador Registado');
+    const [editando, setEditando] = useState(false);
+    const [guardando, setGuardando] = useState(false);
+
+    // ==========================================
+    // ESTADOS DE SEGURANÇA (PASSWORD)
+    // ==========================================
+    const [modalPasswordAberto, setModalPasswordAberto] = useState(false);
+    const [passAtual, setPassAtual] = useState('');
+    const [passNova, setPassNova] = useState('');
+    const [passConfirma, setPassConfirma] = useState('');
+
     const userInfo = authService.getUserInfo() as any;
     const currentUserId = userInfo?.sub || userInfo?.idUtilizador;
 
+    // ==========================================
+    // EFEITOS (LIFECYCLE)
+    // ==========================================
     useEffect(() => {
         carregarDados();
     }, [abaAtiva]);
 
-    // Carregar a foto de perfil logo que o componente monta
     useEffect(() => {
         if (currentUserId) {
             buscarFotoAtual();
         }
     }, [currentUserId]);
 
+    // ==========================================
+    // FUNÇÕES DE COMUNICAÇÃO COM O BACKEND
+    // ==========================================
     const buscarFotoAtual = async () => {
         try {
             const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/foto`);
             if (response.ok) {
                 const data = await response.json();
-                
                 if (data.url) {
-                    // TRUQUE MÁGICO CONTRA O CACHE
                     const separador = data.url.includes('?') ? '&' : '?';
                     const urlSemCache = `${data.url}${separador}t=${new Date().getTime()}`;
-                    
                     setFotoUrl(urlSemCache);
                 } else {
                     setFotoUrl(null);
@@ -55,63 +84,153 @@ export function Perfil() {
     };
 
     const carregarDados = async () => {
-        if (abaAtiva === 'dados_pessoais') return;
-
         setLoading(true);
         try {
             const token = localStorage.getItem('token') || authService.getToken();
             const headers = { 'Authorization': `Bearer ${token}` };
 
+            const resUser = await fetch(`http://localhost:3000/utilizador/${currentUserId}`, { headers });
+            if (resUser.ok) {
+                const dadosUser = await resUser.json();
+                setAtivo(dadosUser.Ativo === 1 || dadosUser.Ativo === true);
+
+                const p = dadosUser.Pessoa;
+                let cargoDetectado = 'Utilizador Registado';
+                if (p) {
+                    const funcoes = [];
+                    if (p.Direcao) funcoes.push('Direção');
+                    if (p.Professor) funcoes.push('Professor');
+                    if (p.Enc_Educacao) funcoes.push('Enc. Educação');
+                    if (funcoes.length > 0) cargoDetectado = funcoes.join(' / ');
+                }
+                setCargo(cargoDetectado);
+                setNome(p?.Nome || '');
+                setNif(p?.NIF || '');
+                setContacto(p?.Contacto || '');
+                setEmail(p?.Email || '');
+            }
+
             if (abaAtiva === 'minhas_aulas') {
-                // Chamada para o teu endpoint de aulas
-                const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/aulas`, { headers });
-                if (response.ok) {
-                    const dados = await response.json();
-                    setMinhasAulas(dados);
+                const resAulas = await fetch(`http://localhost:3000/utilizador/${currentUserId}/aulas`, { headers });
+                if (resAulas.ok) {
+                    const dadosAulas = await resAulas.json();
+                    setMinhasAulas(dadosAulas);
                 }
             }
         } catch (error: any) {
-            console.error("Erro ao carregar as aulas:", error);
+            console.error("Erro ao carregar dados:", error);
         } finally {
             setLoading(false);
         }
     };
 
-    // A Função Mágica que faz o Upload da nova Foto
-    const lidarComUploadFoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const lidarComSelecaoFicheiro = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (!file || !currentUserId) return;
+        if (!file) return;
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+            setImagemOriginal(reader.result as string);
+            setModalCorteAberto(true);
+        };
+    };
 
+    const aoCortarCompletado = (_: any, pixels: any) => {
+        setCroppedAreaPixels(pixels);
+    };
+
+    const finalizarCorte = async () => {
+        try {
+            const blobFinal = await getCroppedImg(imagemOriginal!, croppedAreaPixels);
+            executarUpload(blobFinal);
+        } catch (e) {
+            console.error("Erro ao processar imagem:", e);
+        }
+    };
+
+    const executarUpload = async (blobFinal: Blob) => {
         setLoadingFoto(true);
         const formData = new FormData();
-        formData.append("file", file);
-
+        formData.append("file", blobFinal, "perfil.jpg");
         try {
             const token = localStorage.getItem('token') || authService.getToken();
-            
             const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/uploadphoto`, {
                 method: "PUT",
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData,
             });
-            
             if (response.ok) {
                 alert("Foto atualizada com sucesso!");
-                buscarFotoAtual(); // Atualiza a foto na página de perfil
-                
-                // Dispara o evento para o Header atualizar a foto também
+                buscarFotoAtual();
                 window.dispatchEvent(new Event('fotoPerfilAtualizada')); 
-            } else {
-                const errorData = await response.json();
-                alert(`Erro ao alterar foto: ${errorData.message || 'Verifica o formato e tamanho.'}`);
+                setModalCorteAberto(false);
             }
         } catch (error) {
-            console.error("Erro no upload da foto:", error);
-            alert("Erro de ligação. Tenta novamente.");
+            console.error("Erro no upload:", error);
         } finally {
             setLoadingFoto(false);
-            if (fileInputRef.current) fileInputRef.current.value = ''; // Limpa o input
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
+    };
+
+    const guardarAlteracoes = async () => {
+        setGuardando(true);
+        try {
+            const token = localStorage.getItem('token') || authService.getToken();
+            const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/update-pessoal`, {
+                method: 'PUT',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ nome, nif, contacto })
+            });
+            if (response.ok) {
+                alert("Dados atualizados com sucesso!");
+                setEditando(false);
+            }
+        } catch (error) {
+            alert("Erro de ligação.");
+        } finally {
+            setGuardando(false);
+        }
+    };
+
+    const lidarComMudarPassword = async () => {
+        if (passNova !== passConfirma) {
+            alert("A nova password e a confirmação não coincidem.");
+            return;
+        }
+        try {
+            const token = authService.getToken();
+            const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/change-password`, {
+                method: 'PUT',
+                headers: { 
+                    'Authorization': `Bearer ${token}`, 
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify({ passAtual, passNova })
+            });
+            const resultado = await response.json();
+            if (response.ok) {
+                alert("Password alterada com sucesso!");
+                fecharModalPassword();
+            } else {
+                alert(resultado.message || "Erro ao mudar password.");
+            }
+        } catch (e) {
+            alert("Erro de ligação ao servidor.");
+        }
+    };
+
+    const abrirModalPassword = () => {
+        setPassAtual(''); setPassNova(''); setPassConfirma('');
+        setModalPasswordAberto(true);
+    };
+
+    const fecharModalPassword = () => {
+        setPassAtual(''); setPassNova(''); setPassConfirma('');
+        setModalPasswordAberto(false);
     };
 
     return (
@@ -130,91 +249,238 @@ export function Perfil() {
 
             <main className="perfil-conteudo">
                 {loading ? (
-                    <div className="mensagem-centro">A organizar as tuas aulas...</div>
+                    <div className="mensagem-centro">A carregar informações...</div>
                 ) : (
                     <div className="cartao-branco">
-
-                        {/* Secção de Dados Pessoais / Foto */}
+                        {/* ABA: DADOS PESSOAIS */}
                         {abaAtiva === 'dados_pessoais' && (
                             <section className="seccao-perfil">
-                                <h3>O Meu Perfil</h3>
+                                <div className="perfil-header-topo">
+                                    <h3>O Meu Perfil</h3>
+                                    <button 
+                                        className="btn-editar"
+                                        onClick={() => editando ? guardarAlteracoes() : setEditando(true)}
+                                        disabled={guardando}
+                                    >
+                                        {guardando ? 'A guardar...' : editando ? '✅ Guardar' : '✏️ Editar Dados'}
+                                    </button>
+                                </div>
                                 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '30px', marginTop: '20px' }}>
-                                    <div style={{
-                                        width: '120px', height: '120px', borderRadius: '50%', backgroundColor: '#eee',
-                                        display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
-                                        border: '3px solid #004d40'
-                                    }}>
+                                <div className="perfil-info-principal">
+                                    <div className="foto-moldura">
                                         {loadingFoto ? (
-                                            <span style={{ color: '#666' }}>A carregar...</span>
+                                            <span className="carregando-texto">...</span>
                                         ) : fotoUrl ? (
-                                            <img src={fotoUrl} alt="A minha foto de perfil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <img src={fotoUrl} alt="Perfil" />
                                         ) : (
-                                            <i className="fa fa-user" style={{ fontSize: '50px', color: '#aaa' }}></i>
+                                            <i className="fa fa-user"></i>
                                         )}
                                     </div>
 
-                                    <div>
-                                        <h4>{userInfo?.username || 'Utilizador'}</h4>
-                                        <p style={{ color: '#666', marginBottom: '15px' }}>Altera a tua foto de perfil (Max 10MB)</p>
+                                    <div className="info-texto">
+                                        <h4 className="nome-principal">{nome || 'Utilizador'}</h4>
+                                        <p className="nome-meta">@{userInfo?.username || 'utilizador'}</p>
+                                        <p className="email-utilizador">{email || 'Sem email registado'}</p>
                                         
-                                        <input 
-                                            type="file" 
-                                            accept=".png,.jpg,.jpeg,.webp,.jfif" 
-                                            ref={fileInputRef} 
-                                            style={{ display: 'none' }} 
-                                            onChange={lidarComUploadFoto}
-                                        />
+                                        <p className="aviso-tamanho">
+                                            <i className="fa fa-info-circle"></i> Tamanho máximo permitido: 10MB
+                                        </p>
 
-                                        <button 
-                                            onClick={() => fileInputRef.current?.click()}
-                                            style={{ padding: '8px 16px', backgroundColor: '#004d40', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                                            disabled={loadingFoto}
-                                        >
-                                            <i className="fa fa-camera" style={{ marginRight: '8px' }}></i>
+                                        <input type="file" accept="image/*" ref={fileInputRef} className="input-file-escondido" onChange={lidarComSelecaoFicheiro} />
+                                        <button className="btn-link-foto" onClick={() => fileInputRef.current?.click()}>
+                                            <i className="fa fa-camera"></i>
                                             {fotoUrl ? 'Alterar Foto' : 'Carregar Foto'}
                                         </button>
                                     </div>
                                 </div>
-                            </section>
+
+                                <hr className="divisor-perfil" />
+
+                                <div className="perfil-grid-layout">
+                                    <div className="coluna-formulario">
+                                        <div className="cartao-edicao">
+                                            <h4>Editar Dados Pessoais</h4>
+                                            <div className="form-pessoal">
+                                                <div className="campo">
+                                                    <label>Nome Completo</label>
+                                                    <input type="text" value={nome} disabled={!editando} onChange={(e) => setNome(e.target.value)} />
+                                                </div>
+                                                <div className="campo">
+                                                    <label>NIF (Número de Contribuinte)</label>
+                                                    <input type="text" value={nif} disabled={!editando} onChange={(e) => setNif(e.target.value)} />
+                                                </div>
+                                                <div className="campo">
+                                                    <label>Contacto Telefónico</label>
+                                                    <input type="text" value={contacto} disabled={!editando} onChange={(e) => setContacto(e.target.value)} />
+                                                </div>
+                                                {editando && (
+                                                    <button className="btn-cancelar" onClick={() => { setEditando(false); carregarDados(); }}>Cancelar</button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="coluna-detalhes">
+                                        <div className="cartao-info-extra">
+                                            <h4>Informações de Conta</h4>
+                                            <div className="item-info">
+                                                <span className="label">Estado da Conta:</span>
+                                                <span className={`etiqueta ${ativo ? 'verde' : 'vermelha'}`}>
+                                                    {ativo ? 'Ativo' : 'Inativo'}
+                                                </span>
+                                            </div>
+                                            <div className="item-info">
+                                                <span className="label">Cargo / Função:</span>
+                                                <span className="valor-cargo">{cargo}</span>
+                                            </div>
+                                            <hr />
+                                            <h4>Segurança</h4>
+                                            <p className="texto-seguranca">Protege a tua conta alterando a palavra-passe regularmente.</p>
+                                            <button className="btn-secundario" onClick={abrirModalPassword}>
+                                                <i className="fa fa-lock" style={{marginRight: '8px'}}></i>
+                                                Alterar Palavra-passe
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section> 
                         )}
 
-                        {/* Secção de Aulas Privadas / Coaching de Dança */}
+                        {/* ABA: MINHAS AULAS (CÓDIGO ADICIONADO) */}
                         {abaAtiva === 'minhas_aulas' && (
-                            <section>
-                                <h3>As Minhas Aulas</h3>
+                            <section className="seccao-aulas">
+                                <h3>As Minhas Aulas / Horário</h3>
                                 {minhasAulas.length === 0 ? (
-                                    <p className="texto-vazio">Ainda não tens aulas privadas ou ensaios agendados.</p>
+                                    <div className="mensagem-vazia">
+                                        <i className="fa fa-calendar-times-o"></i>
+                                        <p>Ainda não tens aulas agendadas no sistema.</p>
+                                    </div>
                                 ) : (
-                                    <table className="tabela-custom">
-                                        <thead>
-                                            <tr>
-                                                <th>Foco / Coreografia</th>
-                                                <th>{minhasAulas[0].coach ? 'Professor(a)' : 'Aluno(a)'}</th>
-                                                <th>Data</th>
-                                                <th>Horário</th>
-                                                <th>Local / Estúdio</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {minhasAulas.map((aula, index) => (
-                                                <tr key={index}>
-                                                    <td><strong>{aula.sessao}</strong></td>
-                                                    <td>{aula.coach || aula.cliente}</td>
-                                                    <td>{aula.data}</td>
-                                                    <td>{aula.horario}</td>
-                                                    <td>
-                                                        <span className={`etiqueta ${aula.formato.toLowerCase().includes('online') ? 'verde' : 'amarela'}`}>
-                                                            {aula.formato}
-                                                        </span>
-                                                    </td>
+                                    <div className="tabela-container">
+                                        <table className="tabela-custom">
+                                            <thead>
+                                                <tr>
+                                                    <th>Foco / Coreografia</th>
+                                                    <th>{userInfo?.role === 'Professor' ? 'Cliente' : 'Professor(a)'}</th>
+                                                    <th>Data</th>
+                                                    <th>Horário</th>
+                                                    <th>Local / Formato</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody>
+                                                {minhasAulas.map((aula, index) => (
+                                                    <tr key={index}>
+                                                        <td><strong>{aula.sessao || aula.Sessao}</strong></td>
+                                                        <td>{aula.coach || aula.cliente || 'N/A'}</td>
+                                                        <td>{aula.data || aula.Data}</td>
+                                                        <td>{aula.horario || aula.Horario}</td>
+                                                        <td>
+                                                            <span className={`etiqueta ${String(aula.formato || '').toLowerCase().includes('online') ? 'verde' : 'amarela'}`}>
+                                                                {aula.formato || 'Presencial'}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 )}
                             </section>
                         )}
+                    </div>
+                )}
+
+                {/* MODAL DE CORTE DE FOTO */}
+                {modalCorteAberto && (
+                    <div className="modal-corte-overlay">
+                        <div className="modal-corte-container">
+                            <div className="modal-header">
+                                <h3>Ajustar Foto de Perfil</h3>
+                                <p>Arrasta e ajusta o zoom para enquadrar a foto</p>
+                            </div>
+                            <div className="cropper-wrapper">
+                                <Cropper
+                                    image={imagemOriginal!}
+                                    crop={crop}
+                                    zoom={zoom}
+                                    aspect={1}
+                                    cropShape="round"
+                                    showGrid={true}
+                                    onCropChange={setCrop}
+                                    onZoomChange={setZoom}
+                                    onCropComplete={aoCortarCompletado}
+                                />
+                            </div>
+                            <div className="controles-corte">
+                                <div className="zoom-slider">
+                                    <input type="range" min={1} max={3} step={0.1} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} />
+                                </div>
+                                <div className="botoes-modal">
+                                    <button className="btn-modal-cancelar" onClick={() => setModalCorteAberto(false)}>Cancelar</button>
+                                    <button className="btn-modal-confirmar" onClick={finalizarCorte}>Confirmar e Guardar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* MODAL DE MUDAR PASSWORD */}
+                {modalPasswordAberto && (
+                    <div className="modal-corte-overlay">
+                        <div className="modal-corte-container" style={{ maxWidth: '400px' }}>
+                            <div className="modal-header">
+                                <h3>Segurança da Conta</h3>
+                                <p>Atualiza a tua password de acesso.</p>
+                            </div>
+
+                            <div className="form-pessoal">
+                                <div className="campo">
+                                    <label>Password Atual</label>
+                                    <input 
+                                        type="password" 
+                                        value={passAtual} 
+                                        onChange={(e) => setPassAtual(e.target.value)}
+                                        autoComplete="new-password"
+                                    />
+                                </div>
+
+                                <div className="campo">
+                                    <label>Nova Password</label>
+                                    <input 
+                                        type="password" 
+                                        value={passNova} 
+                                        onChange={(e) => setPassNova(e.target.value)} 
+                                        autoComplete="new-password"
+                                    />
+                                </div>
+
+                                <div className="campo">
+                                    <label>Confirmar Nova Password</label>
+                                    <input 
+                                        type="password" 
+                                        value={passConfirma} 
+                                        onChange={(e) => setPassConfirma(e.target.value)} 
+                                        autoComplete="new-password"
+                                        className={passConfirma && passNova !== passConfirma ? 'input-erro' : ''}
+                                    />
+                                    {passConfirma && passNova !== passConfirma && (
+                                        <span className="legenda-erro">As passwords não coincidem</span>
+                                    )}
+                                </div>
+
+                                <div className="botoes-modal" style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+                                    <button className="btn-modal-cancelar" style={{ flex: 1 }} onClick={fecharModalPassword}>Cancelar</button>
+                                    <button 
+                                        className="btn-modal-confirmar" 
+                                        style={{ flex: 1 }} 
+                                        onClick={lidarComMudarPassword}
+                                        disabled={!passAtual || !passNova || passNova !== passConfirma}
+                                    >
+                                        Atualizar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
             </main>
