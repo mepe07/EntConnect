@@ -11,9 +11,11 @@
  * enquanto a refatoração do Marketplace passa a privilegiar um dono canónico
  * no ID do Utilizador.
  */
+import { Role } from '../../auth/enums/roles.enum';
+
 export interface UtilizadorAutenticado {
     sub: number;
     username: string;
-    role: string;
+    role: Role;
     idPessoa: number;
 }
