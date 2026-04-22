@@ -174,19 +174,44 @@ export class MarketplaceService {
 
     async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutenticado, file?: Express.Multer.File) {
         let urlFoto: string | null = null;
+
+        // Só entramos aqui se o utilizador realmente tiver enviado uma fotografia
         if (file) {
+
+            // 1. Validação do Tipo de Ficheiro (O Porteiro da Extensão)
+            const extensoesPermitidas = /image\/(jpeg|png|webp|jfif)/i;
+
+            if (!extensoesPermitidas.test(file.mimetype)) {
+                throw new BadRequestException(
+                    `Formato inválido. Extensões permitidas: .png, .jpg, .jpeg, .webp, .jfif. O teu ficheiro: ${file.mimetype}`
+                );
+            }
+
+            // 2. Validação do Tamanho (O Porteiro do Peso)
+            const limiteMB = 10;
+            const limiteBytes = limiteMB * 1024 * 1024;
+
+            if (file.size > limiteBytes) {
+                const tamanhoAtualMB = (file.size / (1024 * 1024)).toFixed(2);
+
+                throw new BadRequestException(
+                    `A foto é demasiado pesada. Tamanho máximo: ${limiteMB}MB. Tamanho enviado: ${tamanhoAtualMB}MB.`
+                );
+            }
+
+            // 3. Tudo válido? Então sim, gastamos recursos a guardar na Nuvem!
             const nomeFicheiro = `anuncio_${utilizador.sub}_${Date.now()}`;
             urlFoto = await this.blobsService.guardarFotosMarketplace('marketplace', nomeFicheiro, file);
         }
 
+        // A partir daqui, a magia do Prisma continua exatamente igual...
         return this.prisma.$transaction(async (tx) => {
             const novoArtigo = await tx.artigo.create({
                 data: {
                     Nome: dto.titulo,
                     Descricao: dto.descricao,
-                    // CORREÇÃO: O DTO recebe 'notasInternas', mas a BD chama-se 'Notas'
-                    Notas: dto.notasInternas, 
-                    Foto: urlFoto,
+                    Notas: dto.notasInternas,
+                    Foto: urlFoto, // Vai com o link da cloud, ou com null se não enviou foto
                     Tipo_Anuncio: dto.tipoAnuncio,
                     Origem_Registo: "utilizador",
                     Publicado_No_Marketplace: true,
@@ -201,7 +226,6 @@ export class MarketplaceService {
                 data: {
                     ID_Artigo: novoArtigo.ID_Artigo,
                     Quantidade_Total: dto.quantidadeTotal,
-                    // CORREÇÃO: Mapear os IDs que vêm do DTO
                     ID_Tamanho: dto.idTamanho ? Number(dto.idTamanho) : null,
                     ID_Estado: dto.idEstado ? Number(dto.idEstado) : null,
                 },

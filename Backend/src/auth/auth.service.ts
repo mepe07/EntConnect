@@ -37,6 +37,10 @@ export class AuthService {
             throw new UnauthorizedException('Credenciais inválidas');
         }
 
+        if (user.Ativo == false) {
+            throw new UnauthorizedException('Utilizador inativo. Contacta a direção para mais informações.');
+        }
+
         // 3. O Detetor de Mentiras (validação da hash)
         // Comparamos a string limpa com a hash guardada no campo 'Password' da BD
         const isPasswordValid = await bcrypt.compare(password, user.Password);

@@ -52,7 +52,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body>
+      {/* Adicionado o h-full para garantir que o html/body ocupam o ecrã todo sem scroll indesejado */}
+      <body className="h-full bg-white m-0 p-0">
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -69,26 +70,34 @@ export default function App() {
     setDomLoaded(true);
   }, []);
   
+  // ==========================================
+  // LAYOUT DA APLICAÇÃO (Quando Logado)
+  // ==========================================
   const page = (
-        <>
-            <Header />
-            {/* RETIRÁMOS A PALAVRA 'container' DAQUI! */}
-            <div className="main-wrapper">
-                <NavigationMenu />
-                <div className="body-wrapper ml-[280px] pt-[76px] w-full p-6">
-                  <Outlet />
-                </div>
-            </div>
-        </>
-    );
+      <div className="app-layout min-h-screen bg-[#f8fafc]"> {/* Fundo global cinza claro para evitar barras pretas */}
+          <Header />
+          <div className="main-wrapper">
+              <NavigationMenu />
+              {/* Adicionado min-h-screen para esticar até ao fundo e cobrir a tela toda */}
+              {/*<div className="body-wrapper ml-[280px] pt-[76px] w-full min-h-screen p-6">*/}
+              {/* Usamos mt-[76px] para empurrar abaixo do header, e p-8 para dar um espaço bonito por dentro */}
+              <div className="body-wrapper ml-[280px] mt-[76px] w-full min-h-[calc(100vh-76px)] p-6">
+                <Outlet />
+              </div>
+          </div>
+      </div>
+  );
 
+  // ==========================================
+  // PROTEÇÃO DE ROTAS (Login vs App)
+  // ==========================================
   // If we're on the client, check for the token and conditionally render the page or redirect to login.
   if(domLoaded) {
     const currentUserToken = localStorage.getItem('entconnect_token');
       if (currentUserToken) {
-        return page;
+        return page; // Mostra a App normal (com Header e Sidebar)
       } else {
-        return <Login />;
+        return <Login />; // O Login toma conta do ecrã TODO (ignora o layout acima)
       }
     }
 }

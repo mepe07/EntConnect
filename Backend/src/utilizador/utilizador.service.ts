@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, NotFoundException, ConflictException } from '@nestjs/common';
 import { CreateUtilizadorDto } from './dto/create-utilizador.dto';
 import { UpdateUtilizadorDto } from './dto/update-utilizador.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { UpdatePessoalDto } from './dto/update-pessoal.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
 
 // Serviço para lidar com operações simples CRUD relacionados com utilizadores.
@@ -217,7 +219,7 @@ export class UtilizadorService {
 
     if (utilizador.Pessoa.Professor) {
       const aulasProfessor = await this.prisma.aula.findMany({
-        where: { ID_Professor: idPessoa },
+        where: { ID_Professor: utilizador.Pessoa.Professor.ID_Pessoa, }, // Procura as aulas do prof logado
         include: {
           Coaching: { include: { Sala: true } }, 
           Aula_Aluno: { include: { Aluno: true } } 
@@ -293,4 +295,81 @@ export class UtilizadorService {
       where: { ID_Enc_Educacao: idEncEducacao }
     });
   }
+
+  // Ficheiro: utilizador.service.ts
+  async updateDadosPessoais(idUtilizador: number, updateDto: UpdatePessoalDto) {
+    // Procura o utilizador para descobrir qual é o ID da Pessoa associada
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: idUtilizador },
+    });
+
+    if (!utilizador || !utilizador.ID_Pessoa) {
+      throw new NotFoundException('Utilizador não encontrado.');
+    }
+
+    // Atualiza a tabela Pessoa com o novo NIF e Telemóvel que vêm do DTO
+    return this.prisma.pessoa.update({
+      where: { ID_Pessoa: utilizador.ID_Pessoa },
+      data: {
+        Nome: updateDto.nome,
+        NIF: updateDto.nif,
+        Contacto: updateDto.contacto,
+      },
+    });
+  }
+
+
+  // ====================================================================
+  // OBTER 1 UTILIZADOR (COM OS DADOS PESSOAIS E CARGOS PARA O PERFIL)
+  // ====================================================================
+  async findOne(id: number) {
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: id },
+      include: {
+        Pessoa: {
+          include: {
+            Direcao: true,
+            Professor: true,
+            Enc_Educacao: true,
+          },
+        },
+      },
+    });
+
+    if (!utilizador) throw new NotFoundException('Utilizador não encontrado');
+    return utilizador;
+  }
+
+  async mudarPassword(id: number, dto: ChangePasswordDto) {
+    // 1. Procurar o utilizador
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: id },
+    });
+
+    if (!utilizador) {
+      throw new NotFoundException('Utilizador não encontrado');
+    }
+
+    // 2. O Detetor de Mentiras: Verificar se a password atual enviada 
+    // bate com a hash que está na base de dados
+    const passValida = await bcrypt.compare(dto.passAtual, utilizador.Password);
+
+    if (!passValida) {
+      throw new UnauthorizedException('A password atual está incorreta.');
+    }
+
+    // 3. Gerar a nova Hash (nunca guardamos texto limpo!)
+    const saltRounds = 10;
+    const novaHash = await bcrypt.hash(dto.passNova, saltRounds);
+
+    // 4. Atualizar na Base de Dados
+    await this.prisma.utilizador.update({
+      where: { ID_Utilizador: id },
+      data: { Password: novaHash },
+    });
+
+    return { message: 'Password alterada com sucesso!' };
+  }
+
 }
+

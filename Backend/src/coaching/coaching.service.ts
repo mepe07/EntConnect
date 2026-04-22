@@ -31,7 +31,7 @@ export class CoachingService {
     }
 
     let coaching = await this.prisma.coaching.findFirst({
-      where: { ID_Disponibilidade: idDisponibilidade },
+      //where: { ID_Disponibilidade: idDisponibilidade },
     });
 
     if (!coaching) {
@@ -55,8 +55,8 @@ export class CoachingService {
         ID_Aluno: body.idAluno,
         Observacoes: body.obs || null,
         Data_Inscricao: new Date(),
-        ValorEmFalta: body.valorEmFalta,
-        ID_Enc_Educacao: body.idEncEducacao,
+        //ValorEmFalta: body.valorEmFalta,
+        //ID_Enc_Educacao: body.idEncEducacao,
       },
     });
 
