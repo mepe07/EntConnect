@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AuthService } from '~/services/auth.service';
-import { AdminService } from '~/services/admin.service'; 
+import { AdminService } from '~/services/admin.service';
 import { TableComponent } from '~/components/table/table.component';
 import { TableColumnTypesEnum } from '~/components/table/models/enums/table-column-types.enum';
 import { ButtonTypeEnum } from '~/components/button/models/enums/button-type.enum';
@@ -29,7 +29,7 @@ export default function CoachingAdmin() {
     const userInfo = authService.getUserInfo();
     // const coachingService = new CoachingService();
     const adminService = new AdminService();
-    
+
     // Estados
     const [sessoes, setSessoes] = useState<SessaoAdmin[]>([]);
     const [isModalAberto, setIsModalAberto] = useState(false);
@@ -50,7 +50,7 @@ export default function CoachingAdmin() {
                 adminService.getKpis(),
                 adminService.getSessoesFuturas()
             ]);
-            
+
             setKpis(dadosKpis);
             setSessoes(dadosTabela);
         } catch (error) {
@@ -99,9 +99,9 @@ export default function CoachingAdmin() {
                     alert('Aluno removido com sucesso.');
                     const novaListaAlunos = sessaoSelecionada.alunos.filter(a => a.idAluno !== idAluno);
                     setSessaoSelecionada({ ...sessaoSelecionada, alunos: novaListaAlunos });
-                    
+
                     // Recarregar os dados para atualizar a tabela por trás
-                    fetchDadosDashboard(); 
+                    fetchDadosDashboard();
                 }
             } catch (error) {
                 alert('Erro ao remover aluno.');
@@ -111,7 +111,7 @@ export default function CoachingAdmin() {
 
     return (
         <div className="dashboard-wrapper">
-            
+
             {/* CABEÇALHO */}
             <div className="dashboard-boas-vindas">
                 <div>
@@ -141,7 +141,7 @@ export default function CoachingAdmin() {
                         <i className="fa-solid fa-triangle-exclamation"></i>
                     </div>
                     <div className="info">
-                        <span>Por Validar</span>
+                        <span>Terminadas por validar</span>
                         <h3>{kpis.porValidar}</h3>
                     </div>
                 </div>
@@ -154,33 +154,27 @@ export default function CoachingAdmin() {
                 </div>
             </section>
 
-            {/* TABELA DE SESSÕES */}
-            <section className="conteudo-principal" style={{ marginTop: '24px' }}>
-                <div style={{ width: '100%', backgroundColor: '#fff', padding: '24px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                    <h2 style={{ marginBottom: '16px' }}>Sessões Futuras</h2>
-                    
-                    <TableComponent
-                        config={{
-                            columns: [
-                                { key: 'nomeProfessor', value: 'Professor', type: TableColumnTypesEnum.Default },
-                                { key: 'data', value: 'Data', type: TableColumnTypesEnum.Default },
-                                { key: 'horario', value: 'Horário', type: TableColumnTypesEnum.Default },
-                                { key: 'modalidade', value: 'Modalidade', type: TableColumnTypesEnum.Default },
-                                { key: 'numAlunos', value: 'Nº Alunos Inscritos', type: TableColumnTypesEnum.Default }
-                            ],
-                            actions: [
-                                {
-                                    icon: 'fa-solid fa-eye',
-                                    tooltip: 'Ver Detalhes / Gerir Alunos',
-                                    config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Theme, size: SizeEnum.Regular },
-                                    onClick: (row: any) => abrirModal(row)
-                                }
-                            ]
-                        }}
-                        data={tableData}
-                    />
-                </div>
-            </section>
+            <TableComponent
+                config={{
+                    columns: [
+                        { key: 'nomeProfessor', value: 'Professor', type: TableColumnTypesEnum.Default },
+                        { key: 'data', value: 'Data', type: TableColumnTypesEnum.Default },
+                        { key: 'horario', value: 'Horário', type: TableColumnTypesEnum.Default },
+                        { key: 'modalidade', value: 'Modalidade', type: TableColumnTypesEnum.Default },
+                        { key: 'numAlunos', value: 'Nº Alunos Inscritos', type: TableColumnTypesEnum.Default }
+                    ],
+                    actions: [
+                        {
+                            icon: 'fa-solid fa-eye',
+                            tooltip: 'Ver Detalhes / Gerir Alunos',
+                            config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Theme, size: SizeEnum.Regular },
+                            onClick: (row: any) => abrirModal(row)
+                        }
+                    ]
+                }}
+                data={tableData}
+            />
+
 
             {/* MODAL DE DETALHES E GESTÃO DE ALUNOS */}
             {isModalAberto && sessaoSelecionada && (
@@ -205,7 +199,7 @@ export default function CoachingAdmin() {
                             {sessaoSelecionada.alunos.map(aluno => (
                                 <div key={aluno.idAluno} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', borderBottom: '1px solid #eee' }}>
                                     <span>{aluno.nome}</span>
-                                    <button 
+                                    <button
                                         onClick={() => handleRemoverAluno(aluno.idAluno)}
                                         style={{ background: 'none', border: 'none', color: '#d9534f', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                                     >

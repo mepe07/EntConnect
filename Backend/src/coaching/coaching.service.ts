@@ -20,14 +20,14 @@ export class CoachingService {
   async inscreverAluno(idDisponibilidade: number, body: any) {
 
     const disponibilidadeInfo = await this.prisma.disponibilidade.findUnique({
-      where: {ID_Disponibilidade: idDisponibilidade},
-      select: {MaxAlunos: true}
+      where: { ID_Disponibilidade: idDisponibilidade },
+      select: { MaxAlunos: true }
     });
 
-    if ( !disponibilidadeInfo || (disponibilidadeInfo.MaxAlunos ?? 0) <= 0 ) {
+    if (!disponibilidadeInfo || (disponibilidadeInfo.MaxAlunos ?? 0) <= 0) {
       throw new Error('Não existem vagas disponíveis para esta sessão.');
-      
-      
+
+
     }
 
     let coaching = await this.prisma.coaching.findFirst({
@@ -61,8 +61,8 @@ export class CoachingService {
     });
 
     await this.prisma.disponibilidade.update({
-      where: { 
-        ID_Disponibilidade: idDisponibilidade 
+      where: {
+        ID_Disponibilidade: idDisponibilidade
       },
       data: {
         MaxAlunos: {
@@ -117,8 +117,8 @@ export class CoachingService {
 
     if (coaching && coaching.ID_Disponibilidade) {
       await this.prisma.disponibilidade.update({
-        where: { 
-          ID_Disponibilidade: coaching.ID_Disponibilidade 
+        where: {
+          ID_Disponibilidade: coaching.ID_Disponibilidade
         },
         data: {
           MaxAlunos: {
@@ -170,7 +170,7 @@ export class CoachingService {
       idCoaching: session.ID_Coaching,
       nomeProfessor: session.Professor?.Pessoa?.Nome || 'N/A',
       data: session.Inicio_Coaching ? session.Inicio_Coaching.toLocaleDateString('pt-PT') : 'N/A',
-      horario: session.Inicio_Coaching && session.Duracao 
+      horario: session.Inicio_Coaching && session.Duracao
         ? `${session.Inicio_Coaching.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} - ${(new Date(session.Inicio_Coaching.getTime() + session.Duracao * 60000)).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
         : 'N/A',
       modalidade: session.Disponibilidade?.Modalidade || 'N/A',
@@ -211,11 +211,10 @@ export class CoachingService {
       },
     });
 
-    // Por validar (assumindo que estado 'Pendente' é por validar)
     const porValidar = await this.prisma.coaching.count({
       where: {
         Inicio_Coaching: {
-          gte: now,
+          lt: now,
         },
         Estado_Coaching: {
           Tipo: 'Pendente',

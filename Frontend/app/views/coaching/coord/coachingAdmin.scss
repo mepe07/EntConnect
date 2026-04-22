@@ -3,7 +3,8 @@
    ========================================================================== */
 .dashboard-wrapper {
     padding: 24px 32px;
-    background-color: #f8f9fa; /* Fundo cinza super claro para destacar os cards */
+    background-color: #f8f9fa;
+    /* Fundo cinza super claro para destacar os cards */
     min-height: 100vh;
 
     .dashboard-boas-vindas {
@@ -48,7 +49,8 @@
         transition: transform 0.2s ease, box-shadow 0.2s ease;
 
         &:hover {
-            transform: translateY(-4px); /* Sobe ligeiramente quando passas o rato */
+            transform: translateY(-4px);
+            /* Sobe ligeiramente quando passas o rato */
             box-shadow: 0 10px 15px rgba(0, 0, 0, 0.08);
         }
 
@@ -62,10 +64,25 @@
             font-size: 1.5rem;
 
             /* Cores específicas de cada Card */
-            &.azul { background-color: #e0f2fe; color: #0284c7; }
-            &.verde { background-color: #dcfce7; color: #16a34a; }
-            &.amarelo { background-color: #fef3c7; color: #d97706; }
-            &.roxo { background-color: #f3e8ff; color: #9333ea; }
+            &.azul {
+                background-color: #e0f2fe;
+                color: #0284c7;
+            }
+
+            &.verde {
+                background-color: #dcfce7;
+                color: #16a34a;
+            }
+
+            &.amarelo {
+                background-color: #fef3c7;
+                color: #d97706;
+            }
+
+            &.roxo {
+                background-color: #f3e8ff;
+                color: #9333ea;
+            }
         }
 
         .info {
@@ -90,6 +107,10 @@
     }
 }
 
+table button {
+    border: none !important;
+}
+
 /* ==========================================================================
    MODAL DE GESTÃO DE ALUNOS
    ========================================================================== */
@@ -99,12 +120,14 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(15, 23, 42, 0.6); /* Fundo escuro azulado */
-    backdrop-filter: blur(4px); /* Efeito de desfocagem do fundo (moderno) */
+    background-color: rgba(15, 23, 42, 0.6);
+    /* Fundo escuro azulado */
+    backdrop-filter: blur(4px);
+    /* Efeito de desfocagem do fundo (moderno) */
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 9999; 
+    z-index: 9999;
 
     .modal-conteudo {
         background-color: #ffffff;
@@ -114,7 +137,8 @@
         max-width: 550px;
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         max-height: 90vh;
-        overflow-y: auto; /* Permite scroll se a lista de alunos for gigante */
+        overflow-y: auto;
+        /* Permite scroll se a lista de alunos for gigante */
 
         .modal-cabecalho {
             display: flex;
@@ -124,21 +148,23 @@
             border-bottom: 1px solid #e2e8f0;
             padding-bottom: 16px;
 
-            h2 { 
-                margin: 0; 
-                font-size: 1.5rem; 
-                color: #1e293b; 
+            h2 {
+                margin: 0;
+                font-size: 1.5rem;
+                color: #1e293b;
             }
 
             .btn-fechar-icon {
-                background: none; 
-                border: none; 
-                font-size: 1.25rem; 
+                background: none;
+                border: none;
+                font-size: 1.25rem;
                 cursor: pointer;
                 color: #94a3b8;
                 transition: color 0.2s;
-                
-                &:hover { color: #ef4444; }
+
+                &:hover {
+                    color: #ef4444;
+                }
             }
         }
 
@@ -151,17 +177,18 @@
             border-radius: 8px;
 
             .detalhe-item {
-                display: flex; 
+                display: flex;
                 flex-direction: column;
 
-                span { 
-                    font-size: 0.85rem; 
-                    color: #64748b; 
-                    margin-bottom: 4px; 
+                span {
+                    font-size: 0.85rem;
+                    color: #64748b;
+                    margin-bottom: 4px;
                 }
-                strong { 
-                    color: #334155; 
-                    font-size: 1rem; 
+
+                strong {
+                    color: #334155;
+                    font-size: 1rem;
                 }
             }
         }
@@ -176,7 +203,7 @@
         }
 
         .lista-alunos-modal {
-            > div {
+            >div {
                 transition: background-color 0.2s;
                 border-radius: 6px;
 
@@ -202,25 +229,27 @@
         }
 
         .modal-acoes {
-            display: flex; 
+            display: flex;
             justify-content: flex-end;
             padding-top: 16px;
             border-top: 1px solid #e2e8f0;
 
             .btn-fechar {
-                padding: 10px 24px; 
-                background-color: #f1f5f9; 
+                padding: 10px 24px;
+                background-color: #f1f5f9;
                 color: #475569;
-                border: none; 
-                border-radius: 6px; 
-                cursor: pointer; 
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
                 font-weight: 600;
                 transition: background-color 0.2s;
 
-                &:hover { 
-                    background-color: #e2e8f0; 
+                &:hover {
+                    background-color: #e2e8f0;
                 }
             }
         }
     }
+
+    
 }
