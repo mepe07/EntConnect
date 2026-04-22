@@ -30,7 +30,7 @@ export class AuthService {
                 const token = await response.json();
                 const user = jwtDecode(token?.access_token);
 
-                this._userToken = token;
+                this._userToken = token?.access_token;
                 this._userInfo = user;
 
                 localStorage.setItem('entconnect_token', token?.access_token);
