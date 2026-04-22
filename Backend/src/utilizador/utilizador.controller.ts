@@ -1,6 +1,6 @@
 import { 
   Controller, Get, Post, Put, Body, Patch, Param, Delete, 
-  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe 
+  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator,Query
 } from '@nestjs/common'; 
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -314,10 +314,13 @@ export class ProfessorController {
     return this.professorService.create(createProfessorDto);
   }
 
+// ENDPOINT PARA LISTAR COM PAGINAÇÃO
   @Get()
-  @ApiOperation({ summary: 'Listar todos os professores com os seus dados pessoais' })
-  findAll() {
-    return this.professorService.findAll();
+  @ApiOperation({ summary: 'Listar professores com paginação (20 por página)' })
+  findAll(@Query('page') page: string) {
+    // Se não enviar página, assume a 1. O "+" converte string para número.
+    const paginaAtual = page ? +page : 1;
+    return this.professorService.findAll(paginaAtual);
   }
 
   @Patch(':id')
