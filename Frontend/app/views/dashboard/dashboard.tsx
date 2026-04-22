@@ -1,13 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router'; // Importar o hook de navegação
 import { AuthService } from '~/services/auth.service';
 import './dashboard.scss';
 
 export function Dashboard() {
+    
     const authService = new AuthService();
     const userInfo = authService.getUserInfo();
-  
+    const navigate = useNavigate();
+
     // LÓGICA: Dar as boas vindas com base no nome do utilizador logado
     const nomeUtilizador = userInfo?.username || "Diretora";
+
+    // ==========================================
+    // ESTADOS: AÇÕES RÁPIDAS
+    // ==========================================
+    // Controla se estamos no "modo de edição" (lápis ativado)
+    const [editandoAcoes, setEditandoAcoes] = useState(false);
+
+    // Lista de todas as ações disponíveis no sistema
+    const [acoesRapidas, setAcoesRapidas] = useState([
+        { id: 1, nome: 'Novo Aluno', icone: 'fa-solid fa-plus', visivel: true, rota: '/admin/utilizadores' },
+        { id: 2, nome: 'Criar Fatura', icone: 'fa-solid fa-file-invoice', visivel: true, rota: '/faturas/nova' },
+        { id: 3, nome: 'Agendar Aula', icone: 'fa-solid fa-calendar-plus', visivel: true, rota: '/agenda' },
+        { id: 5, nome: 'Relatório Mensal', icone: 'fa-solid fa-chart-pie', visivel: false, rota: '/relatorios' },
+    ]);
+
+    // Função que inverte a visibilidade de uma ação específica
+    const alternarVisibilidade = (id: number) => {
+        setAcoesRapidas(acoesAtuais => 
+            acoesAtuais.map(acao => 
+                acao.id === id ? { ...acao, visivel: !acao.visivel } : acao
+            )
+        );
+    };
 
     return (
         <div className="dashboard-wrapper">
@@ -62,11 +88,55 @@ export function Dashboard() {
                 <div className="painel-grafico">
                     <div className="painel-header">
                         <h2>Ações Rápidas</h2>
+                        {/* Botão de Lápis / Visto */}
+                        <button 
+                            className="btn-icone-acao" 
+                            onClick={() => setEditandoAcoes(!editandoAcoes)}
+                            title={editandoAcoes ? "Guardar" : "Editar Ações"}
+                        >
+                            <i className={`fa-solid ${editandoAcoes ? 'fa-check text-green-600' : 'fa-pen text-slate-400'}`}></i>
+                        </button>
                     </div>
+
                     <div className="painel-corpo acoes-rapidas">
-                        <button className="btn-acao"><i className="fa-solid fa-plus"></i> Novo Aluno</button>
-                        <button className="btn-acao"><i className="fa-solid fa-file-invoice"></i> Criar Fatura</button>
-                        <button className="btn-acao"><i className="fa-solid fa-calendar-plus"></i> Agendar Aula</button>
+                        {editandoAcoes ? (
+                            /* MODO EDIÇÃO */
+                            <div className="lista-edicao-acoes">
+                                {acoesRapidas.map((acao) => (
+                                    <div key={acao.id} className={`item-edicao ${acao.visivel ? 'ativo' : 'inativo'}`}>
+                                        {/* Ícone e Texto juntos dentro do quadrado */}
+                                        <i className={`icone-principal ${acao.icone}`}></i>
+                                        <span className="texto-acao">{acao.nome}</span>
+                                        
+                                        {/* Olho flutuante no canto */}
+                                        <button 
+                                            onClick={() => alternarVisibilidade(acao.id)}
+                                            className="btn-toggle-olho"
+                                        >
+                                            <i className={`fa-solid ${acao.visivel ? 'fa-eye' : 'fa-eye-slash'}`}></i>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            /* MODO VISUALIZAÇÃO */
+                            <div className="grelha-botoes-acoes">
+                                {acoesRapidas.filter(a => a.visivel).length > 0 ? (
+                                    acoesRapidas.filter(a => a.visivel).map((acao) => (
+                                        <button 
+                                            key={acao.id} 
+                                            className="btn-acao"
+                                            onClick={() => navigate(acao.rota)} //rotas
+                                        >
+                                            <i className={`icone-principal ${acao.icone}`}></i>
+                                            <span className="texto-acao">{acao.nome}</span>
+                                        </button>
+                                    ))
+                                ) : (
+                                    <p className="texto-vazio-acoes">Não tens ações visíveis. Clica no lápis para adicionar.</p>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -106,4 +176,4 @@ export function Dashboard() {
             </section>
         </div>
     );
-} 
+}

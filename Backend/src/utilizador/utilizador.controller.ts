@@ -9,25 +9,32 @@ import {
   ApiOperation, ApiTags, ApiResponse, ApiParam, ApiConsumes, ApiBody 
 } from '@nestjs/swagger';
 
-// Serviços e DTOs
+// Serviços
 import { UtilizadorService } from './utilizador.service';
 import { DispobilidadeService } from './professor/Disponibilidade.service';
 import { UtilizadorImportService } from './ImportUsers/utilizador-import.service';
 import { BlobsService } from '../Infraestrutura/Blobs/blobs.service'; 
+import { ProfessorService } from './professor/professor.service';
 
+// DTOs
 import { CreateUtilizadorDto } from './dto/create-utilizador.dto';
 import { UpdateUtilizadorDto } from './dto/update-utilizador.dto';
 import { CreateDisponibilidadeDto } from './dto/create-disponibilidade.dto';
 import { UpdateDisponibilidadeDto } from './dto/update-disponibilidade.dto';
-import { ProfessorService } from './professor/professor.service';
 import { CreateProfessorDto } from './dto/create-professor.dto';
 import { UpdateProfessorDto } from './dto/update-professor.dto';
+import { UpdatePessoalDto } from './dto/update-pessoal.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+// Tipagem do Multer
 import { MarcacoesService } from './EE/marcacoes.service';
 
 // Tipagem do Multer (Se não tiver o @types/multer instalado, mas ajuda o TS)
 import 'multer';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 
+// ============================================================================
+// CONTROLADOR DE UTILIZADORES
+// ============================================================================
 @ApiTags('Utilizadores')
 @Controller('utilizador')
 export class UtilizadorController {
@@ -39,19 +46,20 @@ export class UtilizadorController {
     private readonly blobsService: BlobsService,
   ) {}
 
-  /**
-   * Obtém a lista completa de todos os utilizadores registados no sistema.
-   * A resposta inclui os dados de login combinados com os dados pessoais (Nome, Email, etc.)
-   * e um array com os cargos que a pessoa desempenha (Professor, Aluno, etc.).
-   * Os dados sensíveis, como as passwords, são automaticamente omitidos da resposta.
-   *
-   * @returns {Promise<any[]>} Um array de objetos formatados com a informação de cada utilizador.
-   */
   @Get()
   @ApiOperation({summary: 'Listar todos os utilizadores'})
   @ApiResponse({status:200})
   async getAllUsers() {
     return this.utilizadorService.getAllUsers();
+  }
+
+  
+  @Get(':id')
+  @ApiOperation({ summary: 'Obter um utilizador pelo ID (inclui dados pessoais)' })
+  @ApiResponse({ status: 200, description: 'Utilizador encontrado.' })
+  @ApiResponse({ status: 404, description: 'Utilizador não encontrado.' })
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.utilizadorService.findOne(id);
   }
 
   @Patch(':id/block')
@@ -86,8 +94,8 @@ export class UtilizadorController {
    * @param file - O ficheiro CSV capturado pelo interceptor.
    */
   @Post('importusersblob')
-  @UseInterceptors(FileInterceptor('file')) // Dizemos ao Nest para capturar o ficheiro
-  @ApiConsumes('multipart/form-data') // Atualizamos o Swagger para mostrar o botão de upload
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload direto, importação e limpeza do Azure num só passo' })
   @ApiBody({
     description: 'Ficheiro CSV com os dados dos utilizadores a importar',
@@ -105,47 +113,24 @@ export class UtilizadorController {
   @ApiResponse({ status: 400, description: 'Ficheiro não especificado ou formato inválido.' })
   @ApiResponse({ status: 500, description: 'Erro interno ao processar a importação.' })
   async importarDoBlob(@UploadedFile() file: Express.Multer.File) {
-    
-    // Tratamento de Erro: Verifica se o utilizador anexou mesmo um ficheiro
     if (!file) {
       throw new BadRequestException('Por favor, selecione um ficheiro CSV para importar.');
     }
 
-    // Guardamos os nomes para o Azure
     const nomeFicheiroCompleto = file.originalname;
     const nomeSemExtensao = nomeFicheiroCompleto.split('.').slice(0, -1).join('.');
 
     try {
-      // PASSO 1: Enviar para o Azure
       await this.blobsService.uploadFicheiro('importar-csv', file, nomeSemExtensao || 'import_temp');
-
-      // PASSO 2: O teu serviço lê o ficheiro do Azure e processa tudo na Base de Dados
       const resultadoImportacao = await this.importService.importarDeBlob(nomeFicheiroCompleto);
-
-      // PASSO 3: Limpeza imediata! Apagar do Azure.
       await this.blobsService.apagarFicheiro('importar-csv', nomeFicheiroCompleto);
-
-      // Devolvemos a mensagem de sucesso (que o teu serviço já cria tão bem)
       return resultadoImportacao;
-
     } catch (error) {
-      // SEGURANÇA: Se a importação rebentar a meio (ex: CSV mal formatado), 
-      // tentamos apagar o ficheiro à mesma para ele não ficar lá perdido!
       await this.blobsService.apagarFicheiro('importar-csv', file.originalname);
-      
-      throw error; // Re-lança o erro para aparecer no Frontend
+      throw error; 
     }
   }
 
-  
-  /**
-   * Faz o upload físico de uma foto para o Azure e atualiza o URL na Base de Dados.
-   * 1. Recebe o ficheiro via Multipart Form Data.
-   * 2. Envia para o Azure Blob Storage.
-   * 3. Guarda o URL gerado na tabela Pessoa (ligada ao ID_Utilizador).
-   * @param id ID do utilizador (ID_Utilizador)
-   * @param file Ficheiro de imagem capturado pelo interceptor
-   */
   @Put(':id/uploadphoto')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
@@ -163,38 +148,30 @@ export class UtilizadorController {
   })
   async UploadPhoto(
     @Param('id') id: string,
-    @UploadedFile() file: Express.Multer.File, // 👈 Tiramos o ParseFilePipe daqui
+    @UploadedFile() file: Express.Multer.File,
   ) {
-    // 1. Verifica se o ficheiro foi anexado
     if (!file) {
       throw new BadRequestException('Por favor, selecione uma foto.');
     }
 
-    // 2. Validação do Tipo de Ficheiro (incluindo o teu jfif)
     const extensoesPermitidas = /image\/(jpeg|png|webp|jfif)/i;
-    
     if (!extensoesPermitidas.test(file.mimetype)) {
       throw new BadRequestException(
         `Formato inválido. Extensões permitidas: .png, .jpg, .jpeg, .webp, .jfif. O teu ficheiro: ${file.mimetype}`
       );
     }
 
-    // 3. Validação do Tamanho (com cálculo em MB)
     const limiteMB = 10;
     const limiteBytes = limiteMB * 1024 * 1024;
 
     if (file.size > limiteBytes) {
-      // Converte o tamanho do ficheiro de Bytes para MB (com 2 casas decimais)
       const tamanhoAtualMB = (file.size / (1024 * 1024)).toFixed(2);
-      
       throw new BadRequestException(
-        `A foto é demasiado pesada. Tamanho máximo: ${limiteMB}MB. Tamanho enviado: ${tamanhoAtualMB}MB. Extensões permitidas: .png, .jpg, .jpeg, .webp, .jfif.`
+        `A foto é demasiado pesada. Tamanho máximo: ${limiteMB}MB. Tamanho enviado: ${tamanhoAtualMB}MB.`
       );
     }
 
-    // 4. Se passou nas validações, faz o upload!
     const nomeParaAzure = `user${id}`;
-
     const urlGerado = await this.blobsService.uploadFicheiro(
       'fotos-pessoas', 
       file, 
@@ -204,41 +181,20 @@ export class UtilizadorController {
     return this.utilizadorService.UploadPhoto(urlGerado, +id);
   }
 
-
-// src/utilizador/utilizador.controller.ts
-
-  /**
-   * Obtém o URL da foto de perfil de um utilizador.
-   * * Vai à Base de Dados procurar o campo da foto associado à Pessoa.
-   * @param {string} id - O ID do utilizador.
-   * @returns Um objeto com o URL da foto para ser usado no frontend (ex: na tag <img src="...">).
-   */
   @Get(':id/foto')
   @ApiOperation({ summary: 'Obter o URL da foto de perfil do utilizador' })
   @ApiResponse({ status: 200, description: 'URL retornado com sucesso.' })
   @ApiResponse({ status: 404, description: 'Utilizador não encontrado.' })
   async getFotoPerfil(@Param('id') id: string) {
-    
-    // Chama o serviço passando o ID convertido para número
     return this.utilizadorService.getFotoPerfil(+id);
   }
   
-
-
-  /**
-   * Remove a foto de perfil de um utilizador.
-   * @param {string} id - O ID do utilizador a atualizar.
-   * @returns Uma mensagem de sucesso.
-   */
   @Patch(':id/removephoto')
   @ApiOperation({ summary: 'Remover a foto de perfil do utilizador (coloca a null)' })
   @ApiResponse({ status: 200, description: 'A foto de perfil foi removida com sucesso.' })
   @ApiResponse({ status: 404, description: 'O utilizador com o ID fornecido não foi encontrado.' })
   async RemovePhoto(@Param('id') id: string) {
-    
     await this.utilizadorService.RemovePhoto(+id);
-    
-    // Como estamos apenas a apagar, devolver uma mensagem simples fica muito elegante no frontend
     return { message: `A foto do utilizador com ID ${id} foi removida com sucesso.` };
   }
 
@@ -250,12 +206,6 @@ export class UtilizadorController {
     return this.utilizadorService.createUser(createUtilizadorDto);
   }
   
-  
- /**
-   * Retorna a lista de aulas/ensaios de um utilizador.
-   * A lógica no serviço deteta automaticamente se é Professor ou Aluno.
-   * @param id ID do Utilizador logado
-   */
   @Get(':id/aulas')
   @ApiOperation({ summary: 'Obter o horário de aulas/ensaios (Professor ou Aluno)' })
   @ApiResponse({ status: 200, description: 'Lista de aulas devolvida com sucesso.' })
@@ -263,8 +213,34 @@ export class UtilizadorController {
   async getMinhasAulas(@Param('id') id: string) {
     return this.utilizadorService.getMinhasAulas(+id);
   }
-    
+  
+  // NOVO ENDPOINT DE ATUALIZAÇÃO PESSOAL COM DTO E SWAGGER
+ @Put(':id/update-pessoal')
+  @ApiOperation({ 
+    summary: 'Atualizar dados pessoais (Nome, NIF e Contacto)', 
+    description: 'Permite que o utilizador altere o seu Nome, NIF e Contacto Telefónico na tabela Pessoa.' 
+  })
+  @ApiParam({ name: 'id', description: 'ID do Utilizador', example: 1 })
+  @ApiBody({ type: UpdatePessoalDto })
+  @ApiResponse({ status: 200, description: 'Dados atualizados com sucesso.' })
+  @ApiResponse({ status: 404, description: 'Utilizador ou Pessoa associada não encontrados.' })
+  @ApiResponse({ status: 400, description: 'Dados de entrada inválidos.' })
+  async updatePessoal(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateDto: UpdatePessoalDto,
+  ) {
+    // O controller continua a passar o pacote inteiro, que agora já inclui o 'nome'
+    return this.utilizadorService.updateDadosPessoais(id, updateDto);
+  }
 
+  @Put(':id/change-password')
+  @ApiOperation({ summary: 'Alterar a password do utilizador' })
+  async changePassword(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.utilizadorService.mudarPassword(id, dto);
+  }
 
   @Get('enc-educacao/:id/alunos')
   @ApiOperation({summary: 'Obter alunos de um Encarregado de Educação'})
@@ -299,40 +275,34 @@ export class UtilizadorController {
 
   @Post('professor/:id/adicionar-disponibilidade')
   @ApiOperation({summary: 'Criar disponibilidade para um professor'})
-  @ApiParam({ 
-    name: 'id', 
-    description: 'Identificador único (ID) do professor',
-    example: 1,
-    type: Number
-  })
+  @ApiParam({ name: 'id', description: 'Identificador único (ID) do professor', example: 1, type: Number })
   @ApiResponse({status:201})
   async createDisponibility(
     @Param('id') id: string, 
-    @Body() createDisponibilidadeDto: CreateDisponibilidadeDto) {
+    @Body() createDisponibilidadeDto: CreateDisponibilidadeDto
+  ) {
     return this.dispobilidadeService.createAvailability(+id, createDisponibilidadeDto);
   }
 
   @Patch('professor/disponibilidade/:id/atualizar-disponibilidade')
   @ApiOperation({summary: 'Atualizar disponibilidade - Ex: aprovar'})
-  @ApiParam({ 
-    name: 'id', 
-    description: 'Identificador único (ID) da Disponibilidade a alterar',
-    example: 1,
-    type: Number
-  })
+  @ApiParam({ name: 'id', description: 'Identificador único (ID) da Disponibilidade', example: 1, type: Number })
   @ApiResponse({status:200})
   async updateDisponibility(
     @Param('id') idDisponibilidade: string,
-    @Body() updateDisponibilidadeDto: UpdateDisponibilidadeDto) {
-      return this.dispobilidadeService.updateAvailability(+idDisponibilidade, updateDisponibilidadeDto);
-    } 
-  }
+    @Body() updateDisponibilidadeDto: UpdateDisponibilidadeDto
+  ) {
+    return this.dispobilidadeService.updateAvailability(+idDisponibilidade, updateDisponibilidadeDto);
+  } 
+} // <-- Fim do UtilizadorController
 
-    // CONTROLER PARA GERIR PROFESSORES, EX: CRIAR UM PROFESSOR
 
-  @ApiTags('Professores')
-  @Controller('professor')
-  export class ProfessorController {
+// ============================================================================
+// CONTROLADOR DE PROFESSORES
+// ============================================================================
+@ApiTags('Professores')
+@Controller('professor')
+export class ProfessorController {
   
   constructor(private readonly professorService: ProfessorService) {}
 
@@ -353,7 +323,6 @@ export class UtilizadorController {
     return this.professorService.findAll(paginaAtual);
   }
 
-  // ENDPOINT PARA EDITAR (PATCH)
   @Patch(':id')
   @ApiOperation({ summary: 'Editar os dados de um professor existente' })
   update(
@@ -363,11 +332,9 @@ export class UtilizadorController {
     return this.professorService.update(id, updateProfessorDto);
   }
 
-  // ENDPOINT PARA REMOVER (DELETE)
   @Delete(':id')
   @ApiOperation({ summary: 'Remover um professor (e os seus dados pessoais)' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.professorService.remove(id);
   }
 }
-
