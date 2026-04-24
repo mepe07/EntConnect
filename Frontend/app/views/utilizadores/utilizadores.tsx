@@ -67,12 +67,18 @@ export function Utilizadores() {
     const [modalAberto, setModalAberto] = useState(false);
     const [utilizadorSelecionado, setUtilizadorSelecionado] = useState<Utilizador | null>(null);
 
+    // Dados pessoais editáveis
+    const [editNome, setEditNome] = useState('');
+    const [editContacto, setEditContacto] = useState('');
+    const [editNif, setEditNif] = useState('');
+    const [erroDados, setErroDados] = useState('');
+    const [loadingSaveDados, setLoadingSaveDados] = useState(false);
+
     // Password
     const [novaPassword, setNovaPassword] = useState('');
     const [confirmarPassword, setConfirmarPassword] = useState('');
     const [mostrarPassword, setMostrarPassword] = useState(false);
     const [erroPassword, setErroPassword] = useState('');
-    const [loadingSave, setLoadingSave] = useState(false);
 
     // Foto
     const [fotoAtual, setFotoAtual] = useState<string | null>(null);
@@ -136,6 +142,10 @@ export function Utilizadores() {
     // ==========================================
     const abrirModal = async (utilizador: Utilizador) => {
         setUtilizadorSelecionado(utilizador);
+        setEditNome(utilizador.nome || '');
+        setEditContacto(utilizador.contacto || '');
+        setEditNif(utilizador.nif || '');
+        setErroDados('');
         setNovaPassword('');
         setConfirmarPassword('');
         setMostrarPassword(false);
@@ -156,6 +166,10 @@ export function Utilizadores() {
     const fecharModal = () => {
         setModalAberto(false);
         setUtilizadorSelecionado(null);
+        setEditNome('');
+        setEditContacto('');
+        setEditNif('');
+        setErroDados('');
         setFotoAtual(null);
         setFotoPreview(null);
         setFicheiroFoto(null);
@@ -325,34 +339,71 @@ export function Utilizadores() {
     };
 
     // ==========================================
-    // PASSWORD
+    // GUARDAR TUDO (dados pessoais + password opcional)
     // ==========================================
-    const handleGuardarPassword = async () => {
+    const handleGuardarTudo = async () => {
+        setErroDados('');
         setErroPassword('');
 
-        if (!novaPassword) {
-            setErroPassword('Por favor, introduz uma nova password.');
+        // Validação dos dados pessoais
+        if (!editNome.trim() || editNome.trim().length < 3) {
+            setErroDados('O nome deve ter pelo menos 3 caracteres.');
             return;
         }
-        if (novaPassword.length < 6) {
-            setErroPassword('A password deve ter pelo menos 6 caracteres.');
+        if (editNif && !/^\d{9}$/.test(editNif)) {
+            setErroDados('O NIF deve ter exatamente 9 dígitos numéricos.');
             return;
         }
-        if (novaPassword !== confirmarPassword) {
-            setErroPassword('As passwords não coincidem.');
+        if (editContacto && !/^\d{9}$/.test(editContacto)) {
+            setErroDados('O contacto deve ter exatamente 9 dígitos numéricos.');
             return;
         }
 
-        setLoadingSave(true);
+        // Validação da password — só se pelo menos um dos campos estiver preenchido
+        const passwordPreenchida = novaPassword || confirmarPassword;
+        if (passwordPreenchida) {
+            if (novaPassword.length < 6) {
+                setErroPassword('A password deve ter pelo menos 6 caracteres.');
+                return;
+            }
+            if (novaPassword !== confirmarPassword) {
+                setErroPassword('As passwords não coincidem.');
+                return;
+            }
+        }
+
+        setLoadingSaveDados(true);
         try {
-            await utilizadorService.updatePassword(utilizadorSelecionado!.idUtilizador, novaPassword);
-            setNovaPassword('');
-            setConfirmarPassword('');
-            alert('Password atualizada com sucesso!');
-        } catch {
-            setErroPassword('Erro ao atualizar a password. Tenta novamente.');
+            // Guardar dados pessoais
+            await utilizadorService.updatePessoal(utilizadorSelecionado!.idUtilizador, {
+                nome: editNome.trim(),
+                contacto: editContacto.trim() || undefined,
+                nif: editNif.trim() || undefined,
+            });
+
+            const updated = {
+                ...utilizadorSelecionado!,
+                nome: editNome.trim(),
+                contacto: editContacto.trim(),
+                nif: editNif.trim(),
+            };
+            setUtilizadorSelecionado(updated);
+            setUtilizadores(prev =>
+                prev.map(u => u.idUtilizador === updated.idUtilizador ? updated : u)
+            );
+
+            // Guardar password (apenas se preenchida)
+            if (passwordPreenchida) {
+                await utilizadorService.updatePassword(utilizadorSelecionado!.idUtilizador, novaPassword);
+                setNovaPassword('');
+                setConfirmarPassword('');
+            }
+
+            alert('Alterações guardadas com sucesso!');
+        } catch (error: any) {
+            setErroDados(error?.message || 'Erro ao guardar as alterações. Tenta novamente.');
         } finally {
-            setLoadingSave(false);
+            setLoadingSaveDados(false);
         }
     };
 
@@ -649,9 +700,15 @@ export function Utilizadores() {
                             </div>
 
                             <div className="form-row">
-                                <div className="form-group readonly">
+                                <div className="form-group">
                                     <label>Nome Completo</label>
-                                    <div className="input-readonly">{utilizadorSelecionado.nome}</div>
+                                    <input
+                                        type="text"
+                                        className="input-campo"
+                                        value={editNome}
+                                        onChange={(e) => { setEditNome(e.target.value); setErroDados(''); }}
+                                        placeholder="Nome completo"
+                                    />
                                 </div>
                                 <div className="form-group readonly">
                                     <label>Username</label>
@@ -664,16 +721,28 @@ export function Utilizadores() {
                                     <label>Email</label>
                                     <div className="input-readonly">{utilizadorSelecionado.email}</div>
                                 </div>
-                                <div className="form-group readonly">
+                                <div className="form-group">
                                     <label>Contacto</label>
-                                    <div className="input-readonly">{utilizadorSelecionado.contacto || '—'}</div>
+                                    <input
+                                        type="text"
+                                        className="input-campo"
+                                        value={editContacto}
+                                        onChange={(e) => { setEditContacto(e.target.value); setErroDados(''); }}
+                                        placeholder="Ex: 912345678"
+                                    />
                                 </div>
                             </div>
 
                             <div className="form-row">
-                                <div className="form-group readonly">
+                                <div className="form-group">
                                     <label>NIF</label>
-                                    <div className="input-readonly">{utilizadorSelecionado.nif || '—'}</div>
+                                    <input
+                                        type="text"
+                                        className="input-campo"
+                                        value={editNif}
+                                        onChange={(e) => { setEditNif(e.target.value); setErroDados(''); }}
+                                        placeholder="Ex: 123456789"
+                                    />
                                 </div>
                                 <div className="form-group readonly">
                                     <label>Cargo</label>
@@ -682,6 +751,12 @@ export function Utilizadores() {
                                     </div>
                                 </div>
                             </div>
+
+                            {erroDados && (
+                                <div className="mensagem-erro">
+                                    <i className="fa-solid fa-triangle-exclamation"></i> {erroDados}
+                                </div>
+                            )}
 
                             <div className="separador"></div>
 
@@ -739,10 +814,10 @@ export function Utilizadores() {
                             </button>
                             <button
                                 className="btn-primario"
-                                onClick={handleGuardarPassword}
-                                disabled={loadingSave}
+                                onClick={handleGuardarTudo}
+                                disabled={loadingSaveDados}
                             >
-                                {loadingSave
+                                {loadingSaveDados
                                     ? <><i className="fa-solid fa-spinner fa-spin"></i> A guardar...</>
                                     : <><i className="fa-solid fa-floppy-disk"></i> Guardar Alterações</>
                                 }
