@@ -208,6 +208,7 @@ export class UtilizadorController {
     return this.utilizadorService.createUser(createUtilizadorDto);
   }
 
+  /*
   @Get(':id/aulas')
   @ApiOperation({ summary: 'Obter o horário de aulas/ensaios (Professor ou Aluno)' })
   @ApiResponse({ status: 200, description: 'Lista de aulas devolvida com sucesso.' })
@@ -216,6 +217,8 @@ export class UtilizadorController {
     return this.utilizadorService.getMinhasAulas(+id);
   }
 
+  }*/
+  
   // NOVO ENDPOINT DE ATUALIZAÇÃO PESSOAL COM DTO E SWAGGER
   @Put(':id/update-pessoal')
   @ApiOperation({

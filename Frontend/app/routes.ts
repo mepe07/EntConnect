@@ -25,19 +25,20 @@ export default [
 
     // Aprovar disponibilidade dos professores
     route("/admin/professores-disponibilidade", "routes/aprovacoes.tsx"),
-        // Rota dos professores
+
+    // Rota dos professores
     route("admin/professores", "routes/professor.tsx"),
 
     // NavBar diz: path: '/relatorios/faturacao'
     route("relatorios/faturacao", "routes/faturacao.tsx"),
 
-    // Rota solta do marketplace
+    // Rota "Gerir Inventário"
     route("marketplace/inventario", "routes/inventario.tsx"),
 
-    // Rota solta do marketplace
+    // Rota "MarketPlace"
     route("marketplace/anuncios", "routes/marketplace.tsx"),
 
-    // Rota solta do marketplace
+    // Rota "Registo de Moderação"
     route("marketplace/atividades", "routes/atividades.tsx"),
 
     // Rota de testes
@@ -49,7 +50,6 @@ export default [
     // Rota das estatísticas
     route("relatorios/estatisticas", "routes/estatisticas.tsx"),
 
-    // Rota da oferta de coaching
     // Rota da oferta de coaching
     route("/coaching/oferta", "routes/ofertaCoaching.tsx"),
 
