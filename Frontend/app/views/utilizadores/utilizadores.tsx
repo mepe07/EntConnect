@@ -62,6 +62,12 @@ export function Utilizadores() {
     const [loading, setLoading] = useState(true);
 
     // ==========================================
+    // PAGINAÇÃO
+    // ==========================================
+    const [paginaAtual, setPaginaAtual] = useState(1);
+    const [itensPorPagina, setItensPorPagina] = useState(10);
+
+    // ==========================================
     // ESTADO DO MODAL VER/EDITAR
     // ==========================================
     const [modalAberto, setModalAberto] = useState(false);
@@ -71,6 +77,7 @@ export function Utilizadores() {
     const [editNome, setEditNome] = useState('');
     const [editContacto, setEditContacto] = useState('');
     const [editNif, setEditNif] = useState('');
+    const [editCargo, setEditCargo] = useState('');
     const [erroDados, setErroDados] = useState('');
     const [loadingSaveDados, setLoadingSaveDados] = useState(false);
 
@@ -145,6 +152,7 @@ export function Utilizadores() {
         setEditNome(utilizador.nome || '');
         setEditContacto(utilizador.contacto || '');
         setEditNif(utilizador.nif || '');
+        setEditCargo(utilizador.cargo || '');
         setErroDados('');
         setNovaPassword('');
         setConfirmarPassword('');
@@ -169,6 +177,7 @@ export function Utilizadores() {
         setEditNome('');
         setEditContacto('');
         setEditNif('');
+        setEditCargo('');
         setErroDados('');
         setFotoAtual(null);
         setFotoPreview(null);
@@ -381,11 +390,17 @@ export function Utilizadores() {
                 nif: editNif.trim() || undefined,
             });
 
+            // Guardar cargo (apenas se foi alterado)
+            if (editCargo !== utilizadorSelecionado!.cargo) {
+                await utilizadorService.updateCargo(utilizadorSelecionado!.idUtilizador, editCargo);
+            }
+
             const updated = {
                 ...utilizadorSelecionado!,
                 nome: editNome.trim(),
                 contacto: editContacto.trim(),
                 nif: editNif.trim(),
+                cargo: editCargo,
             };
             setUtilizadorSelecionado(updated);
             setUtilizadores(prev =>
@@ -430,6 +445,23 @@ export function Utilizadores() {
             ));
         } catch {
             alert(`Erro ao ${acao} o utilizador.`);
+        }
+    };
+
+    // ==========================================
+    // ELIMINAR UTILIZADOR
+    // ==========================================
+    const handleEliminarUtilizador = async (utilizador: Utilizador) => {
+        const confirmacao = window.confirm(
+            `Tens a certeza que queres eliminar o utilizador "${utilizador.nome}"?\nEsta ação é irreversível.`
+        );
+        if (!confirmacao) return;
+
+        try {
+            await utilizadorService.deleteUser(utilizador.idUtilizador);
+            setUtilizadores(prev => prev.filter(u => u.idUtilizador !== utilizador.idUtilizador));
+        } catch (error: any) {
+            alert(error?.message || 'Erro ao eliminar o utilizador.');
         }
     };
 
@@ -481,6 +513,19 @@ export function Utilizadores() {
         u.cargo?.toLowerCase().includes(termoPesquisa.toLowerCase())
     );
 
+    const totalPaginas = Math.ceil(utilizadoresFiltrados.length / itensPorPagina);
+    const indiceInicio = (paginaAtual - 1) * itensPorPagina;
+    const utilizadoresPagina = utilizadoresFiltrados.slice(indiceInicio, indiceInicio + itensPorPagina);
+
+    const irParaPagina = (pagina: number) => {
+        if (pagina >= 1 && pagina <= totalPaginas) setPaginaAtual(pagina);
+    };
+
+    const handleItensPorPagina = (valor: number) => {
+        setItensPorPagina(valor);
+        setPaginaAtual(1);
+    };
+
     const fotoModalSrc = fotoPreview ?? fotoAtual;
 
     // ==========================================
@@ -516,7 +561,7 @@ export function Utilizadores() {
                         id="pesquisa-utilizador"
                         placeholder="🔍 Pesquisar por nome, email ou cargo..."
                         value={termoPesquisa}
-                        onChange={(e) => setTermoPesquisa(e.target.value)}
+                        onChange={(e) => { setTermoPesquisa(e.target.value); setPaginaAtual(1); }}
                     />
                 </div>
             </div>
@@ -547,7 +592,7 @@ export function Utilizadores() {
                                 <td colSpan={7} className="tabela-vazia">Nenhum utilizador encontrado.</td>
                             </tr>
                         ) : (
-                            utilizadoresFiltrados.map((u) => (
+                            utilizadoresPagina.map((u) => (
                                 <tr key={u.idUtilizador}>
                                     <td className="id-coluna">#{u.idUtilizador}</td>
                                     <td>
@@ -594,6 +639,13 @@ export function Utilizadores() {
                                         >
                                             <i className={`fa-solid ${u.ativo ? 'fa-lock' : 'fa-lock-open'}`}></i>
                                         </button>
+                                        <button
+                                            className="btn-icone eliminar"
+                                            title="Eliminar utilizador"
+                                            onClick={() => handleEliminarUtilizador(u)}
+                                        >
+                                            <i className="fa-solid fa-trash"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             ))
@@ -601,6 +653,82 @@ export function Utilizadores() {
                     </tbody>
                 </table>
             </div>
+
+            {/* PAGINAÇÃO */}
+            {!loading && utilizadoresFiltrados.length > 0 && (
+                <div className="paginacao">
+                    <div className="paginacao-info">
+                        <span>Mostrar</span>
+                        <select
+                            className="paginacao-select"
+                            value={itensPorPagina}
+                            onChange={(e) => handleItensPorPagina(Number(e.target.value))}
+                        >
+                            {[5, 10, 25, 50].map(n => (
+                                <option key={n} value={n}>{n}</option>
+                            ))}
+                        </select>
+                        <span>por página &mdash; {utilizadoresFiltrados.length} resultado{utilizadoresFiltrados.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div className="paginacao-controlos">
+                        <button
+                            className="btn-pagina"
+                            onClick={() => irParaPagina(1)}
+                            disabled={paginaAtual === 1}
+                            title="Primeira página"
+                        >
+                            <i className="fa-solid fa-angles-left"></i>
+                        </button>
+                        <button
+                            className="btn-pagina"
+                            onClick={() => irParaPagina(paginaAtual - 1)}
+                            disabled={paginaAtual === 1}
+                            title="Página anterior"
+                        >
+                            <i className="fa-solid fa-angle-left"></i>
+                        </button>
+                        <span className="paginacao-paginas">
+                            {Array.from({ length: totalPaginas }, (_, i) => i + 1)
+                                .filter(p => p === 1 || p === totalPaginas || Math.abs(p - paginaAtual) <= 1)
+                                .reduce<(number | '...')[]>((acc, p, idx, arr) => {
+                                    if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) acc.push('...');
+                                    acc.push(p);
+                                    return acc;
+                                }, [])
+                                .map((p, idx) =>
+                                    p === '...' ? (
+                                        <span key={`ellipsis-${idx}`} className="paginacao-ellipsis">…</span>
+                                    ) : (
+                                        <button
+                                            key={p}
+                                            className={`btn-pagina ${paginaAtual === p ? 'ativo' : ''}`}
+                                            onClick={() => irParaPagina(p as number)}
+                                        >
+                                            {p}
+                                        </button>
+                                    )
+                                )
+                            }
+                        </span>
+                        <button
+                            className="btn-pagina"
+                            onClick={() => irParaPagina(paginaAtual + 1)}
+                            disabled={paginaAtual === totalPaginas}
+                            title="Próxima página"
+                        >
+                            <i className="fa-solid fa-angle-right"></i>
+                        </button>
+                        <button
+                            className="btn-pagina"
+                            onClick={() => irParaPagina(totalPaginas)}
+                            disabled={paginaAtual === totalPaginas}
+                            title="Última página"
+                        >
+                            <i className="fa-solid fa-angles-right"></i>
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* ==========================================
                 MODAL DE VISUALIZAÇÃO / EDIÇÃO
@@ -746,9 +874,15 @@ export function Utilizadores() {
                                 </div>
                                 <div className="form-group readonly">
                                     <label>Cargo</label>
-                                    <div className="input-readonly">
-                                        {cargoLabel[utilizadorSelecionado.cargo] ?? utilizadorSelecionado.cargo}
-                                    </div>
+                                    <select
+                                        className="input-campo"
+                                        value={editCargo}
+                                        onChange={(e) => { setEditCargo(e.target.value); setErroDados(''); }}
+                                    >
+                                        {CARGOS_DISPONIVEIS.map(c => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
 
