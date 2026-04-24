@@ -82,6 +82,17 @@ export default function CoachingAdmin() {
         setSessaoSelecionada(null);
     }
 
+    // Eliminar a sessão e remover todos os alunos associados à mesma
+    async function handleEliminarSessao() {
+        if (!sessaoSelecionada) return;
+        
+        for (const aluno of sessaoSelecionada.alunos) {
+            await adminService.removerAluno(aluno.idAluno, sessaoSelecionada.idCoaching);
+        }
+        fecharModal();
+        fetchDadosDashboard();
+    }
+
     // Lógica para Remover Aluno (E apagar sessão se ficar a 0)
     async function handleRemoverAluno(idAluno: number) {
         if (!sessaoSelecionada) return;
@@ -213,7 +224,8 @@ export default function CoachingAdmin() {
                         </div>
 
                         <div className="modal-acoes" style={{ marginTop: '24px' }}>
-                            <button className="btn-fechar" onClick={fecharModal}>Fechar</button>
+                            <button className="btn-anularSessao" onClick={handleEliminarSessao}>Anular sessão</button>
+                            <button className="btn-fechar" onClick={fecharModal}>Fechar</button>                            
                         </div>
                     </div>
                 </div>
