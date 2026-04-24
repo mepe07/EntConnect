@@ -69,27 +69,12 @@ model Artigo_Favorito {
   @@unique([ID_Utilizador, ID_Stock])
 }
 
-model Aula {
-  ID_Aula              Int          @id(map: "PK_Aula") @default(autoincrement())
-  ID_Coaching          Int
-  Data_Aula            DateTime     @db.DateTime
-  ID_Professor         Int
-  ID_Direcao_Validacao Int?
-  Data_Validacao       DateTime?    @db.DateTime
-  Resumo_Aula          String?      @db.NVarChar(Max)
-  Coaching             Coaching     @relation(fields: [ID_Coaching], references: [ID_Coaching], onUpdate: NoAction, map: "FK_Aula_Coaching")
-  Direcao              Direcao?     @relation(fields: [ID_Direcao_Validacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Aula_Direcao")
-  Professor            Professor    @relation(fields: [ID_Professor], references: [ID_Pessoa], onUpdate: NoAction, map: "FK_Aula_Professor")
-  Aula_Aluno           Aula_Aluno[]
-}
-
 model Aula_Aluno {
   ID_Aula     Int
   ID_Aluno    Int
   Presente    Boolean @default(true, map: "DF__Aula_Alun__Prese__17036CC0")
   Observacoes String? @db.NVarChar(255)
   Aluno       Aluno   @relation(fields: [ID_Aluno], references: [ID_aluno], onUpdate: NoAction, map: "FK_AulaAluno_Aluno")
-  Aula        Aula    @relation(fields: [ID_Aula], references: [ID_Aula], onUpdate: NoAction, map: "FK_AulaAluno_Aula")
 
   @@id([ID_Aula, ID_Aluno], map: "PK_Aula_Aluno")
 }
@@ -119,7 +104,6 @@ model Coaching {
   Inicio_Coaching    DateTime?        @db.DateTime
   Duracao            Int              @default(0, map: "DF__Coaching__Duraca__42E1EEFE")
   ID_Disponibilidade Int?
-  Aula               Aula[]
   Coordenador        Coordenador?     @relation(fields: [ID_Coordenador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Coordenador")
   Disponibilidade    Disponibilidade? @relation(fields: [ID_Disponibilidade], references: [ID_Disponibilidade], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Disponibilidade")
   Estado_Coaching    Estado_Coaching? @relation(fields: [ID_Estado_Coaching], references: [ID_Estado_Coaching], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Estado_Coaching")
@@ -155,9 +139,8 @@ model Cor {
 }
 
 model Direcao {
-  ID_Pessoa Int      @id(map: "PK__Direcao__81E8E17987895FBF")
-  Aula      Aula[]
-  Pessoa    Pessoa   @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK__Direcao__ID_Pess__2CF2ADDF")
+  ID_Pessoa Int    @id(map: "PK__Direcao__81E8E17987895FBF")
+  Pessoa    Pessoa @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK__Direcao__ID_Pess__2CF2ADDF")
 }
 
 model Disponibilidade {
@@ -266,7 +249,6 @@ model Pessoa {
 
 model Professor {
   ID_Pessoa       Int               @id(map: "PK__Professo__81E8E179C3CD56EA")
-  Aula            Aula[]
   Coaching        Coaching[]
   Disponibilidade Disponibilidade[]
   Pessoa          Pessoa            @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK__Professor__ID_Pe__2739D489")
