@@ -16,6 +16,7 @@ import { NavigationMenu } from "./structure/navigation-menu/navigation-menu";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { Login } from "./views/login/login";
 import { useEffect, useState } from "react";
+import { authService } from "./services/auth.service";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -64,42 +65,58 @@ export function Layout({ children }: { children: React.ReactNode }) {
 } 
 
 export default function App() {
-  const [domLoaded, setDomLoaded] = useState(false);
+    const [domLoaded, setDomLoaded] = useState(false);
+    const [sessaoValida, setSessaoValida] = useState(false);
+    const location = useLocation();
 
-  useEffect(() => {
-    setDomLoaded(true);
-  }, []);
-  
-  // ==========================================
-  // LAYOUT DA APLICAÇÃO (Quando Logado)
-  // ==========================================
-  const page = (
-      <div className="app-layout min-h-screen bg-[#f8fafc]"> {/* Fundo global cinza claro para evitar barras pretas */}
-          <Header />
-          <div className="main-wrapper">
-              <NavigationMenu />
-              {/* Adicionado min-h-screen para esticar até ao fundo e cobrir a tela toda */}
-              {/*<div className="body-wrapper ml-[280px] pt-[76px] w-full min-h-screen p-6">*/}
-              {/* Usamos mt-[76px] para empurrar abaixo do header, e p-8 para dar um espaço bonito por dentro */}
-              <div className="body-wrapper ml-[280px] mt-[76px] w-full min-h-[calc(100vh-76px)] p-6">
-                <Outlet />
-              </div>
-          </div>
-      </div>
-  );
+    useEffect(() => {
+        setDomLoaded(true);
+    }, []);
 
-  // ==========================================
-  // PROTEÇÃO DE ROTAS (Login vs App)
-  // ==========================================
-  // If we're on the client, check for the token and conditionally render the page or redirect to login.
-  if(domLoaded) {
-    const currentUserToken = localStorage.getItem('entconnect_token');
-      if (currentUserToken) {
-        return page; // Mostra a App normal (com Header e Sidebar)
-      } else {
-        return <Login />; // O Login toma conta do ecrã TODO (ignora o layout acima)
-      }
+    useEffect(() => {
+        // Sempre que a rota muda, volta a validar a sessão.
+        // Isto é importante depois do login, porque o token acabou de ser guardado.
+        setSessaoValida(authService.isAuthenticated());
+    }, [location.pathname]);
+
+    useEffect(() => {
+        // Verifica periodicamente se o token ainda é válido.
+        const intervalId = window.setInterval(() => {
+            setSessaoValida(authService.isAuthenticated());
+        }, 60_000);
+
+        return () => window.clearInterval(intervalId);
+    }, []);
+
+    const page = (
+        <div className="app-layout min-h-screen bg-[#f8fafc]">
+            <Header />
+            <div className="main-wrapper">
+                <NavigationMenu />
+                <div className="body-wrapper ml-[280px] mt-[76px] w-full min-h-[calc(100vh-76px)] p-6">
+                    <Outlet />
+                </div>
+            </div>
+        </div>
+    );
+
+    if (!domLoaded) {
+        return null;
     }
+
+    if (location.pathname === '/login') {
+        if (sessaoValida) {
+            return <Navigate to="/" replace />;
+        }
+
+        return <Login />;
+    }
+
+    if (!sessaoValida) {
+        return <Navigate to="/login" replace />;
+    }
+
+    return page;
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

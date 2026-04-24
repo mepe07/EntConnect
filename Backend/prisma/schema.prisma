@@ -34,23 +34,24 @@ model Aluno {
 }
 
 model Artigo {
-  ID_Artigo                                             Int             @id @default(autoincrement())
-  Nome                                                  String          @db.VarChar(255)
-  Notas                                                 String?         @db.VarChar(255)
-  Foto                                                  String?         @db.VarChar(255)
+  ID_Artigo                                             Int                             @id @default(autoincrement())
+  Nome                                                  String                          @db.VarChar(255)
+  Notas                                                 String?                         @db.VarChar(255)
+  Foto                                                  String?                         @db.VarChar(255)
   ID_Utilizador_Criador                                 Int?
   ID_Utilizador_Moderador                               Int?
-  Origem_Registo                                        String          @default("utilizador") @db.VarChar(30)
-  Tipo_Anuncio                                          String          @default("venda") @db.VarChar(20)
-  Estado_Anuncio                                        String          @default("ativo") @db.VarChar(30)
-  Motivo_Moderacao                                      String?         @db.VarChar(500)
-  Publicado_No_Marketplace                              Boolean         @default(false)
-  Descricao                                             String?         @db.VarChar(1000)
-  Data_Moderacao                                        DateTime?       @db.DateTime
-  Data_Criacao                                          DateTime        @default(now(), map: "DF__Artigo__Data_Cri__0D44F85C") @db.DateTime
-  Data_Atualizacao                                      DateTime        @db.DateTime
-  Utilizador_Artigo_ID_Utilizador_CriadorToUtilizador   Utilizador?     @relation("Artigo_ID_Utilizador_CriadorToUtilizador", fields: [ID_Utilizador_Criador], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction)
-  Utilizador_Artigo_ID_Utilizador_ModeradorToUtilizador Utilizador?     @relation("Artigo_ID_Utilizador_ModeradorToUtilizador", fields: [ID_Utilizador_Moderador], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction)
+  Origem_Registo                                        String                          @default("utilizador") @db.VarChar(30)
+  Tipo_Anuncio                                          String                          @default("venda") @db.VarChar(20)
+  Estado_Anuncio                                        String                          @default("ativo") @db.VarChar(30)
+  Motivo_Moderacao                                      String?                         @db.VarChar(500)
+  Publicado_No_Marketplace                              Boolean                         @default(false)
+  Descricao                                             String?                         @db.VarChar(1000)
+  Data_Moderacao                                        DateTime?                       @db.DateTime
+  Data_Criacao                                          DateTime                        @default(now(), map: "DF__Artigo__Data_Cri__0D44F85C") @db.DateTime
+  Data_Atualizacao                                      DateTime                        @db.DateTime
+  Utilizador_Artigo_ID_Utilizador_CriadorToUtilizador   Utilizador?                     @relation("Artigo_ID_Utilizador_CriadorToUtilizador", fields: [ID_Utilizador_Criador], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction)
+  Utilizador_Artigo_ID_Utilizador_ModeradorToUtilizador Utilizador?                     @relation("Artigo_ID_Utilizador_ModeradorToUtilizador", fields: [ID_Utilizador_Moderador], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction)
+  Registo_Moderacao_Marketplace                         Registo_Moderacao_Marketplace[]
   Stock_Armazem                                         Stock_Armazem[]
 
   @@index([ID_Utilizador_Criador], map: "IX_Artigo_ID_Utilizador_Criador")
@@ -254,6 +255,23 @@ model Professor {
   Pessoa          Pessoa            @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK__Professor__ID_Pe__2739D489")
 }
 
+model Registo_Moderacao_Marketplace {
+  ID_Registo_Moderacao    Int        @id(map: "PK_Registo_Moderacao_Marketplace") @default(autoincrement())
+  ID_Artigo               Int
+  ID_Utilizador_Moderador Int
+  Acao                    String     @db.NVarChar(50)
+  Estado_Anterior         String?    @db.NVarChar(50)
+  Estado_Novo             String     @db.NVarChar(50)
+  Motivo                  String?    @db.NVarChar(500)
+  Data_Registo            DateTime   @default(dbgenerated("sysutcdatetime()"), map: "DF_Registo_Moderacao_Marketplace_Data_Registo")
+  Artigo                  Artigo     @relation(fields: [ID_Artigo], references: [ID_Artigo], onUpdate: NoAction, map: "FK_Registo_Moderacao_Marketplace_Artigo")
+  Utilizador              Utilizador @relation(fields: [ID_Utilizador_Moderador], references: [ID_Utilizador], onUpdate: NoAction, map: "FK_Registo_Moderacao_Marketplace_Utilizador")
+
+  @@index([Data_Registo(sort: Desc)], map: "IX_Registo_Moderacao_Marketplace_Data_Registo")
+  @@index([ID_Artigo], map: "IX_Registo_Moderacao_Marketplace_ID_Artigo")
+  @@index([ID_Utilizador_Moderador], map: "IX_Registo_Moderacao_Marketplace_ID_Utilizador_Moderador")
+}
+
 model Sala {
   ID_Sala       Int         @id(map: "PK__Sala__2071DEA7FF09AFCD") @default(autoincrement())
   Nome          String      @db.VarChar(100)
@@ -299,19 +317,20 @@ model Tamanho {
 }
 
 model Utilizador {
-  ID_Utilizador                                            Int                @id(map: "PK__Utilizad__02069817600CB419") @default(autoincrement())
-  ID_Pessoa                                                Int                @unique(map: "UQ__Utilizad__81E8E178D6E729CD")
-  Utilizador                                               String             @unique(map: "UQ_Utilizador_Nome") @db.VarChar(100)
-  Password                                                 String             @db.VarChar(100)
-  Ativo                                                    Boolean            @default(true, map: "DF__Utilizado__Ativo__40F9A68C")
+  ID_Utilizador                                            Int                             @id(map: "PK__Utilizad__02069817600CB419") @default(autoincrement())
+  ID_Pessoa                                                Int                             @unique(map: "UQ__Utilizad__81E8E178D6E729CD")
+  Utilizador                                               String                          @unique(map: "UQ_Utilizador_Nome") @db.VarChar(100)
+  Password                                                 String                          @db.VarChar(100)
+  Ativo                                                    Boolean                         @default(true, map: "DF__Utilizado__Ativo__40F9A68C")
   Aluguer_Artigo                                           Aluguer_Artigo[]
-  Artigo_Artigo_ID_Utilizador_CriadorToUtilizador          Artigo[]           @relation("Artigo_ID_Utilizador_CriadorToUtilizador")
-  Artigo_Artigo_ID_Utilizador_ModeradorToUtilizador        Artigo[]           @relation("Artigo_ID_Utilizador_ModeradorToUtilizador")
+  Artigo_Artigo_ID_Utilizador_CriadorToUtilizador          Artigo[]                        @relation("Artigo_ID_Utilizador_CriadorToUtilizador")
+  Artigo_Artigo_ID_Utilizador_ModeradorToUtilizador        Artigo[]                        @relation("Artigo_ID_Utilizador_ModeradorToUtilizador")
   Artigo_Favorito                                          Artigo_Favorito[]
   Aula_Fixa                                                Aula_Fixa[]
   Disponibilidade                                          Disponibilidade[]
   Interesse_Artigo                                         Interesse_Artigo[]
-  Pedido_Coaching_Pedido_Coaching_ID_EEToUtilizador        Pedido_Coaching[]  @relation("Pedido_Coaching_ID_EEToUtilizador")
-  Pedido_Coaching_Pedido_Coaching_ID_ProfessorToUtilizador Pedido_Coaching[]  @relation("Pedido_Coaching_ID_ProfessorToUtilizador")
-  Pessoa                                                   Pessoa             @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK_Utilizador_Pessoa")
+  Pedido_Coaching_Pedido_Coaching_ID_EEToUtilizador        Pedido_Coaching[]               @relation("Pedido_Coaching_ID_EEToUtilizador")
+  Pedido_Coaching_Pedido_Coaching_ID_ProfessorToUtilizador Pedido_Coaching[]               @relation("Pedido_Coaching_ID_ProfessorToUtilizador")
+  Registo_Moderacao_Marketplace                            Registo_Moderacao_Marketplace[]
+  Pessoa                                                   Pessoa                          @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK_Utilizador_Pessoa")
 }

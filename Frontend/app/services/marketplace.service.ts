@@ -9,6 +9,7 @@ import type {
     Anuncio,
     Proposta,
     CriarItemInventarioPayload,
+    RegistoModeracaoMarketplace,
 } from '../types/marketplace.types';
 
 const API_URL = 'http://localhost:3000/marketplace';
@@ -21,12 +22,21 @@ const getHeaders = () => ({
 });
 
 async function parseError(response: Response, fallback: string): Promise<never> {
+    let mensagem = fallback;
+
     try {
         const erro = await response.json();
-        throw new Error(erro.message || fallback);
+
+        if (Array.isArray(erro.message)) {
+            mensagem = erro.message.join(', ');
+        } else if (erro.message) {
+            mensagem = erro.message;
+        }
     } catch {
-        throw new Error(fallback);
+        // Se a resposta não tiver JSON válido, mantém a mensagem fallback.
     }
+
+    throw new Error(mensagem);
 }
 
 export const marketplaceService = {
@@ -67,6 +77,16 @@ export const marketplaceService = {
         });
 
         if (!response.ok) return parseError(response, 'Erro ao carregar a fila de moderação.');
+        return response.json();
+    },
+
+    async listarRegistoModeracao(): Promise<RegistoModeracaoMarketplace[]> {
+        const response = await fetch(`${API_URL}/moderacao/registo`, {
+            method: 'GET',
+            headers: getHeaders(),
+        });
+
+        if (!response.ok) return parseError(response, 'Erro ao carregar o registo de moderação.');
         return response.json();
     },
 
