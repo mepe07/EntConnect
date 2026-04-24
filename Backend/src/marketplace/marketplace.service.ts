@@ -121,6 +121,36 @@ export class MarketplaceService {
         });
     }
 
+    async listarRegistoModeracao(utilizador: UtilizadorAutenticado) {
+        garantirPermissaoDeModeracao(utilizador.role);
+
+        const prisma = this.prisma as any;
+
+        return prisma.registo_Moderacao_Marketplace.findMany({
+            include: {
+                Artigo: {
+                    select: {
+                        ID_Artigo: true,
+                        Nome: true,
+                        Foto: true,
+                        Tipo_Anuncio: true,
+                        Estado_Anuncio: true,
+                        Origem_Registo: true,
+                    },
+                },
+                Utilizador: {
+                    include: {
+                        Pessoa: true,
+                    },
+                },
+            },
+            orderBy: [
+                { Data_Registo: 'desc' },
+                { ID_Registo_Moderacao: 'desc' },
+            ],
+        });
+    }
+
     async listarMeusAnuncios(utilizador: UtilizadorAutenticado) {
         const prisma = this.prisma as any;
 
@@ -418,59 +448,64 @@ export class MarketplaceService {
         const prisma = this.prisma as any;
         const artigo = await this.obterArtigoOuFalhar(idArtigo);
 
+        const estadoAnterior = artigo.Estado_Anuncio as EstadoAnuncio;
+        const dataModeracao = new Date();
+
+        let estadoNovo: EstadoAnuncio;
+        let publicadoNoMarketplace: boolean;
+        let motivoFinal: string | null;
+
         if (dto.acao === AcaoModeracao.REMOVER) {
             if (artigo.Estado_Anuncio === EstadoAnuncio.REMOVIDO) {
                 throw new BadRequestException('O anúncio já se encontra removido.');
             }
 
-            return prisma.artigo.update({
-                where: { ID_Artigo: idArtigo },
-                data: {
-                    Estado_Anuncio: EstadoAnuncio.REMOVIDO,
-                    Publicado_No_Marketplace: false,
-                    ID_Utilizador_Moderador: utilizador.sub,
-                    Motivo_Moderacao: dto.motivo ?? 'Removido pela moderação.',
-                    Data_Moderacao: new Date(),
-                    Data_Atualizacao: new Date(),
-                },
-                include: this.includeBaseArtigo(),
-            });
-        }
-
-        if (dto.acao === AcaoModeracao.REATIVAR) {
+            estadoNovo = EstadoAnuncio.REMOVIDO;
+            publicadoNoMarketplace = false;
+            motivoFinal = dto.motivo ?? 'Removido pela moderação.';
+        } else if (dto.acao === AcaoModeracao.REATIVAR) {
             if (artigo.Estado_Anuncio !== EstadoAnuncio.REMOVIDO) {
                 throw new BadRequestException('Só é possível reativar anúncios que estejam removidos.');
             }
 
-            return prisma.artigo.update({
+            estadoNovo = EstadoAnuncio.ATIVO;
+            publicadoNoMarketplace = true;
+            motivoFinal = dto.motivo ?? artigo.Motivo_Moderacao ?? null;
+        } else {
+            if (artigo.Estado_Anuncio === EstadoAnuncio.ARQUIVADO) {
+                throw new BadRequestException('O anúncio já se encontra arquivado.');
+            }
+
+            estadoNovo = EstadoAnuncio.ARQUIVADO;
+            publicadoNoMarketplace = false;
+            motivoFinal = dto.motivo ?? artigo.Motivo_Moderacao ?? null;
+        }
+
+        return prisma.$transaction(async (tx: any) => {
+            const artigoAtualizado = await tx.artigo.update({
                 where: { ID_Artigo: idArtigo },
                 data: {
-                    Estado_Anuncio: EstadoAnuncio.ATIVO,
-                    Publicado_No_Marketplace: true,
+                    Estado_Anuncio: estadoNovo,
+                    Publicado_No_Marketplace: publicadoNoMarketplace,
                     ID_Utilizador_Moderador: utilizador.sub,
-                    Motivo_Moderacao: dto.motivo ?? artigo.Motivo_Moderacao ?? null,
-                    Data_Moderacao: new Date(),
-                    Data_Atualizacao: new Date(),
+                    Motivo_Moderacao: motivoFinal,
+                    Data_Moderacao: dataModeracao,
+                    Data_Atualizacao: dataModeracao,
                 },
                 include: this.includeBaseArtigo(),
             });
-        }
 
-        if (artigo.Estado_Anuncio === EstadoAnuncio.ARQUIVADO) {
-            throw new BadRequestException('O anúncio já se encontra arquivado.');
-        }
+            await this.criarRegistoModeracao(tx, {
+                idArtigo,
+                idUtilizadorModerador: utilizador.sub,
+                acao: dto.acao,
+                estadoAnterior,
+                estadoNovo,
+                motivo: motivoFinal,
+                dataRegisto: dataModeracao,
+            });
 
-        return prisma.artigo.update({
-            where: { ID_Artigo: idArtigo },
-            data: {
-                Estado_Anuncio: EstadoAnuncio.ARQUIVADO,
-                Publicado_No_Marketplace: false,
-                ID_Utilizador_Moderador: utilizador.sub,
-                Motivo_Moderacao: dto.motivo ?? artigo.Motivo_Moderacao ?? null,
-                Data_Moderacao: new Date(),
-                Data_Atualizacao: new Date(),
-            },
-            include: this.includeBaseArtigo(),
+            return artigoAtualizado;
         });
     }
 
@@ -791,5 +826,30 @@ export class MarketplaceService {
                 'A remoção administrativa deve ser feita pelo endpoint de moderação.',
             );
         }
+    }
+
+    private async criarRegistoModeracao(
+        tx: any,
+        params: {
+            idArtigo: number;
+            idUtilizadorModerador: number;
+            acao: AcaoModeracao;
+            estadoAnterior: EstadoAnuncio | string | null;
+            estadoNovo: EstadoAnuncio | string;
+            motivo?: string | null;
+            dataRegisto: Date;
+        },
+    ) {
+        return tx.registo_Moderacao_Marketplace.create({
+            data: {
+                ID_Artigo: params.idArtigo,
+                ID_Utilizador_Moderador: params.idUtilizadorModerador,
+                Acao: params.acao,
+                Estado_Anterior: params.estadoAnterior,
+                Estado_Novo: params.estadoNovo,
+                Motivo: params.motivo ?? null,
+                Data_Registo: params.dataRegisto,
+            },
+        });
     }
 }

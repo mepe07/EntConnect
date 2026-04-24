@@ -196,6 +196,7 @@ export class UtilizadorService {
     };
   }
   
+  /*
   async getMinhasAulas(id: number) {
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: id },
@@ -288,7 +289,7 @@ export class UtilizadorService {
     }
 
     return [];
-  }
+  }*/
 
   async getAlunosByEE(idEncEducacao: number) {
     return this.prisma.aluno.findMany({

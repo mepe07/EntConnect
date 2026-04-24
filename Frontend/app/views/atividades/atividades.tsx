@@ -1,184 +1,390 @@
-// Ficheiro: src/views/atividades/atividades.tsx
-
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { marketplaceService } from '../../services/marketplace.service';
-import { Anuncio, EstadoAnuncio } from '../../types/marketplace.types';
+import { EstadoAnuncio } from '../../types/marketplace.types';
+import type { RegistoModeracaoMarketplace } from '../../types/marketplace.types';
 import './atividades.scss';
 
-// Para já, focamos na gestão da montra pessoal. 
-// Favoritos e Pedidos voltarão quando a equipa fechar o módulo de Chat e Interesses.
-type AbaTipo = 'anuncios';
+type FiltroAcao = 'todas' | 'remover' | 'reativar' | 'arquivar';
 
-export function Atividades() { 
-    const [abaAtiva, setAbaAtiva] = useState<AbaTipo>('anuncios');
-    const [meusAnuncios, setMeusAnuncios] = useState<Anuncio[]>([]); // 👈 Repara no uso da interface Anuncio!
+export function Atividades() {
+    const [registos, setRegistos] = useState<RegistoModeracaoMarketplace[]>([]);
     const [loading, setLoading] = useState(false);
+    const [erro, setErro] = useState<string | null>(null);
+    const [pesquisa, setPesquisa] = useState('');
+    const [acaoFiltro, setAcaoFiltro] = useState<FiltroAcao>('todas');
 
-    // Efeito de carregamento inicial
+    const [registoSelecionado, setRegistoSelecionado] = useState<RegistoModeracaoMarketplace | null>(null);
+    const [aReativar, setAReativar] = useState<number | null>(null);
+
     useEffect(() => {
-        carregarMeusAnuncios();
+        carregarRegistoModeracao();
     }, []);
 
-    // Função para extrair o ID do utilizador logado a partir do token
-    const getMeuId = () => {
-        const token = localStorage.getItem('entconnect_token');
-        if (!token) return null;
-        try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            return payload.sub; // O 'sub' costuma guardar o ID no NestJS
-        } catch (e) {
-            return null;
-        }
-    };
-
-    const carregarMeusAnuncios = async () => {
-        const meuId = getMeuId();
-        if (!meuId) return;
-
+    const carregarRegistoModeracao = async () => {
         setLoading(true);
+        setErro(null);
+
         try {
-            // Usa o novo sistema de filtros do serviço do colega!
-            const dados = await marketplaceService.listarAnuncios({ idCriador: meuId });
-            setMeusAnuncios(dados);
-        } catch (error: any) {
-            console.error("Erro ao carregar anúncios:", error);
+            const dados = await marketplaceService.listarRegistoModeracao();
+            setRegistos(dados);
+        } catch (error) {
+            const mensagem =
+                error instanceof Error
+                    ? error.message
+                    : 'Erro ao carregar o registo de moderação.';
+
+            setErro(mensagem);
         } finally {
             setLoading(false);
         }
     };
 
-    // Função para o dono alterar o estado da peça (OLX style)
-    const handleMudarEstado = async (idArtigo: number, novoEstado: EstadoAnuncio) => {
-        if (!window.confirm(`Tens a certeza que queres marcar este anúncio como ${novoEstado}?`)) return;
+    const obterNomeArtigo = (registo: RegistoModeracaoMarketplace) => {
+        return registo.Artigo?.Nome ?? `Artigo #${registo.ID_Artigo}`;
+    };
 
-        try {
-            await marketplaceService.alterarEstado(idArtigo, novoEstado);
-            alert(`Anúncio marcado como ${novoEstado} com sucesso!`);
-            carregarMeusAnuncios(); // Recarrega a lista para atualizar a cor das etiquetas
-        } catch (error: any) {
-            alert('Erro: ' + error.message);
+    const obterNomeModerador = (registo: RegistoModeracaoMarketplace) => {
+        return registo.Utilizador?.Pessoa?.Nome
+            ?? registo.Utilizador_Moderador?.Pessoa?.Nome
+            ?? `Utilizador #${registo.ID_Utilizador_Moderador}`;
+    };
+
+    const registosFiltrados = useMemo(() => {
+        const termo = pesquisa.trim().toLowerCase();
+
+        return registos.filter((registo) => {
+            const nomeArtigo = obterNomeArtigo(registo).toLowerCase();
+            const motivo = (registo.Motivo ?? '').toLowerCase();
+            const moderador = obterNomeModerador(registo).toLowerCase();
+            const acao = registo.Acao.toLowerCase();
+
+            const passaPesquisa =
+                !termo ||
+                nomeArtigo.includes(termo) ||
+                motivo.includes(termo) ||
+                moderador.includes(termo) ||
+                acao.includes(termo);
+
+            const passaAcao = acaoFiltro === 'todas' || registo.Acao === acaoFiltro;
+
+            return passaPesquisa && passaAcao;
+        });
+    }, [registos, pesquisa, acaoFiltro]);
+
+    const formatarData = (data?: string) => {
+        if (!data) return '-';
+
+        return new Intl.DateTimeFormat('pt-PT', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        }).format(new Date(data));
+    };
+
+    const formatarAcao = (acao: string) => {
+        const labels: Record<string, string> = {
+            remover: 'Removido',
+            reativar: 'Reativado',
+            arquivar: 'Arquivado',
+            moderacao: 'Moderação',
+        };
+
+        return labels[acao] ?? acao;
+    };
+
+    const formatarEstado = (estado?: string | null) => {
+        if (!estado) return '-';
+
+        const labels: Record<string, string> = {
+            [EstadoAnuncio.ATIVO]: 'Ativo',
+            [EstadoAnuncio.RESERVADO]: 'Reservado',
+            [EstadoAnuncio.CONCLUIDO]: 'Concluído',
+            [EstadoAnuncio.ARQUIVADO]: 'Arquivado',
+            [EstadoAnuncio.REMOVIDO]: 'Removido',
+        };
+
+        return labels[estado] ?? estado;
+    };
+
+    const classeAcao = (acao: string) => {
+        switch (acao) {
+            case 'remover':
+                return 'badge badge-vermelha';
+            case 'reativar':
+                return 'badge badge-verde';
+            case 'arquivar':
+                return 'badge badge-cinzenta';
+            default:
+                return 'badge badge-azul';
         }
     };
 
-    // Função para apagar definitivamente
-    const handleRemoverAnuncio = async (idArtigo: number) => {
-        if (!window.confirm("Aviso: Queres mesmo apagar este anúncio para sempre?")) return;
+    const abrirModal = (registo: RegistoModeracaoMarketplace) => {
+        setRegistoSelecionado(registo);
+    };
+
+    const fecharModal = () => {
+        setRegistoSelecionado(null);
+    };
+
+    const podeReativar = (registo: RegistoModeracaoMarketplace) => {
+        const estadoAtual = registo.Artigo?.Estado_Anuncio ?? registo.Estado_Novo;
+
+        return estadoAtual === EstadoAnuncio.REMOVIDO || estadoAtual === 'removido';
+    };
+
+    const reativarAnuncio = async (registo: RegistoModeracaoMarketplace) => {
+        const confirmar = window.confirm(`Pretendes reativar o anúncio "${obterNomeArtigo(registo)}"?`);
+        if (!confirmar) return;
 
         try {
-            await marketplaceService.removerAnuncio(idArtigo);
-            setMeusAnuncios(prev => prev.filter(a => a.ID_Artigo !== idArtigo));
-        } catch (error: any) {
-            alert('Erro: ' + error.message);
+            setAReativar(registo.ID_Artigo);
+
+            await marketplaceService.moderarAnuncio(
+                registo.ID_Artigo,
+                'reativar',
+                'Reativado através do registo de moderação.',
+            );
+
+            await carregarRegistoModeracao();
+
+            // Se o modal estiver aberto no mesmo anúncio, fecha para evitar informação desatualizada
+            if (registoSelecionado?.ID_Artigo === registo.ID_Artigo) {
+                fecharModal();
+            }
+        } catch (error) {
+            const mensagem =
+                error instanceof Error
+                    ? error.message
+                    : 'Não foi possível reativar o anúncio.';
+
+            alert(mensagem);
+        } finally {
+            setAReativar(null);
         }
     };
 
-    const renderEtiquetaEstado = (estado: EstadoAnuncio) => {
-        switch (estado) {
-            case EstadoAnuncio.ATIVO: return <span className="etiqueta verde">Ativo na Montra</span>;
-            case EstadoAnuncio.RESERVADO: return <span className="etiqueta amarela">Reservado</span>;
-            case EstadoAnuncio.CONCLUIDO: return <span className="etiqueta cinzenta" style={{ background: '#e2e8f0', color: '#475569' }}>Concluído</span>;
-            case EstadoAnuncio.REMOVIDO: return <span className="etiqueta vermelha">Removido (Moderação)</span>;
-            default: return <span className="etiqueta">{estado}</span>;
+    const formatarEstadoAnterior = (registo: RegistoModeracaoMarketplace) => {
+        if (registo.Estado_Anterior) {
+            return formatarEstado(registo.Estado_Anterior);
         }
+
+        return 'Não registado';
     };
 
     return (
-        <div className="atividades-container"> 
-            <aside className="atividades-sidebar">
-                <h2>A Minha Mochila</h2>
-                <nav>
-                    <button className={abaAtiva === 'anuncios' ? 'ativo' : ''} onClick={() => setAbaAtiva('anuncios')}>
-                        🏪 Os Meus Anúncios
-                    </button>
-                    {/* Botões de Favoritos e Pedidos ocultos temporariamente até o Chat estar ligado */}
-                </nav>
-            </aside>
+        <div className="atividades-container">
+            <section className="atividades-header card-header-claro">
+                <div>
+                    <span className="eyebrow">Marketplace</span>
+                    <h1>Registo de Moderação</h1>
+                    <p>
+                        Consulta o histórico de ações feitas pela coordenação nos anúncios do Marketplace.
+                    </p>
+                </div>
 
-            <main className="atividades-conteudo">
-                {loading ? (
-                    <div className="mensagem-centro">A carregar a tua montra...</div>
-                ) : (
-                    <div className="cartao-branco">
-                        <section>
-                            <div className="titulo-com-acao">
-                                <h3>O Que Tenho à Venda / Emprestar</h3>
-                            </div>
-                            
-                            {meusAnuncios.length === 0 ? (
-                                <p className="texto-vazio">Não tens anúncios ativos. Que tal começares hoje?</p>
-                            ) : (
-                                <div className="lista-anuncios">
-                                    {meusAnuncios.map(anuncio => (
-                                        <div key={anuncio.ID_Artigo} className="item-anuncio" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '1rem' }}>
-                                            
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                                                <div className="info">
-                                                    <strong style={{ fontSize: '1.2rem' }}>{anuncio.Nome}</strong>
-                                                    <div style={{ display: 'flex', gap: '0.8rem', marginTop: '0.5rem' }}>
-                                                        {renderEtiquetaEstado(anuncio.Estado_Anuncio)}
-                                                        <span style={{ fontSize: '0.85rem', color: '#64748b', border: '1px solid #cbd5e1', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-                                                            {anuncio.Tipo_Anuncio.toUpperCase()}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                
-                                                {/* Botão de Eliminar no canto superior direito */}
-                                                <button 
-                                                    onClick={() => handleRemoverAnuncio(anuncio.ID_Artigo)}
-                                                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1.2rem' }}
-                                                    title="Apagar Anúncio"
-                                                >
-                                                    🗑️
-                                                </button>
-                                            </div>
+                <button className="btn-secundario" onClick={carregarRegistoModeracao} disabled={loading}>
+                    Atualizar
+                </button>
+            </section>
 
-                                            {/* Painel de Ações do OLX (Alterar Estados) */}
-                                            {anuncio.Estado_Anuncio !== EstadoAnuncio.CONCLUIDO && anuncio.Estado_Anuncio !== EstadoAnuncio.REMOVIDO && (
-                                                <div style={{ display: 'flex', gap: '0.5rem', width: '100%', borderTop: '1px solid #f1f5f9', paddingTop: '1rem' }}>
-                                                    
-                                                    {anuncio.Estado_Anuncio === EstadoAnuncio.ATIVO && (
-                                                        <button 
-                                                            className="btn-secundario" 
-                                                            onClick={() => handleMudarEstado(anuncio.ID_Artigo, EstadoAnuncio.RESERVADO)}
-                                                        >
-                                                            ⏳ Marcar como Reservado
-                                                        </button>
-                                                    )}
+            <section className="cartao-branco">
+                <div className="toolbar">
+                    <div>
+                        <h2>Histórico de decisões</h2>
+                        <p>Registos ordenados dos mais recentes para os mais antigos.</p>
+                    </div>
 
-                                                    {anuncio.Estado_Anuncio === EstadoAnuncio.RESERVADO && (
-                                                        <button 
-                                                            className="btn-secundario" 
-                                                            onClick={() => handleMudarEstado(anuncio.ID_Artigo, EstadoAnuncio.ATIVO)}
-                                                        >
-                                                            🔄 Voltar a Ativo
-                                                        </button>
-                                                    )}
+                    <div className="filtros">
+                        <input
+                            type="text"
+                            value={pesquisa}
+                            onChange={(event) => setPesquisa(event.target.value)}
+                            placeholder="Pesquisar por anúncio, motivo ou moderador..."
+                        />
 
-                                                    <button 
-                                                        className="btn-primario" 
-                                                        style={{ marginLeft: 'auto', background: '#10b981' }}
-                                                        onClick={() => handleMudarEstado(anuncio.ID_Artigo, EstadoAnuncio.CONCLUIDO)}
-                                                    >
-                                                        ✅ Marcar como Concluído
-                                                    </button>
-                                                </div>
-                                            )}
+                        <select
+                            value={acaoFiltro}
+                            onChange={(event) => setAcaoFiltro(event.target.value as FiltroAcao)}
+                        >
+                            <option value="todas">Todas as ações</option>
+                            <option value="remover">Removidos</option>
+                            <option value="reativar">Reativados</option>
+                            <option value="arquivar">Arquivados</option>
+                        </select>
+                    </div>
+                </div>
 
-                                            {/* Mensagem da Moderação */}
-                                            {anuncio.Estado_Anuncio === EstadoAnuncio.REMOVIDO && (
-                                                <div style={{ background: '#fef2f2', color: '#991b1b', padding: '0.8rem', borderRadius: '8px', width: '100%', fontSize: '0.9rem' }}>
-                                                    <strong>Aviso da Coordenação:</strong> Este anúncio foi removido da plataforma.
-                                                </div>
-                                            )}
-
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </section>
+                {loading && (
+                    <div className="mensagem-centro">
+                        A carregar registo de moderação...
                     </div>
                 )}
-            </main>
+
+                {!loading && erro && (
+                    <div className="mensagem-erro">
+                        {erro}
+                    </div>
+                )}
+
+                {!loading && !erro && registosFiltrados.length === 0 && (
+                    <div className="mensagem-centro">
+                        Ainda não existem registos de moderação para os filtros selecionados.
+                    </div>
+                )}
+
+                {!loading && !erro && registosFiltrados.length > 0 && (
+                    <div className="tabela-wrapper">
+                        <table className="tabela-registos">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Anúncio</th>
+                                    <th>Ação</th>
+                                    <th>Transição</th>
+                                    <th>Motivo</th>
+                                    <th>Moderador</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {registosFiltrados.map((registo) => (
+                                    <tr key={registo.ID_Registo_Moderacao}>
+                                        <td>{formatarData(registo.Data_Registo)}</td>
+
+                                        <td>
+                                            <strong>{obterNomeArtigo(registo)}</strong>
+                                            <span>#{registo.ID_Artigo}</span>
+                                        </td>
+
+                                        <td>
+                                            <span className={classeAcao(registo.Acao)}>
+                                                {formatarAcao(registo.Acao)}
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <span className="estado-transicao">
+                                                {formatarEstadoAnterior(registo)} → {formatarEstado(registo.Estado_Novo)}
+                                            </span>
+                                        </td>
+
+                                        <td>{registo.Motivo || 'Sem motivo indicado'}</td>
+
+                                        <td>{obterNomeModerador(registo)}</td>
+
+                                        <td>
+                                            <div className="acoes-linha">
+                                                <button
+                                                    className="btn-tabela btn-ver"
+                                                    onClick={() => abrirModal(registo)}
+                                                >
+                                                    Ver
+                                                </button>
+
+                                                {podeReativar(registo) && (
+                                                    <button
+                                                        className="btn-tabela btn-reativar"
+                                                        onClick={() => reativarAnuncio(registo)}
+                                                        disabled={aReativar === registo.ID_Artigo}
+                                                    >
+                                                        {aReativar === registo.ID_Artigo ? 'A reativar...' : 'Reativar'}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </section>
+
+            {registoSelecionado && (
+                <div className="modal-overlay" onClick={fecharModal}>
+                    <div className="modal-registo" onClick={(event) => event.stopPropagation()}>
+                        <div className="modal-header">
+                            <div>
+                                <span className="eyebrow">Anúncio</span>
+                                <h3>{obterNomeArtigo(registoSelecionado)}</h3>
+                            </div>
+
+                            <button className="btn-fechar" onClick={fecharModal}>
+                                ×
+                            </button>
+                        </div>
+
+                        <div className="modal-body">
+                            <div className="modal-grid">
+                                <div>
+                                    <label>ID do artigo</label>
+                                    <p>#{registoSelecionado.ID_Artigo}</p>
+                                </div>
+
+                                <div>
+                                    <label>Ação</label>
+                                    <p>{formatarAcao(registoSelecionado.Acao)}</p>
+                                </div>
+
+                                <div>
+                                    <label>Data</label>
+                                    <p>{formatarData(registoSelecionado.Data_Registo)}</p>
+                                </div>
+
+                                <div>
+                                    <label>Moderador</label>
+                                    <p>{obterNomeModerador(registoSelecionado)}</p>
+                                </div>
+
+                                <div>
+                                    <label>Estado anterior</label>
+                                    <p>{formatarEstado(registoSelecionado.Estado_Anterior)}</p>
+                                </div>
+
+                                <div>
+                                    <label>Estado novo</label>
+                                    <p>{formatarEstado(registoSelecionado.Estado_Novo)}</p>
+                                </div>
+
+                                <div>
+                                    <label>Tipo de anúncio</label>
+                                    <p>{registoSelecionado.Artigo?.Tipo_Anuncio ?? '-'}</p>
+                                </div>
+
+                                <div>
+                                    <label>Origem do registo</label>
+                                    <p>{registoSelecionado.Artigo?.Origem_Registo ?? '-'}</p>
+                                </div>
+                            </div>
+
+                            <div className="bloco-texto">
+                                <label>Motivo</label>
+                                <p>{registoSelecionado.Motivo || 'Sem motivo indicado.'}</p>
+                            </div>
+                        </div>
+
+                        <div className="modal-footer">
+                            {podeReativar(registoSelecionado) && (
+                                <button
+                                    className="btn-primario"
+                                    onClick={() => reativarAnuncio(registoSelecionado)}
+                                    disabled={aReativar === registoSelecionado.ID_Artigo}
+                                >
+                                    {aReativar === registoSelecionado.ID_Artigo ? 'A reativar...' : 'Reativar anúncio'}
+                                </button>
+                            )}
+
+                            <button className="btn-secundario" onClick={fecharModal}>
+                                Fechar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 } 

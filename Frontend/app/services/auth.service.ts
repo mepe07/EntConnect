@@ -1,42 +1,51 @@
 import { jwtDecode } from "jwt-decode";
 import type { User } from "~/models/interfaces/user.interface";
 
+interface JwtPayloadBase {
+    exp?: number;
+}
+
 export class AuthService {
     private _userToken: string | null = null;
-    private _userInfo: any = null;
+    private _userInfo: User | null = null;
     private _apiUrl = 'http://localhost:3000';
+    private readonly tokenStorageKey = 'entconnect_token';
 
     /**
-     * Logs in the user by sending their credentials to the backend and storing the received token in localStorage.
-     * 
-     * @param username: The username of the user trying to log in.
-     * @param password: The password of the user trying to log in.
+     * Efetua login no backend e guarda o token recebido.
+     *
+     * Importante:
+     * O login deve fazer sempre pedido ao backend, mesmo que já exista token no localStorage.
+     * Assim evitamos reutilizar tokens expirados ou sessões antigas.
      */
     async login(username: string, password: string) {
         try {
-            // Check if we already have a token in localStorage. If not, proceed with the login request.
-            if (!localStorage.getItem('entconnect_token')) {
-                const response = await fetch(`${this._apiUrl}/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password }),
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Failed to log in');
-                }
+            const response = await fetch(`${this._apiUrl}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password }),
+            });
 
-                const token = await response.json();
-                const user = jwtDecode(token?.access_token);
-
-                this._userToken = token?.access_token;
-                this._userInfo = user;
-
-                localStorage.setItem('entconnect_token', token?.access_token);
-
-                return true;
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to log in');
             }
+
+            const token = await response.json();
+            const accessToken = token?.access_token;
+
+            if (!accessToken) {
+                throw new Error('Token de autenticação não recebido.');
+            }
+
+            const user = jwtDecode<User>(accessToken);
+
+            this._userToken = accessToken;
+            this._userInfo = user;
+
+            localStorage.setItem(this.tokenStorageKey, accessToken);
+
+            return true;
         } catch (error: Error | unknown) {
             console.error('Login error:', error);
             throw error;
@@ -44,48 +53,95 @@ export class AuthService {
     }
 
     /**
-     * Logs out the user by clearing the token from localStorage and resetting the service's user information.
-     * 
-     * @param event: The click event from the logout link, used to prevent the default navigation behavior.
+     * Termina a sessão do utilizador.
      */
-    logout(event: React.MouseEvent<HTMLAnchorElement>) {
-        event.preventDefault();
+    logout(event?: React.MouseEvent<HTMLAnchorElement>) {
+        event?.preventDefault();
 
-        this._userToken = null;
-        this._userInfo = null;
-        localStorage.removeItem('entconnect_token');
-
-        // Redirect to the home page after logging out
-        window.location.href = '/';
+        this.limparSessao();
+        window.location.href = '/login';
     }
 
     /**
-     * Retrieves the user's token from localStorage if it's not already stored in the service instance.
-     * 
-     * @returns The user's authentication token, or null if it doesn't exist.
+     * Limpa token e dados do utilizador.
+     * Não redireciona automaticamente.
+     */
+    limparSessao() {
+        this._userToken = null;
+        this._userInfo = null;
+        localStorage.removeItem(this.tokenStorageKey);
+    }
+
+    /**
+     * Verifica se um JWT já expirou.
+     *
+     * No JWT, o campo "exp" vem em segundos.
+     * O Date.now() trabalha em milissegundos.
+     */
+    isTokenExpired(token: string): boolean {
+        try {
+            const decoded = jwtDecode<JwtPayloadBase>(token);
+
+            if (!decoded.exp) {
+                return true;
+            }
+
+            return decoded.exp * 1000 <= Date.now();
+        } catch {
+            return true;
+        }
+    }
+
+    /**
+     * Obtém o token apenas se ele ainda for válido.
+     * Se estiver expirado ou inválido, limpa a sessão.
      */
     getToken() {
         if (!this._userToken) {
-            this._userToken = localStorage.getItem('entconnect_token');
+            this._userToken = localStorage.getItem(this.tokenStorageKey);
         }
+
+        if (!this._userToken) {
+            return null;
+        }
+
+        if (this.isTokenExpired(this._userToken)) {
+            this.limparSessao();
+            return null;
+        }
+
         return this._userToken;
     }
 
     /**
-     * Retrieves the user's information by decoding the JWT token.
-     * 
-     * @returns The decoded user information, or null if the token is not available or invalid.
+     * Indica se existe uma sessão válida.
      */
-    getUserInfo(): User {
+    isAuthenticated(): boolean {
+        return this.getToken() !== null;
+    }
+
+    /**
+     * Obtém a informação do utilizador através do token válido.
+     */
+    getUserInfo(): User | null {
+        const token = this.getToken();
+
+        if (!token) {
+            return null;
+        }
+
         if (!this._userInfo) {
-            const token = this.getToken();
-            if (token) {
-                this._userInfo = jwtDecode(token);
+            try {
+                this._userInfo = jwtDecode<User>(token);
+            } catch {
+                this.limparSessao();
+                return null;
             }
         }
+
         return this._userInfo;
     }
 }
 
-// Dependencia Singleton
+// Dependência Singleton
 export const authService = new AuthService();

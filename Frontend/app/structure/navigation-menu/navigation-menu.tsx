@@ -47,7 +47,7 @@ const MENU_CONFIG: MenuConfig = {
             submenu: [
                 { titulo: 'Gerir Inventário', path: '/marketplace/inventario' },
                 { titulo: 'Marketplace', path: '/marketplace/anuncios' },
-                { titulo: 'Atividades Marketplace', path: '/marketplace/atividades' },
+                { titulo: 'Registo de Moderação', path: '/marketplace/atividades' },
             ]
         },
         {
@@ -89,7 +89,6 @@ const MENU_CONFIG: MenuConfig = {
             icone: 'fa-solid fa-store',
             submenu: [
                 { titulo: 'Marketplace', path: '/marketplace/anuncios' },
-                { titulo: 'Atividades Marketplace', path: '/marketplace/atividades' },
             ]
         },
         { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' } // 👈 Intacto!
@@ -121,7 +120,6 @@ const MENU_CONFIG: MenuConfig = {
             icone: 'fa-solid fa-store',
             submenu: [
                 { titulo: 'Marketplace', path: '/marketplace/anuncios' },
-                { titulo: 'Atividades Marketplace', path: '/marketplace/atividades' },
             ]
         },
         { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' }
@@ -138,19 +136,6 @@ export function NavigationMenu() {
     // Guarda o título do menu atualmente expandido (comportamento de acordeão)
     const [menuAberto, setMenuAberto] = useState<string | null>(null);
 
-    /*
-    * Diz erro no role, mas isso é do TypeScript, 
-    * que não sabe que o token tem um campo "role".
-    * O JWT guarda essa informação
-    * ex:
-    * {
-    * "sub": 1,
-    * "name": "coord01",
-    * "role": "Coordenador", <--- aqui está a role
-    * "iat": 1775074104
-    * "exp": 1775081304
-    * A interface User tem o campo "role", ja resolve este erro.
-    */
     const userInfo = authService.getUserInfo() as User;
     const roleDoUser = userInfo?.role; 
 
