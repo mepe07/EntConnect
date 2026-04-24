@@ -1,5 +1,7 @@
 // Ficheiro: Frontend/app/types/marketplace.types.ts
 
+export type AcaoModeracao = 'remover' | 'reativar' | 'arquivar' | 'moderacao';
+
 export enum TipoAnuncio {
     VENDA = 'venda',
     ALUGUER = 'aluguer',
@@ -145,4 +147,23 @@ export interface CriarItemInventarioPayload {
     ficheiroFoto?: File;
     idCor?: number;
     quantidade: number;
+}
+
+export interface RegistoModeracaoMarketplace {
+    ID_Registo_Moderacao: number;
+    ID_Artigo: number;
+    ID_Utilizador_Moderador: number;
+    Acao: AcaoModeracao | string;
+    Estado_Anterior?: EstadoAnuncio | string | null;
+    Estado_Novo: EstadoAnuncio | string;
+    Motivo?: string | null;
+    Data_Registo: string;
+
+    Artigo?: Pick<
+        Anuncio,
+        'ID_Artigo' | 'Nome' | 'Foto' | 'Tipo_Anuncio' | 'Estado_Anuncio' | 'Origem_Registo'
+    >;
+
+    Utilizador?: UtilizadorResumo;
+    Utilizador_Moderador?: UtilizadorResumo;
 }
