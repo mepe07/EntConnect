@@ -126,7 +126,7 @@ describe('AuthService', () => {
         prismaMock.utilizador.findUnique.mockResolvedValue(null);
 
         await expect(service.login(loginDto)).rejects.toThrow(
-            new UnauthorizedException('Credenciais inválidas.'),
+            new UnauthorizedException('Os dados introduzidos estão inválidos.'),
         );
     });
 
@@ -138,7 +138,7 @@ describe('AuthService', () => {
         (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
         await expect(service.login(loginDto)).rejects.toThrow(
-            new UnauthorizedException('Credenciais inválidas.'),
+            new UnauthorizedException('Os dados introduzidos estão inválidos.'),
         );
     });
 
@@ -150,7 +150,7 @@ describe('AuthService', () => {
         (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
         await expect(service.login(loginDto)).rejects.toThrow(
-            new UnauthorizedException('A sua conta encontra-se inativa. Contacte a coordenação.'),
+            new UnauthorizedException('A sua conta está inativa. Contacte a coordenação.'),
         );
     });
 

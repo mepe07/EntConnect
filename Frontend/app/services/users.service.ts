@@ -117,6 +117,25 @@ export class UtilizadorService {
         return await response.json();
     }
 
+    async updatePessoal(userId: number, dados: { nome?: string; contacto?: string; nif?: string }) {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${this._apiUrl}/utilizador/${userId}/update-pessoal`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify(dados),
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error?.message ?? 'Erro ao atualizar os dados pessoais.');
+        }
+
+        return await response.json();
+    }
+
     async updatePassword(userId: number, newPassword: string) {
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/password`, {
             method: 'PATCH',

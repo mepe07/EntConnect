@@ -16,17 +16,17 @@ export class AuthService {
         const user = await this.obterUtilizadorPorUsername(loginDto.username);
 
         if (!user) {
-            throw new UnauthorizedException('Credenciais inválidas.');
+            throw new UnauthorizedException('Os dados introduzidos estão inválidos.');
         }
 
         const passwordValida = await bcrypt.compare(loginDto.password, user.Password);
 
         if (!passwordValida) {
-            throw new UnauthorizedException('Credenciais inválidas.');
+            throw new UnauthorizedException('Os dados introduzidos estão inválidos.');
         }
 
         if (!user.Ativo) {
-            throw new UnauthorizedException('A sua conta encontra-se inativa. Contacte a coordenação.');
+            throw new UnauthorizedException('A sua conta está inativa. Contacte a coordenação.');
         }
 
         const userRole = this.determinarRole(user);
