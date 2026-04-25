@@ -68,6 +68,7 @@ export default function App() {
     const [domLoaded, setDomLoaded] = useState(false);
     const [sessaoValida, setSessaoValida] = useState(false);
     const location = useLocation();
+    const isRotaPublicaEventos = location.pathname.startsWith('/eventos');
 
     useEffect(() => {
         setDomLoaded(true);
@@ -110,6 +111,12 @@ export default function App() {
         }
 
         return <Login />;
+    }
+
+    // Rotas públicas de eventos.
+    // Qualquer pessoa pode abrir estas páginas sem login.
+    if (isRotaPublicaEventos) {
+        return <Outlet />;
     }
 
     if (!sessaoValida) {
