@@ -196,20 +196,21 @@ export class UtilizadorService {
     };
   }
   
-  // async getMinhasAulas(id: number) {
-  //   const utilizador = await this.prisma.utilizador.findUnique({
-  //     where: { ID_Utilizador: id },
-  //     include: {
-  //       Pessoa: {
-  //         include: {
-  //           Professor: true,
-  //           Enc_Educacao: {
-  //             include: { Aluno: true }
-  //           }
-  //         }
-  //       }
-  //     }
-  //   });
+  /*
+  async getMinhasAulas(id: number) {
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: id },
+      include: {
+        Pessoa: {
+          include: {
+            Professor: true,
+            Enc_Educacao: {
+              include: { Aluno: true }
+            }
+          }
+        }
+      }
+    });
 
   //   if (!utilizador || !utilizador.Pessoa) {
   //     throw new NotFoundException(`Utilizador não encontrado.`);
@@ -287,8 +288,8 @@ export class UtilizadorService {
   //     });
   //   }
 
-  //   return [];
-  // }
+    return [];
+  }*/
 
   async getAlunosByEE(idEncEducacao: number) {
     return this.prisma.aluno.findMany({
@@ -340,6 +341,48 @@ export class UtilizadorService {
     return utilizador;
   }
 
+  async updateCargo(idUtilizador: number, novoCargo: string) {
+    const cargosValidos = ['Professor', 'Coordenador', 'Direção', 'Encarregado de Educação'];
+    if (!cargosValidos.includes(novoCargo)) {
+      throw new NotFoundException(`Cargo "${novoCargo}" não é válido.`);
+    }
+
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: idUtilizador },
+      include: {
+        Pessoa: {
+          include: {
+            Professor: true,
+            Coordenador: true,
+            Direcao: true,
+            Enc_Educacao: true,
+          },
+        },
+      },
+    });
+
+    if (!utilizador || !utilizador.Pessoa) {
+      throw new NotFoundException('Utilizador não encontrado.');
+    }
+
+    const idPessoa = utilizador.ID_Pessoa;
+    const pessoa = utilizador.Pessoa;
+
+    // Apagar o cargo atual (apenas o que existir)
+    if (pessoa.Professor)    await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Coordenador)  await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Direcao)      await this.prisma.direcao.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Enc_Educacao) await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
+
+    // Criar o novo cargo
+    if (novoCargo === 'Professor')                 await this.prisma.professor.create({ data: { ID_Pessoa: idPessoa } });
+    else if (novoCargo === 'Coordenador')          await this.prisma.coordenador.create({ data: { ID_Pessoa: idPessoa } });
+    else if (novoCargo === 'Direção')              await this.prisma.direcao.create({ data: { ID_Pessoa: idPessoa } });
+    else if (novoCargo === 'Encarregado de Educação') await this.prisma.enc_Educacao.create({ data: { ID_Pessoa: idPessoa } });
+
+    return { mensagem: `Cargo atualizado para "${novoCargo}" com sucesso.` };
+  }
+
   async mudarPassword(id: number, dto: ChangePasswordDto) {
     // 1. Procurar o utilizador
     const utilizador = await this.prisma.utilizador.findUnique({
@@ -370,6 +413,41 @@ export class UtilizadorService {
 
     return { message: 'Password alterada com sucesso!' };
   }
+  async deleteUser(idUtilizador: number) {
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: idUtilizador },
+      include: {
+        Pessoa: {
+          include: {
+            Professor: true,
+            Coordenador: true,
+            Direcao: true,
+            Enc_Educacao: true,
+          },
+        },
+      },
+    });
+
+    if (!utilizador || !utilizador.Pessoa) {
+      throw new NotFoundException('Utilizador não encontrado.');
+    }
+
+    const idPessoa = utilizador.ID_Pessoa;
+    const pessoa = utilizador.Pessoa;
+
+    // Apagar registos de cargo (FK para Pessoa)
+    if (pessoa.Professor)    await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Coordenador)  await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Direcao)      await this.prisma.direcao.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Enc_Educacao) await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
+
+    // Apagar Utilizador (FK para Pessoa)
+    await this.prisma.utilizador.delete({ where: { ID_Utilizador: idUtilizador } });
+
+    // Apagar Pessoa
+    await this.prisma.pessoa.delete({ where: { ID_Pessoa: idPessoa } });
+
+    return { mensagem: 'Utilizador eliminado com sucesso.' };
+  }
 
 }
-

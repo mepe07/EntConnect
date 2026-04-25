@@ -76,7 +76,11 @@ export function Login() {
                 navigateTo('/');
             }
         } catch (erro) {
-            setErrorMessage('Credencias Invalidas');
+            if (erro instanceof Error) {
+                setErrorMessage(erro.message);
+            } else {
+                setErrorMessage('Ocorreu um erro ao iniciar sessão.');
+            }
         }
     };
 
