@@ -68,7 +68,9 @@ export default function App() {
     const [domLoaded, setDomLoaded] = useState(false);
     const [sessaoValida, setSessaoValida] = useState(false);
     const location = useLocation();
-    const isRotaPublicaEventos = location.pathname.startsWith('/eventos');
+    const isRotaPublicaEventos =
+        location.pathname === '/eventos' ||
+        location.pathname.startsWith('/eventos/');
 
     useEffect(() => {
         setDomLoaded(true);

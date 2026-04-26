@@ -36,3 +36,32 @@ export interface Evento extends EventoResumo {
     dataAtualizacao: string;
     dataRemocao?: string | null;
 }
+
+export type FiltroEstadoEventoGestao = 'todos' | 'ativos' | 'removidos';
+
+export interface FiltrosGestaoEventos {
+    pesquisa?: string;
+    tipo?: TipoEvento | 'todos';
+    ativo?: boolean;
+    publico?: boolean;
+    publicado?: boolean;
+    destaque?: boolean;
+    destaqueLogin?: boolean;
+    limite?: number;
+}
+
+export interface GuardarEventoPayload {
+    titulo: string;
+    slug?: string;
+    resumo?: string;
+    descricao?: string;
+    tipo: TipoEvento;
+    local?: string;
+    dataInicio: string;
+    dataFim?: string;
+    publico: boolean;
+    publicado: boolean;
+    destaque: boolean;
+    destaqueLogin: boolean;
+    ficheiroImagem?: File | null;
+}

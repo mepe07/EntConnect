@@ -239,6 +239,10 @@ export function EventoDetalhePublico() {
                         </div>
                     )}
 
+                    <Link to="/eventos" className={styles.secondaryButton}>
+                        Ver todos os eventos
+                    </Link>
+
                     <Link to="/login" className={styles.primaryButton}>
                         Entrar na plataforma
                     </Link>

@@ -54,7 +54,6 @@ export class AuthService {
                     include: {
                         Professor: true,
                         Coordenador: true,
-                        Direcao: true,
                         Enc_Educacao: true,
                     },
                 },

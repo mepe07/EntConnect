@@ -10,55 +10,105 @@ const TEMPO_ENTRADA_MS = 900;
 const TEMPO_VISIVEL_MS = 7500;
 const STORAGE_KEY = 'entconnect_eventos_login_vistos';
 
+// Tempo durante o qual o mesmo evento não volta a aparecer no toast.
+// Neste caso: 24 horas.
+const TEMPO_BLOQUEIO_TOAST_MS = 24 * 60 * 60 * 1000;
+
 type EventoVistoStorage = {
     id: number;
     vistoEm: string;
 };
 
-    function obterEventosVistos(): EventoVistoStorage[] {
-        try {
-            const valor = localStorage.getItem(STORAGE_KEY);
+/**
+ * Lê os eventos já mostrados no login.
+ *
+ * Nota:
+ * O localStorage pode ter dados antigos, inválidos ou alterados manualmente.
+ * Por isso, validamos a estrutura antes de confiar nos dados.
+ */
+function obterEventosVistos(): EventoVistoStorage[] {
+    try {
+        const valor = localStorage.getItem(STORAGE_KEY);
 
-            if (!valor) {
-                return [];
-            }
-
-            const eventos = JSON.parse(valor);
-
-            return Array.isArray(eventos) ? eventos : [];
-        } catch {
+        if (!valor) {
             return [];
         }
-    }
 
-    function eventoFoiVistoHoje(idEvento: number): boolean {
-        const hoje = new Date().toISOString().slice(0, 10);
+        const eventos = JSON.parse(valor);
 
-        return obterEventosVistos().some((evento) => {
-            const dataVista = new Date(evento.vistoEm).toISOString().slice(0, 10);
+        if (!Array.isArray(eventos)) {
+            return [];
+        }
 
-            return evento.id === idEvento && dataVista === hoje;
+        return eventos.filter((evento) => {
+            return (
+                typeof evento.id === 'number' &&
+                typeof evento.vistoEm === 'string'
+            );
         });
+    } catch {
+        return [];
     }
+}
 
-    function guardarEventoVisto(idEvento: number): void {
-        const eventosVistos = obterEventosVistos();
+/**
+ * Remove do localStorage eventos vistos há mais de 24 horas.
+ *
+ * Assim:
+ * - não mostramos spam ao utilizador;
+ * - mas também não bloqueamos o evento para sempre;
+ * - e evitamos acumular lixo no localStorage.
+ */
+function limparEventosVistosExpirados(): EventoVistoStorage[] {
+    const agora = Date.now();
 
-        const eventosSemDuplicado = eventosVistos.filter(
-            (evento) => evento.id !== idEvento
-        );
+    const eventosValidos = obterEventosVistos().filter((evento) => {
+        const vistoEm = new Date(evento.vistoEm).getTime();
 
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify([
-                ...eventosSemDuplicado,
-                {
-                    id: idEvento,
-                    vistoEm: new Date().toISOString(),
-                },
-            ])
-        );
-    }
+        if (Number.isNaN(vistoEm)) {
+            return false;
+        }
+
+        return agora - vistoEm < TEMPO_BLOQUEIO_TOAST_MS;
+    });
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(eventosValidos));
+
+    return eventosValidos;
+}
+
+/**
+ * Verifica se o evento já apareceu nas últimas 24 horas.
+ */
+function eventoFoiVistoRecentemente(idEvento: number): boolean {
+    const eventosVistos = limparEventosVistosExpirados();
+
+    return eventosVistos.some((evento) => evento.id === idEvento);
+}
+
+/**
+ * Guarda que este evento foi mostrado agora.
+ *
+ * Se o evento já existir no storage, atualizamos a data.
+ */
+function guardarEventoVisto(idEvento: number): void {
+    const eventosVistos = limparEventosVistosExpirados();
+
+    const eventosSemDuplicado = eventosVistos.filter(
+        (evento) => evento.id !== idEvento
+    );
+
+    localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify([
+            ...eventosSemDuplicado,
+            {
+                id: idEvento,
+                vistoEm: new Date().toISOString(),
+            },
+        ])
+    );
+}
 
 function formatarDataEvento(data: string): string {
     return new Intl.DateTimeFormat('pt-PT', {
@@ -91,7 +141,9 @@ export function EventoLoginToast() {
     const [pausado, setPausado] = useState(false);
 
     const textoData = useMemo(() => {
-        if (!evento) return '';
+        if (!evento) {
+            return '';
+        }
 
         const dataFormatada = formatarDataEvento(evento.dataInicio);
 
@@ -108,10 +160,13 @@ export function EventoLoginToast() {
         async function carregarEventoToast() {
             try {
                 const eventos = await eventosService.listarEventosLoginToast();
-                // Escolhemos o primeiro evento que ainda não foi visto hoje.
-                // Assim o utilizador não leva spam, mas também não bloqueamos o evento para sempre.
+
+                /*
+                 * Escolhemos o primeiro evento que ainda não apareceu
+                 * nas últimas 24 horas.
+                 */
                 const proximoEvento = eventos.find(
-                    (item) => !eventoFoiVistoHoje(item.id)
+                    (item) => !eventoFoiVistoRecentemente(item.id)
                 );
 
                 if (!proximoEvento) {
@@ -124,9 +179,11 @@ export function EventoLoginToast() {
                     setVisivel(true);
                 }, TEMPO_ENTRADA_MS);
             } catch {
-                // Importante:
-                // O login nunca pode falhar só porque os eventos falharam.
-                // Por isso, o erro é ignorado de forma silenciosa.
+                /*
+                 * Importante:
+                 * O login nunca pode falhar só porque os eventos falharam.
+                 * Por isso, o erro é ignorado de forma silenciosa.
+                 */
             }
         }
 
@@ -223,7 +280,8 @@ export function EventoLoginToast() {
             </div>
 
             <div
-                className={`${styles.barraProgresso} ${pausado ? styles.barraPausada : ''}`}
+                className={`${styles.barraProgresso} ${pausado ? styles.barraPausada : ''
+                    }`}
             />
         </div>
     );

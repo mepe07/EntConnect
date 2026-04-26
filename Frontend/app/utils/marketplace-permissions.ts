@@ -9,8 +9,6 @@
 
 export const ROLES_COM_ACESSO_AO_MARKETPLACE = [
     'Coordenador',
-    'Admin',
-    'Direcao',
     'Professor',
     'Enc_Educacao',
 ] as const;

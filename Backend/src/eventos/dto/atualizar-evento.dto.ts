@@ -9,15 +9,8 @@ import {
     IsString,
     MaxLength,
 } from 'class-validator';
+import { transformarBoolean } from './transformar-boolean';
 import { TipoEvento } from '../enums/tipo-evento.enum';
-
-function transformarBoolean(value: unknown): boolean | undefined {
-    if (value === undefined || value === null || value === '') {
-        return undefined;
-    }
-
-    return value === true || value === 'true' || value === 1 || value === '1';
-}
 
 export class AtualizarEventoDto {
     @IsOptional()
