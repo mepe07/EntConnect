@@ -7,34 +7,127 @@
     animation: fadeIn 0.4s ease-in-out;
 
     /* =========================================================================
-       1. CABEÇALHO
+       1. TOPO: BOAS VINDAS E AÇÕES RÁPIDAS
        ========================================================================= */
-    .dashboard-boas-vindas {
+    .dashboard-topo {
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
         margin-bottom: 32px;
 
-        h1 {
-            font-size: 32px;
-            color: colors.$gray-8;
-            margin-bottom: 8px;
-            font-weight: 700;
+        .dashboard-boas-vindas {
+            h1 {
+                font-size: 32px;
+                color: colors.$gray-8;
+                margin-bottom: 8px;
+                font-weight: 700;
+            }
+            p {
+                color: colors.$gray-5;
+                margin: 0;
+                font-size: 16px;
+            }
         }
 
-        p {
-            color: colors.$gray-7;
-            margin: 0;
-            font-size: 16px;
-        }
+        /* Container das Ações Rápidas Compactas */
+        .acoes-rapidas-container {
+            position: relative;
+            
+            .botoes-acoes-topo {
+                display: flex;
+                gap: 8px;
+                background: #fff;
+                padding: 6px;
+                border-radius: 12px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+                border: 1px solid colors.$gray-3;
 
-        .data-hoje {
-            font-weight: 600;
-            color: colors.$theme-100;
-            text-transform: capitalize;
-            background: rgba(colors.$theme-100, 0.1);
-            padding: 8px 16px;
-            border-radius: 8px;
+                .btn-acao-mini {
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 8px;
+                    border: none;
+                    background: colors.$gray-1;
+                    color: colors.$theme-100;
+                    font-size: 16px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+
+                    &:hover {
+                        background: colors.$theme-20;
+                        transform: translateY(-2px);
+                    }
+
+                    /* Lápis de edição */
+                    &.editar {
+                        background: #fff;
+                        border: 1px dashed colors.$gray-4;
+                        color: colors.$gray-5;
+
+                        &:hover, &.ativo {
+                            border-color: colors.$theme-100;
+                            color: colors.$theme-100;
+                            background: colors.$theme-20;
+                        }
+                        
+                        .fa-check { color: #16a34a; }
+                    }
+                }
+            }
+
+            /* Menu Dropdown de Edição */
+            .menu-edicao-acoes {
+                position: absolute;
+                top: calc(100% + 12px);
+                right: 0;
+                width: 240px;
+                background: #fff;
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+                border: 1px solid colors.$gray-3;
+                padding: 16px;
+                z-index: 50;
+                animation: fadeIn 0.2s ease-out;
+
+                h4 {
+                    font-size: 12px;
+                    color: colors.$gray-5;
+                    text-transform: uppercase;
+                    margin-bottom: 12px;
+                    font-weight: 700;
+                    letter-spacing: 0.5px;
+                }
+
+                .item-edicao-mini {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 10px 0;
+                    border-bottom: 1px solid colors.$gray-2;
+
+                    &:last-child { border-bottom: none; padding-bottom: 0; }
+
+                    span {
+                        font-size: 14px;
+                        font-weight: 500;
+                        color: colors.$gray-8;
+                        i { color: colors.$gray-5; margin-right: 10px; width: 16px; text-align: center; }
+                    }
+
+                    button {
+                        background: none;
+                        border: none;
+                        font-size: 22px;
+                        cursor: pointer;
+                        padding: 0;
+                        transition: transform 0.2s;
+                        &:hover { transform: scale(1.1); }
+                    }
+                }
+            }
         }
     }
 
@@ -58,9 +151,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.02);
             transition: transform 0.2s;
 
-            &:hover {
-                transform: translateY(-4px);
-            }
+            &:hover { transform: translateY(-4px); }
 
             .icone {
                 width: 56px;
@@ -84,7 +175,6 @@
                     text-transform: uppercase;
                     font-weight: 600;
                 }
-
                 h3 {
                     font-size: 24px;
                     color: colors.$gray-8;
@@ -103,19 +193,19 @@
         grid-template-columns: 2fr 1fr; /* Esquerda ocupa o dobro da direita */
         gap: 24px;
 
-        .painel-grafico, .painel-agenda {
+        .painel-destaques, .painel-agenda {
             background: #fff;
             border: 1px solid colors.$gray-3;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.02);
             overflow: hidden;
+            padding: 24px;
 
             .painel-header {
-                padding: 20px 24px;
-                border-bottom: 1px solid colors.$gray-3;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                margin-bottom: 24px;
 
                 h2 {
                     font-size: 18px;
@@ -130,203 +220,151 @@
                     color: colors.$theme-100;
                     cursor: pointer;
                     font-weight: 600;
+                    font-size: 14px;
+                    &:hover { text-decoration: underline; }
                 }
 
-                /* Lápis de Edição / Check Guardar */
-                .btn-icone-acao {
-                    background: none;
-                    border: none;
-                    cursor: pointer;
-                    font-size: 18px;
-                    padding: 6px 10px;
-                    border-radius: 6px;
-                    transition: all 0.2s ease;
-
-                    &:hover { background-color: colors.$gray-1; }
-                    .fa-check { color: #16a34a; } 
-                    .fa-pen { color: colors.$gray-5; } 
-                }
-            }
-
-            .painel-corpo {
-                padding: 24px;
+                &.mt-4 { margin-top: 32px; }
             }
         }
 
         /* -----------------------------------------------------
-           AÇÕES RÁPIDAS (Modo Grelha vs Lista Edição)
+           LISTA DE EVENTOS (Esquerda)
            ----------------------------------------------------- */
-        .acoes-rapidas {
-            display: block; 
-            width: 100%;
+        .lista-eventos {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
 
-            /* MIXIN: Define o visual base do quadrado, usado nos dois modos */
-            @mixin quadrado-com-texto {
-                background-color: #f8fafc; // Fundo cinza clarinho
-                border: 1px solid #cbd5e1; // Borda visível para não se perder no fundo
-                border-radius: 12px;
-                padding: 16px 8px;
+            .evento-card {
                 display: flex;
-                flex-direction: column;
                 align-items: center;
-                justify-content: center;
-                gap: 12px; 
-                cursor: pointer;
-                position: relative; 
-                transition: all 0.2s ease-in-out;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-                min-height: 110px; // Altura fixa
-
-                i.icone-principal {
-                    font-size: 28px;
-                    color: colors.$theme-100;
-                    transition: transform 0.2s;
-                }
-
-                span.texto-acao {
-                    color: #334155; 
-                    font-size: 0.85rem;
-                    font-weight: 600;
-                    text-align: center;
-                    line-height: 1.2;
-                }
-
-                &:hover {
-                    background-color: #f1f5f9;
-                    border-color: colors.$theme-100; // Borda verde no hover
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-
-                    i.icone-principal { transform: scale(1.1); }
-                    span.texto-acao { color: #0f172a; }
-                }
-
-                &:active {
-                    transform: scale(0.96);
-                }
-            }
-
-            /* Grelha partilhada para ambos os modos */
-            .grelha-botoes-acoes, .lista-edicao-acoes {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
                 gap: 16px;
-                width: 100%;
-            }
+                padding: 16px;
+                border-radius: 12px;
+                background: colors.$gray-1;
+                border: 1px solid colors.$gray-3;
+                transition: background 0.2s, border-color 0.2s;
 
-            /* MODO DE VISUALIZAÇÃO */
-            .grelha-botoes-acoes {
-                .btn-acao {
-                    @include quadrado-com-texto;
-                    width: 100%;
+                &:hover { 
+                    background: #fff; 
+                    border-color: colors.$theme-40; 
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
                 }
 
-                .texto-vazio-acoes {
-                    grid-column: 1 / -1; 
-                    color: colors.$gray-5;
-                    font-size: 0.95rem;
-                    font-style: italic;
-                    text-align: center;
-                    padding: 20px 0;
+                .evento-data {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    width: 64px;
+                    height: 64px;
+                    background: #fff;
+                    border-radius: 10px;
+                    border: 1px solid colors.$gray-3;
+                    color: colors.$theme-100;
+                    
+                    &.destaque { 
+                        background: colors.$theme-100; 
+                        color: #fff; 
+                        border-color: colors.$theme-100; 
+                    }
+
+                    .dia { font-size: 22px; font-weight: 800; line-height: 1; }
+                    .mes { font-size: 12px; font-weight: 700; text-transform: uppercase; margin-top: 4px; }
                 }
-            }
 
-            /* MODO DE EDIÇÃO (Quadrados c/ botão olho e transparência) */
-            .lista-edicao-acoes {
-                .item-edicao {
-                    @include quadrado-com-texto;
+                .evento-info {
+                    flex: 1;
+                    h4 { font-size: 16px; color: colors.$gray-8; font-weight: 700; margin: 0 0 6px 0; }
+                    p { font-size: 13px; color: colors.$gray-5; margin: 0; i { margin-right: 6px; } }
+                }
 
-                    // Botão flutuante do olho
-                    .btn-toggle-olho {
-                        position: absolute;
-                        top: -8px;
-                        right: -8px;
-                        background: #fff;
-                        border: 1px solid #cbd5e1;
-                        border-radius: 50%;
-                        width: 28px;
-                        height: 28px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-size: 12px;
-                        color: #64748b;
-                        cursor: pointer;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        z-index: 10;
-                        transition: all 0.2s;
-
-                        &:hover {
-                            color: colors.$theme-100;
-                            transform: scale(1.1);
-                        }
-                    }
-
-                    /* --- ESTADOS DE VISIBILIDADE --- */
-                    &.ativo {
-                        opacity: 1; // Fica escuro normal
-                    }
-
-                    &.inativo {
-                        opacity: 0.45; // Fica transparente/claro
-                        background-color: #f8fafc;
-                        border-color: #e2e8f0;
-                        filter: grayscale(80%); // Remove a cor viva do ícone
-                        
-                        i.icone-principal { color: #94a3b8; }
-                        
-                        span.texto-acao { 
-                            text-decoration: line-through; 
-                            color: #94a3b8; 
-                        }
-                        
-                        .btn-toggle-olho { 
-                            color: #ef4444; // Olho fica vermelho se estiver fechado
-                        }
-                    }
+                .tag-evento {
+                    font-size: 12px;
+                    font-weight: 600;
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    background: colors.$theme-20;
+                    color: colors.$theme-100;
                 }
             }
         }
 
         /* -----------------------------------------------------
-           Estilos específicos da Agenda
+           QUADRO DE AVISOS (Esquerda)
+           ----------------------------------------------------- */
+        .lista-avisos {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+
+            .aviso-item {
+                display: flex;
+                gap: 16px;
+                padding: 16px;
+                border-radius: 12px;
+                background: #fff;
+                border: 1px solid colors.$gray-3;
+                border-left: 4px solid colors.$gray-4;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.01);
+
+                .aviso-icone {
+                    font-size: 22px;
+                    margin-top: 2px;
+                    &.aviso { color: #f59e0b; }
+                    &.sucesso { color: #10b981; }
+                }
+
+                .aviso-texto {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+                    strong { font-size: 15px; color: colors.$gray-8; font-weight: 700; }
+                    span { font-size: 14px; color: colors.$gray-5; line-height: 1.5; }
+                }
+            }
+        }
+
+        /* -----------------------------------------------------
+           AGENDA (Direita)
            ----------------------------------------------------- */
         .lista-agenda {
             list-style: none;
             padding: 0;
             margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
 
             li {
                 display: flex;
                 gap: 16px;
-                margin-bottom: 20px;
+                padding-bottom: 16px;
+                border-bottom: 1px dashed colors.$gray-3;
 
-                &:last-child { margin-bottom: 0; }
+                &:last-child { border-bottom: none; padding-bottom: 0; }
 
                 .hora {
+                    font-size: 14px;
                     font-weight: 700;
                     color: colors.$theme-100;
-                    font-size: 14px;
                     background: rgba(colors.$theme-100, 0.1);
-                    padding: 6px 10px;
-                    border-radius: 6px;
+                    padding: 8px 12px;
+                    border-radius: 8px;
                     height: fit-content;
+                    min-width: 65px;
+                    text-align: center;
                 }
 
                 .detalhe {
                     display: flex;
                     flex-direction: column;
-
-                    strong {
-                        color: colors.$gray-8;
-                        font-size: 15px;
-                        margin-bottom: 4px;
-                    }
-
-                    span {
-                        color: colors.$gray-4;
-                        font-size: 13px;
-                    }
+                    justify-content: center;
+                    gap: 4px;
+                    
+                    strong { color: colors.$gray-8; font-size: 15px; }
+                    span { color: colors.$gray-5; font-size: 13px; font-weight: 500; }
                 }
             }
         }
@@ -344,4 +382,61 @@
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================================================
+   MODO ESCURO (DARK MODE) - AJUSTADO PARA MANTER DESIGN CLARO
+   ========================================================================= */
+@media (prefers-color-scheme: dark) {
+    .dashboard-wrapper {
+        // Forçamos o fundo geral e os cartões a manterem-se claros/brancos
+        background-color: #f1f5f9; 
+
+        .dashboard-topo .dashboard-boas-vindas h1 { color: #0f172a; } // Texto escuro
+        .dashboard-topo .dashboard-boas-vindas p { color: #475569; }
+
+        // Mantém os botões do topo brancos
+        .dashboard-topo .acoes-rapidas-container .botoes-acoes-topo { 
+            background: #fff !important; 
+            border-color: #cbd5e1 !important; 
+        }
+
+        // Mantém os KPIs brancos
+        .kpi-grid .kpi-card { 
+            background: #fff !important; 
+            border-color: #e2e8f0 !important; 
+            .info h3 { color: #0f172a; }
+            .info span { color: #64748b; }
+        }
+
+        // Mantém os Painéis principais brancos
+        .conteudo-principal .painel-destaques, 
+        .conteudo-principal .painel-agenda { 
+            background: #fff !important; 
+            border-color: #e2e8f0 !important; 
+        }
+
+        .conteudo-principal .painel-header h2 { color: #0f172a; }
+
+        // Ajuste dos cartões de eventos para não ficarem pretos
+        .conteudo-principal .lista-eventos .evento-card {
+            background: #f8fafc !important;
+            border-color: #e2e8f0 !important;
+            .evento-info h4 { color: #0f172a; }
+            .evento-data:not(.destaque) { background: #fff; color: #004d40; }
+        }
+
+        // Ajuste dos avisos
+        .conteudo-principal .lista-avisos .aviso-item {
+            background: #fff !important;
+            border-color: #e2e8f0 !important;
+            strong { color: #0f172a; }
+        }
+
+        // Ajuste da agenda
+        .conteudo-principal .lista-agenda li {
+            border-color: #f1f5f9;
+            .detalhe strong { color: #0f172a; }
+        }
+    }
 }

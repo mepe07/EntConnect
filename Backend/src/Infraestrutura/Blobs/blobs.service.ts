@@ -141,4 +141,41 @@ export class BlobsService {
             throw new BadRequestException(`Erro ao guardar fotos do marketplace no contentor "${containerName}".`);
         }
     }
+
+    /**
+   * Obtém um ficheiro do Azure e devolve o Stream legível.
+   * Ideal para criar respostas de download (piping para a Response do Express).
+   * @param containerName Nome do contentor (ex: 'Templates')
+   * @param nomeFicheiro Nome do ficheiro (ex: 'alunos.csv')
+   * @returns O stream legível (NodeJS.ReadableStream) do ficheiro.
+   */
+  async getFicheiroStream(containerName: string, nomeFicheiro: string): Promise<NodeJS.ReadableStream> {
+    if (!this.blobServiceClient) {
+      throw new InternalServerErrorException('A ligação ao Azure não está configurada no servidor.');
+    }
+
+    try {
+      const containerClient = this.blobServiceClient.getContainerClient(containerName);
+      const blockBlobClient = containerClient.getBlockBlobClient(nomeFicheiro);
+
+      // Verifica se o ficheiro existe antes de tentar fazer download
+      const exists = await blockBlobClient.exists();
+      if (!exists) {
+        throw new BadRequestException(`O ficheiro "${nomeFicheiro}" não foi encontrado no contentor "${containerName}".`);
+      }
+
+      const downloadResponse = await blockBlobClient.download(0);
+      
+      // O Azure SDK devolve um 'readableStreamBody' se estivermos em ambiente Node.js
+      if (!downloadResponse.readableStreamBody) {
+         throw new InternalServerErrorException('Erro a processar o stream do ficheiro no Azure.');
+      }
+
+      return downloadResponse.readableStreamBody;
+
+    } catch (error) {
+      console.error("Erro ao obter stream do Azure Blob Storage:", error);
+      throw new InternalServerErrorException(`Não foi possível fazer download do ficheiro "${nomeFicheiro}".`);
+    }
+  }
 }
