@@ -7,6 +7,15 @@ export default [
     // Rota de Login
     route("login", "routes/login.tsx"),
 
+    // Página pública com lista de eventos
+    route("eventos", "routes/eventos-publicos.tsx"),
+
+    // Página pública de detalhe de evento
+    route("eventos/:slug", "routes/evento-detalhe-publico.tsx"),
+
+    // Gestão interna de eventos da coordenação
+    route("admin/eventos", "routes/gestao-eventos-coordenacao.tsx"),
+
     // ==========================================
     // AS CORREÇÕES DOS CAMINHOS (URLs)
     // O 1º argumento agora é igualzinho à NavBar!

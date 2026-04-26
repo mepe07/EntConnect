@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { InfraestruturaModule } from './Infraestrutura/infraestrutura.module';
 import { SalasModule } from './salas/salas.module';
 import { MarketplaceModule } from './marketplace/marketplace.module';
+import { EventosModule } from './eventos/eventos.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { MarketplaceModule } from './marketplace/marketplace.module';
     AuthModule,
     InfraestruturaModule,
     SalasModule,
+    EventosModule,
   ],
 })
 export class AppModule {}
