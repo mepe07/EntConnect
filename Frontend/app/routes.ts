@@ -32,6 +32,9 @@ export default [
     // NavBar diz: path: '/relatorios/faturacao'
     route("relatorios/faturacao", "routes/faturacao.tsx"),
 
+    // Rota do relatório de coaching
+    route("relatorios/relatorioCoaching", "routes/relatorioCoaching.tsx"),
+
     // Rota "Gerir Inventário"
     route("marketplace/inventario", "routes/inventario.tsx"),
 
@@ -58,5 +61,7 @@ export default [
 
     // Rota do perfil (para todos os utilizadores)
     route("conta", "routes/conta.tsx"),
+
+
 
 ] satisfies RouteConfig;

@@ -1,5 +1,5 @@
 //#region  imports
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UnauthorizedException,Headers } from '@nestjs/common';
 import { CoachingService } from './coaching.service';
 import { CreateCoachingDto } from './dto/create-coaching.dto';
 import { UpdateCoachingDto } from './dto/update-coaching.dto';
@@ -18,7 +18,9 @@ import { InscreverAlunoDto } from './dto/inscrever-aluno.dto';
 export class CoachingController {
   constructor(
     private readonly coachingService: CoachingService,
-    private readonly gestaoEstudiosService: GestaoEstudiosService
+    private readonly gestaoEstudiosService: GestaoEstudiosService,
+    private readonly modalidadesService: ModalidadeService
+    
   ) {}
 
 
@@ -156,6 +158,38 @@ export class CoachingController {
   async getKpisAdmin() {
     return this.coachingService.getKpisAdmin();
   }
+
+  @Get('marcacoes')
+    @ApiOperation({ summary: 'Obtém a agenda pura de marcações de coaching do utilizador' })
+    async getMarcacoes(
+        @Headers('authorization') authHeader: string
+    ) {
+        // 1. Verificação do Segurança (Token)
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            throw new UnauthorizedException('Acesso negado: Token não encontrado na mochila.');
+        }
+
+        const token = authHeader.split(' ')[1];
+        let userPayload;
+
+        // 2. Descodifica a mochila para saber quem é
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+            userPayload = JSON.parse(jsonPayload);
+        } catch (e) {
+            throw new UnauthorizedException('Token inválido ou corrompido.');
+        }
+
+        const role = userPayload.role;
+        const userId = userPayload.sub;
+
+        // 3. Chama o Service que criámos na mensagem anterior!
+        // ATENÇÃO: Muda "this.coachingService" para o nome do service onde colocaste a função
+        return this.coachingService.getMarcacoesProfessor(role, userId);
+    }
+  
 }
 
 // END POINT para as Modalidades - Retirar isto daqui e colocar num novo controller chamado modalidade.controller.ts para organizar melhor o código.
@@ -199,6 +233,7 @@ export class ModalidadeController {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.modalidadeService.remove(id);
   }
-
-  
+ 
 }
+
+

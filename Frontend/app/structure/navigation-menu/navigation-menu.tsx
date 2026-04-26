@@ -57,6 +57,7 @@ const MENU_CONFIG: MenuConfig = {
                 { titulo: 'Faturação', path: '/relatorios/faturacao' },
                 { titulo: 'Histórico Coaching', path: '/relatorios/historico-coaching' },
                 { titulo: 'Estatísticas', path: '/relatorios/estatisticas' },
+                { titulo: 'Consultar Agendas', path: '/relatorioCoaching' },
             ]
         },
         { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' }
@@ -80,8 +81,7 @@ const MENU_CONFIG: MenuConfig = {
             icone: 'fa-solid fa-file-invoice-dollar',
             submenu: [
                 { titulo: 'Faturação', path: '/relatorios/faturacao' },
-                { titulo: 'Coaching', path: '/relatorios/coaching' },
-                { titulo: 'Estatísticas', path: '/relatorios/estatisticas' },
+                { titulo: 'Coaching', path: '/relatorios/relatorioCoaching' },
             ]
         },
         {
@@ -112,7 +112,6 @@ const MENU_CONFIG: MenuConfig = {
             icone: 'fa-solid fa-file-invoice-dollar',
             submenu: [
                 { titulo: 'Faturação', path: '/relatorios/faturacao' },
-                { titulo: 'Estatísticas', path: '/relatorios/estatisticas' },
             ]
         },
         {
