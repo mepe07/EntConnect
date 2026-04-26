@@ -1,0 +1,528 @@
+/* Ficheiro: app/views/eventos/painel-eventos-coordenacao.module.css */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    color: #17212b;
+}
+
+.hero {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 28px;
+    border: 1px solid #e5e7eb;
+    border-radius: 24px;
+    background: #ffffff;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+}
+
+.eyebrow {
+    display: inline-flex;
+    margin-bottom: 8px;
+    color: #139b63;
+    font-size: 0.75rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.hero h1 {
+    margin: 0;
+    color: #111827;
+    font-size: 2.2rem;
+    letter-spacing: -0.05em;
+}
+
+.hero p {
+    max-width: 760px;
+    margin: 10px 0 0;
+    color: #6b7280;
+    line-height: 1.6;
+}
+
+.primaryButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 18px;
+    border: none;
+    border-radius: 14px;
+    color: #ffffff;
+    background: #0f5138;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+    .statsGrid article,
+    .filtersCard,
+    .eventCard,
+    .emptyCard {
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.045);
+    }
+
+    .statsGrid article {
+        padding: 20px;
+        border-radius: 20px;
+    }
+
+    .statsGrid span {
+        display: block;
+        margin-bottom: 8px;
+        color: #6b7280;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .statsGrid strong {
+        color: #111827;
+        font-size: 2rem;
+        letter-spacing: -0.05em;
+    }
+
+.filtersCard {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) 180px 160px;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 20px;
+}
+
+.searchBox {
+    position: relative;
+}
+
+    .searchBox i {
+        position: absolute;
+        top: 50%;
+        left: 14px;
+        color: #9ca3af;
+        transform: translateY(-50%);
+    }
+
+    .searchBox input,
+    .filtersCard select,
+    .form input,
+    .form select,
+    .form textarea {
+        width: 100%;
+        border: 1px solid #dbe1e8;
+        border-radius: 14px;
+        background: #f9fafb;
+        color: #111827;
+        outline: none;
+    }
+
+    .searchBox input,
+    .filtersCard select {
+        min-height: 44px;
+    }
+
+    .searchBox input {
+        padding: 0 14px 0 40px;
+    }
+
+.filtersCard select {
+    padding: 0 12px;
+}
+
+    .searchBox input:focus,
+    .filtersCard select:focus,
+    .form input:focus,
+    .form select:focus,
+    .form textarea:focus {
+        border-color: #16a36b;
+        background: #ffffff;
+    }
+
+.emptyCard {
+    padding: 34px;
+    border-radius: 20px;
+    color: #6b7280;
+    text-align: center;
+}
+
+.eventGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.eventCard {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    overflow: hidden;
+    border-radius: 22px;
+}
+
+.eventCardRemoved {
+    opacity: 0.72;
+}
+
+.cardImage {
+    min-height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at center, rgba(20, 120, 80, 0.18), transparent 38%), linear-gradient(145deg, #17212b, #0f171d);
+    font-size: 2.8rem;
+}
+
+    .cardImage img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.cardBody {
+    padding: 20px;
+}
+
+.cardMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 12px;
+}
+
+.badge,
+.badgeSuccess,
+.badgeMuted,
+.badgeDanger,
+.badgeLogin {
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.badge {
+    color: #0f7a50;
+    background: #dff8ec;
+}
+
+.badgeSuccess {
+    color: #047857;
+    background: #d1fae5;
+}
+
+.badgeMuted {
+    color: #6b7280;
+    background: #f3f4f6;
+}
+
+.badgeDanger {
+    color: #b91c1c;
+    background: #fee2e2;
+}
+
+.badgeLogin {
+    color: #7c2d12;
+    background: #ffedd5;
+}
+
+.cardBody h2 {
+    margin: 0;
+    color: #111827;
+    font-size: 1.35rem;
+    letter-spacing: -0.04em;
+}
+
+.cardBody p {
+    margin: 8px 0 0;
+    color: #6b7280;
+    line-height: 1.55;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.cardInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+    .cardInfo span {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #4b5563;
+        font-size: 0.86rem;
+        font-weight: 700;
+    }
+
+.cardActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.secondaryAction,
+.dangerAction,
+.successAction {
+    padding: 9px 12px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    font-size: 0.82rem;
+    font-weight: 900;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.secondaryAction {
+    color: #0f5138;
+    background: #edf8f2;
+    border-color: #ccebdd;
+}
+
+.dangerAction {
+    color: #b91c1c;
+    background: #fff1f2;
+    border-color: #fecdd3;
+}
+
+.successAction {
+    color: #047857;
+    background: #ecfdf5;
+    border-color: #bbf7d0;
+}
+
+/* Modal */
+
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(8px);
+}
+
+.modal {
+    width: min(920px, 100%);
+    max-height: calc(100vh - 48px);
+    overflow: auto;
+    border-radius: 24px;
+    background: #ffffff;
+    box-shadow: 0 28px 90px rgba(15, 23, 42, 0.35);
+}
+
+.modalHeader {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 24px 26px;
+    border-bottom: 1px solid #eef2f7;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+}
+
+    .modalHeader h2 {
+        margin: 0;
+        color: #111827;
+        font-size: 1.5rem;
+        letter-spacing: -0.04em;
+    }
+
+    .modalHeader button {
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 999px;
+        background: #f3f4f6;
+        color: #4b5563;
+        font-size: 1.35rem;
+        cursor: pointer;
+    }
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 26px;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.form label {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    color: #374151;
+    font-size: 0.86rem;
+    font-weight: 900;
+}
+
+.form input,
+.form select,
+.form textarea {
+    padding: 12px 14px;
+    font-size: 0.95rem;
+}
+
+.form textarea {
+    resize: vertical;
+}
+
+.formError {
+    padding: 12px 14px;
+    border-radius: 14px;
+    color: #991b1b;
+    background: #fee2e2;
+    font-weight: 800;
+}
+
+.uploadArea {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 18px;
+    align-items: center;
+    padding: 16px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 18px;
+    background: #f8fafc;
+}
+
+.previewBox {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 16px;
+    background: #111827;
+    font-size: 2.4rem;
+}
+
+    .previewBox img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.fileLabel input {
+    margin-top: 4px;
+}
+
+.fileLabel small {
+    color: #6b7280;
+    font-weight: 600;
+}
+
+.switchGrid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+    .switchGrid label {
+        flex-direction: row;
+        align-items: center;
+        padding: 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        background: #f9fafb;
+    }
+
+    .switchGrid input {
+        width: auto;
+    }
+
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid #eef2f7;
+}
+
+    .modalFooter button {
+        padding: 12px 16px;
+        border: none;
+        border-radius: 14px;
+        font-weight: 900;
+        cursor: pointer;
+    }
+
+        .modalFooter button:first-child {
+            color: #374151;
+            background: #f3f4f6;
+        }
+
+        .modalFooter button:last-child {
+            color: #ffffff;
+            background: #0f5138;
+        }
+
+        .modalFooter button:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+@media (max-width: 1100px) {
+    .eventGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .statsGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filtersCard {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .hero {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .primaryButton {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .eventCard {
+        grid-template-columns: 1fr;
+    }
+
+    .cardImage {
+        min-height: 180px;
+    }
+
+    .formGrid,
+    .uploadArea,
+    .switchGrid,
+    .statsGrid {
+        grid-template-columns: 1fr;
+    }
+}

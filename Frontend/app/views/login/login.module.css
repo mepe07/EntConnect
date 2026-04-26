@@ -50,22 +50,23 @@
    2. O ECRÃ BIPARTIDO (O Design 70/30)
    ========================================= */
 .brandPanel {
-    flex: 6.5;
+    flex: 7;
     background: url('../../assets/media/foto-bailarina-login.png') no-repeat center center;
     background-size: cover;
     color: white;
     display: flex;
     flex-direction: column;
-    /* Atira os conteúdos para os cantos e liberta a bailarina! */
     justify-content: space-between;
     align-items: flex-start;
     padding: 4rem;
     text-align: left;
+    position: relative;
+    overflow: hidden;
 }
 
 .formPanel {
     /* PROPORÇÕES DO SPLIT: 30% DIREITA (O Apoio com Fundo Negro!) */
-    flex: 3.5;
+    flex: 3;
     display: flex;
     justify-content: center;
     align-items: center;

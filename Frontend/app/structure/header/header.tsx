@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router"; // Importado o hook de navegação
 import { authService } from "~/services/auth.service";
 import logoHeader from "../../assets/media/logo_header.png";
 import './header.scss';
 import type { User } from "~/models/interfaces/user.interface";
 
 export function Header() {
+    // Inicializado o hook de navegação
+    const navigate = useNavigate(); 
+    
     // 1. Guarda a info do utilizador num estado para garantir reatividade
     const [userInfo, setUserInfo] = useState<User | null>(null);
     const [subMenuVisible, setSubMenuVisible] = useState(false);
@@ -25,7 +29,6 @@ export function Header() {
     const userLetter = userInfo?.username ? userInfo.username.charAt(0).toUpperCase() : 'U';
 
     // 3. Este useEffect agora reage quando o userInfo for atualizado
-    // Substitui o useEffect antigo por este:
     useEffect(() => {
         const currentUserId = userInfo?.sub; 
         
@@ -46,7 +49,7 @@ export function Header() {
                     const data = await response.json();
                     
                     if (data.url) {
-                        // 🔥 TRUQUE DA CACHE NO HEADER TAMBÉM!
+                        // TRUQUE DA CACHE NO HEADER TAMBÉM!
                         const separador = data.url.includes('?') ? '&' : '?';
                         const urlSemCache = `${data.url}${separador}t=${new Date().getTime()}`;
                         
@@ -71,7 +74,7 @@ export function Header() {
             window.removeEventListener('fotoPerfilAtualizada', fetchFotoPerfil);
         };
         
-    }, [userInfo]); // Mantém a dependência que já tinhas
+    }, [userInfo]);
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -95,9 +98,15 @@ export function Header() {
     return (
         <header>
             <div className="header-container">
-                <img src={logoHeader} className="logo" alt="EntConnect Logo" />
+                {/*3. Logo agora é clicável e redireciona para o Dashboard que é o / */}
+                <img 
+                    src={logoHeader} 
+                    className="logo" 
+                    alt="EntConnect Logo" 
+                    onClick={() => navigate('/')} // o / corresponde à rota do Dashboard, que é a página principal após o login
+                />
+                
                 <div className="menu">
-                    
                     <div
                         className="profile-picture"
                         ref={profilePictureRef}
@@ -114,7 +123,10 @@ export function Header() {
                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                             />
                         ) : (
-                            userLetter
+                            /*4. A Letra Dinâmica agora está dentro de um span com a classe correta para o SCSS agarrar */
+                            <span className="letra-dinamica">
+                                {userLetter}
+                            </span>
                         )}
                     </div>
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { AuthService } from '../../services/auth.service';
+import { EventoLoginToast } from '~/components/eventos/evento-login-toast.component';
 import styles from './login.module.css';
 
 const CITACOES = [
@@ -97,9 +98,9 @@ export function Login() {
                 {darkTheme ? '☀️' : '🌙'}
             </button>
 
-            {/* LADO ESQUERDO: A Montra (Agora 70% do ecrã) */}
+            {/* LADO ESQUERDO: A Montra */}
             <div className={styles.brandPanel}>
-                
+
                 {/* Título e subtítulo no canto superior esquerdo */}
                 <div className={styles.brandContent}>
                     <h1 className={styles.brandTitle}>EntConnect</h1>
@@ -108,13 +109,22 @@ export function Login() {
                     </p>
                 </div>
 
+                {/* Toast público de eventos.
+        Fica por cima do painel, aparece sozinho e desaparece sem ocupar espaço fixo. */}
+                <EventoLoginToast />
+
                 {/* Citação rotativa e logotipos no canto inferior esquerdo */}
                 <div className={styles.footerBranding}>
                     <p className={styles.citacao}>{CITACOES[indiceCitacao]}</p>
                     <p className={styles.poweredBy}>Powered by developic</p>
                     <p className={styles.entartesLogo}>
-                        {/* Ícone profissional minimalista */}
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '8px' }}>
+                        <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            style={{ marginRight: '8px' }}
+                        >
                             <path d="M12 2L2 22h20L12 2zm0 3.8l7.2 14.2H4.8L12 5.8z" />
                         </svg>
                         Ent’Artes

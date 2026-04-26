@@ -1,6 +1,6 @@
 import { 
   Controller, Get, Post, Put, Body, Patch, Param, Delete, 
-  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator,Query
+  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator,Query, Res
 } from '@nestjs/common'; 
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -8,13 +8,13 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { 
   ApiOperation, ApiTags, ApiResponse, ApiParam, ApiConsumes, ApiBody 
 } from '@nestjs/swagger';
-
 // Serviços
 import { UtilizadorService } from './utilizador.service';
 import { DispobilidadeService } from './professor/Disponibilidade.service';
 import { UtilizadorImportService } from './ImportUsers/utilizador-import.service';
 import { BlobsService } from '../Infraestrutura/Blobs/blobs.service'; 
 import { ProfessorService } from './professor/professor.service';
+import type { Response } from 'express';
 
 // DTOs
 import { CreateUtilizadorDto } from './dto/create-utilizador.dto';
@@ -53,6 +53,23 @@ export class UtilizadorController {
     return this.utilizadorService.getAllUsers();
   }
 
+  @Get('download-template')
+  @ApiOperation({ summary: 'Faz o download do ficheiro CSV modelo para importar utilizadores' })
+  async downloadTemplate(@Res() res: Response) {
+      try {
+          const conteudoCsv = await this.blobsService.lerFicheiroTexto('templates', 'Alunos.csv');
+
+          res.set({
+              'Content-Type': 'text/csv',
+              'Content-Disposition': 'attachment; filename="modelo_utilizadores.csv"',
+          });
+
+          res.send(conteudoCsv); 
+      } catch (error) {
+          console.error('Erro ao fazer download do modelo:', error);
+          res.status(500).send('Erro ao obter o ficheiro modelo.');
+      }
+  }
   
   @Get(':id')
   @ApiOperation({ summary: 'Obter um utilizador pelo ID (inclui dados pessoais)' })
@@ -282,6 +299,7 @@ export class UtilizadorController {
     await this.utilizadorService.updatePassword(id, updatePasswordDto.password);
     return { message: `Password do utilizador ${id} atualizada com sucesso.` };
   }
+
 
   /**
    * Obtém a lista de disponibilidades dos professores.

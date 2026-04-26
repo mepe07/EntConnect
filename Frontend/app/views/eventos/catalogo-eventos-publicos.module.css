@@ -1,0 +1,594 @@
+/* Ficheiro: app/views/eventos/catalogo-eventos-publicos.module.css */
+
+.page {
+    min-height: 100vh;
+    padding: 42px 56px 64px;
+    color: #f5f7fa;
+    font-family: 'Inter', system-ui, sans-serif;
+    background: radial-gradient(circle at 15% 20%, rgba(66, 223, 150, 0.06), transparent 24%), radial-gradient(circle at 80% 12%, rgba(66, 223, 150, 0.045), transparent 22%), linear-gradient(135deg, #0c0f14 0%, #11151b 48%, #151a20 100%);
+}
+
+.logoFlutuante {
+    position: fixed;
+    top: 22px;
+    left: 28px;
+    z-index: 20;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 14px;
+    color: #42df96;
+    font-size: 1.55rem;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+    text-decoration: none;
+    background: rgba(12, 15, 20, 0.5);
+    border: 1px solid rgba(66, 223, 150, 0.12);
+    backdrop-filter: blur(12px);
+    transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+    .logoFlutuante:hover {
+        color: #72e4ad;
+        background: rgba(12, 15, 20, 0.72);
+        border-color: rgba(66, 223, 150, 0.24);
+    }
+
+/* =========================
+   HERO
+========================= */
+
+.hero {
+    max-width: 1180px;
+    margin: 0 auto 28px;
+    padding-top: 54px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 28px;
+}
+
+.heroCopy {
+    max-width: 760px;
+}
+
+.eyebrow {
+    display: inline-flex;
+    margin-bottom: 14px;
+    color: #42df96;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.hero h1 {
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(2.7rem, 6vw, 5.1rem);
+    line-height: 0.96;
+    letter-spacing: -0.07em;
+}
+
+.hero p {
+    max-width: 640px;
+    margin: 18px 0 0;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 1.05rem;
+    line-height: 1.65;
+}
+
+.heroActions {
+    flex: 0 0 auto;
+}
+
+.loginLink {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    border-radius: 14px;
+    color: #08130f;
+    background: #42df96;
+    font-size: 0.9rem;
+    font-weight: 900;
+    text-decoration: none;
+    box-shadow: 0 12px 24px rgba(66, 223, 150, 0.14);
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+    .loginLink:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.03);
+    }
+
+/* =========================
+   FILTROS
+========================= */
+
+.filtersCard {
+    max-width: 1180px;
+    margin: 0 auto 24px;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 22px;
+    background: rgba(20, 25, 32, 0.88);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.searchBox {
+    position: relative;
+}
+
+.searchIcon {
+    position: absolute;
+    top: 50%;
+    left: 14px;
+    color: rgba(255, 255, 255, 0.45);
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.searchBox input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 14px 0 40px;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    font-size: 0.92rem;
+    outline: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+    .searchBox input::placeholder {
+        color: rgba(255, 255, 255, 0.38);
+    }
+
+    .searchBox input:focus {
+        background: rgba(255, 255, 255, 0.055);
+        border-color: rgba(66, 223, 150, 0.35);
+    }
+
+.filterButtons {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.filterButton {
+    min-height: 38px;
+    padding: 0 12px;
+    color: rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 900;
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+    .filterButton:hover {
+        color: #ffffff;
+        border-color: rgba(66, 223, 150, 0.22);
+    }
+
+.filterButtonActive {
+    color: #42df96;
+    background: rgba(66, 223, 150, 0.12);
+    border-color: rgba(66, 223, 150, 0.2);
+}
+
+/* =========================
+   DESTAQUE
+========================= */
+
+.featured {
+    max-width: 1180px;
+    margin: 0 auto 24px;
+    display: grid;
+    grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.1fr);
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 26px;
+    background: rgba(20, 25, 32, 0.88);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+}
+
+.featuredImageWrap {
+    min-height: 340px;
+    position: relative;
+    overflow: hidden;
+}
+
+.featuredImage {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.featuredFallback {
+    height: 100%;
+    min-height: 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background: radial-gradient(circle at center, rgba(66, 223, 150, 0.12), transparent 35%), linear-gradient(145deg, #151b22, #0f1318);
+}
+
+    .featuredFallback span {
+        font-size: 4rem;
+    }
+
+    .featuredFallback strong {
+        color: rgba(255, 255, 255, 0.86);
+        font-size: 1.25rem;
+    }
+
+.featuredContent {
+    padding: 34px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.eventMeta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.badge,
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.badge {
+    color: #42df96;
+    background: rgba(66, 223, 150, 0.12);
+    border: 1px solid rgba(66, 223, 150, 0.18);
+}
+
+.statusBadge {
+    color: rgba(255, 255, 255, 0.78);
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.featuredContent h2 {
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(2.1rem, 4vw, 3.6rem);
+    line-height: 1;
+    letter-spacing: -0.06em;
+}
+
+.featuredContent p {
+    margin: 16px 0 0;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 1rem;
+    line-height: 1.65;
+}
+
+.featuredInfo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+    .featuredInfo span {
+        padding: 10px 12px;
+        border-radius: 14px;
+        color: rgba(255, 255, 255, 0.82);
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        font-size: 0.86rem;
+        font-weight: 800;
+    }
+
+.primaryButton {
+    width: fit-content;
+    margin-top: 24px;
+    padding: 13px 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #08130f;
+    background: #42df96;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    font-weight: 900;
+    text-decoration: none;
+    box-shadow: 0 12px 24px rgba(66, 223, 150, 0.14);
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+    .primaryButton:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.03);
+    }
+
+/* =========================
+   GRELHA DE CARDS
+========================= */
+
+.grid {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.eventCard,
+.skeletonCard,
+.emptyState {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    background: rgba(20, 25, 32, 0.88);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(10px);
+}
+
+.eventCard {
+    overflow: hidden;
+}
+
+.cardImageWrap {
+    height: 180px;
+    overflow: hidden;
+    background: #11151b;
+}
+
+.cardImage {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+}
+
+.eventCard:hover .cardImage {
+    transform: scale(1.04);
+}
+
+.cardFallback {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at center, rgba(66, 223, 150, 0.12), transparent 35%), linear-gradient(145deg, #151b22, #0f1318);
+    font-size: 2.4rem;
+}
+
+.cardBody {
+    padding: 20px;
+}
+
+    .cardBody h3 {
+        margin: 0;
+        color: #ffffff;
+        font-size: 1.25rem;
+        line-height: 1.2;
+        letter-spacing: -0.035em;
+    }
+
+    .cardBody p {
+        margin: 10px 0 0;
+        color: rgba(255, 255, 255, 0.68);
+        font-size: 0.9rem;
+        line-height: 1.55;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+.cardInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 16px;
+}
+
+    .cardInfo span {
+        color: rgba(255, 255, 255, 0.58);
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+.cardLink {
+    display: inline-flex;
+    margin-top: 18px;
+    color: #42df96;
+    font-size: 0.88rem;
+    font-weight: 900;
+    text-decoration: none;
+}
+
+    .cardLink:hover {
+        color: #72e4ad;
+    }
+
+/* =========================
+   LOADING / EMPTY
+========================= */
+
+.skeletonCard {
+    padding: 18px;
+}
+
+.skeletonImage,
+.skeletonLine,
+.skeletonLineSmall,
+.skeletonLineShort {
+    border-radius: 999px;
+    background: linear-gradient( 90deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06) );
+    background-size: 200% 100%;
+    animation: skeleton 1.2s ease-in-out infinite;
+}
+
+.skeletonImage {
+    height: 160px;
+    border-radius: 18px;
+    margin-bottom: 18px;
+}
+
+.skeletonLineShort {
+    width: 40%;
+    height: 18px;
+    margin-bottom: 14px;
+}
+
+.skeletonLine {
+    width: 85%;
+    height: 22px;
+    margin-bottom: 12px;
+}
+
+.skeletonLineSmall {
+    width: 60%;
+    height: 16px;
+}
+
+.emptyState {
+    max-width: 620px;
+    margin: 60px auto 0;
+    padding: 40px;
+    text-align: center;
+}
+
+    .emptyState span {
+        display: inline-flex;
+        margin-bottom: 16px;
+        font-size: 2.8rem;
+    }
+
+    .emptyState h2 {
+        margin: 0 0 10px;
+        color: #ffffff;
+        font-size: 1.8rem;
+        letter-spacing: -0.04em;
+    }
+
+    .emptyState p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.68);
+        line-height: 1.6;
+    }
+
+@keyframes skeleton {
+    from {
+        background-position: 100% 0;
+    }
+
+    to {
+        background-position: -100% 0;
+    }
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+@media (max-width: 1040px) {
+    .hero,
+    .filtersCard,
+    .featured,
+    .grid {
+        max-width: 900px;
+    }
+
+    .featured {
+        grid-template-columns: 1fr;
+    }
+
+    .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filtersCard {
+        grid-template-columns: 1fr;
+    }
+
+    .filterButtons {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 720px) {
+    .page {
+        padding: 64px 18px 32px;
+    }
+
+    .logoFlutuante {
+        top: 14px;
+        left: 14px;
+        padding: 7px 10px;
+        font-size: 1.25rem;
+    }
+
+    .hero {
+        align-items: flex-start;
+        flex-direction: column;
+        padding-top: 22px;
+    }
+
+        .hero h1 {
+            font-size: clamp(2.3rem, 12vw, 3.3rem);
+        }
+
+    .heroActions,
+    .loginLink {
+        width: 100%;
+    }
+
+    .filtersCard,
+    .featured,
+    .eventCard,
+    .skeletonCard,
+    .emptyState {
+        border-radius: 22px;
+    }
+
+    .featuredContent {
+        padding: 24px;
+    }
+
+    .featuredImageWrap,
+    .featuredFallback {
+        min-height: 250px;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filterButtons {
+        gap: 7px;
+    }
+}
