@@ -7,16 +7,10 @@ import { getCroppedImg } from '../utils/cropImage';
 type AbaTipo = 'dados_pessoais' | 'minhas_aulas';
 
 export function Perfil() {
-    // ==========================================
-    // ESTADOS DE NAVEGAÇÃO E DADOS GERAIS
-    // ==========================================
     const [abaAtiva, setAbaAtiva] = useState<AbaTipo>('dados_pessoais');
     const [minhasAulas, setMinhasAulas] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
-    // ==========================================
-    // ESTADOS DA FOTO E MODAL DE CORTE
-    // ==========================================
     const [fotoUrl, setFotoUrl] = useState<string | null>(null);
     const [loadingFoto, setLoadingFoto] = useState(false);
     const [modalCorteAberto, setModalCorteAberto] = useState(false);
@@ -26,9 +20,6 @@ export function Perfil() {
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // ==========================================
-    // ESTADOS DOS DADOS PESSOAIS E CONTA
-    // ==========================================
     const [nif, setNif] = useState('');
     const [contacto, setContacto] = useState('');
     const [nome, setNome] = useState('');
@@ -38,9 +29,6 @@ export function Perfil() {
     const [editando, setEditando] = useState(false);
     const [guardando, setGuardando] = useState(false);
 
-    // ==========================================
-    // ESTADOS DE SEGURANÇA (PASSWORD)
-    // ==========================================
     const [modalPasswordAberto, setModalPasswordAberto] = useState(false);
     const [passAtual, setPassAtual] = useState('');
     const [passNova, setPassNova] = useState('');
@@ -49,9 +37,6 @@ export function Perfil() {
     const userInfo = authService.getUserInfo() as any;
     const currentUserId = userInfo?.sub || userInfo?.idUtilizador;
 
-    // ==========================================
-    // EFEITOS (LIFECYCLE)
-    // ==========================================
     useEffect(() => {
         carregarDados();
     }, [abaAtiva]);
@@ -62,9 +47,6 @@ export function Perfil() {
         }
     }, [currentUserId]);
 
-    // ==========================================
-    // FUNÇÕES DE COMUNICAÇÃO COM O BACKEND
-    // ==========================================
     const buscarFotoAtual = async () => {
         try {
             const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/foto`);
@@ -173,6 +155,33 @@ export function Perfil() {
         }
     };
 
+    // NOVA FUNÇÃO: Remover Foto
+    const removerFoto = async () => {
+        const confirmacao = window.confirm("Tens a certeza que queres remover a tua foto de perfil?");
+        if (!confirmacao) return;
+
+        setLoadingFoto(true);
+        try {
+            const token = localStorage.getItem('token') || authService.getToken();
+            const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/removephoto`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                setFotoUrl(null);
+                window.dispatchEvent(new Event('fotoPerfilAtualizada')); // Atualiza o Header
+                alert("Foto removida com sucesso!");
+            } else {
+                alert("Erro ao remover a foto.");
+            }
+        } catch (error) {
+            alert("Erro de ligação ao servidor.");
+        } finally {
+            setLoadingFoto(false);
+        }
+    };
+
     const guardarAlteracoes = async () => {
         setGuardando(true);
         try {
@@ -252,7 +261,6 @@ export function Perfil() {
                     <div className="mensagem-centro">A carregar informações...</div>
                 ) : (
                     <div className="cartao-branco">
-                        {/* ABA: DADOS PESSOAIS */}
                         {abaAtiva === 'dados_pessoais' && (
                             <section className="seccao-perfil">
                                 <div className="perfil-header-topo">
@@ -283,14 +291,24 @@ export function Perfil() {
                                         <p className="email-utilizador">{email || 'Sem email registado'}</p>
                                         
                                         <p className="aviso-tamanho">
-                                            <i className="fa fa-info-circle"></i> Tamanho máximo permitido: 10MB
+                                            <i className="fa fa-info-circle"></i> Tamanho máximo: 10MB
                                         </p>
 
                                         <input type="file" accept="image/*" ref={fileInputRef} className="input-file-escondido" onChange={lidarComSelecaoFicheiro} />
-                                        <button className="btn-link-foto" onClick={() => fileInputRef.current?.click()}>
-                                            <i className="fa fa-camera"></i>
-                                            {fotoUrl ? 'Alterar Foto' : 'Carregar Foto'}
-                                        </button>
+                                        
+                                        {/* GRUPO DE BOTÕES DA FOTO */}
+                                        <div className="botoes-foto-wrapper">
+                                            <button className="btn-link-foto" onClick={() => fileInputRef.current?.click()} disabled={loadingFoto}>
+                                                <i className="fa fa-camera"></i>
+                                                {fotoUrl ? 'Alterar Foto' : 'Carregar Foto'}
+                                            </button>
+                                            
+                                            {fotoUrl && (
+                                                <button className="btn-link-foto btn-remover" onClick={removerFoto} disabled={loadingFoto}>
+                                                    <i className="fa fa-trash"></i> Remover
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -329,10 +347,16 @@ export function Perfil() {
                                                     {ativo ? 'Ativo' : 'Inativo'}
                                                 </span>
                                             </div>
-                                            <div className="item-info">
+                                            
+                                            {/*  CARGO COM NOVO DESIGN */}
+                                            <div className="item-info cargo-info">
                                                 <span className="label">Cargo / Função:</span>
-                                                <span className="valor-cargo">{cargo}</span>
+                                                <div className="cargo-badge">
+                                                    <i className="fa-solid fa-user-tie"></i>
+                                                    <span>{cargo}</span>
+                                                </div>
                                             </div>
+                                            
                                             <hr />
                                             <h4>Segurança</h4>
                                             <p className="texto-seguranca">Protege a tua conta alterando a palavra-passe regularmente.</p>
@@ -346,7 +370,6 @@ export function Perfil() {
                             </section> 
                         )}
 
-                        {/* ABA: MINHAS AULAS (CÓDIGO ADICIONADO) */}
                         {abaAtiva === 'minhas_aulas' && (
                             <section className="seccao-aulas">
                                 <h3>As Minhas Aulas / Horário</h3>

@@ -1,3 +1,5 @@
+@use "../../assets/styles/variables/colors";
+
 // ==========================================
 // VARIÁVEIS DE DESIGN
 // ==========================================
@@ -104,7 +106,7 @@ $cor-fundo-app: #f1f5f9;
 
     .perfil-info-principal {
         display: flex;
-        align-items: flex-start; //Fixa o alinhamento no topo para o botão não descer
+        align-items: flex-start;
         gap: 25px;
         margin-top: 20px;
     }
@@ -128,26 +130,30 @@ $cor-fundo-app: #f1f5f9;
     .info-texto {
         display: flex;
         flex-direction: column;
-        padding-top: 2px; // Diminuído de 5px para 2px
+        padding-top: 2px;
 
+        .input-file-escondido {
+            display: none !important;
+        }
+        
         .nome-principal {
             color: #000000 !important;
             font-size: 1.4rem;
             font-weight: 700;
-            margin: 0; // Garante que não há margem no título
+            margin: 0; 
         }
 
         .nome-meta {
             color: $cor-texto-claro;
             font-size: 0.95rem;
-            margin: 0; // Removido o 2px 0
+            margin: 0; 
             font-weight: 500;
         }
 
         .email-utilizador {
             font-size: 0.9rem;
             color: $cor-texto-medio;
-            margin-bottom: 4px; // Reduzido de 10px para 4px
+            margin-bottom: 4px; 
         }
 
         .aviso-tamanho {
@@ -156,12 +162,54 @@ $cor-fundo-app: #f1f5f9;
             display: flex;
             align-items: center;
             gap: 6px;
-            margin-bottom: 8px; // Reduzido de 15px para 8px
+            margin-bottom: 8px; 
             i { color: $cor-azul-destaque; }
         }
 
-        .btn-link-foto {
-            margin-top: -15px; // Pequeno ajuste para dar um respiro visual controlado
+        /* 🔥 NOVO: GRUPO DE BOTÕES DA FOTO */
+        .botoes-foto-wrapper {
+            display: flex;
+            gap: 12px;
+            margin-top: 4px;
+
+            .btn-link-foto {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                font-size: 0.85rem;
+                padding: 8px 16px;
+                background-color: #fff;
+                border: 1.5px solid $cor-primaria;
+                color: $cor-primaria;
+                border-radius: 6px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    background-color: $cor-primaria;
+                    color: #fff;
+                    transform: translateY(-1px);
+                }
+
+                &:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                    transform: none;
+                }
+
+                /* 🔥 Estilo específico para remover foto */
+                &.btn-remover {
+                    border-color: #ef4444;
+                    color: #ef4444;
+
+                    &:hover {
+                        background-color: #ef4444;
+                        color: #fff;
+                    }
+                }
+            }
         }
     }
 
@@ -213,6 +261,30 @@ $cor-fundo-app: #f1f5f9;
                     margin-bottom: 1.2rem;
                     .label { color: $cor-texto-claro; font-size: 0.9rem; font-weight: 500; }
                     .valor-cargo { font-weight: 600; color: $cor-texto-escuro; }
+
+                    /* 🔥 NOVO: DESIGN DO CARGO MINIMALISTA (Sem parecer botão) */
+                    &.cargo-info {
+                        flex-direction: row;
+                        align-items: center;
+                        gap: 8px;
+
+                        .cargo-badge {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 8px;
+                            background: transparent; /* Sem fundo */
+                            color: $cor-texto-escuro; /* Cor de texto normal */
+                            padding: 0; /* Sem padding de botão */
+                            box-shadow: none; /* Sem sombra */
+                            font-size: 0.95rem;
+                            font-weight: 700; /* Texto um pouco mais forte para destacar */
+
+                            i {
+                                color: $cor-primaria; /* Apenas o ícone leva a cor da marca */
+                                font-size: 1.1rem;
+                            }
+                        }
+                    }
                 }
 
                 hr { border: 0; border-top: 1px solid $cor-borda; margin: 1.5rem 0; }
@@ -283,7 +355,7 @@ $cor-fundo-app: #f1f5f9;
     /* ============================
        BOTÕES
        ============================ */
-    .btn-editar, .btn-link-foto {
+    .btn-editar {
         padding: 10px 20px;
         background-color: $cor-primaria;
         color: white;
@@ -293,14 +365,6 @@ $cor-fundo-app: #f1f5f9;
         font-weight: 600;
         transition: 0.2s;
         &:hover { background-color: $cor-primaria-hover; transform: translateY(-1px); }
-    }
-
-    .btn-link-foto {
-        align-self: flex-start; // Mantém alinhado à esquerda na coluna
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.85rem;
     }
 
     .btn-secundario {
@@ -355,8 +419,8 @@ $cor-fundo-app: #f1f5f9;
     }
 
     /* ==========================================
-   MODAIS (FOTO E PASSWORD)
-   ========================================== */
+       MODAIS (FOTO E PASSWORD)
+       ========================================== */
     .modal-corte-overlay {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
@@ -365,7 +429,7 @@ $cor-fundo-app: #f1f5f9;
         justify-content: center;
         align-items: center;
         z-index: 10000;
-        backdrop-filter: blur(4px); // Efeito premium de desfoque no fundo
+        backdrop-filter: blur(4px); 
     }
 
     .modal-corte-container {
@@ -402,7 +466,7 @@ $cor-fundo-app: #f1f5f9;
             overflow: hidden;
             background: #334155;
             
-            // Fundo Quadriculado Profissional (Estilo Photoshop)
+            // Fundo Quadriculado Profissional
             background-image: 
                 linear-gradient(45deg, #475569 25%, transparent 25%),
                 linear-gradient(-45deg, #475569 25%, transparent 25%),
@@ -485,7 +549,6 @@ $cor-fundo-app: #f1f5f9;
         }
 
         .input-file-escondido { display: none; }
-
     }
 
     // Animação suave para o erro aparecer
@@ -493,5 +556,27 @@ $cor-fundo-app: #f1f5f9;
         from { opacity: 0; transform: translateY(-5px); }
         to { opacity: 1; transform: translateY(0); }
     }
+}
 
+/* =========================================================================
+   DARK MODE
+   ========================================================================= */
+@media (prefers-color-scheme: dark) {
+
+    .coluna-detalhes .cartao-info-extra .item-info.cargo-info .cargo-badge {
+        color: #f8fafc; // Texto branco
+        i { color: #2dd4bf; } // Ícone num verde mais claro para destacar no fundo escuro
+    }
+    
+    .perfil-container {
+        // Garantir que os botões com fundo branco ficam transparentes no modo escuro
+        .botoes-foto-wrapper .btn-link-foto {
+            background-color: transparent;
+            &.btn-remover {
+                border-color: #ef4444;
+                color: #ef4444;
+                &:hover { background-color: #ef4444; color: #fff; }
+            }
+        }
+    }
 }

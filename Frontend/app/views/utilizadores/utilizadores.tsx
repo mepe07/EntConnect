@@ -528,6 +528,47 @@ export function Utilizadores() {
 
     const fotoModalSrc = fotoPreview ?? fotoAtual;
 
+
+    // ==========================================
+    // DOWNLOAD DO MODELO (DO AZURE VIA BACKEND)
+    // ==========================================
+    const handleDownloadModelo = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            
+            // Faz o pedido à nova rota do teu backend
+            const response = await fetch('http://localhost:3000/utilizador/download-template', {
+                method: 'GET',
+                headers: { 
+                    'Authorization': `Bearer ${token}` 
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao obter o ficheiro modelo do servidor.');
+            }
+
+            // Transforma a resposta num Blob (objeto binário)
+            const blob = await response.blob();
+
+            // Cria um link invisível na memória do browser para forçar o download
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'modelo_utilizadores.csv'; // O nome com que o ficheiro vai ser guardado
+            
+            // Clica no link invisível e depois limpa-o
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+        } catch (error) {
+            console.error('Erro no download:', error);
+            alert('Não foi possível transferir o ficheiro modelo. Tenta novamente.');
+        }
+    };
+
     // ==========================================
     // RENDER
     // ==========================================
@@ -1167,10 +1208,9 @@ export function Utilizadores() {
             />
 
             {/* MODAL DE IMPORT */}
-            {/* MODAL DE IMPORT */}
             {modalImportOpen && (
                 <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget && !loadingImport) setModalImportOpen(false); }}>
-                    <div className="modal-content" style={{ maxWidth: '480px' }}> {/* Ligeiramente mais largo para acomodar a caixa */}
+                    <div className="modal-content" style={{ maxWidth: '480px' }}>
                         <div className="modal-header">
                             <div className="modal-header-info">
                                 <div>
@@ -1194,13 +1234,17 @@ export function Utilizadores() {
                                         <span>Descarrega o ficheiro base para preencheres os dados corretamente.</span>
                                     </div>
                                 </div>
-                                <a 
-                                    href="/modelo_utilizadores.xlsx" 
-                                    download="Modelo_Importacao_Utilizadores.xlsx" 
+                                
+                                {/* 👇 ALTERAÇÃO AQUI: Passou de <a> para <button> */}
+                                <button 
+                                    type="button"
+                                    onClick={handleDownloadModelo} 
                                     className="btn-download-modelo"
                                 >
                                     <i className="fa-solid fa-download"></i> Descarregar
-                                </a>
+                                </button>
+                                {/* 👆 FIM DA ALTERAÇÃO */}
+                                
                             </div>
 
                             {loadingImport && (
