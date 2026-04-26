@@ -215,6 +215,27 @@ export class UtilizadorController {
   }*/
   
   // NOVO ENDPOINT DE ATUALIZAÇÃO PESSOAL COM DTO E SWAGGER
+ @Put(':id/update-cargo')
+  @ApiOperation({ summary: 'Atualizar o cargo do utilizador' })
+  @ApiParam({ name: 'id', description: 'ID do Utilizador', example: 1 })
+  @ApiResponse({ status: 200, description: 'Cargo atualizado com sucesso.' })
+  @ApiResponse({ status: 404, description: 'Utilizador não encontrado ou cargo inválido.' })
+  async updateCargo(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('cargo') cargo: string,
+  ) {
+    return this.utilizadorService.updateCargo(id, cargo);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Eliminar um utilizador e todos os seus dados' })
+  @ApiParam({ name: 'id', description: 'ID do Utilizador', example: 1 })
+  @ApiResponse({ status: 200, description: 'Utilizador eliminado com sucesso.' })
+  @ApiResponse({ status: 404, description: 'Utilizador não encontrado.' })
+  async deleteUser(@Param('id', ParseIntPipe) id: number) {
+    return this.utilizadorService.deleteUser(id);
+  }
+
  @Put(':id/update-pessoal')
   @ApiOperation({ 
     summary: 'Atualizar dados pessoais (Nome, NIF e Contacto)', 

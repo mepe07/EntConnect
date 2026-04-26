@@ -1,4 +1,3 @@
-
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -7,241 +6,317 @@ import { Prisma } from '@prisma/client';
 export class FaturacaoService {
     constructor(private readonly prisma: PrismaService) { }
 
-    // Representa o '+ getGeneralBilling()' do Coordinator no vosso UML 
-    // Ficheiro: faturacao.service.ts
+    /**
+     * Converte valores Decimal/number/string/null para number.
+     * Isto evita repetir Number(...) espalhado pelo código.
+     */
+    private toNumber(valor: unknown): number {
+        return Number(valor ?? 0) || 0;
+    }
 
+    /**
+     * Garante que a data final apanha o dia inteiro.
+     * Exemplo: 2026-04-24 passa a 2026-04-24 23:59:59.999.
+     */
+    private fimDoDia(data: Date): Date {
+        const fim = new Date(data);
+        fim.setHours(23, 59, 59, 999);
+        return fim;
+    }
+
+    /**
+     * Vai buscar o valor total correto por aluno.
+     *
+     * Antes o código lia:
+     * item.ValorPorAluno
+     *
+     * Mas na BD atual o valor está em:
+     * item.Coaching.ValorPorAluno
+     */
+    private obterValorTotalAluno(item: {
+        Coaching?: {
+            ValorPorAluno?: Prisma.Decimal | number | string | null;
+        } | null;
+    }): number {
+        return this.toNumber(item.Coaching?.ValorPorAluno);
+    }
+
+    /**
+     * Vai buscar o valor em falta.
+     *
+     * Se ValorEmFalta vier null, usamos o valor total como fallback.
+     * Isto evita que registos antigos/migrados apareçam como 0€ por engano.
+     */
+    private obterValorEmFalta(
+        item: {
+            ValorEmFalta?: Prisma.Decimal | number | string | null;
+        },
+        valorTotal: number,
+    ): number {
+        if (item.ValorEmFalta === null || item.ValorEmFalta === undefined) {
+            return valorTotal;
+        }
+
+        return this.toNumber(item.ValorEmFalta);
+    }
+
+    /**
+     * Faturação geral.
+     * Devolve inscrições com valores em dívida.
+     */
     async obterFaturacaoGeral() {
-        // 1. O Prisma vai buscar todas as inscrições não pagas, mas agora com "raio-X" profundo!
         const faturasPendentes = await this.prisma.coaching_Aluno.findMany({
             where: {
-                ValorEmFalta: { gt: 0 }
+                OR: [
+                    { ValorEmFalta: { gt: 0 } },
+                    { ValorEmFalta: null },
+                ],
+                Coaching: {
+                    ValorPorAluno: { gt: 0 },
+                },
             },
             include: {
-                // A MAGIA ACONTECE AQUI: Vamos buscar a sessão e quem a deu!
                 Coaching: {
                     include: {
                         Professor: {
                             include: {
-                                Pessoa: true // Essencial para obtermos o Nome do Professor!
-                            }
+                                Pessoa: true,
+                            },
                         },
-                        Sala: true, // Para sabermos onde foi a aula    
-                    }
+                        Sala: true,
+                    },
                 },
                 Aluno: {
                     include: {
                         Enc_Educacao: {
                             include: {
-                                Pessoa: true, // Para sabermos a quem cobrar a dívida
+                                Pessoa: true,
                             },
                         },
                     },
                 },
             },
+            orderBy: {
+                Coaching: {
+                    Inicio_Coaching: 'asc',
+                },
+            },
         });
 
-        const mapaFaturacao = new Map();
+        return faturasPendentes.map((item) => {
+            const valorTotal = this.obterValorTotalAluno(item);
+            const valorEmFalta = this.obterValorEmFalta(item, valorTotal);
 
-        for (const item of faturasPendentes) {
-            if (!item.Aluno || !item.Aluno.Enc_Educacao) continue;
-
-            const idEE = item.Aluno.Enc_Educacao.ID_Pessoa;
-            const pessoaEE = item.Aluno.Enc_Educacao.Pessoa;
-
-            const montante = Number(item.ValorEmFalta) || 0;
-
-            // Criar a "Ficha de Cliente" se ainda não existir no mapa
-            if (!mapaFaturacao.has(idEE)) {
-                mapaFaturacao.set(idEE, {
-                    ID_Enc_Educacao: idEE,
-                    Nome_Enc_Educacao: pessoaEE.Nome,
-                    Email_Enc_Educacao: pessoaEE.Email,
-                    Contato_Enc_Educacao: pessoaEE.Contacto, // Dica: Útil para a coordenadora ligar logo!
-                    Total_Em_Divida: 0,
-                    Detalhes_Divida: [],
-                });
-            }
-
-            // 5. Mapeamento para o DTO (Isto é o que o Frontend espera)
-            return faturasPendentes.map((item) => {
-                return {
-                    idCoaching: item.ID_Coaching,
-                    dataAula: item.Coaching.Inicio_Coaching,
-                    nomeProfessor: item.Coaching.Professor?.Pessoa?.Nome || 'Professor não atribuído',
-                    fotoProfessorUrl: item.Coaching.Professor?.Pessoa?.Foto || null,
-                    nomeAluno: item.Aluno.Nome,
-                    // Usamos o campo correto que descobrimos no teu Prisma
-                    valorTotal: Number(item.ValorEmFalta) || 0,
-                    // Como não tens o campo 'Pago', usamos a lógica do ValorEmFalta ser 0
-                    estaPago: Number(item.ValorEmFalta) === 0,
-                    duracaoMinutos: item.Coaching.Duracao,
-                    salaNome: item.Coaching.Sala?.Nome || 'Sem sala',
-                };
-            });
-        }
+            return {
+                idCoaching: item.ID_Coaching,
+                idAluno: item.ID_Aluno,
+                dataAula: item.Coaching?.Inicio_Coaching,
+                nomeProfessor: item.Coaching?.Professor?.Pessoa?.Nome || 'Professor não atribuído',
+                fotoProfessorUrl: item.Coaching?.Professor?.Pessoa?.Foto || null,
+                nomeAluno: item.Aluno?.Nome || 'Aluno desconhecido',
+                nomeEncarregado: item.Aluno?.Enc_Educacao?.Pessoa?.Nome || 'Sem encarregado',
+                emailEncarregado: item.Aluno?.Enc_Educacao?.Pessoa?.Email || null,
+                contactoEncarregado: item.Aluno?.Enc_Educacao?.Pessoa?.Contacto || null,
+                valorTotal,
+                valorEmFalta,
+                estaPago: valorEmFalta <= 0,
+                isPago: valorEmFalta <= 0,
+                duracaoMinutos: item.Coaching?.Duracao || 0,
+                salaNome: item.Coaching?.Sala?.Nome || 'Sem sala',
+            };
+        });
     }
-    /* Relatório de Faturação Geral:
-    * Este método é o "coração" do módulo de faturação. Ele busca todas as sessões de coaching dentro do intervalo de datas especificado,
-    * trazendo informações detalhadas sobre cada sessão, incluindo o estado atual da aula
-    */
-    async obterRelatorioFaturacaoGeral(dataInicio: Date, dataFim: Date, role: string, userId: number) {
 
-        // 1. Criamos o filtro específico para o Coaching usando o Molde do Prisma!
-        // Adeus 'any', olá TypeScript auto-complete.
+    /**
+     * Relatório de faturação geral.
+     *
+     * Este relatório é usado pela página de faturação.
+     * A correção principal está em usar:
+     * item.Coaching.ValorPorAluno
+     *
+     * em vez de:
+     * item.ValorPorAluno
+     */
+    async obterRelatorioFaturacaoGeral(
+        dataInicio: Date,
+        dataFim: Date,
+        role: string,
+        userId: number,
+    ) {
         const filtroCoaching: Prisma.CoachingWhereInput = {
             Inicio_Coaching: {
                 gte: dataInicio,
-                lte: dataFim,
+                lte: this.fimDoDia(dataFim),
             },
         };
 
-        // 2. A MAGIA DO TÚNEL (RBAC) - Totalmente Tipado!
-        // Se for um Professor, adicionamos a restrição ao filtro do Coaching.
         if (role === 'Professor') {
             filtroCoaching.Professor = {
                 Pessoa: {
                     Utilizador: {
-                        // Adeus 'some'! A relação é 1-para-1, vamos diretos ao assunto:
-                        ID_Utilizador: userId
-                    }
-                }
+                        ID_Utilizador: userId,
+                    },
+                },
             };
         }
 
-        // 3. Criamos o filtro final que vai entrar no findMany
         const condicoesFiltro: Prisma.Coaching_AlunoWhereInput = {
             Coaching: filtroCoaching,
         };
 
-        // 4. A Query final ao Prisma (Sem erros de linter e super segura)
         const inscricoes = await this.prisma.coaching_Aluno.findMany({
             where: condicoesFiltro,
             include: {
                 Aluno: true,
                 Coaching: {
                     include: {
-                        Professor: { include: { Pessoa: true } },
+                        Professor: {
+                            include: {
+                                Pessoa: true,
+                            },
+                        },
                         Sala: true,
                     },
                 },
             },
+            orderBy: {
+                Coaching: {
+                    Inicio_Coaching: 'asc',
+                },
+            },
         });
 
-        // 5. Mapeamento para o DTO (Isto mantém-se intacto)
         return inscricoes.map((item) => {
+            const valorTotal = this.obterValorTotalAluno(item);
+            const valorEmFalta = this.obterValorEmFalta(item, valorTotal);
+            const estaPago = valorEmFalta <= 0;
+
             return {
                 idCoaching: item.ID_Coaching,
-                dataAula: item.Coaching.Inicio_Coaching,
-                nomeProfessor: item.Coaching.Professor?.Pessoa?.Nome || 'Professor não atribuído',
-                fotoProfessorUrl: item.Coaching.Professor?.Pessoa?.Foto || null,
-                nomeAluno: item.Aluno.Nome,
-                valorTotal: Number(item.ValorEmFalta) || 0,
-                isPago: item.ValorEmFalta ? Number(item.ValorEmFalta) === 0 : true,
-                duracaoMinutos: item.Coaching.Duracao,
-                salaNome: item.Coaching.Sala?.Nome || 'Sem sala',
+                idAluno: item.ID_Aluno,
+                dataAula: item.Coaching?.Inicio_Coaching,
+                nomeProfessor: item.Coaching?.Professor?.Pessoa?.Nome || 'Professor não atribuído',
+                fotoProfessorUrl: item.Coaching?.Professor?.Pessoa?.Foto || null,
+                nomeAluno: item.Aluno?.Nome || 'Aluno desconhecido',
+
+                // Valor total correto da aula por aluno.
+                valorTotal,
+
+                // Valor ainda por pagar.
+                valorEmFalta,
+
+                // O frontend usa "estaPago".
+                estaPago,
+
+                // Mantemos também "isPago" para compatibilidade com código antigo.
+                isPago: estaPago,
+
+                duracaoMinutos: item.Coaching?.Duracao || 0,
+                salaNome: item.Coaching?.Sala?.Nome || 'Sem sala',
             };
         });
     }
 
-    /* Relatório de Histórico de Coaching: 
-    * Este método vai buscar todas as sessões de coaching dentro do intervalo de datas especificado, 
-    * trazendo informações detalhadas sobre cada sessão, incluindo o estado atual da aula
-    */
+    /**
+     * Relatório de histórico de coaching.
+     *
+     * Este relatório não depende diretamente dos valores financeiros,
+     * por isso mantemos a lógica focada nos dados da aula.
+     */
     async getHistoricoCoaching(dataInicio: Date, dataFim: Date) {
-
         const aulasBD = await this.prisma.coaching_Aluno.findMany({
             where: {
                 Coaching: {
                     Inicio_Coaching: {
-                        gte: dataInicio, // gte = Greater Than or Equal (Maior ou Igual)
-                        lte: dataFim, // lte = Less Than or Equal (Menor ou Igual)
-                    }
-                }
+                        gte: dataInicio,
+                        lte: this.fimDoDia(dataFim),
+                    },
+                },
             },
             include: {
-                Aluno: true, // Puxa o Aluno
+                Aluno: true,
                 Coaching: {
                     include: {
                         Professor: {
                             include: {
-                                Pessoa: true // Puxa o nome do Professor
-                            }
+                                Pessoa: true,
+                            },
                         },
-                        Sala: true, // Puxa o Estúdio
-                        Estado_Coaching: true // Puxa o estado da aula
-                    }
-                }
+                        Sala: true,
+                        Estado_Coaching: true,
+                    },
+                },
             },
             orderBy: {
                 Coaching: {
-                    Inicio_Coaching: 'asc'
-                }
-            }
+                    Inicio_Coaching: 'asc',
+                },
+            },
         });
 
-        // 3. Mapear os dados para o Frontend
-        return aulasBD.map(registo => {
-            // Prevenção de erros caso falte a data
+        return aulasBD.map((registo) => {
             const dataCrua = registo.Coaching?.Inicio_Coaching;
             const dataDaAula = dataCrua ? new Date(dataCrua) : new Date();
-
-            // Lógica Atualizada: Vamos ler o 'Tipo' diretamente da tabela Estado_Coaching.
-            // O uso do '?.' (Optional Chaining) garante que o código não rebenta se por acaso
-            // uma aula estiver sem estado associado (ID_Estado_Coaching for NULL).
             const estadoRealDaDB = registo.Coaching?.Estado_Coaching?.Tipo || 'Sem Estado';
 
             return {
                 idCoaching: registo.ID_Coaching,
                 idAluno: registo.ID_Aluno,
-                nomeAluno: registo.Aluno?.Nome || 'Aluno Desconhecido',
-                nomeProfessor: registo.Coaching?.Professor?.Pessoa?.Nome || 'Professor Desconhecido',
-                nomeSala: registo.Coaching?.Sala?.Nome || 'Sem Sala',
+                nomeAluno: registo.Aluno?.Nome || 'Aluno desconhecido',
+                nomeProfessor: registo.Coaching?.Professor?.Pessoa?.Nome || 'Professor desconhecido',
+                nomeSala: registo.Coaching?.Sala?.Nome || 'Sem sala',
                 dataAula: dataDaAula.toISOString(),
                 duracaoMinutos: registo.Coaching?.Duracao || 0,
-                // Passamos o estado verdadeiro para o ecrã
-                estadoAula: estadoRealDaDB
+                estadoAula: estadoRealDaDB,
             };
         });
     }
 
-    /* Relatório de Dashboard Financeiro:
-    * Este método é o "coração" do módulo de faturação. Ele busca todas as sessões de coaching dentro do intervalo de datas especificado,
-    * trazendo informações detalhadas sobre cada sessão, incluindo o estado atual da aula
-    */
+    /**
+     * Dashboard financeiro.
+     *
+     * Correção principal:
+     * - valor total vem de Coaching.ValorPorAluno
+     * - dívida vem de Coaching_Aluno.ValorEmFalta
+     *
+     * Assim deixamos de ter gráficos a 0 por causa da alteração da BD.
+     */
     async getDashboardFinanceiro(inicio: Date, fim: Date) {
         const faturas = await this.prisma.coaching_Aluno.findMany({
             where: {
                 Coaching: {
                     Inicio_Coaching: {
                         gte: inicio,
-                        lte: fim,
-                    }
-                }
+                        lte: this.fimDoDia(fim),
+                    },
+                },
             },
             include: {
                 Coaching: {
                     include: {
-                        Professor: { include: { Pessoa: true } }
-                    }
-                }
+                        Professor: {
+                            include: {
+                                Pessoa: true,
+                            },
+                        },
+                    },
+                },
             },
             orderBy: {
-                Coaching: { Inicio_Coaching: 'asc' }
-            }
+                Coaching: {
+                    Inicio_Coaching: 'asc',
+                },
+            },
         });
 
-        let total = 0;
+        let totalPago = 0;
         let totalEmDivida = 0;
-        const rankingProfessores: Record<string, number> = {};
 
-        // ==========================================
-        // A MAGIA DO PREENCHIMENTO DE ZEROS
-        // ==========================================
+        const rankingProfessores: Record<string, number> = {};
         const evolucaoDiaria: Record<string, number> = {};
 
-        // No início do método Dashboard
-        const diaAtual = new Date(inicio); // Garante que 'inicio' é um objeto Date
-        const dataFim = new Date(fim);
+        const diaAtual = new Date(inicio);
+        const dataFim = this.fimDoDia(fim);
 
         while (diaAtual <= dataFim) {
             const dataSimples = diaAtual.toISOString().split('T')[0];
@@ -249,67 +324,65 @@ export class FaturacaoService {
             diaAtual.setDate(diaAtual.getDate() + 1);
         }
 
-        let totalPago = 0;
+        faturas.forEach((fatura) => {
+            const valorTotal = this.obterValorTotalAluno(fatura);
+            const valorEmFalta = this.obterValorEmFalta(fatura, valorTotal);
 
-        faturas.forEach(fatura => {
-            const valor = fatura.ValorEmFalta ? Number(fatura.ValorEmFalta) : 0;
+            // Valor recebido = total da aula menos o que ainda falta pagar.
+            const valorRecebido = Math.max(valorTotal - valorEmFalta, 0);
 
-            // Criamos esta variável aqui para ser usada nos 3 gráficos abaixo
-            const isPago = valor === 0;
+            totalPago += valorRecebido;
+            totalEmDivida += valorEmFalta;
 
-            // --- Gráfico 1: Donut de Pagos vs Em Dívida ---
-            if (isPago) {
-                totalPago += valor; // Nota: Se valor é 0, podes precisar de outro campo para o total pago
-            } else {
-                totalEmDivida += valor;
-            }
-
-            // --- Gráfico 2: Evolução no Tempo ---
-            // --- Gráfico 2: Evolução no Tempo ---
             const dataSessao = fatura.Coaching?.Inicio_Coaching;
 
-            if (isPago && dataSessao instanceof Date) {
+            if (dataSessao instanceof Date) {
                 const dataSimples = dataSessao.toISOString().split('T')[0];
 
                 if (evolucaoDiaria[dataSimples] !== undefined) {
-                    evolucaoDiaria[dataSimples] += valor;
+                    evolucaoDiaria[dataSimples] += valorRecebido;
                 }
             }
 
-            // --- Gráfico 3: O Pódio de Professores ---
-            if (isPago && fatura.Coaching?.Professor?.Pessoa?.Nome) {
-                const nomeProf = fatura.Coaching.Professor.Pessoa.Nome;
-                if (!rankingProfessores[nomeProf]) rankingProfessores[nomeProf] = 0;
-                rankingProfessores[nomeProf] += valor;
+            const nomeProfessor = fatura.Coaching?.Professor?.Pessoa?.Nome;
+
+            if (nomeProfessor) {
+                if (!rankingProfessores[nomeProfessor]) {
+                    rankingProfessores[nomeProfessor] = 0;
+                }
+
+                rankingProfessores[nomeProfessor] += valorRecebido;
             }
         });
 
-
-        // Converte o objeto de datas num Array limpo
-        const arrayEvolucao = Object.keys(evolucaoDiaria).map(data => ({
-            data: data,
-            faturado: evolucaoDiaria[data]
+        const arrayEvolucao = Object.keys(evolucaoDiaria).map((data) => ({
+            data,
+            faturado: evolucaoDiaria[data],
         }));
 
         const arrayTopProfessores = Object.keys(rankingProfessores)
-            .map(nome => ({ nome: nome, total: rankingProfessores[nome] }))
+            .map((nome) => ({
+                nome,
+                total: rankingProfessores[nome],
+            }))
             .sort((a, b) => b.total - a.total)
             .slice(0, 5);
 
         return {
-            resumoGeral: { totalPago, totalEmDivida },
+            resumoGeral: {
+                totalPago,
+                totalEmDivida,
+            },
             evolucaoFinanceira: arrayEvolucao,
             topProfessores: arrayTopProfessores,
         };
-    } // Este fecho (linha 310) termina o método getDashboardFinanceiro
-
-
+    }
 
     /**
-     * Calcula a previsão de receita para os próximos 3 meses.
-     * Implementa 'Zero-Filling' para garantir que meses sem faturação agendada
-     * são devolvidos com valor 0, mantendo a integridade visual do gráfico.
-     * * @returns {Promise<Array<{mes: string, previsto: number}>>} Array formatado para o Recharts
+     * Previsão financeira para os próximos 3 meses.
+     *
+     * Aqui queremos saber quanto está previsto faturar,
+     * por isso usamos Coaching.ValorPorAluno.
      */
     async getPrevisaoFinanceira() {
         const hoje = new Date();
@@ -317,38 +390,38 @@ export class FaturacaoService {
         const daquiA3Meses = new Date();
         daquiA3Meses.setMonth(hoje.getMonth() + 3);
 
-        // ==========================================
-        // 1. A MAGIA DO PREENCHIMENTO DE ZEROS (Futuro)
-        // ==========================================
         const previsaoMensal: Record<string, number> = {};
 
-        // Criamos antecipadamente as "gavetas" para o mês atual e os próximos 2
         for (let i = 0; i < 3; i++) {
             const mesAlvo = new Date(hoje.getFullYear(), hoje.getMonth() + i, 1);
             const nomeMes = mesAlvo.toLocaleString('pt-PT', { month: 'long' });
-            // Capitalizar a primeira letra (ex: "abril" -> "Abril")
             const mesFormatado = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
             const labelMesAno = `${mesFormatado} ${mesAlvo.getFullYear()}`;
 
-            // Forçamos o mês a existir com 0€
             previsaoMensal[labelMesAno] = 0;
         }
 
-        // ==========================================
-        // 2. EXTRAÇÃO E PROCESSAMENTO
-        // ==========================================
         const aulasFuturas = await this.prisma.coaching_Aluno.findMany({
             where: {
                 Coaching: {
-                    Inicio_Coaching: { gte: hoje, lte: daquiA3Meses }
-                }
+                    Inicio_Coaching: {
+                        gte: hoje,
+                        lte: daquiA3Meses,
+                    },
+                },
             },
-            include: { Coaching: true },
-            orderBy: { Coaching: { Inicio_Coaching: 'asc' } }
+            include: {
+                Coaching: true,
+            },
+            orderBy: {
+                Coaching: {
+                    Inicio_Coaching: 'asc',
+                },
+            },
         });
 
-        aulasFuturas.forEach(fatura => {
-            const valor = fatura.ValorEmFalta ? Number(fatura.ValorEmFalta) : 0;
+        aulasFuturas.forEach((fatura) => {
+            const valorPrevisto = this.obterValorTotalAluno(fatura);
 
             if (fatura.Coaching?.Inicio_Coaching) {
                 const data = new Date(fatura.Coaching.Inicio_Coaching);
@@ -356,28 +429,86 @@ export class FaturacaoService {
                 const mesFormatado = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
                 const labelMesAno = `${mesFormatado} ${data.getFullYear()}`;
 
-                // Soma o valor à gaveta que já foi criada no passo 1
                 if (previsaoMensal[labelMesAno] !== undefined) {
-                    previsaoMensal[labelMesAno] += valor;
+                    previsaoMensal[labelMesAno] += valorPrevisto;
                 }
             }
         });
 
-        // 3. RETORNO (Mapeamento final)
-        return Object.keys(previsaoMensal).map(mes => ({
-            mes: mes,
-            previsto: previsaoMensal[mes]
+        return Object.keys(previsaoMensal).map((mes) => ({
+            mes,
+            previsto: previsaoMensal[mes],
         }));
     }
 
     async obterFaturacaoPorEncarregado(idEncarregado: number) {
-        // TODO: Lógica para ir buscar a faturação de 1 só encarregado
-        return [];
+        const faturas = await this.prisma.coaching_Aluno.findMany({
+            where: {
+                ID_Enc_Educacao: idEncarregado,
+            },
+            include: {
+                Aluno: true,
+                Coaching: {
+                    include: {
+                        Professor: {
+                            include: {
+                                Pessoa: true,
+                            },
+                        },
+                        Sala: true,
+                    },
+                },
+            },
+            orderBy: {
+                Coaching: {
+                    Inicio_Coaching: 'asc',
+                },
+            },
+        });
+
+        return faturas.map((item) => {
+            const valorTotal = this.obterValorTotalAluno(item);
+            const valorEmFalta = this.obterValorEmFalta(item, valorTotal);
+
+            return {
+                idCoaching: item.ID_Coaching,
+                idAluno: item.ID_Aluno,
+                dataAula: item.Coaching?.Inicio_Coaching,
+                nomeProfessor: item.Coaching?.Professor?.Pessoa?.Nome || 'Professor não atribuído',
+                nomeAluno: item.Aluno?.Nome || 'Aluno desconhecido',
+                valorTotal,
+                valorEmFalta,
+                estaPago: valorEmFalta <= 0,
+                isPago: valorEmFalta <= 0,
+                duracaoMinutos: item.Coaching?.Duracao || 0,
+                salaNome: item.Coaching?.Sala?.Nome || 'Sem sala',
+            };
+        });
     }
 
+    /**
+     * Regista o pagamento de um aluno numa sessão de coaching.
+     *
+     * Como agora o estado financeiro está em ValorEmFalta,
+     * pagar significa colocar ValorEmFalta a 0.
+     */
     async registarPagamento(idCoaching: number, idAluno: number) {
-        // TODO: Lógica para o botão "Pendente" da Faturação
-        return { message: "Em construção..." };
-    }
+        const registo = await this.prisma.coaching_Aluno.update({
+            where: {
+                ID_Coaching_ID_Aluno: {
+                    ID_Coaching: idCoaching,
+                    ID_Aluno: idAluno,
+                },
+            },
+            data: {
+                ValorEmFalta: 0,
+            },
+        });
 
-}
+        return {
+            message: 'Pagamento registado com sucesso.',
+            idCoaching: registo.ID_Coaching,
+            idAluno: registo.ID_Aluno,
+        };
+    }
+} 
