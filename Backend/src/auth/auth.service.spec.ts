@@ -9,6 +9,7 @@ import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from './enums/roles.enum';
 import { LoginDto } from './dto/login.dto';
+import { MailService } from '../mail/mail.service';
 
 // Substitui a implementação real do bcrypt por um mock controlado pelo teste.
 // Assim conseguimos simular passwords válidas ou inválidas sem usar hashes reais.
@@ -32,6 +33,10 @@ describe('AuthService', () => {
         signAsync: jest.fn(),
     };
 
+    const mailServiceMock = {
+        sendPasswordResetEmail: jest.fn(),
+    };
+
     beforeEach(async () => {
         // Cria um módulo de teste do NestJS com o AuthService real,
         // mas substitui as dependências externas por mocks.
@@ -45,6 +50,10 @@ describe('AuthService', () => {
                 {
                     provide: JwtService,
                     useValue: jwtServiceMock,
+                },
+                {
+                    provide: MailService,
+                    useValue: mailServiceMock,
                 },
             ],
         }).compile();
