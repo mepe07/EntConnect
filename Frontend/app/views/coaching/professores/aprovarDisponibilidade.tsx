@@ -101,7 +101,6 @@ export default function ApproveAvailability() {
         return (
             <div className="pagina-aprovacoes" style={{ padding: '50px', textAlign: 'center' }}>
                 <h1>Acesso Negado 🚫</h1>
-                <p>Apenas a Coordenação pode aceder a esta página.</p>
             </div>
         );
     }

@@ -80,6 +80,19 @@ export class UtilizadorController {
     return { message: `Utilizador com ID ${id} desbloqueado com sucesso.` };
   }
 
+  /**
+   * 
+   * @param idUtilizador  
+   * @returns O id do role do utilizador em questão
+   */
+  @Get(':id/roles-ids')
+  @ApiOperation({ summary: 'Obter os IDs de Professor, Enc. Educação e Coordenador de um utilizador' })
+  @ApiResponse({ status: 200, description: 'IDs das roles retornados com sucesso.' })
+  @ApiResponse({ status: 404, description: 'Utilizador não encontrado.' })
+  async getRolesIds(@Param('id', ParseIntPipe) id: number) {
+    return this.utilizadorService.getRolesIds(id);
+  }
+
   @Get(':id/EE/marcacoes')
   @ApiOperation({ summary: 'Obter marcações por EE' })
   @ApiResponse({ status: 200 })

@@ -110,6 +110,36 @@ export class UtilizadorService {
     };
   }
 
+  async getRolesIds(idUtilizador: number) {
+    // 1. Vai buscar o utilizador e inclui a Pessoa com as suas respetivas tabelas de roles
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: idUtilizador },
+      include: {
+        Pessoa: {
+          include: {
+            Professor: true,
+            Enc_Educacao: true,
+            Coordenador: true,
+          },
+        },
+      },
+    });
+
+    if (!utilizador) {
+      throw new NotFoundException(`Utilizador com ID ${idUtilizador} não encontrado.`);
+    }
+
+    // 2. Formata a resposta. 
+    // Se a tabela existir (não for null), devolve o ID_Pessoa, caso contrário devolve null
+    return {
+      idProfessor: utilizador.Pessoa?.Professor ? utilizador.Pessoa.Professor.ID_Pessoa : null,
+      idEncEducacao: utilizador.Pessoa?.Enc_Educacao ? utilizador.Pessoa.Enc_Educacao.ID_Pessoa : null,
+      idCoordenador: utilizador.Pessoa?.Coordenador ? utilizador.Pessoa.Coordenador.ID_Pessoa : null,
+      // Se precisares do idPessoa base também, podes enviar:
+      idPessoaBase: utilizador.ID_Pessoa
+    };
+  }
+
   async blockUser(id: number) {
     // Vai à tabela utilizador, procura pelo ID e atualiza o campo ativo para false
     return this.prisma.utilizador.update({
