@@ -62,17 +62,30 @@ export function Utilizadores() {
     const [loading, setLoading] = useState(true);
 
     // ==========================================
+    // PAGINAÇÃO
+    // ==========================================
+    const [paginaAtual, setPaginaAtual] = useState(1);
+    const [itensPorPagina, setItensPorPagina] = useState(10);
+
+    // ==========================================
     // ESTADO DO MODAL VER/EDITAR
     // ==========================================
     const [modalAberto, setModalAberto] = useState(false);
     const [utilizadorSelecionado, setUtilizadorSelecionado] = useState<Utilizador | null>(null);
+
+    // Dados pessoais editáveis
+    const [editNome, setEditNome] = useState('');
+    const [editContacto, setEditContacto] = useState('');
+    const [editNif, setEditNif] = useState('');
+    const [editCargo, setEditCargo] = useState('');
+    const [erroDados, setErroDados] = useState('');
+    const [loadingSaveDados, setLoadingSaveDados] = useState(false);
 
     // Password
     const [novaPassword, setNovaPassword] = useState('');
     const [confirmarPassword, setConfirmarPassword] = useState('');
     const [mostrarPassword, setMostrarPassword] = useState(false);
     const [erroPassword, setErroPassword] = useState('');
-    const [loadingSave, setLoadingSave] = useState(false);
 
     // Foto
     const [fotoAtual, setFotoAtual] = useState<string | null>(null);
@@ -136,6 +149,11 @@ export function Utilizadores() {
     // ==========================================
     const abrirModal = async (utilizador: Utilizador) => {
         setUtilizadorSelecionado(utilizador);
+        setEditNome(utilizador.nome || '');
+        setEditContacto(utilizador.contacto || '');
+        setEditNif(utilizador.nif || '');
+        setEditCargo(utilizador.cargo || '');
+        setErroDados('');
         setNovaPassword('');
         setConfirmarPassword('');
         setMostrarPassword(false);
@@ -156,6 +174,11 @@ export function Utilizadores() {
     const fecharModal = () => {
         setModalAberto(false);
         setUtilizadorSelecionado(null);
+        setEditNome('');
+        setEditContacto('');
+        setEditNif('');
+        setEditCargo('');
+        setErroDados('');
         setFotoAtual(null);
         setFotoPreview(null);
         setFicheiroFoto(null);
@@ -325,34 +348,77 @@ export function Utilizadores() {
     };
 
     // ==========================================
-    // PASSWORD
+    // GUARDAR TUDO (dados pessoais + password opcional)
     // ==========================================
-    const handleGuardarPassword = async () => {
+    const handleGuardarTudo = async () => {
+        setErroDados('');
         setErroPassword('');
 
-        if (!novaPassword) {
-            setErroPassword('Por favor, introduz uma nova password.');
+        // Validação dos dados pessoais
+        if (!editNome.trim() || editNome.trim().length < 3) {
+            setErroDados('O nome deve ter pelo menos 3 caracteres.');
             return;
         }
-        if (novaPassword.length < 6) {
-            setErroPassword('A password deve ter pelo menos 6 caracteres.');
+        if (editNif && !/^\d{9}$/.test(editNif)) {
+            setErroDados('O NIF deve ter exatamente 9 dígitos numéricos.');
             return;
         }
-        if (novaPassword !== confirmarPassword) {
-            setErroPassword('As passwords não coincidem.');
+        if (editContacto && !/^\d{9}$/.test(editContacto)) {
+            setErroDados('O contacto deve ter exatamente 9 dígitos numéricos.');
             return;
         }
 
-        setLoadingSave(true);
+        // Validação da password — só se pelo menos um dos campos estiver preenchido
+        const passwordPreenchida = novaPassword || confirmarPassword;
+        if (passwordPreenchida) {
+            if (novaPassword.length < 6) {
+                setErroPassword('A password deve ter pelo menos 6 caracteres.');
+                return;
+            }
+            if (novaPassword !== confirmarPassword) {
+                setErroPassword('As passwords não coincidem.');
+                return;
+            }
+        }
+
+        setLoadingSaveDados(true);
         try {
-            await utilizadorService.updatePassword(utilizadorSelecionado!.idUtilizador, novaPassword);
-            setNovaPassword('');
-            setConfirmarPassword('');
-            alert('Password atualizada com sucesso!');
-        } catch {
-            setErroPassword('Erro ao atualizar a password. Tenta novamente.');
+            // Guardar dados pessoais
+            await utilizadorService.updatePessoal(utilizadorSelecionado!.idUtilizador, {
+                nome: editNome.trim(),
+                contacto: editContacto.trim() || undefined,
+                nif: editNif.trim() || undefined,
+            });
+
+            // Guardar cargo (apenas se foi alterado)
+            if (editCargo !== utilizadorSelecionado!.cargo) {
+                await utilizadorService.updateCargo(utilizadorSelecionado!.idUtilizador, editCargo);
+            }
+
+            const updated = {
+                ...utilizadorSelecionado!,
+                nome: editNome.trim(),
+                contacto: editContacto.trim(),
+                nif: editNif.trim(),
+                cargo: editCargo,
+            };
+            setUtilizadorSelecionado(updated);
+            setUtilizadores(prev =>
+                prev.map(u => u.idUtilizador === updated.idUtilizador ? updated : u)
+            );
+
+            // Guardar password (apenas se preenchida)
+            if (passwordPreenchida) {
+                await utilizadorService.updatePassword(utilizadorSelecionado!.idUtilizador, novaPassword);
+                setNovaPassword('');
+                setConfirmarPassword('');
+            }
+
+            alert('Alterações guardadas com sucesso!');
+        } catch (error: any) {
+            setErroDados(error?.message || 'Erro ao guardar as alterações. Tenta novamente.');
         } finally {
-            setLoadingSave(false);
+            setLoadingSaveDados(false);
         }
     };
 
@@ -379,6 +445,23 @@ export function Utilizadores() {
             ));
         } catch {
             alert(`Erro ao ${acao} o utilizador.`);
+        }
+    };
+
+    // ==========================================
+    // ELIMINAR UTILIZADOR
+    // ==========================================
+    const handleEliminarUtilizador = async (utilizador: Utilizador) => {
+        const confirmacao = window.confirm(
+            `Tens a certeza que queres eliminar o utilizador "${utilizador.nome}"?\nEsta ação é irreversível.`
+        );
+        if (!confirmacao) return;
+
+        try {
+            await utilizadorService.deleteUser(utilizador.idUtilizador);
+            setUtilizadores(prev => prev.filter(u => u.idUtilizador !== utilizador.idUtilizador));
+        } catch (error: any) {
+            alert(error?.message || 'Erro ao eliminar o utilizador.');
         }
     };
 
@@ -430,7 +513,61 @@ export function Utilizadores() {
         u.cargo?.toLowerCase().includes(termoPesquisa.toLowerCase())
     );
 
+    const totalPaginas = Math.ceil(utilizadoresFiltrados.length / itensPorPagina);
+    const indiceInicio = (paginaAtual - 1) * itensPorPagina;
+    const utilizadoresPagina = utilizadoresFiltrados.slice(indiceInicio, indiceInicio + itensPorPagina);
+
+    const irParaPagina = (pagina: number) => {
+        if (pagina >= 1 && pagina <= totalPaginas) setPaginaAtual(pagina);
+    };
+
+    const handleItensPorPagina = (valor: number) => {
+        setItensPorPagina(valor);
+        setPaginaAtual(1);
+    };
+
     const fotoModalSrc = fotoPreview ?? fotoAtual;
+
+
+    // ==========================================
+    // DOWNLOAD DO MODELO (DO AZURE VIA BACKEND)
+    // ==========================================
+    const handleDownloadModelo = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            
+            // Faz o pedido à nova rota do teu backend
+            const response = await fetch('http://localhost:3000/utilizador/download-template', {
+                method: 'GET',
+                headers: { 
+                    'Authorization': `Bearer ${token}` 
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao obter o ficheiro modelo do servidor.');
+            }
+
+            // Transforma a resposta num Blob (objeto binário)
+            const blob = await response.blob();
+
+            // Cria um link invisível na memória do browser para forçar o download
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'modelo_utilizadores.csv'; // O nome com que o ficheiro vai ser guardado
+            
+            // Clica no link invisível e depois limpa-o
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+        } catch (error) {
+            console.error('Erro no download:', error);
+            alert('Não foi possível transferir o ficheiro modelo. Tenta novamente.');
+        }
+    };
 
     // ==========================================
     // RENDER
@@ -465,7 +602,7 @@ export function Utilizadores() {
                         id="pesquisa-utilizador"
                         placeholder="🔍 Pesquisar por nome, email ou cargo..."
                         value={termoPesquisa}
-                        onChange={(e) => setTermoPesquisa(e.target.value)}
+                        onChange={(e) => { setTermoPesquisa(e.target.value); setPaginaAtual(1); }}
                     />
                 </div>
             </div>
@@ -496,7 +633,7 @@ export function Utilizadores() {
                                 <td colSpan={7} className="tabela-vazia">Nenhum utilizador encontrado.</td>
                             </tr>
                         ) : (
-                            utilizadoresFiltrados.map((u) => (
+                            utilizadoresPagina.map((u) => (
                                 <tr key={u.idUtilizador}>
                                     <td className="id-coluna">#{u.idUtilizador}</td>
                                     <td>
@@ -543,6 +680,13 @@ export function Utilizadores() {
                                         >
                                             <i className={`fa-solid ${u.ativo ? 'fa-lock' : 'fa-lock-open'}`}></i>
                                         </button>
+                                        <button
+                                            className="btn-icone eliminar"
+                                            title="Eliminar utilizador"
+                                            onClick={() => handleEliminarUtilizador(u)}
+                                        >
+                                            <i className="fa-solid fa-trash"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             ))
@@ -550,6 +694,82 @@ export function Utilizadores() {
                     </tbody>
                 </table>
             </div>
+
+            {/* PAGINAÇÃO */}
+            {!loading && utilizadoresFiltrados.length > 0 && (
+                <div className="paginacao">
+                    <div className="paginacao-info">
+                        <span>Mostrar</span>
+                        <select
+                            className="paginacao-select"
+                            value={itensPorPagina}
+                            onChange={(e) => handleItensPorPagina(Number(e.target.value))}
+                        >
+                            {[5, 10, 25, 50].map(n => (
+                                <option key={n} value={n}>{n}</option>
+                            ))}
+                        </select>
+                        <span>por página &mdash; {utilizadoresFiltrados.length} resultado{utilizadoresFiltrados.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div className="paginacao-controlos">
+                        <button
+                            className="btn-pagina"
+                            onClick={() => irParaPagina(1)}
+                            disabled={paginaAtual === 1}
+                            title="Primeira página"
+                        >
+                            <i className="fa-solid fa-angles-left"></i>
+                        </button>
+                        <button
+                            className="btn-pagina"
+                            onClick={() => irParaPagina(paginaAtual - 1)}
+                            disabled={paginaAtual === 1}
+                            title="Página anterior"
+                        >
+                            <i className="fa-solid fa-angle-left"></i>
+                        </button>
+                        <span className="paginacao-paginas">
+                            {Array.from({ length: totalPaginas }, (_, i) => i + 1)
+                                .filter(p => p === 1 || p === totalPaginas || Math.abs(p - paginaAtual) <= 1)
+                                .reduce<(number | '...')[]>((acc, p, idx, arr) => {
+                                    if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) acc.push('...');
+                                    acc.push(p);
+                                    return acc;
+                                }, [])
+                                .map((p, idx) =>
+                                    p === '...' ? (
+                                        <span key={`ellipsis-${idx}`} className="paginacao-ellipsis">…</span>
+                                    ) : (
+                                        <button
+                                            key={p}
+                                            className={`btn-pagina ${paginaAtual === p ? 'ativo' : ''}`}
+                                            onClick={() => irParaPagina(p as number)}
+                                        >
+                                            {p}
+                                        </button>
+                                    )
+                                )
+                            }
+                        </span>
+                        <button
+                            className="btn-pagina"
+                            onClick={() => irParaPagina(paginaAtual + 1)}
+                            disabled={paginaAtual === totalPaginas}
+                            title="Próxima página"
+                        >
+                            <i className="fa-solid fa-angle-right"></i>
+                        </button>
+                        <button
+                            className="btn-pagina"
+                            onClick={() => irParaPagina(totalPaginas)}
+                            disabled={paginaAtual === totalPaginas}
+                            title="Última página"
+                        >
+                            <i className="fa-solid fa-angles-right"></i>
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* ==========================================
                 MODAL DE VISUALIZAÇÃO / EDIÇÃO
@@ -649,9 +869,15 @@ export function Utilizadores() {
                             </div>
 
                             <div className="form-row">
-                                <div className="form-group readonly">
+                                <div className="form-group">
                                     <label>Nome Completo</label>
-                                    <div className="input-readonly">{utilizadorSelecionado.nome}</div>
+                                    <input
+                                        type="text"
+                                        className="input-campo"
+                                        value={editNome}
+                                        onChange={(e) => { setEditNome(e.target.value); setErroDados(''); }}
+                                        placeholder="Nome completo"
+                                    />
                                 </div>
                                 <div className="form-group readonly">
                                     <label>Username</label>
@@ -664,24 +890,48 @@ export function Utilizadores() {
                                     <label>Email</label>
                                     <div className="input-readonly">{utilizadorSelecionado.email}</div>
                                 </div>
-                                <div className="form-group readonly">
+                                <div className="form-group">
                                     <label>Contacto</label>
-                                    <div className="input-readonly">{utilizadorSelecionado.contacto || '—'}</div>
+                                    <input
+                                        type="text"
+                                        className="input-campo"
+                                        value={editContacto}
+                                        onChange={(e) => { setEditContacto(e.target.value); setErroDados(''); }}
+                                        placeholder="Ex: 912345678"
+                                    />
                                 </div>
                             </div>
 
                             <div className="form-row">
-                                <div className="form-group readonly">
+                                <div className="form-group">
                                     <label>NIF</label>
-                                    <div className="input-readonly">{utilizadorSelecionado.nif || '—'}</div>
+                                    <input
+                                        type="text"
+                                        className="input-campo"
+                                        value={editNif}
+                                        onChange={(e) => { setEditNif(e.target.value); setErroDados(''); }}
+                                        placeholder="Ex: 123456789"
+                                    />
                                 </div>
                                 <div className="form-group readonly">
                                     <label>Cargo</label>
-                                    <div className="input-readonly">
-                                        {cargoLabel[utilizadorSelecionado.cargo] ?? utilizadorSelecionado.cargo}
-                                    </div>
+                                    <select
+                                        className="input-campo"
+                                        value={editCargo}
+                                        onChange={(e) => { setEditCargo(e.target.value); setErroDados(''); }}
+                                    >
+                                        {CARGOS_DISPONIVEIS.map(c => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
+
+                            {erroDados && (
+                                <div className="mensagem-erro">
+                                    <i className="fa-solid fa-triangle-exclamation"></i> {erroDados}
+                                </div>
+                            )}
 
                             <div className="separador"></div>
 
@@ -739,10 +989,10 @@ export function Utilizadores() {
                             </button>
                             <button
                                 className="btn-primario"
-                                onClick={handleGuardarPassword}
-                                disabled={loadingSave}
+                                onClick={handleGuardarTudo}
+                                disabled={loadingSaveDados}
                             >
-                                {loadingSave
+                                {loadingSaveDados
                                     ? <><i className="fa-solid fa-spinner fa-spin"></i> A guardar...</>
                                     : <><i className="fa-solid fa-floppy-disk"></i> Guardar Alterações</>
                                 }
@@ -958,10 +1208,9 @@ export function Utilizadores() {
             />
 
             {/* MODAL DE IMPORT */}
-            {/* MODAL DE IMPORT */}
             {modalImportOpen && (
                 <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget && !loadingImport) setModalImportOpen(false); }}>
-                    <div className="modal-content" style={{ maxWidth: '480px' }}> {/* Ligeiramente mais largo para acomodar a caixa */}
+                    <div className="modal-content" style={{ maxWidth: '480px' }}>
                         <div className="modal-header">
                             <div className="modal-header-info">
                                 <div>
@@ -985,13 +1234,17 @@ export function Utilizadores() {
                                         <span>Descarrega o ficheiro base para preencheres os dados corretamente.</span>
                                     </div>
                                 </div>
-                                <a 
-                                    href="/modelo_utilizadores.xlsx" 
-                                    download="Modelo_Importacao_Utilizadores.xlsx" 
+                                
+                                {/* 👇 ALTERAÇÃO AQUI: Passou de <a> para <button> */}
+                                <button 
+                                    type="button"
+                                    onClick={handleDownloadModelo} 
                                     className="btn-download-modelo"
                                 >
                                     <i className="fa-solid fa-download"></i> Descarregar
-                                </a>
+                                </button>
+                                {/* 👆 FIM DA ALTERAÇÃO */}
+                                
                             </div>
 
                             {loadingImport && (

@@ -10,7 +10,7 @@ export default function PerfilRoute() {
             <meta property="og:title" content={title} />
             
             {/* O Perfil é para todos os que têm conta na escola! */}
-            <ProtectedRoute rolesPermitidas={['Coordenador', 'Direcao', 'Professor', 'Enc_Educacao']}>
+            <ProtectedRoute rolesPermitidas={['Coordenador', 'Professor', 'Enc_Educacao']}>
                 <Perfil />
             </ProtectedRoute>
         </>

@@ -11,13 +11,6 @@ export class AuthService {
     private _apiUrl = 'http://localhost:3000';
     private readonly tokenStorageKey = 'entconnect_token';
 
-    /**
-     * Efetua login no backend e guarda o token recebido.
-     *
-     * Importante:
-     * O login deve fazer sempre pedido ao backend, mesmo que já exista token no localStorage.
-     * Assim evitamos reutilizar tokens expirados ou sessões antigas.
-     */
     async login(username: string, password: string) {
         try {
             const response = await fetch(`${this._apiUrl}/auth/login`, {
@@ -52,9 +45,38 @@ export class AuthService {
         }
     }
 
-    /**
-     * Termina a sessão do utilizador.
-     */
+    async forgotPassword(email: string) {
+        const response = await fetch(`${this._apiUrl}/auth/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Não foi possível iniciar a recuperação da password.');
+        }
+
+        return data as { message: string; resetLink?: string };
+    }
+
+    async resetPassword(token: string, password: string) {
+        const response = await fetch(`${this._apiUrl}/auth/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Não foi possível alterar a password.');
+        }
+
+        return data as { message: string };
+    }
+
     logout(event?: React.MouseEvent<HTMLAnchorElement>) {
         event?.preventDefault();
 
@@ -62,22 +84,12 @@ export class AuthService {
         window.location.href = '/login';
     }
 
-    /**
-     * Limpa token e dados do utilizador.
-     * Não redireciona automaticamente.
-     */
     limparSessao() {
         this._userToken = null;
         this._userInfo = null;
         localStorage.removeItem(this.tokenStorageKey);
     }
 
-    /**
-     * Verifica se um JWT já expirou.
-     *
-     * No JWT, o campo "exp" vem em segundos.
-     * O Date.now() trabalha em milissegundos.
-     */
     isTokenExpired(token: string): boolean {
         try {
             const decoded = jwtDecode<JwtPayloadBase>(token);
@@ -92,10 +104,6 @@ export class AuthService {
         }
     }
 
-    /**
-     * Obtém o token apenas se ele ainda for válido.
-     * Se estiver expirado ou inválido, limpa a sessão.
-     */
     getToken() {
         if (!this._userToken) {
             this._userToken = localStorage.getItem(this.tokenStorageKey);
@@ -113,16 +121,10 @@ export class AuthService {
         return this._userToken;
     }
 
-    /**
-     * Indica se existe uma sessão válida.
-     */
     isAuthenticated(): boolean {
         return this.getToken() !== null;
     }
 
-    /**
-     * Obtém a informação do utilizador através do token válido.
-     */
     getUserInfo(): User | null {
         const token = this.getToken();
 
@@ -143,5 +145,4 @@ export class AuthService {
     }
 }
 
-// Dependência Singleton
 export const authService = new AuthService();

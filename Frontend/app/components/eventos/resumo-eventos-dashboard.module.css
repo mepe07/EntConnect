@@ -1,0 +1,446 @@
+/* Ficheiro: app/components/eventos/resumo-eventos-dashboard.module.css */
+
+.section {
+    width: 100%;
+    margin-top: 32px;
+    padding: 28px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.04);
+}
+
+.titleBlock {
+    margin-bottom: 22px;
+}
+
+    .titleBlock h2 {
+        margin: 0;
+        color: #111827;
+        font-size: 1.65rem;
+        font-weight: 900;
+        letter-spacing: -0.045em;
+    }
+
+    .titleBlock p {
+        margin: 8px 0 0;
+        color: #6b7280;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+/* =========================
+   CONTEÚDO
+========================= */
+
+.contentGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+    gap: 18px;
+}
+
+.featuredCard,
+.compactCard {
+    color: inherit;
+    text-decoration: none;
+}
+
+.featuredCard {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    background: #f9fafb;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+    .featuredCard:hover {
+        transform: translateY(-2px);
+        border-color: #ccebdd;
+        box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
+    }
+
+.featuredImage {
+    min-height: 280px;
+    overflow: hidden;
+    background: #101820;
+}
+
+    .featuredImage img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        transition: transform 0.35s ease;
+    }
+
+.featuredCard:hover .featuredImage img {
+    transform: scale(1.04);
+}
+
+.fallbackImage {
+    height: 100%;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #ffffff;
+    background: radial-gradient(circle at center, rgba(20, 120, 80, 0.25), transparent 38%), linear-gradient(145deg, #17212b, #0f171d);
+}
+
+    .fallbackImage span {
+        font-size: 3rem;
+    }
+
+    .fallbackImage strong {
+        font-size: 1.1rem;
+    }
+
+.featuredBody {
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.metaRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 12px;
+}
+
+.badge,
+.statusBadge,
+.badgeSmall {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.badge {
+    padding: 6px 10px;
+    color: #0f7a50;
+    background: #dff8ec;
+}
+
+.statusBadge {
+    padding: 6px 10px;
+    color: #475569;
+    background: #eef2f7;
+}
+
+.badgeSmall {
+    padding: 5px 8px;
+    color: #0f7a50;
+    background: #dff8ec;
+}
+
+.featuredBody h3 {
+    margin: 0;
+    color: #111827;
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.055em;
+}
+
+.featuredBody p {
+    margin: 12px 0 0;
+    color: #6b7280;
+    font-size: 0.95rem;
+    line-height: 1.55;
+}
+
+.infoRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+    .infoRow span {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 11px;
+        border-radius: 12px;
+        color: #475569;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        font-size: 0.82rem;
+        font-weight: 800;
+    }
+
+.cardLink {
+    margin-top: 22px;
+    color: #0f7a50;
+    font-size: 0.9rem;
+}
+
+/* =========================
+   LISTA LATERAL
+========================= */
+
+.sideList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.compactCard {
+    display: grid;
+    grid-template-columns: 66px minmax(0, 1fr);
+    gap: 14px;
+    padding: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    background: #ffffff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+    .compactCard:hover {
+        transform: translateY(-2px);
+        border-color: #ccebdd;
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+    }
+
+.dateBox {
+    width: 66px;
+    height: 66px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    color: #0f5138;
+    background: #edf8f2;
+    border: 1px solid #ccebdd;
+}
+
+    .dateBox strong {
+        font-size: 1.45rem;
+        line-height: 1;
+    }
+
+    .dateBox span {
+        margin-top: 4px;
+        font-size: 0.72rem;
+        font-weight: 900;
+        text-transform: uppercase;
+    }
+
+.compactBody {
+    min-width: 0;
+}
+
+    .compactBody h4 {
+        margin: 0;
+        color: #111827;
+        font-size: 1rem;
+        font-weight: 900;
+        line-height: 1.25;
+    }
+
+.compactInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+    .compactInfo span {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: #6b7280;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+.sideEmpty {
+    height: 100%;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    border: 1px dashed #d1d5db;
+    border-radius: 18px;
+    background: #f9fafb;
+    text-align: center;
+}
+
+    .sideEmpty span {
+        font-size: 2rem;
+    }
+
+    .sideEmpty p {
+        margin: 10px 0 0;
+        color: #6b7280;
+        line-height: 1.5;
+    }
+
+/* =========================
+   LOADING / EMPTY
+========================= */
+
+.skeletonGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.skeletonCard,
+.emptyState {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    background: #f9fafb;
+}
+
+.skeletonCard {
+    padding: 18px;
+}
+
+.skeletonImage,
+.skeletonLine,
+.skeletonLineSmall,
+.skeletonLineShort {
+    border-radius: 999px;
+    background: linear-gradient( 90deg, #eef2f7, #f8fafc, #eef2f7 );
+    background-size: 200% 100%;
+    animation: skeleton 1.2s ease-in-out infinite;
+}
+
+.skeletonImage {
+    height: 150px;
+    border-radius: 16px;
+    margin-bottom: 18px;
+}
+
+.skeletonLineShort {
+    width: 42%;
+    height: 16px;
+    margin-bottom: 14px;
+}
+
+.skeletonLine {
+    width: 85%;
+    height: 22px;
+    margin-bottom: 12px;
+}
+
+.skeletonLineSmall {
+    width: 62%;
+    height: 16px;
+}
+
+.emptyState {
+    padding: 42px;
+    text-align: center;
+}
+
+    .emptyState span {
+        display: inline-flex;
+        margin-bottom: 14px;
+        font-size: 2.8rem;
+    }
+
+    .emptyState h3 {
+        margin: 0 0 8px;
+        color: #111827;
+        font-size: 1.4rem;
+        font-weight: 900;
+        letter-spacing: -0.04em;
+    }
+
+    .emptyState p {
+        max-width: 480px;
+        margin: 0 auto;
+        color: #6b7280;
+        line-height: 1.55;
+    }
+
+@keyframes skeleton {
+    from {
+        background-position: 100% 0;
+    }
+
+    to {
+        background-position: -100% 0;
+    }
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+@media (max-width: 1180px) {
+    .contentGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .sideList {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 820px) {
+    .section {
+        padding: 22px;
+    }
+
+    .featuredCard {
+        grid-template-columns: 1fr;
+    }
+
+    .featuredImage,
+    .fallbackImage {
+        min-height: 240px;
+    }
+
+    .sideList,
+    .skeletonGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .section {
+        padding: 18px;
+        border-radius: 16px;
+    }
+
+    .featuredBody {
+        padding: 20px;
+    }
+
+        .featuredBody h3 {
+            font-size: 1.55rem;
+        }
+
+    .infoRow {
+        flex-direction: column;
+    }
+
+    .compactCard {
+        grid-template-columns: 56px minmax(0, 1fr);
+    }
+
+    .dateBox {
+        width: 56px;
+        height: 56px;
+    }
+}

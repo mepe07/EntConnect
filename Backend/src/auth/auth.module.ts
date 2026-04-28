@@ -5,9 +5,11 @@ import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthGuard } from './auth.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
     imports: [
+        MailModule,
         JwtModule.register({
             global: true, // Permite usar o JwtService em qualquer parte da aplicação sem precisar importar o módulo novamente.
             // Lembrete: Mover a 'secret' para o ficheiro .env antes de ir para produção!

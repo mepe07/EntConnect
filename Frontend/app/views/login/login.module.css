@@ -50,22 +50,23 @@
    2. O ECRÃ BIPARTIDO (O Design 70/30)
    ========================================= */
 .brandPanel {
-    flex: 6.5;
+    flex: 7;
     background: url('../../assets/media/foto-bailarina-login.png') no-repeat center center;
     background-size: cover;
     color: white;
     display: flex;
     flex-direction: column;
-    /* Atira os conteúdos para os cantos e liberta a bailarina! */
     justify-content: space-between;
     align-items: flex-start;
     padding: 4rem;
     text-align: left;
+    position: relative;
+    overflow: hidden;
 }
 
 .formPanel {
     /* PROPORÇÕES DO SPLIT: 30% DIREITA (O Apoio com Fundo Negro!) */
-    flex: 3.5;
+    flex: 3;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -370,3 +371,69 @@
     .forgotPassword:hover {
         text-decoration: underline;
     }
+
+.successMessage {
+    background-color: rgba(46, 160, 113, 0.12);
+    color: #2ea071;
+    padding: 0.6rem;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 0.8rem;
+    border: 1px solid rgba(46, 160, 113, 0.35);
+}
+
+.secondaryButton {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--input-border);
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.secondaryButton:hover {
+    color: var(--text-primary);
+    border-color: var(--brand-color);
+}
+
+.devResetLink {
+    display: block;
+    word-break: break-word;
+    color: var(--brand-color);
+    font-size: 0.78rem;
+    text-align: center;
+    text-decoration: none;
+    border: 1px dashed rgba(46, 160, 113, 0.45);
+    border-radius: 8px;
+    padding: 0.55rem;
+    background-color: rgba(46, 160, 113, 0.08);
+}
+
+.devResetLink:hover {
+    text-decoration: underline;
+}
+
+.forgotPassword {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--brand-color);
+    text-decoration: none;
+    font-size: 0.8rem;
+}
+
+.forgotPassword:hover {
+    text-decoration: underline;
+}
+
+.submitButton:disabled,
+.secondaryButton:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+}

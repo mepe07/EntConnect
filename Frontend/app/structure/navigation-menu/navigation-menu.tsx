@@ -15,6 +15,7 @@ const MENU_CONFIG: MenuConfig = {
     // --- Perfil: Coordenação ---
     coordenacao: [
         { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
+        { titulo: 'Gestão de Eventos', path: '/admin/eventos', icone: 'fa-solid fa-calendar-days' },
         { titulo: 'Gestão Utilizadores', path: '/admin/utilizadores', icone: 'fa-solid fa-users' },
         {
             titulo: 'Infraestrutura',
@@ -143,7 +144,7 @@ export function NavigationMenu() {
     let menuAtivo = MENU_CONFIG.encarregado; 
     
     // Mapeamento do dicionário consoante a role do utilizador
-    if (roleDoUser === 'Direcao' || roleDoUser === 'Coordenador') {
+    if (roleDoUser === 'Coordenador') {
         menuAtivo = MENU_CONFIG.coordenacao;
     } else if (roleDoUser === 'Professor') {
         menuAtivo = MENU_CONFIG.professor;
@@ -151,7 +152,7 @@ export function NavigationMenu() {
         menuAtivo = MENU_CONFIG.encarregado;
     }
 
-    if ((roleDoUser === 'Direcao' || roleDoUser === 'Professor' || roleDoUser === 'Enc_Educacao' || roleDoUser === 'EncEducacao') && Array.isArray(menuAtivo)) {
+    if ((roleDoUser === 'Professor' || roleDoUser === 'Enc_Educacao' || roleDoUser === 'EncEducacao') && Array.isArray(menuAtivo)) {
         menuAtivo = menuAtivo.map((item: any) => {
             if (item.titulo === 'Marketplace & Inventário' && item.submenu) {
                 return {

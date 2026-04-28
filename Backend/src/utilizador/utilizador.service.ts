@@ -242,81 +242,81 @@ export class UtilizadorService {
       }
     });
 
-    if (!utilizador || !utilizador.Pessoa) {
-      throw new NotFoundException(`Utilizador não encontrado.`);
-    }
+  //   if (!utilizador || !utilizador.Pessoa) {
+  //     throw new NotFoundException(`Utilizador não encontrado.`);
+  //   }
 
-    const idPessoa = utilizador.ID_Pessoa;
+  //   const idPessoa = utilizador.ID_Pessoa;
 
-    if (utilizador.Pessoa.Professor) {
-      const aulasProfessor = await this.prisma.aula.findMany({
-        where: { ID_Professor: utilizador.Pessoa.Professor.ID_Pessoa, }, // Procura as aulas do prof logado
-        include: {
-          Coaching: { include: { Sala: true } }, 
-          Aula_Aluno: { include: { Aluno: true } } 
-        },
-        orderBy: { Data_Aula: 'asc' }
-      });
+  //   if (utilizador.Pessoa.Professor) {
+  //     const aulasProfessor = await this.prisma.aula.findMany({
+  //       where: { ID_Professor: utilizador.Pessoa.Professor.ID_Pessoa, }, // Procura as aulas do prof logado
+  //       include: {
+  //         Coaching: { include: { Sala: true } }, 
+  //         Aula_Aluno: { include: { Aluno: true } } 
+  //       },
+  //       orderBy: { Data_Aula: 'asc' }
+  //     });
 
-      return aulasProfessor.map(aula => {
-        const dataStr = aula.Data_Aula.toLocaleDateString('pt-PT');
-        const horaInicio = aula.Data_Aula.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+  //     return aulasProfessor.map(aula => {
+  //       const dataStr = aula.Data_Aula.toLocaleDateString('pt-PT');
+  //       const horaInicio = aula.Data_Aula.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
         
-        const duracaoMinutos = aula.Coaching?.Duracao || 60;
-        const horaFimObj = new Date(aula.Data_Aula.getTime() + duracaoMinutos * 60000);
-        const horaFim = horaFimObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+  //       const duracaoMinutos = aula.Coaching?.Duracao || 60;
+  //       const horaFimObj = new Date(aula.Data_Aula.getTime() + duracaoMinutos * 60000);
+  //       const horaFim = horaFimObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 
-        const nomesClientes = aula.Aula_Aluno.map(aa => aa.Aluno.Nome).join(', ');
+  //       const nomesClientes = aula.Aula_Aluno.map(aa => aa.Aluno.Nome).join(', ');
 
-        return {
-          sessao: aula.Resumo_Aula || 'Aula Privada / Ensaio',
-          cliente: nomesClientes || 'Sem aluno associado',
-          data: dataStr,
-          horario: `${horaInicio} - ${horaFim}`,
-          formato: aula.Coaching?.Sala?.Nome || 'Estúdio a definir' 
-        };
-      });
-    } 
+  //       return {
+  //         sessao: aula.Resumo_Aula || 'Aula Privada / Ensaio',
+  //         cliente: nomesClientes || 'Sem aluno associado',
+  //         data: dataStr,
+  //         horario: `${horaInicio} - ${horaFim}`,
+  //         formato: aula.Coaching?.Sala?.Nome || 'Estúdio a definir' 
+  //       };
+  //     });
+  //   } 
     
-    else if (utilizador.Pessoa.Enc_Educacao) {
-      const aulasCliente = await this.prisma.aula.findMany({
-        where: {
-          Aula_Aluno: {
-            some: {
-              Aluno: { ID_Enc_Educacao: idPessoa }
-            }
-          }
-        },
-        include: {
-          Professor: { include: { Pessoa: true } },
-          Coaching: { include: { Sala: true } },
-          Aula_Aluno: { include: { Aluno: true } }
-        },
-        orderBy: { Data_Aula: 'asc' }
-      });
+  //   else if (utilizador.Pessoa.Enc_Educacao) {
+  //     const aulasCliente = await this.prisma.aula.findMany({
+  //       where: {
+  //         Aula_Aluno: {
+  //           some: {
+  //             Aluno: { ID_Enc_Educacao: idPessoa }
+  //           }
+  //         }
+  //       },
+  //       include: {
+  //         Professor: { include: { Pessoa: true } },
+  //         Coaching: { include: { Sala: true } },
+  //         Aula_Aluno: { include: { Aluno: true } }
+  //       },
+  //       orderBy: { Data_Aula: 'asc' }
+  //     });
 
-      return aulasCliente.map(aula => {
-        const dataStr = aula.Data_Aula.toLocaleDateString('pt-PT');
-        const horaInicio = aula.Data_Aula.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+  //     return aulasCliente.map(aula => {
+  //       const dataStr = aula.Data_Aula.toLocaleDateString('pt-PT');
+  //       const horaInicio = aula.Data_Aula.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
         
-        const duracaoMinutos = aula.Coaching?.Duracao || 60;
-        const horaFimObj = new Date(aula.Data_Aula.getTime() + duracaoMinutos * 60000);
-        const horaFim = horaFimObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+  //       const duracaoMinutos = aula.Coaching?.Duracao || 60;
+  //       const horaFimObj = new Date(aula.Data_Aula.getTime() + duracaoMinutos * 60000);
+  //       const horaFim = horaFimObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 
-        const meusAlunosNestaAula = aula.Aula_Aluno
-          .filter(aa => aa.Aluno.ID_Enc_Educacao === idPessoa)
-          .map(aa => aa.Aluno.Nome)
-          .join(', ');
+  //       const meusAlunosNestaAula = aula.Aula_Aluno
+  //         .filter(aa => aa.Aluno.ID_Enc_Educacao === idPessoa)
+  //         .map(aa => aa.Aluno.Nome)
+  //         .join(', ');
 
-        return {
-          sessao: aula.Resumo_Aula ? aula.Resumo_Aula : `Aula de Dança - ${meusAlunosNestaAula}`,
-          coach: aula.Professor?.Pessoa?.Nome || 'Professor a definir',
-          data: dataStr,
-          horario: `${horaInicio} - ${horaFim}`,
-          formato: aula.Coaching?.Sala?.Nome || 'Estúdio a definir'
-        };
-      });
-    }
+  //       return {
+  //         sessao: aula.Resumo_Aula ? aula.Resumo_Aula : `Aula de Dança - ${meusAlunosNestaAula}`,
+  //         coach: aula.Professor?.Pessoa?.Nome || 'Professor a definir',
+  //         data: dataStr,
+  //         horario: `${horaInicio} - ${horaFim}`,
+  //         formato: aula.Coaching?.Sala?.Nome || 'Estúdio a definir'
+  //       };
+  //     });
+  //   }
 
     return [];
   }*/
@@ -371,6 +371,48 @@ export class UtilizadorService {
     return utilizador;
   }
 
+  async updateCargo(idUtilizador: number, novoCargo: string) {
+    const cargosValidos = ['Professor', 'Coordenador', 'Direção', 'Encarregado de Educação'];
+    if (!cargosValidos.includes(novoCargo)) {
+      throw new NotFoundException(`Cargo "${novoCargo}" não é válido.`);
+    }
+
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: idUtilizador },
+      include: {
+        Pessoa: {
+          include: {
+            Professor: true,
+            Coordenador: true,
+            Direcao: true,
+            Enc_Educacao: true,
+          },
+        },
+      },
+    });
+
+    if (!utilizador || !utilizador.Pessoa) {
+      throw new NotFoundException('Utilizador não encontrado.');
+    }
+
+    const idPessoa = utilizador.ID_Pessoa;
+    const pessoa = utilizador.Pessoa;
+
+    // Apagar o cargo atual (apenas o que existir)
+    if (pessoa.Professor)    await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Coordenador)  await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Direcao)      await this.prisma.direcao.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Enc_Educacao) await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
+
+    // Criar o novo cargo
+    if (novoCargo === 'Professor')                 await this.prisma.professor.create({ data: { ID_Pessoa: idPessoa } });
+    else if (novoCargo === 'Coordenador')          await this.prisma.coordenador.create({ data: { ID_Pessoa: idPessoa } });
+    else if (novoCargo === 'Direção')              await this.prisma.direcao.create({ data: { ID_Pessoa: idPessoa } });
+    else if (novoCargo === 'Encarregado de Educação') await this.prisma.enc_Educacao.create({ data: { ID_Pessoa: idPessoa } });
+
+    return { mensagem: `Cargo atualizado para "${novoCargo}" com sucesso.` };
+  }
+
   async mudarPassword(id: number, dto: ChangePasswordDto) {
     // 1. Procurar o utilizador
     const utilizador = await this.prisma.utilizador.findUnique({
@@ -401,6 +443,41 @@ export class UtilizadorService {
 
     return { message: 'Password alterada com sucesso!' };
   }
+  async deleteUser(idUtilizador: number) {
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: idUtilizador },
+      include: {
+        Pessoa: {
+          include: {
+            Professor: true,
+            Coordenador: true,
+            Direcao: true,
+            Enc_Educacao: true,
+          },
+        },
+      },
+    });
+
+    if (!utilizador || !utilizador.Pessoa) {
+      throw new NotFoundException('Utilizador não encontrado.');
+    }
+
+    const idPessoa = utilizador.ID_Pessoa;
+    const pessoa = utilizador.Pessoa;
+
+    // Apagar registos de cargo (FK para Pessoa)
+    if (pessoa.Professor)    await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Coordenador)  await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Direcao)      await this.prisma.direcao.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Enc_Educacao) await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
+
+    // Apagar Utilizador (FK para Pessoa)
+    await this.prisma.utilizador.delete({ where: { ID_Utilizador: idUtilizador } });
+
+    // Apagar Pessoa
+    await this.prisma.pessoa.delete({ where: { ID_Pessoa: idPessoa } });
+
+    return { mensagem: 'Utilizador eliminado com sucesso.' };
+  }
 
 }
-
