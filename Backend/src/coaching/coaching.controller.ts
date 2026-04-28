@@ -156,6 +156,12 @@ export class CoachingController {
   async getKpisAdmin() {
     return this.coachingService.getKpisAdmin();
   }
+
+  @Get('aluno/:id/detalhes')
+  @ApiOperation({ summary: 'Obter detalhes do aluno e do seu encarregado' })
+  async getAlunoDetalhes(@Param('id', ParseIntPipe) id: number) {
+    return this.coachingService.getAlunoDetalhes(id);
+  }
 }
 
 // END POINT para as Modalidades - Retirar isto daqui e colocar num novo controller chamado modalidade.controller.ts para organizar melhor o código.

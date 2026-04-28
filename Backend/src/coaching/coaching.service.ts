@@ -242,4 +242,38 @@ export class CoachingService {
       realizadasMes,
     };
   }
+
+  async getAlunoDetalhes(idAluno: number) {
+    const aluno = await this.prisma.aluno.findUnique({
+      where: { ID_aluno: idAluno },
+      include: {
+        Enc_Educacao: {
+          include: {
+            Pessoa: true,
+          },
+        },
+      },
+    });
+
+    if (!aluno) {
+      throw new Error('Aluno não encontrado.');
+    }
+
+    return {
+      idAluno: aluno.ID_aluno,
+      nome: aluno.Nome,
+      dataNascimento: aluno.Data_Nascimento?.toISOString().split('T')[0] ?? null,
+      nif: aluno.NIF,
+      email: aluno.Mail ?? null,
+      contacto: aluno.Contato ?? null,
+      menorIdade: aluno.Menor_Idade,
+      encarregado: aluno.Enc_Educacao
+        ? {
+            nome: aluno.Enc_Educacao.Pessoa?.Nome || 'Sem encarregado',
+            email: aluno.Enc_Educacao.Pessoa?.Email || null,
+            contacto: aluno.Enc_Educacao.Pessoa?.Contacto || null,
+          }
+        : null,
+    };
+  }
 }
