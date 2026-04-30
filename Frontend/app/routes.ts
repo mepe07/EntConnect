@@ -69,6 +69,9 @@ export default [
     route("conta", "routes/conta.tsx"),
 
     // Rota para ver os agendamentos do professor
-    route("agenda/agendamentos", "routes/agendamentos.tsx")
+    route("agenda/agendamentos", "routes/agendamentos.tsx"),
+
+    // Rota para confirmações do professor
+    route("agenda/confirmacoes", "routes/confirmacoes.tsx")
 
 ] satisfies RouteConfig;
