@@ -117,6 +117,33 @@ export class UtilizadorController {
     return this.marcacoesService.getMarcacoesbyEE(+id);
   }
 
+  @Get(':id/EE/confirmacoes')
+  @ApiOperation({ summary: 'Obter sessões passadas por EE para confirmação' })
+  @ApiResponse({ status: 200, description: 'Sessões para confirmação retornadas com sucesso.' })
+  async getConfirmacoesByEE(@Param('id') id: string) {
+    return this.marcacoesService.getConfirmacoesByEE(+id);
+  }
+
+  @Patch(':id/EE/confirmacoes/:idCoaching')
+  @ApiOperation({ summary: 'Confirmar realização ou não realização de uma sessão de coaching como EE' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        idEstadoCoaching: { type: 'number', example: 13 },
+      },
+      required: ['idEstadoCoaching'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Estado do coaching atualizado com sucesso.' })
+  async confirmarSessaoByEE(
+    @Param('id') id: string,
+    @Param('idCoaching', ParseIntPipe) idCoaching: number,
+    @Body('idEstadoCoaching', ParseIntPipe) idEstadoCoaching: number,
+  ) {
+    return this.marcacoesService.confirmarSessaoByEE(+id, idCoaching, idEstadoCoaching);
+  }
+
   /**
    * FLUXO DIRETO: Importa um lote de utilizadores a partir de um ficheiro CSV local.
    * 1. Recebe o ficheiro via Multipart Form Data.

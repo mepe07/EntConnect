@@ -74,7 +74,10 @@ export default [
     // Rota para confirmações do professor
     route("agenda/confirmacoes", "routes/confirmacoes.tsx"),
 
-    // Rota para confirmações do professor
-    route("coaching/confirmacoes", "routes/EEconfirmacoes.tsx")
+    // Rota para confirmações do EE
+    route("coaching/confirmacoes", "routes/EEconfirmacoes.tsx"),
+
+    // Rota para disponibilidades do professor
+    route("agenda/disponibilidades", "routes/profDisponibilidades.tsx")
 
 ] satisfies RouteConfig;
