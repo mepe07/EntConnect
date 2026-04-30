@@ -15,7 +15,7 @@ export default function VerMarcacoes() {
 
     // Validar o role do utilizador 
     const userInfo = authService.getUserInfo() as User;
-
+    console.log('Informações do utilizador:', userInfo); // Log para depuração
     if (userInfo.role !== 'Enc_Educacao') {
         return null;
     }
