@@ -36,7 +36,7 @@ export function Header() {
             if (!currentUserId) return;
             
             try {
-                const token = localStorage.getItem('token') || authService.getToken(); 
+                const token = localStorage.getItem('entconnect_token') || authService.getToken(); 
                 const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/foto`, {
                     method: 'GET',
                     headers: {

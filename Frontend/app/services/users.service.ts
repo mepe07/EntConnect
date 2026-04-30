@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '~/config/api.config';
+
 export interface CreateUtilizadorPayload {
     nome: string;
     username: string;
@@ -10,7 +12,9 @@ export interface CreateUtilizadorPayload {
 }
 
 export class UtilizadorService {
-    private _apiUrl = 'http://localhost:3000';
+    // URL base da API.
+    // Vem do ficheiro .env do frontend através de VITE_API_URL.
+    private _apiUrl = API_BASE_URL;
 
     /**
      * Obtém a lista de utilizadores da API.
@@ -27,7 +31,7 @@ export class UtilizadorService {
      * Cria um novo utilizador.
      */
     async createUser(payload: CreateUtilizadorPayload) {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador`, {
             method: 'POST',
             headers: {
@@ -118,7 +122,7 @@ export class UtilizadorService {
     }
 
     async deleteUser(userId: number) {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}`, {
             method: 'DELETE',
             headers: {
@@ -136,7 +140,7 @@ export class UtilizadorService {
     }
 
     async updateCargo(userId: number, cargo: string) {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/update-cargo`, {
             method: 'PUT',
             headers: {
@@ -155,7 +159,7 @@ export class UtilizadorService {
     }
 
     async updatePessoal(userId: number, dados: { nome?: string; contacto?: string; nif?: string }) {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/update-pessoal`, {
             method: 'PUT',
             headers: {

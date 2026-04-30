@@ -1,8 +1,10 @@
 // LÓGICA: Importamos o nosso segurança para podermos usar o Token JWT dele!
 import { authService } from './auth.service';
+import { API_BASE_URL } from '~/config/api.config';
 
-// A morada do teu Backend em NestJS
-const API_URL = 'http://localhost:3000/salas';
+// URL base das rotas de salas.
+// A origem da API vem do .env do frontend através de VITE_API_URL.
+const API_URL = `${API_BASE_URL}/salas`;
 
 export class SalasService {
     
