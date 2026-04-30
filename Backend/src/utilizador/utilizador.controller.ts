@@ -333,6 +333,35 @@ export class UtilizadorController {
     return this.agendamentosService.getAgendamentosProfessor(+idProfessor);
   }
 
+  @Get('professor/:id/confirmacoes')
+  @ApiOperation({ summary: 'Obter as sessões passadas do professor para confirmação' })
+  @ApiResponse({ status: 200, description: 'Sessões a confirmar retornadas com sucesso.' })
+  async getConfirmacoesProfessor(
+    @Param('id') idProfessor: string
+  ) {
+    return this.agendamentosService.getConfirmacoesProfessor(+idProfessor);
+  }
+
+  @Patch('professor/:id/confirmacoes/:idCoaching')
+  @ApiOperation({ summary: 'Confirmar realização ou não realização de uma sessão de coaching' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        idEstadoCoaching: { type: 'number', example: 13 },
+      },
+      required: ['idEstadoCoaching'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Estado do coaching atualizado com sucesso.' })
+  async confirmarSessaoProfessor(
+    @Param('id') idProfessor: string,
+    @Param('idCoaching', ParseIntPipe) idCoaching: number,
+    @Body('idEstadoCoaching', ParseIntPipe) idEstadoCoaching: number,
+  ) {
+    return this.agendamentosService.atualizarConfirmacaoProfessor(+idProfessor, idCoaching, idEstadoCoaching);
+  }
+
   /**
    * Obtém a lista de disponibilidades dos professores.
    * @returns A lista de disponibilidades dos professores.
