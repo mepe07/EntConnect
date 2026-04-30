@@ -68,7 +68,9 @@ export function Perfil() {
     const carregarDados = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('token') || authService.getToken();
+            const token = localStorage.getItem(
+            
+            ) || authService.getToken();
             const headers = { 'Authorization': `Bearer ${token}` };
 
             const resUser = await fetch(`http://localhost:3000/utilizador/${currentUserId}`, { headers });
