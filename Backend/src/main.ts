@@ -17,11 +17,24 @@ async function bootstrap() {
     // Em desenvolvimento: http://localhost:5173
     // Em produção: alteras apenas no .env, sem mexer no código.
     const frontendUrl =
-        configService.get<string>('FRONTEND_URL') ?? 'http://localhost:5173';
+        configService.get<string>('FRONTEND_URL') ?? 'http://localhost:4200';
+
+    const allowedOrigins = new Set([
+        frontendUrl,
+        'http://localhost:4200',
+        'http://localhost:5173',
+    ]);
 
     // CORS permite que o frontend consiga comunicar com o backend.
     app.enableCors({
-        origin: frontendUrl,
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.has(origin)) {
+                callback(null, true);
+                return;
+            }
+
+            callback(new Error(`Origin ${origin} not allowed by CORS`));
+        },
         credentials: true,
     });
 
