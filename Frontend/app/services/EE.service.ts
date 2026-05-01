@@ -36,6 +36,64 @@ export class EEService {
         return await response.json();
     }
 
+    async getMeusEducandos() {
+        const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/me/alunos`, {
+            method: 'GET',
+            headers: this.getHeaders()
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Erro ao buscar educandos: ${response.statusText}`);
+        }
+
+        return await response.json();
+    }
+
+    async criarMeuEducando(payload: any) {
+        const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/me/alunos`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Erro ao adicionar educando: ${response.statusText}`);
+        }
+
+        return await response.json();
+    }
+
+    async atualizarMeuEducando(idAluno: number, payload: any) {
+        const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/me/alunos/${idAluno}`, {
+            method: 'PUT',
+            headers: this.getHeaders(),
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Erro ao atualizar educando: ${response.statusText}`);
+        }
+
+        return await response.json();
+    }
+
+    async removerMeuEducando(idAluno: number) {
+        const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/me/alunos/${idAluno}`, {
+            method: 'DELETE',
+            headers: this.getHeaders()
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Erro ao remover educando: ${response.statusText}`);
+        }
+
+        return await response.json();
+    }
+
     /**
      * Inscreve um aluno numa sessão de Coaching
      */

@@ -68,6 +68,8 @@ export default [
     // Rota das marcações de coaching (Para o EE)
     route("coaching/marcacoes", "routes/marcacoes.tsx"),
 
+    route("educandos", "routes/educandos.tsx"),
+
     // Rota do perfil (para todos os utilizadores)
     route("conta", "routes/conta.tsx"),
 
