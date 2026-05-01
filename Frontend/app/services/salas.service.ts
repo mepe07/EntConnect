@@ -1,7 +1,6 @@
 // LÓGICA: Importamos o nosso segurança para podermos usar o Token JWT dele!
 import { authService } from './auth.service';
-import { API_BASE_URL } from '~/config/api.config';
-
+import { API_BASE_URL } from "../../src/config/api.config";
 // URL base das rotas de salas.
 // A origem da API vem do .env do frontend através de VITE_API_URL.
 const API_URL = `${API_BASE_URL}/salas`;

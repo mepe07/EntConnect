@@ -1,5 +1,5 @@
 import { authService } from './auth.service'; // Ajusta o caminho se for preciso
-import { API_BASE_URL } from '~/config/api.config';
+import { API_BASE_URL } from "../../src/config/api.config";
 
 export class EEService {
     // URL base da API.
