@@ -1,5 +1,5 @@
 //#region  imports
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UnauthorizedException,Headers } from '@nestjs/common';
 import { CoachingService } from './coaching.service';
 import { CreateCoachingDto } from './dto/create-coaching.dto';
 import { UpdateCoachingDto } from './dto/update-coaching.dto';
@@ -18,7 +18,9 @@ import { InscreverAlunoDto } from './dto/inscrever-aluno.dto';
 export class CoachingController {
   constructor(
     private readonly coachingService: CoachingService,
-    private readonly gestaoEstudiosService: GestaoEstudiosService
+    private readonly gestaoEstudiosService: GestaoEstudiosService,
+    private readonly modalidadesService: ModalidadeService
+    
   ) {}
 
 
@@ -156,49 +158,38 @@ export class CoachingController {
   async getKpisAdmin() {
     return this.coachingService.getKpisAdmin();
   }
-}
 
-// END POINT para as Modalidades - Retirar isto daqui e colocar num novo controller chamado modalidade.controller.ts para organizar melhor o código.
+  @Get('marcacoes')
+    @ApiOperation({ summary: 'Obtém a agenda pura de marcações de coaching do utilizador' })
+    async getMarcacoes(
+        @Headers('authorization') authHeader: string
+    ) {
+        // 1. Verificação do Segurança (Token)
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            throw new UnauthorizedException('Acesso negado: Token não encontrado na mochila.');
+        }
 
-@ApiTags('Modalidades') // Cria a secção "Modalidades" no Swagger
-@Controller('modalidade') // O URL vai ser http://localhost:3000/modalidade
-export class ModalidadeController {
-  
-  // Injeta o teu serviço para podermos comunicar com a BD
-  constructor(private readonly modalidadeService: ModalidadeService) {}
+        const token = authHeader.split(' ')[1];
+        let userPayload;
 
-  // ENDPOINT PARA LISTAR (GET)
-  @Get()
-  @ApiOperation({ summary: 'Listar todas as modalidades' })
-  findAll() {
-    return this.modalidadeService.findAll();
-  }
+        // 2. Descodifica a mochila para saber quem é
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+            userPayload = JSON.parse(jsonPayload);
+        } catch (e) {
+            throw new UnauthorizedException('Token inválido ou corrompido.');
+        }
 
-  @Post() // Indica que é um pedido para CRIAR (POST)
-  @ApiOperation({ summary: 'Adicionar uma nova modalidade à base de dados' })
-  @ApiResponse({ status: 201, description: 'A modalidade foi criada com sucesso.' })
-  @ApiResponse({ status: 400, description: 'Dados inválidos.' })
-  create(@Body() createModalidadeDto: CreateModalidadeDto) {
-    // O @Body() apanha o JSON do Swagger e passa-o para o teu Service gravar na BD
-    return this.modalidadeService.create(createModalidadeDto);
-  }
-  
-  // ENDPOINT PARA EDITAR (PATCH)
-  @Patch(':id') // O ':id' significa que espera um número no URL
-  @ApiOperation({ summary: 'Editar uma modalidade existente' })
-  update(
-    @Param('id', ParseIntPipe) id: number, // Apanha o ID do URL e converte para número
-    @Body() updateModalidadeDto: UpdateModalidadeDto // Apanha o JSON do Body
-  ) {
-    return this.modalidadeService.update(id, updateModalidadeDto);
-  }
+        const role = userPayload.role;
+        const userId = userPayload.sub;
 
-  // ENDPOINT PARA REMOVER (DELETE)
-  @Delete(':id')
-  @ApiOperation({ summary: 'Remover uma modalidade' })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.modalidadeService.remove(id);
-  }
-
+        // 3. Chama o Service que criámos na mensagem anterior!
+        // ATENÇÃO: Muda "this.coachingService" para o nome do service onde colocaste a função
+        return this.coachingService.getMarcacoesProfessor(role, userId);
+    }
   
 }
+
+
