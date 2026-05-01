@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '~/config/api.config';
+import { API_BASE_URL } from "../../src/config/api.config";
 
 export interface CreateUtilizadorPayload {
     nome: string;

@@ -1,5 +1,4 @@
-import { API_BASE_URL } from "~/config/api.config";
-
+import { API_BASE_URL } from "../../src/config/api.config";
 export class DisponibilidadesService {
     // URL base da API.
     // Vem do ficheiro .env do frontend através de VITE_API_URL.
