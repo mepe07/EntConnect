@@ -1,6 +1,6 @@
 import { jwtDecode } from "jwt-decode";
 import type { User } from "~/models/interfaces/user.interface";
-import { API_BASE_URL } from "~/config/api.config";
+import { API_BASE_URL } from "../../src/config/api.config";
 
 interface JwtPayloadBase {
     exp?: number;

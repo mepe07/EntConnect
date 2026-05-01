@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '~/config/api.config';
+import { API_BASE_URL } from "../../src/config/api.config";
 
 export interface CreateUtilizadorPayload {
     nome: string;
@@ -9,6 +9,40 @@ export interface CreateUtilizadorPayload {
     dataNascimento: string;
     cargo: string;
     password: string;
+}
+
+export interface ImpactoRemocaoAssociacoesEncarregado {
+    alunosAssociados: number;
+    inscricoesCoachingAssociadas: number;
+}
+
+export class ConfirmacaoRemocaoAssociacoesEncarregadoError extends Error {
+    impacto: ImpactoRemocaoAssociacoesEncarregado;
+
+    constructor(message: string, impacto: ImpactoRemocaoAssociacoesEncarregado) {
+        super(message);
+        this.name = 'ConfirmacaoRemocaoAssociacoesEncarregadoError';
+        this.impacto = impacto;
+    }
+}
+
+export interface Educando {
+    ID_aluno: number;
+    ID_Enc_Educacao?: number | null;
+    Nome: string;
+    Data_Nascimento: string;
+    NIF: string;
+    Mail?: string | null;
+    Contato?: string | null;
+    Menor_Idade: boolean;
+}
+
+export interface UpsertEducandoPayload {
+    nome: string;
+    dataNascimento: string;
+    nif: string;
+    mail?: string;
+    contato?: string;
 }
 
 export class UtilizadorService {
@@ -139,7 +173,7 @@ export class UtilizadorService {
         return await response.json();
     }
 
-    async updateCargo(userId: number, cargo: string) {
+    async updateCargo(userId: number, cargo: string, confirmarRemocaoAssociacoes = false) {
         const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/update-cargo`, {
             method: 'PUT',
@@ -147,11 +181,17 @@ export class UtilizadorService {
                 'Content-Type': 'application/json',
                 ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
             },
-            body: JSON.stringify({ cargo }),
+            body: JSON.stringify({ cargo, confirmarRemocaoAssociacoes }),
         });
 
         if (!response.ok) {
             const error = await response.json().catch(() => ({}));
+            if (response.status === 409 && error?.code === 'CONFIRMACAO_REMOCAO_ASSOCIACOES_ENCARREGADO') {
+                throw new ConfirmacaoRemocaoAssociacoesEncarregadoError(
+                    error?.message ?? 'Esta alteracao remove associacoes de encarregado de educacao.',
+                    error?.impacto ?? { alunosAssociados: 0, inscricoesCoachingAssociadas: 0 },
+                );
+            }
             throw new Error(error?.message ?? 'Erro ao atualizar o cargo.');
         }
 
@@ -187,6 +227,108 @@ export class UtilizadorService {
         if (!response.ok) {
             const error = await response.json().catch(() => ({}));
             throw new Error(error?.message ?? 'Erro ao atualizar a password.');
+        }
+
+        return await response.json();
+    }
+
+    async getEducandos(idEncEducacao: number): Promise<Educando[]> {
+        const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/${idEncEducacao}/alunos`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error?.message ?? 'Erro ao obter os educandos.');
+        }
+
+        return await response.json();
+    }
+
+    async getAlunosSemEncarregado(): Promise<Educando[]> {
+        const response = await fetch(`${this._apiUrl}/utilizador/alunos/sem-encarregado`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error?.message ?? 'Erro ao obter alunos sem encarregado.');
+        }
+
+        return await response.json();
+    }
+
+    async createEducando(idEncEducacao: number, payload: UpsertEducandoPayload): Promise<Educando> {
+        const token = localStorage.getItem('entconnect_token');
+        const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/${idEncEducacao}/alunos`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error?.message ?? 'Erro ao adicionar o educando.');
+        }
+
+        return await response.json();
+    }
+
+    async updateEducando(idEncEducacao: number, idAluno: number, payload: UpsertEducandoPayload): Promise<Educando> {
+        const token = localStorage.getItem('entconnect_token');
+        const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/${idEncEducacao}/alunos/${idAluno}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error?.message ?? 'Erro ao atualizar o educando.');
+        }
+
+        return await response.json();
+    }
+
+    async removeEducando(idEncEducacao: number, idAluno: number) {
+        const token = localStorage.getItem('entconnect_token');
+        const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/${idEncEducacao}/alunos/${idAluno}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            },
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error?.message ?? 'Erro ao remover o educando.');
+        }
+
+        return await response.json();
+    }
+
+    async associateEducando(idEncEducacao: number, idAluno: number): Promise<Educando> {
+        const token = localStorage.getItem('entconnect_token');
+        const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/${idEncEducacao}/alunos/${idAluno}/associar`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            },
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error?.message ?? 'Erro ao associar o educando.');
         }
 
         return await response.json();

@@ -1,5 +1,5 @@
 import { authService } from './auth.service';
-import { API_BASE_URL } from '~/config/api.config';
+import { API_BASE_URL } from "../../src/config/api.config";
 
 // URL base das rotas de modalidades.
 // A origem da API vem do .env do frontend através de VITE_API_URL.
