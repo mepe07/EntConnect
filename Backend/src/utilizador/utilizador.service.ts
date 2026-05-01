@@ -356,6 +356,14 @@ export class UtilizadorService {
   async removerEducando(idEncEducacao: number, idAluno: number) {
     await this.garantirAlunoDoEncarregado(idEncEducacao, idAluno);
 
+    await this.prisma.coaching_Aluno.updateMany({
+      where: {
+        ID_Aluno: idAluno,
+        ID_Enc_Educacao: idEncEducacao,
+      },
+      data: { ID_Enc_Educacao: null },
+    });
+
     await this.prisma.aluno.update({
       where: { ID_aluno: idAluno },
       data: { ID_Enc_Educacao: null },

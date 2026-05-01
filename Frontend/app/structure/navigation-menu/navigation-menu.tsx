@@ -98,6 +98,7 @@ const MENU_CONFIG: MenuConfig = {
     // --- Perfil: Encarregado de Educação ---
     encarregado: [
         { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
+        { titulo: 'Educandos', path: '/educandos', icone: 'fa-solid fa-user-graduate' },
         {
             titulo: 'Coaching',
             icone: 'fa-solid fa-handshake-angle',

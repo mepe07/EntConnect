@@ -1,6 +1,6 @@
 import { 
   Controller, Get, Post, Put, Body, Patch, Param, Delete, 
-  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator,Query, Res
+  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator,Query, Res, UseGuards, Request
 } from '@nestjs/common'; 
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -32,6 +32,11 @@ import { MarcacoesService } from './EE/marcacoes.service';
 import 'multer';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpsertEducandoDto } from './dto/upsert-educando.dto';
+import { AuthGuard } from '../auth/auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../auth/enums/roles.enum';
+import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 
 // ============================================================================
 // CONTROLADOR DE UTILIZADORES
@@ -59,6 +64,48 @@ export class UtilizadorController {
   @ApiResponse({ status: 200 })
   async getAlunosSemEncarregado() {
     return this.utilizadorService.getAlunosSemEncarregado();
+  }
+
+  @Get('enc-educacao/me/alunos')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.ENC_EDUCACAO)
+  @ApiOperation({ summary: 'Listar os educandos do encarregado autenticado' })
+  async getMeusEducandos(@Request() req: { user: UtilizadorAutenticado }) {
+    return this.utilizadorService.getAlunosByEE(req.user.idPessoa);
+  }
+
+  @Post('enc-educacao/me/alunos')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.ENC_EDUCACAO)
+  @ApiOperation({ summary: 'Adicionar um educando ao encarregado autenticado' })
+  async criarMeuEducando(
+    @Request() req: { user: UtilizadorAutenticado },
+    @Body() dto: UpsertEducandoDto,
+  ) {
+    return this.utilizadorService.criarEducando(req.user.idPessoa, dto);
+  }
+
+  @Put('enc-educacao/me/alunos/:idAluno')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.ENC_EDUCACAO)
+  @ApiOperation({ summary: 'Editar um educando do encarregado autenticado' })
+  async atualizarMeuEducando(
+    @Request() req: { user: UtilizadorAutenticado },
+    @Param('idAluno', ParseIntPipe) idAluno: number,
+    @Body() dto: UpsertEducandoDto,
+  ) {
+    return this.utilizadorService.atualizarEducando(req.user.idPessoa, idAluno, dto);
+  }
+
+  @Delete('enc-educacao/me/alunos/:idAluno')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.ENC_EDUCACAO)
+  @ApiOperation({ summary: 'Remover a associacao de um educando do encarregado autenticado' })
+  async removerMeuEducando(
+    @Request() req: { user: UtilizadorAutenticado },
+    @Param('idAluno', ParseIntPipe) idAluno: number,
+  ) {
+    return this.utilizadorService.removerEducando(req.user.idPessoa, idAluno);
   }
 
   @Get('download-template')
