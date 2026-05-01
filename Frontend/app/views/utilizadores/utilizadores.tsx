@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { InputComponent } from '~/components/input/input.component';
 import { ButtonComponent } from '~/components/button/button.component';
 import { ConfirmacaoRemocaoAssociacoesEncarregadoError, UtilizadorService } from '~/services/users.service';
+import { authService } from '~/services/auth.service';
+import { API_BASE_URL } from '~/config/api.config';
 import type { Educando } from '~/services/users.service';
 import './utilizadores.scss';
 
@@ -689,8 +691,8 @@ export function Utilizadores() {
         formData.append('file', file);
 
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3000/utilizador/importusersblob', {
+            const token = localStorage.getItem('entconnect_token') || authService.getToken();
+            const response = await fetch(`${API_BASE_URL}/utilizador/importusersblob`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData,
@@ -745,10 +747,10 @@ export function Utilizadores() {
     // ==========================================
     const handleDownloadModelo = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('entconnect_token') || authService.getToken();
             
             // Faz o pedido à nova rota do teu backend
-            const response = await fetch('http://localhost:3000/utilizador/download-template', {
+            const response = await fetch(`${API_BASE_URL}/utilizador/download-template`, {
                 method: 'GET',
                 headers: { 
                     'Authorization': `Bearer ${token}` 

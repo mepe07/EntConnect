@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Cropper from 'react-easy-crop';
 import { authService } from '~/services/auth.service';
+import { API_BASE_URL } from '~/config/api.config';
 import './perfil.scss';
 import { getCroppedImg } from '../utils/cropImage';
 
@@ -49,7 +50,7 @@ export function Perfil() {
 
     const buscarFotoAtual = async () => {
         try {
-            const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/foto`);
+            const response = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/foto`);
             if (response.ok) {
                 const data = await response.json();
                 if (data.url) {
@@ -68,12 +69,10 @@ export function Perfil() {
     const carregarDados = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem(
-            
-            ) || authService.getToken();
+            const token = localStorage.getItem('entconnect_token') || authService.getToken();
             const headers = { 'Authorization': `Bearer ${token}` };
 
-            const resUser = await fetch(`http://localhost:3000/utilizador/${currentUserId}`, { headers });
+            const resUser = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}`, { headers });
             if (resUser.ok) {
                 const dadosUser = await resUser.json();
                 setAtivo(dadosUser.Ativo === 1 || dadosUser.Ativo === true);
@@ -95,7 +94,7 @@ export function Perfil() {
             }
 
             if (abaAtiva === 'minhas_aulas') {
-                const resAulas = await fetch(`http://localhost:3000/utilizador/${currentUserId}/aulas`, { headers });
+                const resAulas = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/aulas`, { headers });
                 if (resAulas.ok) {
                     const dadosAulas = await resAulas.json();
                     setMinhasAulas(dadosAulas);
@@ -137,8 +136,8 @@ export function Perfil() {
         const formData = new FormData();
         formData.append("file", blobFinal, "perfil.jpg");
         try {
-            const token = localStorage.getItem('token') || authService.getToken();
-            const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/uploadphoto`, {
+            const token = localStorage.getItem('entconnect_token') || authService.getToken();
+            const response = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/uploadphoto`, {
                 method: "PUT",
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData,
@@ -164,8 +163,8 @@ export function Perfil() {
 
         setLoadingFoto(true);
         try {
-            const token = localStorage.getItem('token') || authService.getToken();
-            const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/removephoto`, {
+            const token = localStorage.getItem('entconnect_token') || authService.getToken();
+            const response = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/removephoto`, {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -187,8 +186,8 @@ export function Perfil() {
     const guardarAlteracoes = async () => {
         setGuardando(true);
         try {
-            const token = localStorage.getItem('token') || authService.getToken();
-            const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/update-pessoal`, {
+            const token = localStorage.getItem('entconnect_token') || authService.getToken();
+            const response = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/update-pessoal`, {
                 method: 'PUT',
                 headers: { 
                     'Authorization': `Bearer ${token}`,
@@ -214,7 +213,7 @@ export function Perfil() {
         }
         try {
             const token = authService.getToken();
-            const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/change-password`, {
+            const response = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/change-password`, {
                 method: 'PUT',
                 headers: { 
                     'Authorization': `Bearer ${token}`, 
