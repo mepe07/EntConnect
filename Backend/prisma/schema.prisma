@@ -353,9 +353,9 @@ model Utilizador {
   ID_Pessoa                                                Int                             @unique(map: "UQ__Utilizad__81E8E178D6E729CD")
   Utilizador                                               String                          @unique(map: "UQ_Utilizador_Nome") @db.VarChar(100)
   Password                                                 String                          @db.VarChar(100)
-  ResetPasswordToken                                      String?                         @db.VarChar(255)
-  ResetPasswordTokenExpiresAt                             DateTime?                       @db.DateTime
   Ativo                                                    Boolean                         @default(true, map: "DF__Utilizado__Ativo__40F9A68C")
+  ResetPasswordToken                                       String?                         @db.VarChar(255)
+  ResetPasswordTokenExpiresAt                              DateTime?                       @db.DateTime
   Aluguer_Artigo                                           Aluguer_Artigo[]
   Artigo_Artigo_ID_Utilizador_CriadorToUtilizador          Artigo[]                        @relation("Artigo_ID_Utilizador_CriadorToUtilizador")
   Artigo_Artigo_ID_Utilizador_ModeradorToUtilizador        Artigo[]                        @relation("Artigo_ID_Utilizador_ModeradorToUtilizador")

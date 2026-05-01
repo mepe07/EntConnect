@@ -44,25 +44,34 @@ class ModalidadesService {
     // ==========================================
     // CREATE: Enviar uma nova modalidade para o Backend
     // ==========================================
-    async createModalidade(dadosNovaModalidade: { descricao: string; }) {
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: this.getHeaders(),
-                // O JSON.stringify transforma o nosso objeto num texto que a internet entende
-                body: JSON.stringify(dadosNovaModalidade),
-            });
+// =====================================================================
+  // CREATE: Enviar uma nova modalidade para o Backend
+  // =====================================================================
+  async createModalidade(dadosNovaModalidade: { descricao: string; }) {
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: this.getHeaders(), // Mantemos os teus headers de segurança!
+        
+        // 👇 AQUI ESTÁ A CORREÇÃO:
+        // Mapeamos o "descricao" do frontend para "Descricao" (com D maiúsculo) para o backend aceitar
+        body: JSON.stringify({ Descricao: dadosNovaModalidade.descricao }),
+      });
 
-            if (!response.ok) {
-                throw new Error('Falha ao criar a modalidade no servidor.');
-            }
+      if (!response.ok) {
+        // Se quiseres ver o erro real do backend na consola, podes adicionar isto:
+        const erroReal = await response.text();
+        console.error("Motivo da recusa do backend:", erroReal);
+        
+        throw new Error('Falha ao criar a modalidade no servidor.');
+      }
 
-            return await response.json();
-        } catch (erro) {
-            console.error('Erro no createModalidade:', erro);
-            throw erro;
-        }
+      return await response.json();
+    } catch (erro) {
+      console.error('Erro no createModalidade:', erro);
+      throw erro;
     }
+  }
 
     // ==========================================
     // DELETE: Enviar ordem para apagar ao Backend
