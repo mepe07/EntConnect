@@ -1,6 +1,9 @@
+import { API_BASE_URL } from "~/config/api.config";
 
 export class DisponibilidadesService {
-    private _apiUrl = 'http://localhost:3000';
+    // URL base da API.
+    // Vem do ficheiro .env do frontend através de VITE_API_URL.
+    private _apiUrl = API_BASE_URL;
 
     /**
          * Obtém as disponibilidades dos professores.

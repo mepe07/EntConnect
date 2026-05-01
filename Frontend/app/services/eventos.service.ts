@@ -8,7 +8,11 @@ import type {
     GuardarEventoPayload,
 } from '../types/eventos.types';
 
-const API_URL = 'http://localhost:3000/eventos';
+import { API_BASE_URL } from '~/config/api.config';
+
+// URL base das rotas de eventos.
+// A origem da API vem do .env do frontend através de VITE_API_URL.
+const API_URL = `${API_BASE_URL}/eventos`;
 const TOKEN_STORAGE_KEY = 'entconnect_token';
 
 export type ListarEventosPublicosParams = {

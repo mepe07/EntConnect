@@ -17,9 +17,14 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
+import { ConfigService } from '@nestjs/config';
+
 @Injectable()
 export class AuthGuard implements CanActivate {
-    constructor(private jwtService: JwtService) { }
+    constructor(
+        private readonly jwtService: JwtService,
+        private readonly configService: ConfigService,
+    ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
@@ -32,7 +37,7 @@ export class AuthGuard implements CanActivate {
         try {
             // O segurança verifica se o bilhete é verdadeiro usando a mesma palavra-passe
             const payload = await this.jwtService.verifyAsync(token, {
-                secret: 'Entco##ect' // ATENÇÃO: Igual à que tens no auth.module.ts!
+                secret: this.configService.getOrThrow<string>('JWT_SECRET')
             });
       
             // Se for verdadeiro, ele guarda os dados do utilizador no pedido (request)
