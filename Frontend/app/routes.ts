@@ -83,10 +83,12 @@ export default [
     route("coaching/confirmacoes", "routes/EEconfirmacoes.tsx"),
 
     // Rota para disponibilidades do professor
-    route("agenda/disponibilidades", "routes/profDisponibilidades.tsx")
+    route("agenda/disponibilidades", "routes/profDisponibilidades.tsx"),
 
     // Rota para o calendário (para o admin)
-    route("admin/calendario", "routes/adminCalendario.tsx")
+    route("admin/calendario", "routes/adminCalendario.tsx"),
 
+    // Rota para gerir o horário das aulas fixas
+    route("admin/horarios", "routes/adminHorarios.tsx"),
 
 ] satisfies RouteConfig;
