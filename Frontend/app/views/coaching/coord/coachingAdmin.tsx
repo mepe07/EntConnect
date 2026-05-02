@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AuthService } from '~/services/auth.service';
-import { AdminService } from '~/services/admin.service'; 
+import { AdminService } from '~/services/admin.service';
 import { TableComponent } from '~/components/table/table.component';
 import { TableColumnTypesEnum } from '~/components/table/models/enums/table-column-types.enum';
 import { ButtonTypeEnum } from '~/components/button/models/enums/button-type.enum';
@@ -12,6 +12,23 @@ import './coachingAdmin.scss'; // Podes reaproveitar o CSS do dashboard para os 
 interface AlunoSessao {
     idAluno: number;
     nome: string;
+}
+
+interface EncarregadoInfo {
+    nome: string;
+    email: string | null;
+    contacto: string | null;
+}
+
+interface AlunoDetalhes {
+    idAluno: number;
+    nome: string;
+    dataNascimento: string | null;
+    nif: string;
+    email: string | null;
+    contacto: string | null;
+    menorIdade: boolean;
+    encarregado: EncarregadoInfo | null;
 }
 
 interface SessaoAdmin {
@@ -29,11 +46,14 @@ export default function CoachingAdmin() {
     const userInfo = authService.getUserInfo();
     // const coachingService = new CoachingService();
     const adminService = new AdminService();
-    
+
     // Estados
     const [sessoes, setSessoes] = useState<SessaoAdmin[]>([]);
     const [isModalAberto, setIsModalAberto] = useState(false);
     const [sessaoSelecionada, setSessaoSelecionada] = useState<SessaoAdmin | null>(null);
+    const [isAlunoInfoModalAberto, setIsAlunoInfoModalAberto] = useState(false);
+    const [alunoDetalhes, setAlunoDetalhes] = useState<AlunoDetalhes | null>(null);
+    const [isCarregandoAluno, setIsCarregandoAluno] = useState(false);
 
     // Estados para os Cards (KPIs)
     const [kpis, setKpis] = useState({
@@ -50,7 +70,7 @@ export default function CoachingAdmin() {
                 adminService.getKpis(),
                 adminService.getSessoesFuturas()
             ]);
-            
+
             setKpis(dadosKpis);
             setSessoes(dadosTabela);
         } catch (error) {
@@ -82,6 +102,17 @@ export default function CoachingAdmin() {
         setSessaoSelecionada(null);
     }
 
+    // Eliminar a sessão e remover todos os alunos associados à mesma
+    async function handleEliminarSessao() {
+        if (!sessaoSelecionada) return;
+        
+        for (const aluno of sessaoSelecionada.alunos) {
+            await adminService.removerAluno(aluno.idAluno, sessaoSelecionada.idCoaching);
+        }
+        fecharModal();
+        fetchDadosDashboard();
+    }
+
     // Lógica para Remover Aluno (E apagar sessão se ficar a 0)
     async function handleRemoverAluno(idAluno: number) {
         if (!sessaoSelecionada) return;
@@ -99,9 +130,9 @@ export default function CoachingAdmin() {
                     alert('Aluno removido com sucesso.');
                     const novaListaAlunos = sessaoSelecionada.alunos.filter(a => a.idAluno !== idAluno);
                     setSessaoSelecionada({ ...sessaoSelecionada, alunos: novaListaAlunos });
-                    
+
                     // Recarregar os dados para atualizar a tabela por trás
-                    fetchDadosDashboard(); 
+                    fetchDadosDashboard();
                 }
             } catch (error) {
                 alert('Erro ao remover aluno.');
@@ -109,9 +140,28 @@ export default function CoachingAdmin() {
         }
     }
 
+    async function abrirModalAluno(aluno: AlunoSessao) {
+        setIsCarregandoAluno(true);
+        try {
+            const detalhes = await adminService.getAlunoDetalhes(aluno.idAluno);
+            setAlunoDetalhes(detalhes);
+            setIsAlunoInfoModalAberto(true);
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao carregar detalhes do aluno.');
+        } finally {
+            setIsCarregandoAluno(false);
+        }
+    }
+
+    function fecharModalAluno() {
+        setIsAlunoInfoModalAberto(false);
+        setAlunoDetalhes(null);
+    }
+
     return (
         <div className="dashboard-wrapper">
-            
+
             {/* CABEÇALHO */}
             <div className="dashboard-boas-vindas">
                 <div>
@@ -141,7 +191,7 @@ export default function CoachingAdmin() {
                         <i className="fa-solid fa-triangle-exclamation"></i>
                     </div>
                     <div className="info">
-                        <span>Por Validar</span>
+                        <span>Terminadas por validar</span>
                         <h3>{kpis.porValidar}</h3>
                     </div>
                 </div>
@@ -154,33 +204,27 @@ export default function CoachingAdmin() {
                 </div>
             </section>
 
-            {/* TABELA DE SESSÕES */}
-            <section className="conteudo-principal" style={{ marginTop: '24px' }}>
-                <div style={{ width: '100%', backgroundColor: '#fff', padding: '24px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                    <h2 style={{ marginBottom: '16px' }}>Sessões Futuras</h2>
-                    
-                    <TableComponent
-                        config={{
-                            columns: [
-                                { key: 'nomeProfessor', value: 'Professor', type: TableColumnTypesEnum.Default },
-                                { key: 'data', value: 'Data', type: TableColumnTypesEnum.Default },
-                                { key: 'horario', value: 'Horário', type: TableColumnTypesEnum.Default },
-                                { key: 'modalidade', value: 'Modalidade', type: TableColumnTypesEnum.Default },
-                                { key: 'numAlunos', value: 'Nº Alunos Inscritos', type: TableColumnTypesEnum.Default }
-                            ],
-                            actions: [
-                                {
-                                    icon: 'fa-solid fa-eye',
-                                    tooltip: 'Ver Detalhes / Gerir Alunos',
-                                    config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Theme, size: SizeEnum.Regular },
-                                    onClick: (row: any) => abrirModal(row)
-                                }
-                            ]
-                        }}
-                        data={tableData}
-                    />
-                </div>
-            </section>
+            <TableComponent
+                config={{
+                    columns: [
+                        { key: 'nomeProfessor', value: 'Professor', type: TableColumnTypesEnum.Default },
+                        { key: 'data', value: 'Data', type: TableColumnTypesEnum.Default },
+                        { key: 'horario', value: 'Horário', type: TableColumnTypesEnum.Default },
+                        { key: 'modalidade', value: 'Modalidade', type: TableColumnTypesEnum.Default },
+                        { key: 'numAlunos', value: 'Nº Alunos Inscritos', type: TableColumnTypesEnum.Default }
+                    ],
+                    actions: [
+                        {
+                            icon: 'fa-solid fa-eye',
+                            tooltip: 'Ver Detalhes / Gerir Alunos',
+                            config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Theme, size: SizeEnum.Regular },
+                            onClick: (row: any) => abrirModal(row)
+                        }
+                    ]
+                }}
+                data={tableData}
+            />
+
 
             {/* MODAL DE DETALHES E GESTÃO DE ALUNOS */}
             {isModalAberto && sessaoSelecionada && (
@@ -205,12 +249,31 @@ export default function CoachingAdmin() {
                             {sessaoSelecionada.alunos.map(aluno => (
                                 <div key={aluno.idAluno} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', borderBottom: '1px solid #eee' }}>
                                     <span>{aluno.nome}</span>
-                                    <button 
-                                        onClick={() => handleRemoverAluno(aluno.idAluno)}
-                                        style={{ background: 'none', border: 'none', color: '#d9534f', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
-                                    >
-                                        <i className="fa-solid fa-trash-can"></i> Remover
-                                    </button>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <button
+                                            onClick={() => abrirModalAluno(aluno)}
+                                            disabled={isCarregandoAluno}
+                                            style={{
+                                                background: 'none',
+                                                border: '1px solid #007bff',
+                                                color: '#007bff',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                padding: '8px 12px',
+                                                borderRadius: '6px'
+                                            }}
+                                        >
+                                            <i className="fa-solid fa-info-circle"></i> Ver Info
+                                        </button>
+                                        <button
+                                            onClick={() => handleRemoverAluno(aluno.idAluno)}
+                                            style={{ background: 'none', border: 'none', color: '#d9534f', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                                        >
+                                            <i className="fa-solid fa-trash-can"></i> Remover
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                             {sessaoSelecionada.alunos.length === 0 && (
@@ -219,7 +282,41 @@ export default function CoachingAdmin() {
                         </div>
 
                         <div className="modal-acoes" style={{ marginTop: '24px' }}>
-                            <button className="btn-fechar" onClick={fecharModal}>Fechar</button>
+                            <button className="btn-anularSessao" onClick={handleEliminarSessao}>Anular sessão</button>
+                            <button className="btn-fechar" onClick={fecharModal}>Fechar</button>                            
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isAlunoInfoModalAberto && alunoDetalhes && (
+                <div className="modal-overlay" style={{ zIndex: 10001 }}>
+                    <div className="modal-conteudo" style={{ maxWidth: '520px', position: 'relative', zIndex: 10002 }}>
+                        <div className="modal-cabecalho">
+                            <h2>Informação do Aluno</h2>
+                            <button className="btn-fechar-icon" onClick={fecharModalAluno}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div className="detalhes-grid" style={{ marginBottom: '20px' }}>
+                            <div className="detalhe-item"><span>Nome</span><strong>{alunoDetalhes.nome}</strong></div>
+                            <div className="detalhe-item"><span>Data de Nascimento</span><strong>{alunoDetalhes.dataNascimento || 'N/A'}</strong></div>
+                            <div className="detalhe-item"><span>NIF</span><strong>{alunoDetalhes.nif}</strong></div>
+                            <div className="detalhe-item"><span>Email</span><strong>{alunoDetalhes.email || 'N/A'}</strong></div>
+                            <div className="detalhe-item"><span>Contacto</span><strong>{alunoDetalhes.contacto || 'N/A'}</strong></div>
+                            <div className="detalhe-item"><span>Menor de idade</span><strong>{alunoDetalhes.menorIdade ? 'Sim' : 'Não'}</strong></div>
+                        </div>
+
+                        <h3>Encarregado de Educação</h3>
+                        <div className="detalhes-grid" style={{ marginTop: '12px' }}>
+                            <div className="detalhe-item"><span>Nome</span><strong>{alunoDetalhes.encarregado?.nome || 'Sem encarregado'}</strong></div>
+                            <div className="detalhe-item"><span>Email</span><strong>{alunoDetalhes.encarregado?.email || 'N/A'}</strong></div>
+                            <div className="detalhe-item"><span>Contacto</span><strong>{alunoDetalhes.encarregado?.contacto || 'N/A'}</strong></div>
+                        </div>
+
+                        <div className="modal-acoes" style={{ marginTop: '24px' }}>
+                            <button className="btn-fechar" onClick={fecharModalAluno}>Fechar</button>
                         </div>
                     </div>
                 </div>

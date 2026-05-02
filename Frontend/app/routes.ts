@@ -73,6 +73,17 @@ export default [
     // Rota do perfil (para todos os utilizadores)
     route("conta", "routes/conta.tsx"),
 
+    // Rota para ver os agendamentos do professor
+    route("agenda/agendamentos", "routes/agendamentos.tsx"),
+
+    // Rota para confirmações do professor
+    route("agenda/confirmacoes", "routes/confirmacoes.tsx"),
+
+    // Rota para confirmações do EE
+    route("coaching/confirmacoes", "routes/EEconfirmacoes.tsx"),
+
+    // Rota para disponibilidades do professor
+    route("agenda/disponibilidades", "routes/profDisponibilidades.tsx")
 
 
 ] satisfies RouteConfig;

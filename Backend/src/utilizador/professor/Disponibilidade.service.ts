@@ -20,14 +20,14 @@ export class DispobilidadeService {
                 Professor: { include: { Pessoa: true } },
                 Estado_Disponibilidade: true,
                 Utilizador: { include: { Pessoa: true } },
-                
+
                 // Vai buscar as sessões de coaching desta disponibilidade e os seus alunos
-                Coaching: { 
-                    include: { 
-                        Coaching_Aluno: { 
-                            select: { ID_Aluno: true } 
-                        } 
-                    } 
+                Coaching: {
+                    include: {
+                        Coaching_Aluno: {
+                            select: { ID_Aluno: true }
+                        }
+                    }
                 }
             }
         });
@@ -40,7 +40,7 @@ export class DispobilidadeService {
             if (disp.Hora_Inicio === null || disp.Duracao === null) {
                 return null;
             }
-            
+
             const horaInicio = new Date(disp.Hora_Inicio);
             const horaFim = new Date(horaInicio.getTime() + disp.Duracao * 60000);
 
@@ -74,51 +74,52 @@ export class DispobilidadeService {
     }
 
 
-    async createAvailability(idProfessor: number, createDisponibilidadeDto: CreateDisponibilidadeDto) {
-        // Implementar verificações
-
-        const novaDispobilidade = await this.prisma.disponibilidade.create({
+    async criarDisponibilidade(dto: CreateDisponibilidadeDto) {
+        const novaDisponibilidade = await this.prisma.disponibilidade.create({
             data: {
-                ID_Professor: idProfessor, // Vem na rota como parâmetro
-                Hora_Inicio: createDisponibilidadeDto.Hora_Inicio,
-                Duracao: createDisponibilidadeDto.Duracao,
-                EstadoDisponibilidadeID: 2, // Sempre criado como pendente
-                AlteradoPorUtilizadorID: createDisponibilidadeDto.AlteradoPorUtilizadorID,
-                DataAtualizacao: new Date(), // Data atual
-                Modalidade: createDisponibilidadeDto.Modalidade,
-                MaxAlunos: createDisponibilidadeDto.MaxAlunos
-            },
-        });
-
-        return {
-            message: 'Disponibilidade criada com sucesso',
-            disponibilidade: novaDispobilidade
-        };
-    }
-
-
-    async updateAvailability(idDisponibilidade: number, updateDisponibilidadeDto: UpdateDisponibilidadeDto) {
-        // Verificar a disponibilidade existe
-        if (await this.prisma.disponibilidade.count({
-            where: { ID_Disponibilidade: idDisponibilidade }
-        }) === 0) {
-            throw new BadRequestException(`A disponibilidade com ID ${idDisponibilidade} não existe.`);
-        }
-
-        const atualizaDisponibilidade = await this.prisma.disponibilidade.update({
-            where: {
-                ID_Disponibilidade: idDisponibilidade
-            },
-
-            data: {
-                ...updateDisponibilidadeDto, // todos os campos (vai ignorar os campos que não vierem no payload)
-                DataAtualizacao: new Date(), // alterar data de atualição
+                ID_Professor: dto.ID_Professor,
+                Hora_Inicio: new Date(dto.Hora_Inicio),
+                EstadoDisponibilidadeID: 2,           // Sempre criado com o valor 2
+                DataAtualizacao: new Date(),          // Data do momento exato da criação
+                AlteradoPorUtilizadorID: dto.AlteradoPorUtilizadorID,
+                Duracao: dto.Duracao,
+                Modalidade: dto.Modalidade,           // Da view
+                IdEstudio: null,                      // Sempre nulo na criação
+                MaxAlunos: dto.MaxAlunos,             // Da view
+                ValorPorAluno: null                   // Sempre nulo na criação
             }
         });
 
         return {
-            message: 'Disponibiliade atualizada com sucesso.',
-            disponibilidade: atualizaDisponibilidade,
+            message: 'Disponibilidade criada com sucesso!',
+            disponibilidade: novaDisponibilidade
         };
     }
+
+
+
+    async updateAvailability(idDisponibilidade: number, updateDisponibilidadeDto: UpdateDisponibilidadeDto) {
+    // Verificar a disponibilidade existe
+    if (await this.prisma.disponibilidade.count({
+        where: { ID_Disponibilidade: idDisponibilidade }
+    }) === 0) {
+        throw new BadRequestException(`A disponibilidade com ID ${idDisponibilidade} não existe.`);
+    }
+
+    const atualizaDisponibilidade = await this.prisma.disponibilidade.update({
+        where: {
+            ID_Disponibilidade: idDisponibilidade
+        },
+
+        data: {
+            ...updateDisponibilidadeDto, // todos os campos (vai ignorar os campos que não vierem no payload)
+            DataAtualizacao: new Date(), // alterar data de atualição
+        }
+    });
+
+    return {
+        message: 'Disponibiliade atualizada com sucesso.',
+        disponibilidade: atualizaDisponibilidade,
+    };
+}
 }

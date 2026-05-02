@@ -35,4 +35,21 @@ export class DisponibilidadesService {
         
         return await response.json();
     }
+
+    async criarDisponibilidade(dados: any) {
+        // Ajusta o URL consoante a rota que definiste no teu controller (ex: /disponibilidades/adicionar)
+        const response = await fetch(`${this._apiUrl}/utilizador/professor/adicionar-disponibilidade`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dados),
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao criar disponibilidade.');
+        }
+
+        return await response.json();
+    }
 }

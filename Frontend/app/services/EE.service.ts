@@ -134,6 +134,32 @@ export class EEService {
         }
         return await response.json();
     }
+
+    async getConfirmacoesByEE(idEE: number) {
+        const response = await fetch(`${this._apiUrl}/utilizador/${idEE}/EE/confirmacoes`, {
+            method: 'GET',
+            headers: this.getHeaders()
+        });
+        if (!response.ok) {
+            throw new Error(`Erro ao buscar confirmações: ${response.statusText}`);
+        }
+        return await response.json();
+    }
+
+    async confirmarSessaoEE(idEE: number, idCoaching: number, idEstadoCoaching: number) {
+        const response = await fetch(`${this._apiUrl}/utilizador/${idEE}/EE/confirmacoes/${idCoaching}`, {
+            method: 'PATCH',
+            headers: this.getHeaders(),
+            body: JSON.stringify({ idEstadoCoaching })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Não foi possível atualizar o estado da sessão.');
+        }
+
+        return await response.json();
+    }
     
     
 }

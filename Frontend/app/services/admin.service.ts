@@ -58,4 +58,17 @@ export class AdminService {
 
         return response.json();
     }
+
+    async getAlunoDetalhes(idAluno: number): Promise<any> {
+        const response = await fetch(`${this._apiUrl}/coaching/aluno/${idAluno}/detalhes`, {
+            method: 'GET',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao buscar detalhes do aluno');
+        }
+
+        return response.json();
+    }
 }

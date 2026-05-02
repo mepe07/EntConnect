@@ -46,6 +46,7 @@ export default function CoachingEE() {
     if (userInfo.role !== 'Enc_Educacao') {
         return null;
     }
+    console.log(userInfo); // Log para depuração
 
     const disponibilidadesService = new DisponibilidadesService();
     const eeService = new EEService();

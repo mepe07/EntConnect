@@ -159,6 +159,12 @@ export class CoachingController {
     return this.coachingService.getKpisAdmin();
   }
 
+  @Get('aluno/:id/detalhes')
+  @ApiOperation({ summary: 'Obter detalhes do aluno e do seu encarregado' })
+  async getAlunoDetalhes(@Param('id', ParseIntPipe) id: number) {
+    return this.coachingService.getAlunoDetalhes(id);
+  }
+
   @Get('marcacoes')
     @ApiOperation({ summary: 'Obtém a agenda pura de marcações de coaching do utilizador' })
     async getMarcacoes(

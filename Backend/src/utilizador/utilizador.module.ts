@@ -7,6 +7,7 @@ import { DispobilidadeService } from './professor/Disponibilidade.service';
 import { ProfessorController } from './utilizador.controller'; 
 import { ProfessorService } from './professor/professor.service';       
 import { MarcacoesService } from './EE/marcacoes.service';
+import { AgendamentosService } from './professor/Agendamentos.service';
 import { AuthModule } from '../auth/auth.module';
 
 
@@ -19,6 +20,7 @@ import { AuthModule } from '../auth/auth.module';
     DispobilidadeService, 
     ProfessorService,
     MarcacoesService,
+    AgendamentosService,
     PrismaService],
 })
 export class UtilizadorModule {}

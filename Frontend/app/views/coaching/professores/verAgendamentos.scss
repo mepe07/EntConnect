@@ -1,115 +1,23 @@
-/* ==========================================================================
-   ESTILOS GLOBAIS DA PÁGINA (WRAPPER E CABEÇALHO)
-   ========================================================================== */
-.dashboard-wrapper {
-    padding: 24px 32px;
-    background-color: #f8f9fa;
-    /* Fundo cinza super claro para destacar os cards */
+.pagina-agendamentos {
+    padding: 32px;
+    background-color: #f8fafc; // Fundo cinza super claro
     min-height: 100vh;
 
-    .dashboard-boas-vindas {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+    h1 {
         margin-bottom: 32px;
-
-        h1 {
-            margin: 0;
-            font-size: 2rem;
-            color: #1e293b;
-        }
-
-        p {
-            margin: 8px 0 0;
-            color: #64748b;
-            font-size: 1rem;
-        }
-    }
-}
-
-/* ==========================================================================
-   CARDS DE INDICADORES (KPIs)
-   ========================================================================== */
-.kpi-grid {
-    display: grid;
-    /* Adapta-se automaticamente ao tamanho do ecrã: */
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 24px;
-    margin-bottom: 32px;
-
-    .kpi-card {
-        background-color: #ffffff;
-        border-radius: 12px;
-        padding: 24px;
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
-        border: 1px solid #f1f5f9;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-        &:hover {
-            transform: translateY(-4px);
-            /* Sobe ligeiramente quando passas o rato */
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.08);
-        }
-
-        .icone {
-            width: 56px;
-            height: 56px;
-            border-radius: 12px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.5rem;
-
-            /* Cores específicas de cada Card */
-            &.azul {
-                background-color: #e0f2fe;
-                color: #0284c7;
-            }
-
-            &.verde {
-                background-color: #dcfce7;
-                color: #16a34a;
-            }
-
-            &.amarelo {
-                background-color: #fef3c7;
-                color: #d97706;
-            }
-
-            &.roxo {
-                background-color: #f3e8ff;
-                color: #9333ea;
-            }
-        }
-
-        .info {
-            display: flex;
-            flex-direction: column;
-
-            span {
-                font-size: 0.85rem;
-                color: #64748b;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-
-            h3 {
-                margin: 6px 0 0;
-                font-size: 1.75rem;
-                font-weight: 700;
-                color: #0f172a;
-            }
-        }
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -1px;
     }
 }
 
 table button {
     border: none !important;
 }
+
+
+
 
 /* ==========================================================================
    MODAL DE GESTÃO DE ALUNOS
@@ -268,9 +176,7 @@ table button {
                 }
             }
 
-            
+
         }
     }
-
-    
 }
