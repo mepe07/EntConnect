@@ -1,11 +1,11 @@
 // Ficheiro: src/marketplace/marketplace-stock.helpers.ts
 
 import { BadRequestException } from '@nestjs/common';
-import { TipoAnuncio } from './enums/tipo-anuncio.enum';
+import { TipoAnuncio } from '../enums/tipo-anuncio.enum';
 import {
     type ArtigoComBase,
     type StockPrincipalMarketplace,
-} from './marketplace.prisma-types';
+} from '../types/marketplace.prisma-types';
 
 /*
     Parâmetros necessários para calcular a distribuição de stock

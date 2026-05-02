@@ -26,24 +26,33 @@ import { AcaoModeracao } from './enums/acao-moderacao.enum';
 import {
     INCLUDE_BASE_ARTIGO,
     type ArtigoComBase,
-} from './marketplace.prisma-types';
+} from './types/marketplace.prisma-types';
+
+import {
+    obterStockPrincipal,
+    resolverDistribuicaoStock,
+} from './helpers/marketplace-stock.helpers';
+
+import { validarFotoMarketplace } from './helpers/marketplace-fotos.helpers';
+
+import { calcularResultadoModeracao } from './helpers/marketplace-moderacao.helpers';
+
+import {
+    montarDadosAtualizacaoAnuncio,
+    montarDadosCriacaoAnuncio,
+    montarDadosCriacaoItemInventario,
+    montarDadosPublicacaoInventario,
+    montarDadosStockAtualizacaoAnuncio,
+    montarDadosStockCriacaoAnuncio,
+    montarDadosStockItemInventario,
+    montarDadosStockPublicacaoInventario,
+} from './mappers/marketplace-artigo.mapper';
+
 import {
     garantirAcessoAoInventarioDaEscola,
     garantirPermissaoDeModeracao,
     podeModerarMarketplace,
-} from './marketplace.permissoes';
-import {
-    obterStockPrincipal,
-    resolverDistribuicaoStock,
-} from './marketplace-stock.helpers';
-import { validarFotoMarketplace } from './marketplace-fotos.helpers';
-import { calcularResultadoModeracao } from './marketplace-moderacao.helpers';
-import {
-    montarDadosCriacaoAnuncio,
-    montarDadosCriacaoItemInventario,
-    montarDadosStockCriacaoAnuncio,
-    montarDadosStockItemInventario,
-} from './marketplace-artigo.mapper';
+} from './permissions/marketplace.permissoes';
 
 
 @Injectable()
@@ -56,7 +65,7 @@ export class MarketplaceService {
 
 
     // ========================================================================
-    // 1. CONSULTA PÚBLICA
+    // 1. CONSULTA / LISTAGEM
     // ========================================================================
 
     async listarAnuncios(filtros: ListarAnunciosMarketplaceDto) {
@@ -206,25 +215,25 @@ export class MarketplaceService {
 
         const dataAtual = new Date();
 
-    return this.prisma.$transaction(async (tx) => {
-        const novoArtigo = await tx.artigo.create({
-            data: montarDadosCriacaoAnuncio({
-                dto,
-                idUtilizadorCriador: utilizador.sub,
-                urlFoto,
-                dataAtual,
-            }),
-        });
+        return this.prisma.$transaction(async (tx) => {
+            const novoArtigo = await tx.artigo.create({
+                data: montarDadosCriacaoAnuncio({
+                    dto,
+                    idUtilizadorCriador: utilizador.sub,
+                    urlFoto,
+                    dataAtual,
+                }),
+            });
 
-        await tx.stock_Armazem.create({
-            data: montarDadosStockCriacaoAnuncio({
-                idArtigo: novoArtigo.ID_Artigo,
-                dto,
-            }),
-        });
+            await tx.stock_Armazem.create({
+                data: montarDadosStockCriacaoAnuncio({
+                    idArtigo: novoArtigo.ID_Artigo,
+                    dto,
+                }),
+            });
 
-        return novoArtigo;
-    });
+            return novoArtigo;
+        });
     }
 
     async publicarInventarioDaEscola(
@@ -253,27 +262,24 @@ export class MarketplaceService {
             quantidadeTotal: stockPrincipal.Quantidade_Total,
         });
 
+       const dataAtual = new Date();
+
         return this.prisma.$transaction(async (tx) => {
             await tx.stock_Armazem.update({
                 where: { ID_Stock: stockPrincipal.ID_Stock },
-                data: {
-                    Quantidade_Venda: distribuicao.quantidadeVenda,
-                    Quantidade_Aluguer: distribuicao.quantidadeAluguer,
-                },
+                data: montarDadosStockPublicacaoInventario({
+                    distribuicao,
+                }),
             });
 
             return tx.artigo.update({
                 where: { ID_Artigo: dto.idArtigo },
-                data: {
-                    Nome: dto.titulo ?? artigo.Nome,
-                    Descricao: dto.descricao ?? artigo.Descricao ?? null,
-                    Foto: dto.foto ?? artigo.Foto ?? null,
-                    Origem_Registo: OrigemRegisto.INVENTARIO_ESCOLA,
-                    Tipo_Anuncio: distribuicao.tipoAnuncio,
-                    Estado_Anuncio: EstadoAnuncio.ATIVO,
-                    Publicado_No_Marketplace: true,
-                    Data_Atualizacao: new Date(),
-                },
+                data: montarDadosPublicacaoInventario({
+                    dto,
+                    artigo,
+                    distribuicao,
+                    dataAtual,
+                }),
                 include: this.includeBaseArtigo(),
             });
         });
@@ -320,29 +326,28 @@ export class MarketplaceService {
             );
         }
 
+        const dataAtual = new Date();
+
         return this.prisma.$transaction(async (tx) => {
             await tx.stock_Armazem.update({
                 where: { ID_Stock: stockPrincipal.ID_Stock },
-                data: {
-                    Quantidade_Total: quantidadeTotalFinal,
-                    Quantidade_Venda: distribuicao.quantidadeVenda,
-                    Quantidade_Aluguer: distribuicao.quantidadeAluguer,
-                    ID_Cor: dto.idCor ?? stockPrincipal.ID_Cor ?? null,
-                    ID_Estado: dto.idEstado ?? stockPrincipal.ID_Estado ?? null,
-                    ID_Tamanho: dto.idTamanho ?? stockPrincipal.ID_Tamanho ?? null,
-                },
+                data: montarDadosStockAtualizacaoAnuncio({
+                    dto,
+                    stockPrincipal,
+                    quantidadeTotalFinal,
+                    distribuicao,
+                }),
             });
 
             return tx.artigo.update({
                 where: { ID_Artigo: idArtigo },
-                data: {
-                    Nome: dto.titulo ?? artigo.Nome,
-                    Descricao: dto.descricao ?? artigo.Descricao ?? null,
-                    Foto: urlFotoFinal,
-                    Notas: dto.notasInternas ?? artigo.Notas ?? null,
-                    Tipo_Anuncio: distribuicao.tipoAnuncio,
-                    Data_Atualizacao: new Date(),
-                },
+                data: montarDadosAtualizacaoAnuncio({
+                    dto,
+                    artigo,
+                    urlFotoFinal,
+                    distribuicao,
+                    dataAtual,
+                }),
                 include: this.includeBaseArtigo(),
             });
         });

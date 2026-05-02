@@ -1,8 +1,8 @@
 // Ficheiro: src/marketplace/marketplace-moderacao.helpers.ts
 
 import { BadRequestException } from '@nestjs/common';
-import { AcaoModeracao } from './enums/acao-moderacao.enum';
-import { EstadoAnuncio } from './enums/estado-anuncio.enum';
+import { AcaoModeracao } from '../enums/acao-moderacao.enum';
+import { EstadoAnuncio } from '../enums/estado-anuncio.enum';
 
 /*
     Parâmetros necessários para calcular o resultado de uma ação de moderação.
