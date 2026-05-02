@@ -21,6 +21,9 @@ import { ListarEventosGestaoDto } from './dto/listar-eventos-gestao.dto';
 import { CriarEventoDto } from './dto/criar-evento.dto';
 import { AtualizarEventoDto } from './dto/atualizar-evento.dto';
 import { AuthGuard } from '../auth/auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../auth/enums/roles.enum';
 import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 import { FileInterceptor } from '@nestjs/platform-express';
 import 'multer';
@@ -54,7 +57,8 @@ export class EventosController {
     // Estas rotas exigem login e validação de role no service.
     // ========================================================================
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.COORDENADOR)
     @Get('gestao')
     listarEventosGestao(
         @Query() filtros: ListarEventosGestaoDto,
@@ -63,7 +67,8 @@ export class EventosController {
         return this.eventosService.listarEventosGestao(filtros, req.user);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.COORDENADOR)
     @Get('gestao/:id')
     obterEventoGestao(
         @Param('id', ParseIntPipe) idEvento: number,
@@ -72,7 +77,8 @@ export class EventosController {
         return this.eventosService.obterEventoGestao(idEvento, req.user);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.COORDENADOR)
     @Post()
     @UseInterceptors(FileInterceptor('imagem'))
     criarEvento(
@@ -83,7 +89,8 @@ export class EventosController {
         return this.eventosService.criarEvento(dto, req.user, imagem);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.COORDENADOR)
     @Patch(':id')
     @UseInterceptors(FileInterceptor('imagem'))
     atualizarEvento(
@@ -95,7 +102,8 @@ export class EventosController {
         return this.eventosService.atualizarEvento(idEvento, dto, req.user, imagem);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.COORDENADOR)
     @Delete(':id')
     removerEvento(
         @Param('id', ParseIntPipe) idEvento: number,
@@ -104,7 +112,8 @@ export class EventosController {
         return this.eventosService.removerEvento(idEvento, req.user);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.COORDENADOR)
     @Patch(':id/reativar')
     reativarEvento(
         @Param('id', ParseIntPipe) idEvento: number,

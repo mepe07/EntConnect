@@ -1,8 +1,10 @@
 // LÓGICA: Importamos o nosso segurança para podermos usar o Token JWT dele!
 import { authService } from './auth.service';
+import { API_BASE_URL } from "../../src/config/api.config";
 
-// A morada do teu Backend em NestJS para os professores
-const API_URL = 'http://localhost:3000/professor';
+// URL base das rotas de professores.
+// A origem da API vem do .env do frontend através de VITE_API_URL.
+const API_URL = `${API_BASE_URL}/professor`;
 
 class ProfessorService {
     

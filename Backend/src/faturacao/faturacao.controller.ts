@@ -50,11 +50,24 @@ export class FaturacaoController {
         const role = userPayload.role;
         const userId = userPayload.sub; // No teu JWT (que me mostraste), o ID está no "sub"
 
+        // ==========================================
+        // TESTE DO SUSPEITO 1: Verifica o terminal!
+        // ==========================================
+        console.log("=== DEBUG SEGURANÇA ===");
+        console.log("CARGO:", role);
+        console.log("ID:", userId);
+        console.log("=======================");
+
         const dataInicio = new Date(inicioStr);
         const dataFim = new Date(fimStr);
 
-        // 4. Passamos a batata quente (agora com o ID e Role) para o Cozinheiro (Service)
         return this.faturacaoService.obterRelatorioFaturacaoGeral(dataInicio, dataFim, role, userId);
+
+       //const dataInicio = new Date(inicioStr);
+      //  const dataFim = new Date(fimStr);
+
+        // 4. Passamos a batata quente (agora com o ID e Role) para o Cozinheiro (Service)
+       // return this.faturacaoService.obterRelatorioFaturacaoGeral(dataInicio, dataFim, role, userId);
     }
 
 
@@ -75,7 +88,53 @@ export class FaturacaoController {
         return this.faturacaoService.registarPagamento(+idCoaching, +idAluno);
     }
 
+
+// ==========================================
+    // CORREÇÃO DO SUSPEITO 2: Adicionar Segurança ao Histórico
+    // ==========================================
     @Get('Historico')
+    @ApiOperation({ summary: 'Gera o relatório de histórico para a coordenadora' })
+    async getHistorico(
+        @Query('inicio') inicioStr: string,
+        @Query('fim') fimStr: string,
+        @Headers('authorization') authHeader: string // <-- Adicionámos o Segurança aqui!
+    ) {
+        if (!inicioStr || !fimStr) {
+            throw new BadRequestException("As datas de início e fim são obrigatórias.");
+        }
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            throw new UnauthorizedException('Acesso negado: Token em falta.');
+        }
+
+        // Descodifica o token para saber quem é
+        const token = authHeader.split(' ')[1];
+        let userPayload;
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+            userPayload = JSON.parse(jsonPayload);
+        } catch (e) {
+            throw new UnauthorizedException('Token inválido.');
+        }
+
+        const role = userPayload.role;
+        const userId = userPayload.sub;
+
+        const dateInicio = new Date(inicioStr);
+        const dateFim = new Date(fimStr);
+
+        if (isNaN(dateInicio.getTime()) || isNaN(dateFim.getTime())) {
+            throw new BadRequestException("O formato das datas fornecidas é inválido.");
+        }
+
+        // Passamos o role e o userId para o Service do Histórico também!
+        return this.faturacaoService.getHistoricoCoaching(dateInicio, dateFim, role, userId);
+    }
+
+
+
+   /* @Get('Historico')
     @ApiOperation({ summary: 'Gera o relatório de histórico para a coordenadora' })
     async getHistorico(
         @Query('inicio') inicioStr: string,
@@ -97,7 +156,7 @@ export class FaturacaoController {
 
         // 4. Chamamos o Service com o nome CORRETO
         return this.faturacaoService.getHistoricoCoaching(dateInicio, dateFim);
-    }
+    } */
 
     @Get('dashboard-financeiro')
     @ApiOperation({ summary: 'Obtém os dados aglomerados para o Dashboard de Estatísticas' })

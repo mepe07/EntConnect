@@ -8,9 +8,11 @@ import { ProfessorController } from './utilizador.controller';
 import { ProfessorService } from './professor/professor.service';       
 import { MarcacoesService } from './EE/marcacoes.service';
 import { AgendamentosService } from './professor/Agendamentos.service';
+import { AuthModule } from '../auth/auth.module';
 
 
 @Module({
+  imports: [AuthModule],
   controllers: [UtilizadorController, ProfessorController],
   providers: [
     UtilizadorService, 

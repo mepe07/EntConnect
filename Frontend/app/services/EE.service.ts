@@ -1,7 +1,10 @@
 import { authService } from './auth.service'; // Ajusta o caminho se for preciso
+import { API_BASE_URL } from "../../src/config/api.config";
 
 export class EEService {
-    private _apiUrl = 'http://localhost:3000';
+    // URL base da API.
+    // Vem do ficheiro .env do frontend através de VITE_API_URL.
+    private _apiUrl = API_BASE_URL;
 
     /**
      * Função auxiliar para gerar os headers comuns, incluindo o Token de segurança.
@@ -28,6 +31,64 @@ export class EEService {
 
         if (!response.ok) {
             throw new Error(`Erro ao buscar alunos: ${response.statusText}`);
+        }
+
+        return await response.json();
+    }
+
+    async getMeusEducandos() {
+        const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/me/alunos`, {
+            method: 'GET',
+            headers: this.getHeaders()
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Erro ao buscar educandos: ${response.statusText}`);
+        }
+
+        return await response.json();
+    }
+
+    async criarMeuEducando(payload: any) {
+        const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/me/alunos`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Erro ao adicionar educando: ${response.statusText}`);
+        }
+
+        return await response.json();
+    }
+
+    async atualizarMeuEducando(idAluno: number, payload: any) {
+        const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/me/alunos/${idAluno}`, {
+            method: 'PUT',
+            headers: this.getHeaders(),
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Erro ao atualizar educando: ${response.statusText}`);
+        }
+
+        return await response.json();
+    }
+
+    async removerMeuEducando(idAluno: number) {
+        const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/me/alunos/${idAluno}`, {
+            method: 'DELETE',
+            headers: this.getHeaders()
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Erro ao remover educando: ${response.statusText}`);
         }
 
         return await response.json();
@@ -99,4 +160,6 @@ export class EEService {
 
         return await response.json();
     }
+    
+    
 }

@@ -276,4 +276,61 @@ export class CoachingService {
         : null,
     };
   }
+  /**
+     * Obtém as marcações de Coaching (Agenda pura, sem faturação)
+     */
+  async getMarcacoesProfessor(role: string, userId: number) {
+
+    // 1. Filtro de Segurança
+    let filtroCoaching: any = {};
+
+    // Se for Professor, só vê as aulas onde ele é o professor atribuído
+    if (role === 'Professor') {
+      filtroCoaching = {
+        Professor: {
+          Pessoa: {
+            Utilizador: {
+              ID_Utilizador: userId,
+            },
+          },
+        },
+      };
+    }
+
+    // 2. Consulta à tabela PRINCIPAL de Coaching
+    const marcacoes = await this.prisma.coaching.findMany({
+      where: filtroCoaching,
+      include: {
+        Sala: true,
+        Estado_Coaching: true,             // Traz os dados da Sala
+        Coaching_Aluno: {       // Entra na tabela de ligação para ir buscar os Alunos
+          include: {
+            Aluno: true,
+          },
+        },
+      },
+      orderBy: {
+        Inicio_Coaching: 'asc', // Ordena cronologicamente
+      },
+    });
+
+    return marcacoes.map((aula) => {
+      const nomesAlunos = aula.Coaching_Aluno
+        .map(ligacao => ligacao.Aluno?.Nome)
+        .filter(nome => nome !== undefined);
+
+      return {
+        idCoaching: aula.ID_Coaching,
+        dataInicio: aula.Inicio_Coaching,
+        duracaoMinutos: aula.Duracao,
+        sala: aula.Sala?.Nome || 'Sem sala atribuída',
+        modalidade: 'Sessão de Coaching',
+        alunos: nomesAlunos,
+        totalAlunos: nomesAlunos.length,
+        estado: aula.Estado_Coaching?.Tipo || 'PENDENTE'
+      };
+    });
+  }
+
 }
+

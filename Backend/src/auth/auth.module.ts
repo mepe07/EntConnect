@@ -1,33 +1,48 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+
 import { PrismaService } from '../prisma/prisma.service';
+
+import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller';
 import { AuthGuard } from './auth.guard';
 import { RolesGuard } from './guards/roles.guard';
+
 import { MailModule } from '../mail/mail.module';
+
 
 @Module({
     imports: [
         MailModule,
-        JwtModule.register({
-            global: true, // Permite usar o JwtService em qualquer parte da aplicação sem precisar importar o módulo novamente.
-            // Lembrete: Mover a 'secret' para o ficheiro .env antes de ir para produção!
-            secret: 'Entco##ect',
-            signOptions: { expiresIn: '8h' },
+        JwtModule.registerAsync({
+            inject: [ConfigService],
+            useFactory: (configService: ConfigService): JwtModuleOptions => {
+                const expiresIn = configService.get<string>('JWT_EXPIRES_IN') ?? '1d';
+
+                return {
+                    secret: configService.getOrThrow<string>('JWT_SECRET'),
+                    signOptions: {
+                        expiresIn,
+                    } as JwtModuleOptions['signOptions'],
+                };
+            },
         }),
     ],
-    controllers: [AuthController],
+    controllers: [
+        AuthController
+    ],
     providers: [
-        AuthService,
-        AuthGuard,
-        RolesGuard,
-        PrismaService,
+        AuthService, 
+        AuthGuard, 
+        RolesGuard
     ],
     exports: [
         AuthService,
         AuthGuard,
         RolesGuard,
+        JwtModule
     ],
 })
-export class AuthModule { }
+export class AuthModule {
+}
