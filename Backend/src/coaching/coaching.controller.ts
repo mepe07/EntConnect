@@ -164,7 +164,6 @@ export class CoachingController {
   async getAlunoDetalhes(@Param('id', ParseIntPipe) id: number) {
     return this.coachingService.getAlunoDetalhes(id);
   }
-}
 
   @Get('marcacoes')
     @ApiOperation({ summary: 'Obtém a agenda pura de marcações de coaching do utilizador' })
