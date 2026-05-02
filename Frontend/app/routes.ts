@@ -85,5 +85,8 @@ export default [
     // Rota para disponibilidades do professor
     route("agenda/disponibilidades", "routes/profDisponibilidades.tsx")
 
+    // Rota para o calendário (para o admin)
+    route("admin/calendario", "routes/adminCalendario.tsx")
+
 
 ] satisfies RouteConfig;
