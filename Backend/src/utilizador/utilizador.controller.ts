@@ -1,7 +1,7 @@
-import { 
-  Controller, Get, Post, Put, Body, Patch, Param, Delete, 
-  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator,Query, Res
-} from '@nestjs/common'; 
+import {
+  Controller, Get, Post, Put, Body, Patch, Param, Delete,
+  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Query, Res
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 // Swagger
@@ -58,21 +58,21 @@ export class UtilizadorController {
   @Get('download-template')
   @ApiOperation({ summary: 'Faz o download do ficheiro CSV modelo para importar utilizadores' })
   async downloadTemplate(@Res() res: Response) {
-      try {
-          const conteudoCsv = await this.blobsService.lerFicheiroTexto('templates', 'Alunos.csv');
+    try {
+      const conteudoCsv = await this.blobsService.lerFicheiroTexto('templates', 'Alunos.csv');
 
-          res.set({
-              'Content-Type': 'text/csv',
-              'Content-Disposition': 'attachment; filename="modelo_utilizadores.csv"',
-          });
+      res.set({
+        'Content-Type': 'text/csv',
+        'Content-Disposition': 'attachment; filename="modelo_utilizadores.csv"',
+      });
 
-          res.send(conteudoCsv); 
-      } catch (error) {
-          console.error('Erro ao fazer download do modelo:', error);
-          res.status(500).send('Erro ao obter o ficheiro modelo.');
-      }
+      res.send(conteudoCsv);
+    } catch (error) {
+      console.error('Erro ao fazer download do modelo:', error);
+      res.status(500).send('Erro ao obter o ficheiro modelo.');
+    }
   }
-  
+
   @Get(':id')
   @ApiOperation({ summary: 'Obter um utilizador pelo ID (inclui dados pessoais)' })
   @ApiResponse({ status: 200, description: 'Utilizador encontrado.' })
@@ -275,9 +275,9 @@ export class UtilizadorController {
   }
 
   }*/
-  
+
   // NOVO ENDPOINT DE ATUALIZAÇÃO PESSOAL COM DTO E SWAGGER
- @Put(':id/update-cargo')
+  @Put(':id/update-cargo')
   @ApiOperation({ summary: 'Atualizar o cargo do utilizador' })
   @ApiParam({ name: 'id', description: 'ID do Utilizador', example: 1 })
   @ApiResponse({ status: 200, description: 'Cargo atualizado com sucesso.' })
@@ -298,10 +298,10 @@ export class UtilizadorController {
     return this.utilizadorService.deleteUser(id);
   }
 
- @Put(':id/update-pessoal')
-  @ApiOperation({ 
-    summary: 'Atualizar dados pessoais (Nome, NIF e Contacto)', 
-    description: 'Permite que o utilizador altere o seu Nome, NIF e Contacto Telefónico na tabela Pessoa.' 
+  @Put(':id/update-pessoal')
+  @ApiOperation({
+    summary: 'Atualizar dados pessoais (Nome, NIF e Contacto)',
+    description: 'Permite que o utilizador altere o seu Nome, NIF e Contacto Telefónico na tabela Pessoa.'
   })
   @ApiParam({ name: 'id', description: 'ID do Utilizador', example: 1 })
   @ApiBody({ type: UpdatePessoalDto })
@@ -400,15 +400,11 @@ export class UtilizadorController {
     return this.dispobilidadeService.getAvailabilities();
   }
 
-  @Post('professor/:id/adicionar-disponibilidade')
-  @ApiOperation({ summary: 'Criar disponibilidade para um professor' })
-  @ApiParam({ name: 'id', description: 'Identificador único (ID) do professor', example: 1, type: Number })
-  @ApiResponse({ status: 201 })
-  async createDisponibility(
-    @Param('id') id: string,
-    @Body() createDisponibilidadeDto: CreateDisponibilidadeDto
-  ) {
-    return this.dispobilidadeService.createAvailability(+id, createDisponibilidadeDto);
+  @Post('professor/adicionar-disponibilidade')
+  @ApiOperation({ summary: 'Adicionar nova disponibilidade de calendário para o professor' })
+  @ApiResponse({ status: 201, description: 'Disponibilidade criada com sucesso.' })
+  async adicionarDisponibilidade(@Body() dto: CreateDisponibilidadeDto) {
+    return this.dispobilidadeService.criarDisponibilidade(dto);
   }
 
   @Patch('professor/disponibilidade/:id/atualizar-disponibilidade')
