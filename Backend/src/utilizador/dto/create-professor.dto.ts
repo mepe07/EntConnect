@@ -1,7 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-// Adicionámos o IsNumberString e o Length aos imports!
 import { IsString, IsEmail, IsNotEmpty, IsDateString, IsOptional, IsNumberString, Length } from 'class-validator';
 
+/**
+ * DTO usado para criar um professor.
+ */
 export class CreateProfessorDto {
   @ApiProperty({ example: 'João Silva', description: 'Nome completo do professor' })
   @IsString()
@@ -18,16 +20,10 @@ export class CreateProfessorDto {
   @IsNotEmpty()
   Data_Nascimento!: string;
 
-  // ==========================================
-  // NIF BLINDADO: Obrigatório, só números e exatos 9 dígitos
-  // ==========================================
   @ApiProperty({ example: '123456789', description: 'Número de Identificação Fiscal (NIF)' })
   @IsNumberString({}, { message: 'O NIF só pode conter números.' })
   NIF!: string;
 
-  // ==========================================
-  // CONTACTO: Opcional (não dá erro se vazio), mas se for preenchido só aceita números
-  // ==========================================
   @ApiPropertyOptional({ example: '912345678', description: 'Contacto telefónico' })
   @IsNumberString({}, { message: 'O contacto só pode conter números.' })
   @IsOptional()

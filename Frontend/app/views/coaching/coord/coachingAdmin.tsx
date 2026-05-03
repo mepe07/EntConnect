@@ -6,9 +6,9 @@ import { TableColumnTypesEnum } from '~/components/table/models/enums/table-colu
 import { ButtonTypeEnum } from '~/components/button/models/enums/button-type.enum';
 import { ButtonColorEnum } from '~/components/button/models/enums/button-color.enum';
 import { SizeEnum } from '~/components/models/enums/size.enum';
-import './coachingAdmin.scss'; // Podes reaproveitar o CSS do dashboard para os cards!
+import './coachingAdmin.scss';
 
-// Tipagens (Ajusta consoante os dados que vêm da tua base de dados)
+
 interface AlunoSessao {
     idAluno: number;
     nome: string;
@@ -44,10 +44,10 @@ interface SessaoAdmin {
 export default function CoachingAdmin() {
     const authService = new AuthService();
     const userInfo = authService.getUserInfo();
-    // const coachingService = new CoachingService();
+
     const adminService = new AdminService();
 
-    // Estados
+
     const [sessoes, setSessoes] = useState<SessaoAdmin[]>([]);
     const [isModalAberto, setIsModalAberto] = useState(false);
     const [sessaoSelecionada, setSessaoSelecionada] = useState<SessaoAdmin | null>(null);
@@ -55,7 +55,7 @@ export default function CoachingAdmin() {
     const [alunoDetalhes, setAlunoDetalhes] = useState<AlunoDetalhes | null>(null);
     const [isCarregandoAluno, setIsCarregandoAluno] = useState(false);
 
-    // Estados para os Cards (KPIs)
+
     const [kpis, setKpis] = useState({
         proximas24h: 0,
         marcadas: 0,
@@ -63,7 +63,7 @@ export default function CoachingAdmin() {
         realizadasMes: 0
     });
 
-    // Buscar dados à API
+
     async function fetchDadosDashboard() {
         try {
             const [dadosKpis, dadosTabela] = await Promise.all([
@@ -75,7 +75,7 @@ export default function CoachingAdmin() {
             setSessoes(dadosTabela);
         } catch (error) {
             console.error("Erro ao carregar dados:", error);
-            // Fallback para dados falsos em caso de erro
+
             setKpis({ proximas24h: 0, marcadas: 0, porValidar: 0, realizadasMes: 0 });
             setSessoes([]);
         }
@@ -85,13 +85,13 @@ export default function CoachingAdmin() {
         fetchDadosDashboard();
     }, []);
 
-    // Preparar dados para a tabela
+
     const tableData = sessoes.map(sessao => ({
         ...sessao,
-        numAlunos: sessao.alunos.length // Coluna extra para ver rapidamente quantos inscritos tem
+        numAlunos: sessao.alunos.length
     }));
 
-    // Ações do Modal
+
     function abrirModal(sessao: SessaoAdmin) {
         setSessaoSelecionada(sessao);
         setIsModalAberto(true);
@@ -102,10 +102,10 @@ export default function CoachingAdmin() {
         setSessaoSelecionada(null);
     }
 
-    // Eliminar a sessão e remover todos os alunos associados à mesma
+
     async function handleEliminarSessao() {
         if (!sessaoSelecionada) return;
-        
+
         for (const aluno of sessaoSelecionada.alunos) {
             await adminService.removerAluno(aluno.idAluno, sessaoSelecionada.idCoaching);
         }
@@ -113,7 +113,7 @@ export default function CoachingAdmin() {
         fetchDadosDashboard();
     }
 
-    // Lógica para Remover Aluno (E apagar sessão se ficar a 0)
+
     async function handleRemoverAluno(idAluno: number) {
         if (!sessaoSelecionada) return;
 
@@ -121,17 +121,17 @@ export default function CoachingAdmin() {
             try {
                 await adminService.removerAluno(idAluno, sessaoSelecionada.idCoaching);
 
-                // Verificar se era o último aluno
+
                 if (sessaoSelecionada.alunos.length === 1) {
                     alert('Aluno removido. A sessão ficou sem alunos e foi apagada do sistema.');
                     fecharModal();
-                    fetchDadosDashboard(); // Recarregar tabela
+                    fetchDadosDashboard();
                 } else {
                     alert('Aluno removido com sucesso.');
                     const novaListaAlunos = sessaoSelecionada.alunos.filter(a => a.idAluno !== idAluno);
                     setSessaoSelecionada({ ...sessaoSelecionada, alunos: novaListaAlunos });
 
-                    // Recarregar os dados para atualizar a tabela por trás
+
                     fetchDadosDashboard();
                 }
             } catch (error) {
@@ -162,7 +162,7 @@ export default function CoachingAdmin() {
     return (
         <div className="dashboard-wrapper">
 
-            {/* CABEÇALHO */}
+
             <div className="dashboard-boas-vindas">
                 <div>
                     <h1>Gestão de Coaching</h1>
@@ -170,7 +170,7 @@ export default function CoachingAdmin() {
                 </div>
             </div>
 
-            {/* CARDS (KPIs) */}
+
             <section className="kpi-grid">
                 <div className="kpi-card">
                     <div className="icone azul"><i className="fa-solid fa-clock-rotate-left"></i></div>
@@ -226,7 +226,6 @@ export default function CoachingAdmin() {
             />
 
 
-            {/* MODAL DE DETALHES E GESTÃO DE ALUNOS */}
             {isModalAberto && sessaoSelecionada && (
                 <div className="modal-overlay">
                     <div className="modal-conteudo">
@@ -283,7 +282,7 @@ export default function CoachingAdmin() {
 
                         <div className="modal-acoes" style={{ marginTop: '24px' }}>
                             <button className="btn-anularSessao" onClick={handleEliminarSessao}>Anular sessão</button>
-                            <button className="btn-fechar" onClick={fecharModal}>Fechar</button>                            
+                            <button className="btn-fechar" onClick={fecharModal}>Fechar</button>
                         </div>
                     </div>
                 </div>

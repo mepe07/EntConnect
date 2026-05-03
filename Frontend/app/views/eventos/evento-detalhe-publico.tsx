@@ -1,4 +1,4 @@
-// Ficheiro: app/views/eventos/evento-detalhe-publico.tsx
+
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
@@ -250,4 +250,4 @@ export function EventoDetalhePublico() {
             </section>
         </main>
     );
-} 
+}

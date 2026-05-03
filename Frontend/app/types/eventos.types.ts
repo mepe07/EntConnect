@@ -1,7 +1,6 @@
-// Ficheiro: Frontend/app/types/eventos.types.ts
 
-// Tipos permitidos para eventos.
-// Têm de bater certo com os valores que existem no backend/SQL.
+
+
 export type TipoEvento =
     | 'evento'
     | 'workshop'

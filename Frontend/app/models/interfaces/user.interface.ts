@@ -1,3 +1,6 @@
+/**
+ * Estrutura base do utilizador autenticado usada no frontend.
+ */
 export interface User {
   idUtilizador: number;
   sub?: number;

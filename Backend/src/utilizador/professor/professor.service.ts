@@ -4,33 +4,38 @@ import { UpdateProfessorDto } from '../dto/update-professor.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
+/**
+ * Serviço responsável pela gestão de professores.
+ */
 export class ProfessorService {
   constructor(private readonly prisma: PrismaService) { }
 
+  /**
+   * Cria um professor e a respetiva pessoa associada.
+   *
+   * @param createProfessorDto - Dados do professor a criar.
+   * @returns Professor criado com a pessoa associada.
+   */
   async create(createProfessorDto: CreateProfessorDto) {
     try {
-      // O Prisma cria a Pessoa e o Professor numa única transação!
       return await this.prisma.professor.create({
         data: {
           Pessoa: {
             create: {
               Nome: createProfessorDto.Nome,
               Email: createProfessorDto.Email,
-              // O Prisma exige que a data seja um objeto Date do JavaScript
               Data_Nascimento: new Date(createProfessorDto.Data_Nascimento),
               NIF: createProfessorDto.NIF,
-              Contacto: createProfessorDto.Contacto ?? "", // Se o contacto for opcional, passamos null se não for fornecido"",
+              Contacto: createProfessorDto.Contacto ?? "",
               Foto: createProfessorDto.Foto,
             },
           },
         },
-        // Opcional: Diz ao Prisma para devolver os dados da Pessoa junto com a resposta
         include: {
           Pessoa: true,
         },
       });
     } catch (error: any) {
-      // Código P2002 do Prisma significa "Unique constraint failed" (Ex: NIF já existe)
       if (error.code === 'P2002') {
         throw new ConflictException('Já existe uma pessoa registada com este NIF ou Email.');
       }
@@ -38,12 +43,16 @@ export class ProfessorService {
     }
   }
 
-  // MÉTODO PARA LISTAR COM PAGINAÇÃO (20 por página)
+  /**
+   * Lista professores com paginação.
+   *
+   * @param page - Página a consultar.
+   * @returns Lista paginada de professores.
+   */
   async findAll(page: number = 1) {
     const limit = 20;
     const skip = (page - 1) * limit;
 
-    // Fazemos as duas operações ao mesmo tempo para ser mais rápido
     const [professores, totalProfessores] = await Promise.all([
       this.prisma.professor.findMany({
         take: limit,
@@ -52,7 +61,7 @@ export class ProfessorService {
           Pessoa: true,
         },
         orderBy: {
-          ID_Pessoa: 'asc', // 👈 Alterado aqui para ordenar pelo ID de forma ascendente
+          ID_Pessoa: 'asc',
         },
       }),
       this.prisma.professor.count(),

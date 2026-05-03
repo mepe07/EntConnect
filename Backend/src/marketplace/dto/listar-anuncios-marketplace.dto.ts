@@ -6,6 +6,9 @@ import { EstadoAnuncio } from '../enums/estado-anuncio.enum';
 import { OrigemRegisto } from '../enums/origem-registo.enum';
 import { TipoAnuncio } from '../enums/tipo-anuncio.enum';
 
+/**
+ * DTO com filtros aceites na listagem de anúncios do Marketplace.
+ */
 export class ListarAnunciosMarketplaceDto {
     @IsOptional()
     @IsString()

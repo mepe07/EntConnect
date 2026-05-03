@@ -65,18 +65,18 @@ export default function VerAgendamentos() {
 
 
     function abrirModal(sessao: any) {
-        setSessaoSelecionada(sessao); // Guarda a linha que foi clicada
-        setIsModalAberto(true);       // Abre o modal
+        setSessaoSelecionada(sessao);
+        setIsModalAberto(true);
     }
 
     function fecharModal() {
-        setIsModalAberto(false);      // Fecha o modal
-        setSessaoSelecionada(null);   // Limpa os dados
+        setIsModalAberto(false);
+        setSessaoSelecionada(null);
     }
 
 async function abrirModalAluno(aluno: any) {
         setIsCarregandoAluno(true);
-        
+
         try {
             const detalhes = await adminService.getAlunoDetalhes(aluno.idAluno);
             setAlunoDetalhes(detalhes);
@@ -94,10 +94,10 @@ async function abrirModalAluno(aluno: any) {
         setAlunoDetalhes(null);
     }
 
-    
+
     async function handleEliminarSessao() {
         if (!sessaoSelecionada) return;
-        
+
         for (const aluno of sessaoSelecionada.alunos) {
             await adminService.removerAluno(aluno.idAluno, sessaoSelecionada.idCoaching);
         }
@@ -133,11 +133,11 @@ async function abrirModalAluno(aluno: any) {
                         }
                     ]
                 }}
-                // Passar a variável de estado que guarda os dados
+
                 data={Array.isArray(agendamentos) ? agendamentos : []}
             />
 
-            {/* 1º MODAL: DETALHES DA SESSÃO E GESTÃO DE ALUNOS */}
+
             {isModalAberto && sessaoSelecionada && (
                 <div className="modal-overlay" style={{ zIndex: 1000 }}>
                     <div className="modal-conteudo">
@@ -148,7 +148,7 @@ async function abrirModalAluno(aluno: any) {
                             </button>
                         </div>
 
-                        {/* Corpo do Modal da Sessão */}
+
                         <div className="detalhes-grid" style={{ marginBottom: '24px' }}>
                             <div className="detalhe-item"><span>Data e Horário</span><strong>{sessaoSelecionada.data} | {sessaoSelecionada.horario}</strong></div>
                             <div className="detalhe-item"><span>Modalidade</span><strong>{sessaoSelecionada.modalidade}</strong></div>
@@ -161,13 +161,13 @@ async function abrirModalAluno(aluno: any) {
                                 <div className="lista-alunos-modal" style={{ border: '1px solid #eee', borderRadius: '8px', padding: '8px' }}>
                                     {sessaoSelecionada.alunos.map((aluno: any, index: number) => (
                                         <div key={aluno.idAluno || index} style={{ padding: '12px', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                            
+
                                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                                 <i className="fa-solid fa-user" style={{ marginRight: '12px', color: '#007bff' }}></i>
                                                 <span style={{ fontWeight: '500' }}>{aluno.nome}</span>
                                             </div>
 
-                                            {/* O Botão para abrir o segundo modal */}
+
                                             <button
                                                 onClick={() => abrirModalAluno(aluno)}
                                                 disabled={isCarregandoAluno}
@@ -200,21 +200,18 @@ async function abrirModalAluno(aluno: any) {
             )}
 
 
-            {/* ========================================================
-                2º MODAL: INFORMAÇÃO DO ALUNO (COM Z-INDEX MÁXIMO FORÇADO)
-                ======================================================== */}
             {isAlunoInfoModalAberto && alunoDetalhes && (
-                <div 
-                    className="modal-overlay" 
-                    // O z-index 99999 garante que ele fica sempre à frente de qualquer outra coisa no ecrã!
+                <div
+                    className="modal-overlay"
+
                     style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
                 >
                     <div className="modal-conteudo" style={{ maxWidth: '520px', backgroundColor: 'white', padding: '24px', borderRadius: '8px', width: '100%', position: 'relative', zIndex: 100000, boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
-                        
+
                         <div className="modal-cabecalho" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '12px' }}>
                             <h2 style={{ margin: 0 }}>Informação do Aluno</h2>
-                            <button 
-                                className="btn-fechar-icon" 
+                            <button
+                                className="btn-fechar-icon"
                                 onClick={fecharModalAluno}
                                 style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#555' }}
                             >
@@ -243,8 +240,8 @@ async function abrirModalAluno(aluno: any) {
                         )}
 
                         <div className="modal-acoes" style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
-                            <button 
-                                className="btn-fechar" 
+                            <button
+                                className="btn-fechar"
                                 onClick={fecharModalAluno}
                                 style={{ padding: '8px 16px', borderRadius: '4px', border: '1px solid #ccc', background: '#f8f9fa', cursor: 'pointer' }}
                             >

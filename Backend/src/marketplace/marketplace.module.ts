@@ -11,5 +11,8 @@ import { MarketplaceService } from './marketplace.service';
     controllers: [MarketplaceController],
     providers: [MarketplaceService],
 })
+/**
+ * Módulo responsável pelo Marketplace e inventário escolar.
+ */
 export class MarketplaceModule {
 } 

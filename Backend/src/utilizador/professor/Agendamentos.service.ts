@@ -3,10 +3,18 @@ import { PrismaService } from "../../prisma/prisma.service";
 
 
 @Injectable()
+/**
+ * Serviço responsável pelos agendamentos e confirmações do professor.
+ */
 export class AgendamentosService {
     constructor(private prisma: PrismaService) { }
 
-
+    /**
+     * Lista sessões futuras pendentes de um professor.
+     *
+     * @param idProfessor - Identificador do professor.
+     * @returns Sessões futuras do professor.
+     */
     async getAgendamentosProfessor(idProfessor: number) {
         const now = new Date();
 

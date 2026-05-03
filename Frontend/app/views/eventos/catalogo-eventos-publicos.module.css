@@ -1,4 +1,4 @@
-/* Ficheiro: app/views/eventos/catalogo-eventos-publicos.module.css */
+
 
 .page {
     min-height: 100vh;
@@ -34,9 +34,6 @@
         border-color: rgba(66, 223, 150, 0.24);
     }
 
-/* =========================
-   HERO
-========================= */
 
 .hero {
     max-width: 1180px;
@@ -102,9 +99,6 @@
         filter: brightness(1.03);
     }
 
-/* =========================
-   FILTROS
-========================= */
 
 .filtersCard {
     max-width: 1180px;
@@ -188,9 +182,6 @@
     border-color: rgba(66, 223, 150, 0.2);
 }
 
-/* =========================
-   DESTAQUE
-========================= */
 
 .featured {
     max-width: 1180px;
@@ -332,9 +323,6 @@
         filter: brightness(1.03);
     }
 
-/* =========================
-   GRELHA DE CARDS
-========================= */
 
 .grid {
     max-width: 1180px;
@@ -434,9 +422,6 @@
         color: #72e4ad;
     }
 
-/* =========================
-   LOADING / EMPTY
-========================= */
 
 .skeletonCard {
     padding: 18px;
@@ -511,9 +496,6 @@
     }
 }
 
-/* =========================
-   RESPONSIVO
-========================= */
 
 @media (max-width: 1040px) {
     .hero,

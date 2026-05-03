@@ -4,6 +4,9 @@ import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { TipoAnuncio } from '../enums/tipo-anuncio.enum';
 
+/**
+ * DTO usado para atualizar um anúncio existente no Marketplace.
+ */
 export class AtualizarAnuncioMarketplaceDto {
     @IsOptional()
     @IsString()

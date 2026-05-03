@@ -1,4 +1,4 @@
-/* Ficheiro: app/components/eventos/resumo-eventos-dashboard.module.css */
+
 
 .section {
     width: 100%;
@@ -30,9 +30,6 @@
         line-height: 1.5;
     }
 
-/* =========================
-   CONTEÚDO
-========================= */
 
 .contentGrid {
     display: grid;
@@ -188,9 +185,6 @@
     font-size: 0.9rem;
 }
 
-/* =========================
-   LISTA LATERAL
-========================= */
 
 .sideList {
     display: flex;
@@ -292,9 +286,6 @@
         line-height: 1.5;
     }
 
-/* =========================
-   LOADING / EMPTY
-========================= */
 
 .skeletonGrid {
     display: grid;
@@ -382,9 +373,6 @@
     }
 }
 
-/* =========================
-   RESPONSIVO
-========================= */
 
 @media (max-width: 1180px) {
     .contentGrid {

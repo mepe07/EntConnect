@@ -28,37 +28,37 @@ export default function Confirmacoes() {
         if (!window.confirm("Confirma que esta sessão foi realizada com sucesso?")) return;
 
         try {
-            // 1. Avisa o backend que a sessão foi realizada
+
             await profConfirmacoesService.confirmarSessao(id);
 
-            // 3. A MAGIA: Removemos a sessão da lista imediatamente no ecrã!
-            setSessoes((sessoesAnteriores) => 
+
+            setSessoes((sessoesAnteriores) =>
                 sessoesAnteriores.filter((sessao) => sessao.idCoaching !== id)
             );
-            
+
         } catch (err: any) {
             alert(err.message);
         }
     };
 
-    // Função para formatar o horário de início e fim
+
     const formatHorario = (dataIso: string, duracaoMinutos: number) => {
         const data = new Date(dataIso);
         const horaInicio = data.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-        
+
         if (!duracaoMinutos) return horaInicio;
-        
+
         const dataFim = new Date(data.getTime() + duracaoMinutos * 60000);
         const horaFim = dataFim.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-        
+
         return `${horaInicio} - ${horaFim}`;
     };
 
-    // Filtragem das sessões baseada na pesquisa
+
     const sessoesFiltradas = sessoes.filter((sessao) => {
         const termo = searchTerm.toLowerCase();
         return (
-            sessao.modalidade?.toLowerCase().includes(termo) || 
+            sessao.modalidade?.toLowerCase().includes(termo) ||
             sessao.sala?.toLowerCase().includes(termo)
         );
     });
@@ -74,19 +74,19 @@ export default function Confirmacoes() {
 
             {error && <div className="status-error">{error}</div>}
 
-            {/* BARRA DE PESQUISA */}
+
             <div className="search-section">
                 <label>Pesquisa</label>
-                <input 
-                    type="text" 
-                    placeholder="Procurar por palavra-chave" 
+                <input
+                    type="text"
+                    placeholder="Procurar por palavra-chave"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="search-input"
                 />
             </div>
 
-            {/* TABELA DE CONFIRMAÇÕES */}
+
             <div className="table-wrapper">
                 <table className="tabela-confirmacoes">
                     <thead>
@@ -113,8 +113,8 @@ export default function Confirmacoes() {
                                     <td>{sessao.modalidade}</td>
                                     <td>{sessao.estado}</td>
                                     <td className="acoes-celula">
-                                        <button 
-                                            className="btn-acao btn-sucesso" 
+                                        <button
+                                            className="btn-acao btn-sucesso"
                                             onClick={() => handleConfirmar(sessao.idCoaching)}
                                             title="Confirmar que a sessão foi realizada"
                                         >

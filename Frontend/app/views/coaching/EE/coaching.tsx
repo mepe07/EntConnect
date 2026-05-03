@@ -26,7 +26,7 @@ interface Disponibilidade {
     idEstudio: number;
     duracao: number;
     idCoordenador: number;
-    alunosInscritosIds: number[]; // ID dos alunos já inscritos nessa disponibilidade
+    alunosInscritosIds: number[];
 }
 
 interface Aluno {
@@ -41,12 +41,12 @@ interface Aluno {
 
 export default function CoachingEE() {
 
-    // Validar o role do utilizador 
+
     const userInfo = authService.getUserInfo() as User;
     if (userInfo.role !== 'Enc_Educacao') {
         return null;
     }
-    console.log(userInfo); // Log para depuração
+    console.log(userInfo);
 
     const disponibilidadesService = new DisponibilidadesService();
     const eeService = new EEService();
@@ -63,20 +63,20 @@ export default function CoachingEE() {
     .filter((disp) => disp.maxAlunos > 0)
     .map((disp) => ({ ...disp }))
     .sort((a, b) => {
-        // Preparar as datas para comparação
-        // Transforma "10/05/2024" em [10, 05, 2024]
+
+
         const [diaA, mesA, anoA] = a.data.split('/');
         const [diaB, mesB, anoB] = b.data.split('/');
-        
-        // Cria datas reais para comparação
+
+
         const dataA = new Date(`${anoA}-${mesA}-${diaA}`);
         const dataB = new Date(`${anoB}-${mesB}-${diaB}`);
 
-        // Ordenar por Data (Ascendente: do mais antigo para o mais recente)
-        if (dataA < dataB) return -1; // 'a' vem primeiro
-        if (dataA > dataB) return 1;  // 'b' vem primeiro
 
-        // Ordenar por Horário (Ascendente: do mais cedo para o mais tarde)
+        if (dataA < dataB) return -1;
+        if (dataA > dataB) return 1;
+
+
         return a.modalidade.localeCompare(b.modalidade);
     });
 
@@ -87,7 +87,7 @@ export default function CoachingEE() {
             const approved = data.filter((disp: Disponibilidade) => disp.estado === 'Aprovado');
 
             console.log('Disponibilidades aprovadas:', approved);
-            
+
             setDisponibilidades(approved);
         } catch (error) {
             console.error('Erro ao buscar disponibilidades:', error);
@@ -108,39 +108,39 @@ export default function CoachingEE() {
         }
 
         try {
-            // 1. Formatar a Data e Hora para o backend (ISO 8601)
-            // Assumindo que a data vem 'DD/MM/YYYY' e o horario 'HH:mm - HH:mm'
+
+
             const [dia, mes, ano] = disponibilidadeSelecionada.data.split('/');
             const [horaInicioStr] = disponibilidadeSelecionada.horario.split(' - ');
             const inicioCoachingFormatado = new Date(`${ano}-${mes}-${dia}T${horaInicioStr}:00`).toISOString();
 
-            // 2. Construir o Payload para respeitar o DTO esperado no backend
+
             const payload = {
                 idAluno: alunoSelecionado,
-                idEncEducacao: userInfo.idPessoa, // Vem do login
+                idEncEducacao: userInfo.idPessoa,
                 idProfessor: disponibilidadeSelecionada.idProfessor,
-                idEstadoCoaching: 7, // Código fixo para "Pendente"
-                idSala: disponibilidadeSelecionada.idEstudio, 
+                idEstadoCoaching: 7,
+                idSala: disponibilidadeSelecionada.idEstudio,
                 valorPorAluno: disponibilidadeSelecionada.valorPorAluno,
                 inicio_Coaching: inicioCoachingFormatado,
                 duracao: disponibilidadeSelecionada.duracao,
                 idCoordenador: disponibilidadeSelecionada.idCoordenador,
-                valorEmFalta: disponibilidadeSelecionada.valorPorAluno, // Inicialmente devem tudo
-                obs: observacoes // Opcional
+                valorEmFalta: disponibilidadeSelecionada.valorPorAluno,
+                obs: observacoes
             };
 
-            // 3. Chamar o Service
+
             await eeService.inscreverAlunoCoaching(
-                disponibilidadeSelecionada.idDisponibilidade, 
+                disponibilidadeSelecionada.idDisponibilidade,
                 payload
             );
 
             alert('Aluno inscrito com sucesso!');
             fecharModal();
-            
-            // Opcional: Voltar a carregar as disponibilidades para atualizar lotação
-            fetchDisponibilidades(); 
-            
+
+
+            fetchDisponibilidades();
+
         } catch (error: any) {
             console.error('Erro ao inscrever aluno:', error);
             alert(error.message || 'Não foi possível inscrever o aluno.');
@@ -170,15 +170,15 @@ export default function CoachingEE() {
 
     const alunosOptions = alunos
         .filter(aluno => {
-            // Se o modal não estiver aberto, devolve todos
-            if (!disponibilidadeSelecionada) return true; 
-            
-            // Se estiver aberto, só devolvemos o aluno se o ID dele NÃO existir no array de inscritos
+
+            if (!disponibilidadeSelecionada) return true;
+
+
             return !disponibilidadeSelecionada.alunosInscritosIds.includes(aluno.ID_aluno);
         })
-        .map(aluno => ({ 
-            value: aluno.ID_aluno.toString(), 
-            label: aluno.Nome 
+        .map(aluno => ({
+            value: aluno.ID_aluno.toString(),
+            label: aluno.Nome
         }));
 
     return (

@@ -101,4 +101,4 @@ export function ModalPublicar({ isOpen, onClose, onConfirm, loteInfo }: ModalPub
             </div>
         </>
     );
-} 
+}

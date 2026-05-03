@@ -9,7 +9,7 @@ import {
 } from '../../types/marketplace.types';
 import './inventario.scss';
 
-// AS IMPORTAÇÕES ESTÃO CORRETAS AGORA
+
 import { ModalCriarItem } from './partials/modalCriarItem';
 import { ModalPublicar } from './partials/modalPublicar';
 
@@ -42,11 +42,11 @@ export function Inventario() {
     const [loading, setLoading] = useState(false);
     const [erro, setErro] = useState('');
     const [resumoFluxo, setResumoFluxo] = useState('Sem ações executadas ainda.');
-    
-    // Controlo de Modais
+
+
     const [mostrarModalPublicar, setMostrarModalPublicar] = useState(false);
     const [mostrarModalCriar, setMostrarModalCriar] = useState(false);
-    
+
     const [formCriar, setFormCriar] = useState<CriarItemInventarioPayload>({
         titulo: '', descricao: '', quantidade: 0, foto: ''
     });
@@ -271,8 +271,7 @@ export function Inventario() {
                 </div>
             </div>
 
-            {/* CHAMADAS CORRETAS DOS MODAIS ISOLADOS */}
-            
+
             {mostrarModalCriar && (
                 <ModalCriarItem
                     form={formCriar}
@@ -300,4 +299,4 @@ export function Inventario() {
 
         </div>
     );
-} 
+}

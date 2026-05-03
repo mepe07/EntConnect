@@ -10,6 +10,9 @@ import { Role } from './enums/roles.enum';
 import { MailService } from '../mail/mail.service';
 
 @Injectable()
+/**
+ * Serviço responsável por autenticar utilizadores e gerir o reset de password.
+ */
 export class AuthService {
     constructor(
         private readonly prisma: PrismaService,
@@ -17,6 +20,12 @@ export class AuthService {
         private readonly mailService: MailService,
     ) { }
 
+    /**
+     * Valida credenciais e devolve um JWT com os dados mínimos do utilizador.
+     *
+     * @param loginDto - Credenciais introduzidas no login.
+     * @returns Token JWT e role resolvida para a sessão.
+     */
     async login(loginDto: LoginDto) {
         const user = await this.obterUtilizadorPorUsername(loginDto.username);
 
@@ -39,6 +48,7 @@ export class AuthService {
         const payload = {
             sub: user.ID_Utilizador,
             username: user.Utilizador,
+            nome: user.Pessoa?.Nome,
             role: userRole,
             idPessoa: user.ID_Pessoa,
         };
@@ -49,6 +59,12 @@ export class AuthService {
         };
     }
 
+    /**
+     * Inicia o fluxo de recuperação de password através de email.
+     *
+     * @param forgotPasswordDto - Email associado à conta.
+     * @returns Resposta genérica para não expor se a conta existe.
+     */
     async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
         const email = forgotPasswordDto.email.trim().toLowerCase();
 
@@ -95,6 +111,12 @@ export class AuthService {
         return respostaGenerica;
     }
 
+    /**
+     * Conclui o reset de password a partir de um token válido.
+     *
+     * @param resetPasswordDto - Token de recuperação e nova password.
+     * @returns Mensagem de confirmação da operação.
+     */
     async resetPassword(resetPasswordDto: ResetPasswordDto) {
         const tokenHash = this.hashResetToken(resetPasswordDto.token);
 

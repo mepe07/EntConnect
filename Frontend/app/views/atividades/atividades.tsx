@@ -150,7 +150,7 @@ export function Atividades() {
 
             await carregarRegistoModeracao();
 
-            // Se o modal estiver aberto no mesmo anúncio, fecha para evitar informação desatualizada
+
             if (registoSelecionado?.ID_Artigo === registo.ID_Artigo) {
                 fecharModal();
             }
@@ -387,4 +387,4 @@ export function Atividades() {
             )}
         </div>
     );
-} 
+}
