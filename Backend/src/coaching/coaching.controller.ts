@@ -191,10 +191,29 @@ export class CoachingController {
         const role = userPayload.role;
         const userId = userPayload.sub;
 
-        // 3. Chama o Service que criámos na mensagem anterior!
-        // ATENÇÃO: Muda "this.coachingService" para o nome do service onde colocaste a função
         return this.coachingService.getMarcacoesProfessor(role, userId);
     }
+
+      /**
+   * Confirma a realização de uma sessão de coaching por parte do professor.
+   * Verifica se a sessão já ocorreu, marca a confirmação e, caso o Encarregado de Educação
+   * também já tenha confirmado, altera o estado da sessão para Concluído (ID 13).
+   * 
+   * @param id O identificador da sessão de coaching
+   * @returns O objeto atualizado da sessão
+   */
+  @Patch(':id/confirmar-professor')
+  @ApiOperation({ 
+    summary: 'Professor: Confirmar realização da sessão', 
+    description: 'Permite ao professor confirmar que a sessão de coaching foi efetivamente realizada.' 
+  })
+  @ApiResponse({ status: 200, description: 'Sessão confirmada com sucesso.' })
+  @ApiResponse({ status: 400, description: 'A sessão ainda não se iniciou ou já está concluída.' })
+  @ApiResponse({ status: 404, description: 'Sessão de coaching não encontrada.' })
+  async confirmarProfessor(@Param('id', ParseIntPipe) id: number) {
+    return this.coachingService.confirmarSessaoProfessor(id);
+  }
+
   
 }
 

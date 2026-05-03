@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCoachingDto } from './dto/create-coaching.dto';
 import { UpdateCoachingDto } from './dto/update-coaching.dto';
 import { PrismaService } from '../prisma/prisma.service'; // Importa o PrismaService para interagir com a DB
@@ -269,10 +269,10 @@ export class CoachingService {
       menorIdade: aluno.Menor_Idade,
       encarregado: aluno.Enc_Educacao
         ? {
-            nome: aluno.Enc_Educacao.Pessoa?.Nome || 'Sem encarregado',
-            email: aluno.Enc_Educacao.Pessoa?.Email || null,
-            contacto: aluno.Enc_Educacao.Pessoa?.Contacto || null,
-          }
+          nome: aluno.Enc_Educacao.Pessoa?.Nome || 'Sem encarregado',
+          email: aluno.Enc_Educacao.Pessoa?.Email || null,
+          contacto: aluno.Enc_Educacao.Pessoa?.Contacto || null,
+        }
         : null,
     };
   }
@@ -280,38 +280,27 @@ export class CoachingService {
      * Obtém as marcações de Coaching (Agenda pura, sem faturação)
      */
   async getMarcacoesProfessor(role: string, userId: number) {
-
-    // 1. Filtro de Segurança
     let filtroCoaching: any = {};
 
-    // Se for Professor, só vê as aulas onde ele é o professor atribuído
     if (role === 'Professor') {
       filtroCoaching = {
         Professor: {
-          Pessoa: {
-            Utilizador: {
-              ID_Utilizador: userId,
-            },
-          },
+          Pessoa: { Utilizador: { ID_Utilizador: userId } },
         },
       };
     }
 
-    // 2. Consulta à tabela PRINCIPAL de Coaching
     const marcacoes = await this.prisma.coaching.findMany({
       where: filtroCoaching,
       include: {
         Sala: true,
-        Estado_Coaching: true,             // Traz os dados da Sala
-        Coaching_Aluno: {       // Entra na tabela de ligação para ir buscar os Alunos
-          include: {
-            Aluno: true,
-          },
+        Estado_Coaching: true,
+        Disponibilidade: true, 
+        Coaching_Aluno: {
+          include: { Aluno: true },
         },
       },
-      orderBy: {
-        Inicio_Coaching: 'asc', // Ordena cronologicamente
-      },
+      orderBy: { Inicio_Coaching: 'asc' },
     });
 
     return marcacoes.map((aula) => {
@@ -324,11 +313,58 @@ export class CoachingService {
         dataInicio: aula.Inicio_Coaching,
         duracaoMinutos: aula.Duracao,
         sala: aula.Sala?.Nome || 'Sem sala atribuída',
-        modalidade: 'Sessão de Coaching',
+        modalidade: aula.Disponibilidade?.Modalidade || 'Sem modalidade',
         alunos: nomesAlunos,
         totalAlunos: nomesAlunos.length,
-        estado: aula.Estado_Coaching?.Tipo || 'PENDENTE'
+        estado: aula.Estado_Coaching?.Tipo || 'Pendente',
+        confirmacao_prof: aula.confirmacao_prof
       };
+    });
+}
+
+  /**
+   * Lógica para confirmação da sessão pelo Professor
+   */
+  async confirmarSessaoProfessor(idCoaching: number) {
+    // 1. Verificar se a sessão existe
+    const sessao = await this.prisma.coaching.findUnique({
+      where: { ID_Coaching: idCoaching },
+    });
+
+    if (!sessao) {
+      throw new NotFoundException(`Sessão de coaching com ID ${idCoaching} não encontrada.`);
+    }
+
+    // 2. Validar se a sessão já começou (não se pode confirmar o futuro)
+    const agora = new Date();
+    const dataInicio = new Date(sessao.Inicio_Coaching!);
+
+    if (agora < dataInicio) {
+      throw new BadRequestException(
+        'Não pode confirmar uma sessão que ainda não se iniciou.'
+      );
+    }
+
+    // 3. Verificar se já está concluída (Estado 13) para evitar updates desnecessários
+    if (sessao.ID_Estado_Coaching === 13) {
+      throw new BadRequestException('Esta sessão já se encontra concluída.');
+    }
+
+    // 4. Determinar o novo estado
+    let novoEstado = sessao.ID_Estado_Coaching;
+
+    // Como confirmacao_EE é booleano no Prisma:
+    if (sessao.confirmacao_EE === true) {
+      novoEstado = 13;
+    }
+
+    // 5. Atualizar a Base de Dados
+    return this.prisma.coaching.update({
+      where: { ID_Coaching: idCoaching },
+      data: {
+        confirmacao_prof: true, // Usa true (booleano) em vez de 1
+        ID_Estado_Coaching: novoEstado,
+      },
     });
   }
 

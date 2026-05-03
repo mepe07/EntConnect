@@ -107,6 +107,8 @@ model Coaching {
   Inicio_Coaching    DateTime?        @db.DateTime
   Duracao            Int              @default(0, map: "DF__Coaching__Duraca__42E1EEFE")
   ID_Disponibilidade Int?
+  confirmacao_prof   Boolean          @default(false, map: "DF__Coaching__confir__32767D0B")
+  confirmacao_EE     Boolean          @default(false, map: "DF__Coaching__confir__336AA144")
   Coordenador        Coordenador?     @relation(fields: [ID_Coordenador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Coordenador")
   Disponibilidade    Disponibilidade? @relation(fields: [ID_Disponibilidade], references: [ID_Disponibilidade], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Disponibilidade")
   Estado_Coaching    Estado_Coaching? @relation(fields: [ID_Estado_Coaching], references: [ID_Estado_Coaching], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Estado_Coaching")
@@ -122,6 +124,7 @@ model Coaching_Aluno {
   Data_Inscricao  DateTime?     @default(now(), map: "DF__Coaching___Data___17F790F9") @db.DateTime
   ValorEmFalta    Decimal?      @db.Decimal(10, 2)
   ID_Enc_Educacao Int?
+  confirmado      Boolean       @default(false, map: "DF__Coaching___confi__345EC57D")
   Aluno           Aluno         @relation(fields: [ID_Aluno], references: [ID_aluno], onDelete: Cascade, onUpdate: NoAction, map: "FK_CoachingAluno_Aluno")
   Coaching        Coaching      @relation(fields: [ID_Coaching], references: [ID_Coaching], onDelete: Cascade, onUpdate: NoAction, map: "FK_CoachingAluno_Coaching")
   Enc_Educacao    Enc_Educacao? @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_CoachingAluno_EncEducacao")

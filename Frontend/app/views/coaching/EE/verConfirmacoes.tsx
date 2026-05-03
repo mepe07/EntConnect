@@ -60,28 +60,37 @@ export default function VerConfirmacoesEE() {
     }
 
     async function handleConfirmacao(sessao: any, idEstadoCoaching: number) {
-        if (!idEE) return;
+    if (!idEE) return;
 
-        const mensagem = idEstadoCoaching === 13
-            ? 'Confirma que esta sessão foi realizada?'
-            : 'Indica que esta sessão não aconteceu?';
+    // Mensagens personalizadas
+    const mensagem = idEstadoCoaching === 13
+        ? `Confirma que a sessão de ${sessao.modalidade} foi realizada pelos alunos: ${sessao.alunos}?`
+        : 'Indica que esta sessão não aconteceu?';
 
-        if (!window.confirm(mensagem)) {
-            return;
-        }
+    if (!window.confirm(mensagem)) return;
 
-        setIsAguardar(true);
-        try {
-            await eeService.confirmarSessaoEE(idEE, sessao.idCoaching, idEstadoCoaching);
-            alert('Estado atualizado com sucesso.');
-            fetchConfirmacoes();
-        } catch (error) {
-            console.error('Erro ao confirmar sessão EE:', error);
-            alert('Erro ao atualizar o estado da sessão.');
-        } finally {
-            setIsAguardar(false);
-        }
+    setIsAguardar(true);
+    try {
+        // 1. Chamada ao backend (que agora valida se todos confirmaram)
+        await eeService.confirmarSessaoEE(idEE, sessao.idCoaching, idEstadoCoaching);
+        
+        // 2. Feedback de sucesso
+        alert('Confirmação registada!');
+
+        // 3. ATUALIZAÇÃO VISUAL: Remove a sessão da lista localmente
+        // Assim o pai vê a linha a desaparecer imediatamente
+        setConfirmacoes((listaAtual) => 
+            listaAtual.filter((item) => item.idCoaching !== sessao.idCoaching)
+        );
+
+        fecharModal();
+    } catch (error: any) {
+        console.error('Erro ao confirmar sessão EE:', error);
+        alert(error.message || 'Erro ao atualizar o estado da sessão.');
+    } finally {
+        setIsAguardar(false);
     }
+}
 
     const tableData = confirmacoes.map((sessao) => ({
         idCoaching: sessao.idCoaching,

@@ -10,6 +10,7 @@ import { MarketplaceModule } from './marketplace/marketplace.module';
 import { EventosModule } from './eventos/eventos.module';
 import { CalendarioModule } from './calendario/calendario.module';
 import { ConfigModule } from '@nestjs/config';
+import { HorariosModule } from './horarios/horarios.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ConfigModule } from '@nestjs/config';
     SalasModule,
     EventosModule,
     CalendarioModule,
+    HorariosModule,
   ],
 })
 export class AppModule {}
