@@ -81,18 +81,20 @@ model Aula_Aluno {
 }
 
 model Aula_Fixa {
-  ID_AulaFixa   Int         @id(map: "PK__Aula_Fix__04B758451FB8E0E0") @default(autoincrement())
-  Dia_Semana    String      @db.NVarChar(100)
-  Hora_Inicio   DateTime
-  Duracao       Int
-  ID_Estudio    Int
-  ID_Modalidade Int
-  ID_Professor  Int?
-  Descricao     String?     @db.NVarChar(100)
-  Ativa         Boolean     @default(true, map: "DF__Aula_Fixa__Ativa__489AC854")
-  Sala          Sala        @relation(fields: [ID_Estudio], references: [ID_Sala], onUpdate: NoAction, map: "FK_AulaFixa_Estudio")
-  Modalidade    Modalidade  @relation(fields: [ID_Modalidade], references: [ID_Modalidade], onUpdate: NoAction, map: "FK_AulaFixa_Modalidade")
-  Utilizador    Utilizador? @relation(fields: [ID_Professor], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction, map: "FK_AulaFixa_Professor")
+  ID_AulaFixa       Int                 @id(map: "PK__Aula_Fix__04B758451FB8E0E0") @default(autoincrement())
+  Dia_Semana        Int
+  Hora_Inicio       DateTime
+  Duracao           Int
+  ID_Estudio        Int
+  ID_Modalidade     Int
+  ID_Professor      Int?
+  Descricao         String?             @db.NVarChar(100)
+  Ativa             Boolean             @default(true, map: "DF__Aula_Fixa__Ativa__489AC854")
+  Dias_Semana       Dias_Semana         @relation(fields: [Dia_Semana], references: [ID_Dia], onUpdate: NoAction, map: "FK_AulaFixa_DiasSemana")
+  Sala              Sala                @relation(fields: [ID_Estudio], references: [ID_Sala], onUpdate: NoAction, map: "FK_AulaFixa_Estudio")
+  Modalidade        Modalidade          @relation(fields: [ID_Modalidade], references: [ID_Modalidade], onUpdate: NoAction, map: "FK_AulaFixa_Modalidade")
+  Utilizador        Utilizador?         @relation(fields: [ID_Professor], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction, map: "FK_AulaFixa_Professor")
+  Excecao_Aula_Fixa Excecao_Aula_Fixa[]
 }
 
 model Coaching {
@@ -105,6 +107,8 @@ model Coaching {
   Inicio_Coaching    DateTime?        @db.DateTime
   Duracao            Int              @default(0, map: "DF__Coaching__Duraca__42E1EEFE")
   ID_Disponibilidade Int?
+  confirmacao_prof   Boolean          @default(false, map: "DF__Coaching__confir__32767D0B")
+  confirmacao_EE     Boolean          @default(false, map: "DF__Coaching__confir__336AA144")
   Coordenador        Coordenador?     @relation(fields: [ID_Coordenador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Coordenador")
   Disponibilidade    Disponibilidade? @relation(fields: [ID_Disponibilidade], references: [ID_Disponibilidade], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Disponibilidade")
   Estado_Coaching    Estado_Coaching? @relation(fields: [ID_Estado_Coaching], references: [ID_Estado_Coaching], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Estado_Coaching")
@@ -120,6 +124,7 @@ model Coaching_Aluno {
   Data_Inscricao  DateTime?     @default(now(), map: "DF__Coaching___Data___17F790F9") @db.DateTime
   ValorEmFalta    Decimal?      @db.Decimal(10, 2)
   ID_Enc_Educacao Int?
+  confirmado      Boolean       @default(false, map: "DF__Coaching___confi__345EC57D")
   Aluno           Aluno         @relation(fields: [ID_Aluno], references: [ID_aluno], onDelete: Cascade, onUpdate: NoAction, map: "FK_CoachingAluno_Aluno")
   Coaching        Coaching      @relation(fields: [ID_Coaching], references: [ID_Coaching], onDelete: Cascade, onUpdate: NoAction, map: "FK_CoachingAluno_Coaching")
   Enc_Educacao    Enc_Educacao? @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_CoachingAluno_EncEducacao")
@@ -137,6 +142,12 @@ model Cor {
   ID_Cor        Int             @id(map: "PK__Cor__2BFE6438EB56194B") @default(autoincrement())
   Descricao     String          @db.VarChar(100)
   Stock_Armazem Stock_Armazem[]
+}
+
+model Dias_Semana {
+  ID_Dia    Int         @id(map: "PK__Dias_Sem__2BBFA152ECAD1678")
+  Nome_Dia  String      @db.VarChar(20)
+  Aula_Fixa Aula_Fixa[]
 }
 
 model Direcao {
@@ -223,6 +234,13 @@ model Evento {
   @@index([ID_Utilizador_Criador], map: "IX_Evento_ID_Utilizador_Criador")
   @@index([Publico, Publicado, Ativo, Data_Inicio], map: "IX_Evento_Publico_Data")
   @@index([Publico, Publicado, Ativo, Destaque_Login, Data_Inicio], map: "IX_Evento_Publico_Login")
+}
+
+model Excecao_Aula_Fixa {
+  ID_Excecao     Int       @id(map: "PK__Excecao___11A78C6B9E461EDE") @default(autoincrement())
+  ID_AulaFixa    Int
+  Data_Cancelada DateTime  @db.Date
+  Aula_Fixa      Aula_Fixa @relation(fields: [ID_AulaFixa], references: [ID_AulaFixa], onDelete: Cascade, onUpdate: NoAction, map: "FK_Excecao_AulaFixa")
 }
 
 model Interesse_Artigo {
