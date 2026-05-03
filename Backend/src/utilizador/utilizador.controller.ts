@@ -39,11 +39,11 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/roles.enum';
 import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 
-// ============================================================================
-// CONTROLADOR DE UTILIZADORES
-// ============================================================================
 @ApiTags('Utilizadores')
 @Controller('utilizador')
+/**
+ * Controller dos endpoints de gestão de utilizadores, fotografias e educandos.
+ */
 export class UtilizadorController {
   constructor(
     private readonly utilizadorService: UtilizadorService,

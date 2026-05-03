@@ -11,5 +11,8 @@ import { EventosService } from './eventos.service';
     controllers: [EventosController],
     providers: [EventosService],
 })
+/**
+ * Módulo responsável pela gestão e publicação de eventos.
+ */
 export class EventosModule {
 } 

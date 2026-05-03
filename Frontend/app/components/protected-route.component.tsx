@@ -6,12 +6,20 @@ import type { User } from '../models/interfaces/user.interface';
 
 import type { ReactNode } from 'react';
 
+/**
+ * Propriedades do wrapper de proteção de rotas.
+ */
 interface ProtectedRouteProps {
     children: ReactNode;
     rolesPermitidas?: string[];
 }
 
-
+/**
+ * Garante autenticação e, opcionalmente, valida a role autorizada para a rota.
+ *
+ * @param props - Conteúdo da rota e lista de roles permitidas.
+ * @returns Conteúdo protegido ou redirecionamento para uma rota segura.
+ */
 export function ProtectedRoute({ children, rolesPermitidas }: ProtectedRouteProps) {
     const userInfo = authService.getUserInfo() as User | null;
 

@@ -1,5 +1,6 @@
-// Ficheiro: Backend/src/marketplace/enums/acao-moderacao.enum.ts
-
+/**
+ * Ações disponíveis no processo de moderação de anúncios.
+ */
 export enum AcaoModeracao {
     REMOVER = 'remover',
     REATIVAR = 'reativar',

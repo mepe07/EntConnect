@@ -1,6 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
+/**
+ * DTO usado para criar ou atualizar um educando.
+ */
 export class UpsertEducandoDto {
   @ApiProperty({ example: 'Maria Silva' })
   @IsString()

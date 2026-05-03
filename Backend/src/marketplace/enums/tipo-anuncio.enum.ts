@@ -1,5 +1,6 @@
-// Ficheiro: Backend/src/marketplace/enums/tipo-anuncio.enum.ts
-
+/**
+ * Tipos de anúncio suportados pelo Marketplace.
+ */
 export enum TipoAnuncio {
     VENDA = 'venda',
     ALUGUER = 'aluguer',

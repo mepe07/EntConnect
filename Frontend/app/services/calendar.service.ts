@@ -22,6 +22,13 @@ async function parseError(response: Response, fallback: string): Promise<never> 
 }
 
 export const calendarService = {
+  /**
+   * Obtém os eventos do calendário dentro de um intervalo de datas.
+   *
+   * @param startDate - Data inicial do intervalo.
+   * @param endDate - Data final do intervalo.
+   * @returns Dados de calendário devolvidos pela API.
+   */
   async getRange(startDate: string, endDate: string) {
     const token = authService.getToken();
 

@@ -1,5 +1,3 @@
-// Ficheiro: Backend/src/marketplace/marketplace.controller.ts
-
 import {
     Body,
     Controller,
@@ -32,29 +30,22 @@ import { RegistarInteresseMarketplaceDto } from './dto/registar-interesse-market
 import { CriarItemInventarioDto } from './dto/criar-item-inventario.dto';
 import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 
-// Roles que podem usar as funcionalidades normais do Marketplace.
+/**
+ * Roles com acesso às funcionalidades normais do Marketplace.
+ */
 const TODAS_AS_ROLES_MARKETPLACE = [
     Role.COORDENADOR,
     Role.PROFESSOR,
     Role.ENC_EDUCACAO,
 ];
 
-// Todas as rotas deste controller exigem token JWT válido.
-// Depois, cada endpoint define as roles permitidas através do @Roles(...).
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('marketplace')
+/**
+ * Controller dos endpoints do Marketplace, moderação e inventário escolar.
+ */
 export class MarketplaceController {
     constructor(private readonly marketplaceService: MarketplaceService) { }
-
-    // ========================================================================
-    // MODERAÇÃO DO MARKETPLACE
-    // ========================================================================
-    // Rotas exclusivas da Coordenadora.
-    //
-    // Nota importante:
-    // Estas rotas ficam antes de @Get('anuncios/:id') para evitar que
-    // "moderafocao" seja interpretado como se sse um ID de anúncio.
-    // ========================================================================
 
     @Roles(Role.COORDENADOR)
     @Get('anuncios/moderacao')

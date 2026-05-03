@@ -7,6 +7,9 @@ import { ValidationPipe } from '@nestjs/common/pipes/validation.pipe';
 
 import { AppModule } from './app.module';
 
+/**
+ * Inicializa a aplicação NestJS, configura CORS, validação global e Swagger.
+ */
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 

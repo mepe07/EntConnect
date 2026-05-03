@@ -1,6 +1,9 @@
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
+/**
+ * DTO usado para criar um item no inventário da escola.
+ */
 export class CriarItemInventarioDto {
     @IsString()
     @IsNotEmpty({ message: 'O título é obrigatório.' })
@@ -14,5 +17,5 @@ export class CriarItemInventarioDto {
 
     @Type(() => Number)
     @Min(0, { message: 'A quantidade não pode ser negativa.' })
-    quantidade: number; // Substituímos Venda/Aluguer pela Quantidade Total
+    quantidade: number;
 } 

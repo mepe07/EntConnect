@@ -31,4 +31,7 @@ import { HorariosModule } from './horarios/horarios.module';
     HorariosModule,
   ],
 })
+/**
+ * Módulo raiz da aplicação EntConnect.
+ */
 export class AppModule {}
