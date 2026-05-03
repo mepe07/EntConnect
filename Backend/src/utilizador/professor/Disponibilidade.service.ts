@@ -2,8 +2,6 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDisponibilidadeDto } from '../dto/create-disponibilidade.dto';
 import { UpdateDisponibilidadeDto } from '../dto/update-disponibilidade.dto';
-import { create } from 'domain';
-
 @Injectable()
 export class DispobilidadeService {
 
@@ -75,10 +73,21 @@ export class DispobilidadeService {
 
 
     async criarDisponibilidade(dto: CreateDisponibilidadeDto) {
+        const horaInicio = new Date(dto.Hora_Inicio);
+        const inicioDoDiaAtual = new Date();
+        inicioDoDiaAtual.setHours(0, 0, 0, 0);
+
+        const diaDisponibilidade = new Date(horaInicio);
+        diaDisponibilidade.setHours(0, 0, 0, 0);
+
+        if (diaDisponibilidade < inicioDoDiaAtual) {
+            throw new BadRequestException('Nao e possivel criar disponibilidades com data anterior a data atual.');
+        }
+
         const novaDisponibilidade = await this.prisma.disponibilidade.create({
             data: {
                 ID_Professor: dto.ID_Professor,
-                Hora_Inicio: new Date(dto.Hora_Inicio),
+                Hora_Inicio: horaInicio,
                 EstadoDisponibilidadeID: 2,           // Sempre criado com o valor 2
                 DataAtualizacao: new Date(),          // Data do momento exato da criação
                 AlteradoPorUtilizadorID: dto.AlteradoPorUtilizadorID,

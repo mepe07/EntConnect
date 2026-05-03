@@ -4,10 +4,20 @@ import { RolesService } from '~/services/roles.service';
 import { DisponibilidadesService } from '~/services/disponibilidades.service';
 import './adicionarDisponibilidade.scss';
 
+function getDataAtualInput() {
+    const agora = new Date();
+    const ano = agora.getFullYear();
+    const mes = String(agora.getMonth() + 1).padStart(2, '0');
+    const dia = String(agora.getDate()).padStart(2, '0');
+
+    return `${ano}-${mes}-${dia}`;
+}
+
 export default function AdicionarDisponibilidade() {
     const userInfo = authService.getUserInfo();
     const rolesService = new RolesService();
     const disponibilidadesService = new DisponibilidadesService();
+    const hoje = getDataAtualInput();
 
 
     const [idProfessorAtivo, setIdProfessorAtivo] = useState<number | null>(null);
@@ -38,6 +48,11 @@ export default function AdicionarDisponibilidade() {
 
         if (!idProfessorAtivo) {
             alert("Erro: Não foi possível identificar o teu perfil de professor.");
+            return;
+        }
+
+        if (dataInicio < hoje) {
+            alert("Nao e possivel criar disponibilidades com data anterior a data atual.");
             return;
         }
 
@@ -95,6 +110,7 @@ export default function AdicionarDisponibilidade() {
                             <input
                                 type="date"
                                 required
+                                min={hoje}
                                 value={dataInicio}
                                 onChange={e => setDataInicio(e.target.value)}
                             />

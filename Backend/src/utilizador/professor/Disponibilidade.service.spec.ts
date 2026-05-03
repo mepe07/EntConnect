@@ -69,7 +69,7 @@ describe('DispobilidadeService', () => {
   it('deve criar disponibilidade pendente sem estúdio nem valor', async () => {
     const dto = {
       ID_Professor: 7,
-      Hora_Inicio: '2026-05-01T10:00:00.000Z',
+      Hora_Inicio: '2026-05-10T10:00:00.000Z',
       AlteradoPorUtilizadorID: 9,
       Duracao: 60,
       Modalidade: 'Salsa',
@@ -89,6 +89,26 @@ describe('DispobilidadeService', () => {
         ValorPorAluno: null,
       }),
     });
+  });
+
+  it('deve rejeitar criacao de disponibilidade com data anterior a atual', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-05-03T12:00:00.000Z'));
+
+    try {
+      const dto = {
+        ID_Professor: 7,
+        Hora_Inicio: '2026-05-02T10:00:00.000Z',
+        AlteradoPorUtilizadorID: 9,
+        Duracao: 60,
+        Modalidade: 'Salsa',
+        MaxAlunos: 4,
+      };
+
+      await expect(service.criarDisponibilidade(dto)).rejects.toThrow(BadRequestException);
+      expect(prismaMock.disponibilidade.create).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('deve atualizar disponibilidade existente e rejeitar inexistente', async () => {
