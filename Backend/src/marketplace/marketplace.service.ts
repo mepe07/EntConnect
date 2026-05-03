@@ -211,13 +211,23 @@ export class MarketplaceService {
     // 2. CRIAÇÃO E PUBLICAÇÃO
     // ========================================================================
 
-    async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutenticado, file?: Express.Multer.File) {
+async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutenticado, file?: Express.Multer.File) {
         const urlFoto = file
-        ? await this.guardarFotoMarketplace(
-            file,
-            `anuncio_${utilizador.sub}_${Date.now()}`,
-        )
-        : null;
+            ? await this.guardarFotoMarketplace(
+                file,
+                `anuncio_${utilizador.sub}_${Date.now()}`,
+            )
+            : null;
+
+        const tipoAnuncio = dto.tipoAnuncio as TipoAnuncio;
+
+        const distribuicao = resolverDistribuicaoStock({
+            tipoAnuncio,
+            quantidadeTotal: dto.quantidadeTotal,
+            quantidadeDisponivel: dto.quantidadeDisponivel,
+            quantidadeVenda: dto.quantidadeVenda,
+            quantidadeAluguer: dto.quantidadeAluguer,
+        });
 
         const dataAtual = new Date();
 
@@ -228,6 +238,7 @@ export class MarketplaceService {
                     idUtilizadorCriador: utilizador.sub,
                     urlFoto,
                     dataAtual,
+                    distribuicao,
                 }),
             });
 
@@ -235,6 +246,7 @@ export class MarketplaceService {
                 data: montarDadosStockCriacaoAnuncio({
                     idArtigo: novoArtigo.ID_Artigo,
                     dto,
+                    distribuicao,
                 }),
             });
 
@@ -530,11 +542,7 @@ export class MarketplaceService {
         });
     }
 
-    async criarItemInventario(
-        dto: CriarItemInventarioDto,
-        utilizador: UtilizadorAutenticado,
-        file?: Express.Multer.File, // O ficheiro físico capturado pelo intercetor no controller
-    ) {
+    async criarItemInventario(dto: CriarItemInventarioDto, utilizador: UtilizadorAutenticado, file?: Express.Multer.File) {
         // 1. Garantir que apenas a coordenadora tem acesso a esta rota
         garantirAcessoAoInventarioDaEscola(utilizador.role);
 
@@ -545,7 +553,7 @@ export class MarketplaceService {
         )
         : null;
 
-        const dataAtual = new Date();
+    const dataAtual = new Date();
 
     return this.prisma.$transaction(async (tx) => {
         const novoArtigo = await tx.artigo.create({

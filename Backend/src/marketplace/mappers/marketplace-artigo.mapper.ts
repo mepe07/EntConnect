@@ -9,6 +9,7 @@ import { PublicarInventarioEscolaDto } from '../dto/publicar-inventario-escola.d
 
 import { EstadoAnuncio } from '../enums/estado-anuncio.enum';
 import { OrigemRegisto } from '../enums/origem-registo.enum';
+import { TipoAnuncio } from '../enums/tipo-anuncio.enum';
 
 import {
     type ArtigoComBase,
@@ -26,7 +27,7 @@ import {
 */
 
 interface DistribuicaoStockMapper {
-    tipoAnuncio: string;
+    tipoAnuncio: TipoAnuncio;
     quantidadeVenda: number;
     quantidadeAluguer: number;
     quantidadeDisponivel: number;
@@ -37,12 +38,14 @@ export function montarDadosCriacaoAnuncio(params: {
     idUtilizadorCriador: number;
     urlFoto: string | null;
     dataAtual: Date;
+    distribuicao: DistribuicaoStockMapper;
 }): Prisma.ArtigoUncheckedCreateInput {
     const {
         dto,
         idUtilizadorCriador,
         urlFoto,
         dataAtual,
+        distribuicao,
     } = params;
 
     return {
@@ -50,7 +53,7 @@ export function montarDadosCriacaoAnuncio(params: {
         Descricao: dto.descricao ?? null,
         Notas: dto.notasInternas ?? null,
         Foto: urlFoto,
-        Tipo_Anuncio: dto.tipoAnuncio,
+        Tipo_Anuncio: distribuicao.tipoAnuncio,
         Origem_Registo: OrigemRegisto.UTILIZADOR,
         Publicado_No_Marketplace: true,
         Estado_Anuncio: EstadoAnuncio.ATIVO,
@@ -63,12 +66,20 @@ export function montarDadosCriacaoAnuncio(params: {
 export function montarDadosStockCriacaoAnuncio(params: {
     idArtigo: number;
     dto: CriarAnuncioMarketplaceDto;
+    distribuicao: DistribuicaoStockMapper;
 }): Prisma.Stock_ArmazemUncheckedCreateInput {
-    const { idArtigo, dto } = params;
+    const {
+        idArtigo,
+        dto,
+        distribuicao,
+    } = params;
 
     return {
         ID_Artigo: idArtigo,
         Quantidade_Total: dto.quantidadeTotal,
+        Quantidade_Venda: distribuicao.quantidadeVenda,
+        Quantidade_Aluguer: distribuicao.quantidadeAluguer,
+        ID_Cor: dto.idCor ? Number(dto.idCor) : null,
         ID_Tamanho: dto.idTamanho ? Number(dto.idTamanho) : null,
         ID_Estado: dto.idEstado ? Number(dto.idEstado) : null,
     };
