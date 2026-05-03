@@ -103,7 +103,7 @@ export function Perfil() {
             }
 
             if (abaAtiva === 'meus_coachings') {
-                const resCoachings = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/aulas`, { headers });
+                const resCoachings = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/coachings`, { headers });
                 if (resCoachings.ok) {
                     const dadosCoachings = await resCoachings.json();
                     setMeusCoachings(dadosCoachings);
