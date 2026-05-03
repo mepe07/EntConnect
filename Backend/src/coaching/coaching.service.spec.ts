@@ -333,6 +333,7 @@ describe('CoachingService', () => {
       prismaMock.coaching.findMany.mockResolvedValue([
         {
           ID_Coaching: 3,
+          ID_Estado_Coaching: 7,
           Inicio_Coaching: inicio,
           Duracao: 45,
           Sala: { Nome: 'Estúdio A' },
@@ -361,6 +362,7 @@ describe('CoachingService', () => {
       expect(resultado).toEqual([
         {
           idCoaching: 3,
+          idEstadoCoaching: 7,
           dataInicio: inicio,
           duracaoMinutos: 45,
           sala: 'Estúdio A',
@@ -377,6 +379,7 @@ describe('CoachingService', () => {
       prismaMock.coaching.findMany.mockResolvedValue([
         {
           ID_Coaching: 4,
+          ID_Estado_Coaching: null,
           Inicio_Coaching: null,
           Duracao: null,
           Sala: null,
@@ -398,6 +401,7 @@ describe('CoachingService', () => {
         expect.objectContaining({
           sala: 'Sem sala atribuída',
           modalidade: 'Sem modalidade',
+          idEstadoCoaching: null,
           estado: 'Pendente',
           totalAlunos: 0,
         }),

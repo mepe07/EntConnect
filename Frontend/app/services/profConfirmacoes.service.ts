@@ -33,8 +33,10 @@ export class ProfConfirmacoesService {
 
 
             const aindaNaoConfirmado = s.confirmacao_prof !== 1 && s.confirmacao_prof !== true;
+            const estado = String(s.estado ?? '').trim().toLowerCase();
+            const estadoPendente = s.idEstadoCoaching === 7 || estado === 'pendente';
 
-            return jaPassou && aindaNaoConfirmado;
+            return jaPassou && aindaNaoConfirmado && estadoPendente;
         });
     }
 
