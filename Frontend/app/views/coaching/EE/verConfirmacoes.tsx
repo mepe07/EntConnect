@@ -62,7 +62,7 @@ export default function VerConfirmacoesEE() {
     async function handleConfirmacao(sessao: any, idEstadoCoaching: number) {
     if (!idEE) return;
 
-    // Mensagens personalizadas
+
     const mensagem = idEstadoCoaching === 13
         ? `Confirma que a sessão de ${sessao.modalidade} foi realizada pelos alunos: ${sessao.alunos}?`
         : 'Indica que esta sessão não aconteceu?';
@@ -71,15 +71,14 @@ export default function VerConfirmacoesEE() {
 
     setIsAguardar(true);
     try {
-        // 1. Chamada ao backend (que agora valida se todos confirmaram)
+
         await eeService.confirmarSessaoEE(idEE, sessao.idCoaching, idEstadoCoaching);
-        
-        // 2. Feedback de sucesso
+
+
         alert('Confirmação registada!');
 
-        // 3. ATUALIZAÇÃO VISUAL: Remove a sessão da lista localmente
-        // Assim o pai vê a linha a desaparecer imediatamente
-        setConfirmacoes((listaAtual) => 
+
+        setConfirmacoes((listaAtual) =>
             listaAtual.filter((item) => item.idCoaching !== sessao.idCoaching)
         );
 

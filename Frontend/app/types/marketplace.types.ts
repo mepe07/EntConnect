@@ -1,4 +1,4 @@
-// Ficheiro: Frontend/app/types/marketplace.types.ts
+
 
 export type AcaoModeracao = 'remover' | 'reativar' | 'arquivar' | 'moderacao';
 
@@ -81,7 +81,7 @@ export interface Anuncio {
     Data_Atualizacao?: string;
     Utilizador_Criador?: UtilizadorResumo;
     Utilizador_Moderador?: UtilizadorResumo;
-    Utilizador_Artigo_ID_Utilizador_CriadorToUtilizador?: UtilizadorResumo; // legado Prisma
+    Utilizador_Artigo_ID_Utilizador_CriadorToUtilizador?: UtilizadorResumo;
     Stock_Armazem?: StockArmazem[];
 }
 
@@ -127,7 +127,7 @@ export interface PublicarInventarioEscolaPayload {
     descricao?: string;
     foto?: string;
     tipoAnuncio: TipoAnuncio;
-    quantidadeDisponivel?: number; // legado: manter temporariamente para compatibilidade
+    quantidadeDisponivel?: number;
     quantidadeVenda?: number;
     quantidadeAluguer?: number;
 }
@@ -143,7 +143,7 @@ export interface CriarItemInventarioPayload {
     descricao?: string;
     quantidadeVenda: number;
     quantidadeAluguer: number;
-    foto?: string; // Mantemos como string para quando a imagem já vem da BD (URL)
+    foto?: string;
     ficheiroFoto?: File;
     idCor?: number;
     quantidade: number;

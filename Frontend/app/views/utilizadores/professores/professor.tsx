@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { InputComponent } from "~/components/input/input.component";
-import './professor.scss'; // Podes copiar o scss das modalidades e mudar o nome!
+import './professor.scss';
 import { professoresService } from '~/services/professor.service';
 
-// Interface que espelha exatamente o que o NestJS + Prisma nos devolvem
+
 interface Professor {
     ID_Pessoa: number;
     Pessoa: {
@@ -22,9 +22,7 @@ export function Professores() {
     const [paginaAtual, setPaginaAtual] = useState(1);
     const [ultimaPagina, setUltimaPagina] = useState(1);
 
-    // ==========================================
-    // ESTADOS DO FORMULÁRIO (DTO)
-    // ==========================================
+
     const [modalAberto, setModalAberto] = useState(false);
     const [professorEmEdicao, setProfessorEmEdicao] = useState<Professor | null>(null);
 
@@ -34,9 +32,7 @@ export function Professores() {
     const [nif, setNif] = useState('');
     const [contacto, setContacto] = useState('');
 
-    // ==========================================
-    // LIGAR OS CABOS
-    // ==========================================
+
     useEffect(() => {
         carregarProfessores();
     }, [paginaAtual]);
@@ -44,18 +40,16 @@ export function Professores() {
     const carregarProfessores = async () => {
         try {
             const resposta = await professoresService.getProfessores(paginaAtual);
-            // Agora os professores estão dentro de .data
+
             setProfessores(resposta.data);
-            // Guardamos o limite de páginas que vem do backend meta.lastPage
+
             setUltimaPagina(resposta.meta.lastPage);
         } catch (erro) {
             alert("Erro ao carregar a lista.");
         }
     };
 
-    // ==========================================
-    // LÓGICA DO MODAL (ABRIR PARA CRIAR / EDITAR)
-    // ==========================================
+
     const abrirModalNovo = () => {
         setProfessorEmEdicao(null);
         setNome('');
@@ -71,8 +65,7 @@ export function Professores() {
         setNome(prof.Pessoa.Nome);
         setEmail(prof.Pessoa.Email);
 
-        // A data vem do backend como ISO (ex: 1990-05-20T00:00:00.000Z).
-        // Para colocar no input type="date", precisamos apenas do "YYYY-MM-DD"
+
         const dataFormatada = prof.Pessoa.Data_Nascimento.split('T')[0];
         setDataNascimento(dataFormatada);
 
@@ -81,18 +74,16 @@ export function Professores() {
         setModalAberto(true);
     };
 
-    // ==========================================
-    // GUARDAR NA BASE DE DADOS (POST / PATCH)
-    // ==========================================
+
     const handleSalvar = async () => {
-        // Validação básica
-        // Validação básica
+
+
         if (!nome || !email || !nif || !contacto) {
             alert("Por favor, preenche todos os campos obrigatórios (Nome, Email, NIF e Contacto).");
             return;
         }
 
-        // O objeto que vamos enviar para o NestJS (igual ao DTO)
+
         const payload = {
             Nome: nome,
             Email: email,
@@ -103,26 +94,24 @@ export function Professores() {
 
         try {
             if (professorEmEdicao) {
-                // EDITAR (PATCH)
+
                 const profAtualizado = await professoresService.updateProfessor(professorEmEdicao.ID_Pessoa, payload);
                 setProfessores(professores.map(p => p.ID_Pessoa === professorEmEdicao.ID_Pessoa ? profAtualizado : p));
             } else {
-                // CRIAR NOVO (POST)
+
                 const novoProf = await professoresService.createProfessor(payload);
                 setProfessores([...professores, novoProf]);
             }
 
             setModalAberto(false);
         } catch (erro: any) {
-            // Apanha a mensagem de conflito do NIF/Email enviada pelo backend
+
             const mensagemErro = erro.response?.data?.message || "Erro ao guardar o professor.";
             alert(mensagemErro);
         }
     };
 
-    // ==========================================
-    // ELIMINAR (DELETE)
-    // ==========================================
+
     const handleApagar = async (id: number) => {
         const confirmacao = window.confirm("Tens a certeza absoluta que queres remover este professor?");
         if (confirmacao) {
@@ -136,9 +125,7 @@ export function Professores() {
         }
     };
 
-    // ==========================================
-    // PESQUISA
-    // ==========================================
+
     const professoresFiltrados = professores.filter(prof =>
         prof.Pessoa.Nome.toLowerCase().includes(termoPesquisa.toLowerCase()) ||
         prof.Pessoa.Email.toLowerCase().includes(termoPesquisa.toLowerCase()) ||
@@ -230,12 +217,10 @@ export function Professores() {
                 </div>
             </div>
 
-            {/* ========================================== */}
-            {/* MODAL DE CRIAÇÃO / EDIÇÃO */}
-            {/* ========================================== */}
+
             {modalAberto && (
                 <div className="modal-overlay">
-                    <div className="modal-content" style={{ maxWidth: '700px' }}> {/* Um pouco mais largo para caberem 2 colunas bem */}
+                    <div className="modal-content" style={{ maxWidth: '700px' }}>
                         <div className="modal-header">
                             <h2>{professorEmEdicao ? "Editar Professor" : "Adicionar Novo Professor"}</h2>
                             <button className="btn-fechar" onClick={() => setModalAberto(false)}>
@@ -266,11 +251,11 @@ export function Professores() {
                                 </div>
                                 <div className="form-group">
                                     <label>Data de Nascimento *</label>
-                                    {/* Usamos input nativo para aproveitar o calendário do browser */}
+
                                     <input
                                         type="date"
                                         id="prof-data"
-                                        className="input-component-style" // Garante que estilizas isto no SCSS parecido ao teu InputComponent
+                                        className="input-component-style"
                                         value={dataNascimento}
                                         onChange={(e) => setDataNascimento(e.target.value)}
                                         style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ccc', fontFamily: 'inherit' }}
@@ -286,7 +271,7 @@ export function Professores() {
                                         placeholder="Ex: 123456789"
                                         value={nif}
                                         onChange={(e) => {
-                                            // Remove tudo o que não for número antes de guardar no estado
+
                                             const apenasNumeros = e.target.value.replace(/\D/g, '');
                                             setNif(apenasNumeros);
                                         }}
@@ -299,7 +284,7 @@ export function Professores() {
                                         placeholder="Ex: 912345678"
                                         value={contacto}
                                         onChange={(e) => {
-                                            // Remove tudo o que não for número (permite formatar livremente)
+
                                             const apenasNumeros = e.target.value.replace(/\D/g, '');
                                             setContacto(apenasNumeros);
                                         }}

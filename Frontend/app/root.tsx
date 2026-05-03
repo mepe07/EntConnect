@@ -53,7 +53,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      {/* Adicionado o h-full para garantir que o html/body ocupam o ecrã todo sem scroll indesejado */}
+
       <body className="h-full bg-white m-0 p-0">
         {children}
         <ScrollRestoration />
@@ -62,7 +62,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     </html>
     </>
   );
-} 
+}
 
 export default function App() {
     const [domLoaded, setDomLoaded] = useState(false);
@@ -77,13 +77,13 @@ export default function App() {
     }, []);
 
     useEffect(() => {
-        // Sempre que a rota muda, volta a validar a sessão.
-        // Isto é importante depois do login, porque o token acabou de ser guardado.
+
+
         setSessaoValida(authService.isAuthenticated());
     }, [location.pathname]);
 
     useEffect(() => {
-        // Verifica periodicamente se o token ainda é válido.
+
         const intervalId = window.setInterval(() => {
             setSessaoValida(authService.isAuthenticated());
         }, 60_000);
@@ -115,8 +115,7 @@ export default function App() {
         return <Login />;
     }
 
-    // Rotas públicas de eventos.
-    // Qualquer pessoa pode abrir estas páginas sem login.
+
     if (isRotaPublicaEventos) {
         return <Outlet />;
     }

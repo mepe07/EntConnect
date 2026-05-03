@@ -1,40 +1,34 @@
-// Ficheiro: app/views/relatorios/estatisticas/estatisticas.tsx
+
 import './estatisticas.scss';
 import { useState, useEffect } from 'react';
-import { faturacaoService } from "~/services/faturacao.service"; 
+import { faturacaoService } from "~/services/faturacao.service";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { ButtonComponent } from '~/components/button/button.component';
 import type { DadosDashboard, DadosPrevisao } from '../../../models/interfaces/estatisticas.interface';
 
 type TipoFiltroData = 'Hoje' | 'Semana' | 'Mes' | 'Personalizado';
 
-/**
- * Função Utilitária: Formata números no padrão de moeda de Portugal (PT-PT)
- * @param valor - Número a formatar
- */
+
 const formatarMoeda = (valor: number) => {
-    return new Intl.NumberFormat('pt-PT', { 
-        style: 'currency', 
+    return new Intl.NumberFormat('pt-PT', {
+        style: 'currency',
         currency: 'EUR',
-        compactDisplay: 'short' // 
+        compactDisplay: 'short'
 
     }).format(valor);
 };
 
 export function Estatisticas() {
-    // ==========================================
-    // ESTADOS (State Management)
-    // ==========================================
+
+
     const [tipoFiltro, setTipoFiltro] = useState<TipoFiltroData>('Mes');
     const [datas, setDatas] = useState({ inicio: '', fim: '' });
     const [aCarregar, setACarregar] = useState<boolean>(false);
-    
+
     const [dados, setDados] = useState<DadosDashboard | null>(null);
     const [previsao, setPrevisao] = useState<DadosPrevisao[] | null>(null);
 
-    // ==========================================
-    // LÓGICA DE NEGÓCIO
-    // ==========================================
+
     const aplicarFiltroRapido = (tipo: TipoFiltroData) => {
         setTipoFiltro(tipo);
         const dataFim = new Date();
@@ -47,7 +41,7 @@ export function Estatisticas() {
         const fimStr = dataFim.toISOString().split('T')[0];
 
         setDatas({ inicio: inicioStr, fim: fimStr });
-        buscarDados(inicioStr, fimStr); 
+        buscarDados(inicioStr, fimStr);
     };
 
     const buscarDados = async (inicio: string, fim: string) => {
@@ -75,24 +69,20 @@ export function Estatisticas() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // ==========================================
-    // PREPARAÇÃO DE DADOS & EMPTY STATES
-    // ==========================================
-    const CORES_PIE = ['#10b981', '#ef4444']; 
-    
+
+    const CORES_PIE = ['#10b981', '#ef4444'];
+
     const dadosDonut = dados ? [
         { name: 'Faturado', value: dados.resumoGeral.totalPago },
         { name: 'Em Dívida', value: dados.resumoGeral.totalEmDivida }
     ] : [];
 
-    // LÓGICA DE UX: Verifica se o período selecionado tem dinheiro (Evita gráficos a zero)
+
     const existemDados = dados && (dados.resumoGeral.totalPago > 0 || dados.resumoGeral.totalEmDivida > 0);
-    // Verifica se há alguma previsão futura maior que zero
+
     const existemDadosFuturos = previsao && previsao.some(mes => mes.previsto > 0);
 
-    // ==========================================
-    // RENDERIZAÇÃO (UI)
-    // ==========================================
+
     return (
         <div className="pagina-estatisticas">
             <div className="cabecalho-estatisticas">
@@ -123,7 +113,7 @@ export function Estatisticas() {
                 <div className="loading-state">A carregar inteligência financeira...</div>
             ) : dados && (
                 <>
-                    {/* ZONA 1: GRÁFICO GIGANTE (Evolução) */}
+
                     <div className="card-grafico-gigante">
                         <h3>Evolução de Faturação Diária</h3>
                         {existemDados ? (
@@ -137,10 +127,10 @@ export function Estatisticas() {
                                             </linearGradient>
                                         </defs>
                                         <XAxis dataKey="data" stroke="#94a3b8" />
-                                        {/* USO DO FORMATADOR DE MOEDA NO EIXO Y */}
+
                                         <YAxis stroke="#94a3b8" width={80} tickFormatter={(value) => formatarMoeda(value)} />
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                        {/* USO DO FORMATADOR DE MOEDA NA TOOLTIP (Quando passas o rato) */}
+
                                         <Tooltip formatter={(value: any) => [formatarMoeda(Number(value)), "Faturado"]} contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
                                         <Area type="monotone" dataKey="faturado" stroke="#3b82f6" strokeWidth={4} fillOpacity={1} fill="url(#corFaturacao)" />
                                     </AreaChart>
@@ -154,9 +144,9 @@ export function Estatisticas() {
                         )}
                     </div>
 
-                    {/* ZONA 2: GRELHA INFERIOR */}
+
                     <div className="layout-grelha-dashboard">
-                        
+
                         <div className="card-dashboard">
                             <h3><i className="fa-solid fa-scale-balanced"></i> Índice de Cobrança</h3>
                             <div className="kpis-resumo">
@@ -228,4 +218,4 @@ export function Estatisticas() {
             )}
         </div>
     );
-} 
+}

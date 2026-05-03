@@ -1,4 +1,4 @@
-// Ficheiro: app/components/protected-route.component.tsx
+
 
 import { Navigate } from 'react-router';
 import { authService } from '../services/auth.service';
@@ -11,19 +11,11 @@ interface ProtectedRouteProps {
     rolesPermitidas?: string[];
 }
 
-/**
- * Componente que protege rotas privadas.
- *
- * Primeiro valida se existe sessão ativa.
- * Depois valida permissões por role, quando a rota define roles permitidas.
- */
+
 export function ProtectedRoute({ children, rolesPermitidas }: ProtectedRouteProps) {
     const userInfo = authService.getUserInfo() as User | null;
 
-    // Sem userInfo significa:
-    // - sem token
-    // - token expirado
-    // - token inválido
+
     if (!userInfo) {
         return <Navigate to="/login" replace />;
     }
@@ -36,4 +28,4 @@ export function ProtectedRoute({ children, rolesPermitidas }: ProtectedRouteProp
     }
 
     return children;
-} 
+}

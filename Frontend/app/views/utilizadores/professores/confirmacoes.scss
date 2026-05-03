@@ -1,20 +1,20 @@
 .confirmacoes-container {
-    
-    padding: 1rem 2rem; 
+
+    padding: 1rem 2rem;
     font-family: 'Inter', sans-serif;
 
     .view-header {
         margin-bottom: 2rem;
-        
-        h1 { 
-            font-size: 2rem; 
-            color: #0f372b; 
-            margin-bottom: 0.25rem; 
+
+        h1 {
+            font-size: 2rem;
+            color: #0f372b;
+            margin-bottom: 0.25rem;
             font-weight: 700;
         }
-        p { 
-            color: #6b7280; 
-            font-size: 0.95rem; 
+        p {
+            color: #6b7280;
+            font-size: 0.95rem;
         }
     }
 }
@@ -29,7 +29,7 @@
     border: 1px solid #f87171;
 }
 
-/* Secção de Pesquisa */
+
 .search-section {
     background: #fff;
     border: 1px solid #e5e7eb;
@@ -54,11 +54,11 @@
         font-size: 0.9rem;
         outline: none;
         transition: border-color 0.2s;
-        color: #1f2937; 
+        color: #1f2937;
 
         &::placeholder {
-            color: #9ca3af; 
-            opacity: 1; 
+            color: #9ca3af;
+            opacity: 1;
         }
 
         &:focus {
@@ -68,7 +68,7 @@
     }
 }
 
-/* Tabela */
+
 .table-wrapper {
     background: #fff;
     border: 1px solid #e5e7eb;
@@ -111,7 +111,7 @@
     font-style: italic;
 }
 
-/* Célula das ações */
+
 .acoes-celula {
     display: flex;
     gap: 8px;
@@ -128,8 +128,8 @@
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
-    
-    /* Removemos a borda de forma agressiva */
+
+
         border: 0 !important;
     outline: none !important;
     box-shadow: none !important;
@@ -141,7 +141,7 @@
     &.btn-sucesso {
         color: #10b981;
         background-color: #ecfdf5;
-        border: 1px solid #ecfdf5 !important; /* Cor da borda igual ao fundo */
+        border: 1px solid #ecfdf5 !important;
 
         &:hover {
             background-color: #d1fae5;
@@ -154,7 +154,7 @@
     &.btn-perigo {
         color: #ef4444;
         background-color: #fef2f2;
-        border: 1px solid #fef2f2 !important; /* Cor da borda igual ao fundo */
+        border: 1px solid #fef2f2 !important;
 
         &:hover {
             background-color: #fee2e2;

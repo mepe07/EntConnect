@@ -1,4 +1,4 @@
-// Ficheiro: app/routes/gestao-eventos-coordenacao.tsx
+
 
 import { ProtectedRoute } from '~/components/protected-route.component';
 import { PainelEventosCoordenacao } from '~/views/eventos/painel-eventos-coordenacao';
@@ -16,4 +16,4 @@ export default function GestaoEventosCoordenacaoRoute() {
             </ProtectedRoute>
         </>
     );
-} 
+}

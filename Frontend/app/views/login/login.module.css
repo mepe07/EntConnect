@@ -1,6 +1,6 @@
-/* =========================================
-   1. ESTRUTURA E MODO ESCURO
-   ========================================= */
+
+
+
 .loginContainer {
     --bg-primary: #f8f9fa;
     --bg-panel: #ffffff;
@@ -19,9 +19,9 @@
 }
 
     .loginContainer.dark {
-        /* MODO ESCURO SaaS Premium (O teu fundo negro preferido!) */
+
         --bg-primary: #1c1d21;
-        --bg-panel: rgba(255, 255, 255, 0.04); /* Cartão de vidro fosco subtil */
+        --bg-panel: rgba(255, 255, 255, 0.04);
         --text-primary: #ffffff;
         --text-secondary: #8b8b8b;
         --input-bg: rgba(0, 0, 0, 0.2);
@@ -46,9 +46,7 @@
         transform: scale(1.1);
     }
 
-/* =========================================
-   2. O ECRÃ BIPARTIDO (O Design 70/30)
-   ========================================= */
+
 .brandPanel {
     flex: 7;
     background: url('../../assets/media/foto-bailarina-login.png') no-repeat center center;
@@ -65,7 +63,7 @@
 }
 
 .formPanel {
-    /* PROPORÇÕES DO SPLIT: 30% DIREITA (O Apoio com Fundo Negro!) */
+
     flex: 3;
     display: flex;
     justify-content: center;
@@ -77,7 +75,7 @@
     .brandPanel {
         display: none;
     }
-    /* Esconde o painel verde em telemóveis */
+
 }
 
 .brandTitle {
@@ -91,7 +89,7 @@
     font-size: 1.1rem;
     opacity: 0.9;
     max-width: 350px;
-    min-height: 60px; /* Impede o ecrã de saltitar enquanto digita */
+    min-height: 60px;
 }
 
 .footerBranding {
@@ -122,19 +120,17 @@
     letter-spacing: 1px;
 }
 
-/* =========================================
-   3. O FORMULÁRIO (Cartão Compacto de Vidro)
-   ========================================= */
+
 .loginCard {
     width: 100%;
-    /* Reduzimos o cartão para ficar elegante dentro do painel de 30% */
+
     max-width: 320px;
     padding: 2rem 1.8rem;
     background-color: var(--bg-panel);
     border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.3);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px); /* O efeito de vidro */
+    backdrop-filter: blur(10px);
 }
 
 .cardTitle {
@@ -155,7 +151,7 @@
     gap: 1.2rem;
 }
 
-/* FLOATING LABELS COM ÍCONES REAJUSTADOS */
+
 .inputGroup {
     position: relative;
     width: 100%;
@@ -175,7 +171,7 @@
 
 .inputGroup input {
     width: 100%;
-    /* Mais espaço à esquerda (2.4rem) para o ícone */
+
     padding: 0.9rem 0.8rem 0.4rem 2.4rem;
     font-size: 0.9rem;
     color: var(--text-primary);
@@ -188,7 +184,7 @@
 
 .inputGroup label {
     position: absolute;
-    left: 2.4rem; /* Alinhado com o texto, à frente do ícone */
+    left: 2.4rem;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-secondary);
@@ -248,9 +244,7 @@
         transform: translateY(-1px);
     }
 
-/* =========================================
-   4. EFEITOS E DETALHES
-   ========================================= */
+
 .cursorBlink {
     animation: piscar 1s step-end infinite;
     color: var(--brand-color);

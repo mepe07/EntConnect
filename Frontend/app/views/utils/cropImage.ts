@@ -1,7 +1,7 @@
 export const getCroppedImg = async (imageSrc: string, pixelCrop: any): Promise<Blob> => {
     const image = new Image();
     image.src = imageSrc;
-    image.crossOrigin = 'anonymous'; // Evita problemas de CORS se a imagem vier de outro domínio
+    image.crossOrigin = 'anonymous';
 
     await new Promise((resolve, reject) => {
         image.onload = resolve;
@@ -15,11 +15,11 @@ export const getCroppedImg = async (imageSrc: string, pixelCrop: any): Promise<B
         throw new Error('Não foi possível obter o contexto do Canvas');
     }
 
-    // Definimos o tamanho do canvas para o tamanho do corte desejado
+
     canvas.width = pixelCrop.width;
     canvas.height = pixelCrop.height;
 
-    // Desenhamos apenas a parte selecionada da imagem original no canvas
+
     ctx.drawImage(
         image,
         pixelCrop.x,
@@ -32,7 +32,7 @@ export const getCroppedImg = async (imageSrc: string, pixelCrop: any): Promise<B
         pixelCrop.height
     );
 
-    // Convertemos o Canvas num Blob (ficheiro) para enviar para o servidor
+
     return new Promise((resolve, reject) => {
         canvas.toBlob((blob) => {
             if (!blob) {
@@ -40,6 +40,6 @@ export const getCroppedImg = async (imageSrc: string, pixelCrop: any): Promise<B
                 return;
             }
             resolve(blob);
-        }, 'image/jpeg', 0.9); // 0.9 é a qualidade da imagem
+        }, 'image/jpeg', 0.9);
     });
 };

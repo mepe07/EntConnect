@@ -15,7 +15,7 @@ async function parseError(response: Response, fallback: string): Promise<never> 
       message = data.message;
     }
   } catch {
-    // Keep fallback message
+
   }
 
   throw new Error(message);

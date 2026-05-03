@@ -1,4 +1,4 @@
-// Ficheiro: Frontend/app/components/eventos/evento-login-toast.component.tsx
+
 
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -10,8 +10,7 @@ const TEMPO_ENTRADA_MS = 900;
 const TEMPO_VISIVEL_MS = 7500;
 const STORAGE_KEY = 'entconnect_eventos_login_vistos';
 
-// Tempo durante o qual o mesmo evento não volta a aparecer no toast.
-// Neste caso: 24 horas.
+
 const TEMPO_BLOQUEIO_TOAST_MS = 24 * 60 * 60 * 1000;
 
 type EventoVistoStorage = {
@@ -19,13 +18,7 @@ type EventoVistoStorage = {
     vistoEm: string;
 };
 
-/**
- * Lê os eventos já mostrados no login.
- *
- * Nota:
- * O localStorage pode ter dados antigos, inválidos ou alterados manualmente.
- * Por isso, validamos a estrutura antes de confiar nos dados.
- */
+
 function obterEventosVistos(): EventoVistoStorage[] {
     try {
         const valor = localStorage.getItem(STORAGE_KEY);
@@ -51,14 +44,7 @@ function obterEventosVistos(): EventoVistoStorage[] {
     }
 }
 
-/**
- * Remove do localStorage eventos vistos há mais de 24 horas.
- *
- * Assim:
- * - não mostramos spam ao utilizador;
- * - mas também não bloqueamos o evento para sempre;
- * - e evitamos acumular lixo no localStorage.
- */
+
 function limparEventosVistosExpirados(): EventoVistoStorage[] {
     const agora = Date.now();
 
@@ -77,20 +63,14 @@ function limparEventosVistosExpirados(): EventoVistoStorage[] {
     return eventosValidos;
 }
 
-/**
- * Verifica se o evento já apareceu nas últimas 24 horas.
- */
+
 function eventoFoiVistoRecentemente(idEvento: number): boolean {
     const eventosVistos = limparEventosVistosExpirados();
 
     return eventosVistos.some((evento) => evento.id === idEvento);
 }
 
-/**
- * Guarda que este evento foi mostrado agora.
- *
- * Se o evento já existir no storage, atualizamos a data.
- */
+
 function guardarEventoVisto(idEvento: number): void {
     const eventosVistos = limparEventosVistosExpirados();
 
@@ -161,10 +141,7 @@ export function EventoLoginToast() {
             try {
                 const eventos = await eventosService.listarEventosLoginToast();
 
-                /*
-                 * Escolhemos o primeiro evento que ainda não apareceu
-                 * nas últimas 24 horas.
-                 */
+
                 const proximoEvento = eventos.find(
                     (item) => !eventoFoiVistoRecentemente(item.id)
                 );
@@ -179,11 +156,8 @@ export function EventoLoginToast() {
                     setVisivel(true);
                 }, TEMPO_ENTRADA_MS);
             } catch {
-                /*
-                 * Importante:
-                 * O login nunca pode falhar só porque os eventos falharam.
-                 * Por isso, o erro é ignorado de forma silenciosa.
-                 */
+
+
             }
         }
 
@@ -285,4 +259,4 @@ export function EventoLoginToast() {
             />
         </div>
     );
-} 
+}

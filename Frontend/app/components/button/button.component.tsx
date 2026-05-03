@@ -1,6 +1,12 @@
 import type { ButtonComponentProps } from './button-props.interface';
 import './button.component.scss';
 
+/**
+ * Botão partilhado da aplicação.
+ *
+ * @param options - Propriedades visuais e comportamentais do botão.
+ * @returns Elemento de botão configurado com classes, ícone e acessibilidade.
+ */
 export function ButtonComponent({
     label,
     icon,

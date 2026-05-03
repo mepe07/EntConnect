@@ -1,6 +1,6 @@
 .coaching-container {
   padding: 2rem;
-  background-color: #f4f7f6; // Fundo muito suave 
+  background-color: #f4f7f6;
   min-height: 100vh;
   font-family: 'Inter', system-ui, sans-serif;
 
@@ -20,7 +20,7 @@
     }
   }
 
-  /* ESTILOS DA CAIXA DE PESQUISA POR DATA  */
+
   .filtro-datas-card {
     display: flex;
     align-items: flex-end;
@@ -60,7 +60,7 @@
     }
 
     .btn-pesquisar {
-      background-color: #144d36; // Verde Escuro 
+      background-color: #144d36;
       color: white;
       border: none;
       padding: 0.75rem 1.5rem;
@@ -79,7 +79,7 @@
     }
   }
 
-  /* O LAYOUT DA TABELA DASHBOARD  */
+
   .tabela-card {
     background: #ffffff;
     border-radius: 8px;
@@ -132,7 +132,7 @@
           }
         }
 
-        /* ESTILOS DOS BADGES SEGUINDO O TEU PADRÃO */
+
         .badge-estado {
           padding: 0.25rem 0.75rem;
           border-radius: 9999px;
@@ -142,21 +142,21 @@
           display: inline-block;
 
           &.pendente {
-            background-color: #e0f2fe; // Azul clarinho
-            color: #0369a1; // Azul escuro
+            background-color: #e0f2fe;
+            color: #0369a1;
           }
 
           &.validado,
           &.aceite,
           &.pago {
-            background-color: #dcfce7; // Verde clarinho
-            color: #166534; // Verde escuro
+            background-color: #dcfce7;
+            color: #166534;
           }
 
           &.recusado,
           &.cancelado {
-            background-color: #fee2e2; // Vermelho clarinho
-            color: #991b1b; // Vermelho escuro
+            background-color: #fee2e2;
+            color: #991b1b;
           }
         }
 

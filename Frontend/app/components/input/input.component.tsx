@@ -1,6 +1,12 @@
 import type { InputComponentProps } from './input-props.interface';
 import './input.component.scss';
 
+/**
+ * Campo de input partilhado com label e configuração visual.
+ *
+ * @param options - Propriedades do input.
+ * @returns Campo de formulário configurado.
+ */
 export function InputComponent(options: InputComponentProps) {
   return (
     <>

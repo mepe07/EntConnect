@@ -12,7 +12,7 @@ async function parseError(response: Response, fallback: string): Promise<never> 
     }
   } catch (e) {
   }
-  
+
   throw new Error(errorMessage);
 }
 

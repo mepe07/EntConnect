@@ -73,7 +73,7 @@ function formatDate(value: string) {
     return date.toLocaleDateString('pt-PT');
 }
 
-// O nosso eixo de horas (00:00 até 23:00)
+
 const HORAS_DIA = Array.from({ length: 24 }, (_, i) => i);
 
 export default function HorariosAdmin() {
@@ -82,18 +82,18 @@ export default function HorariosAdmin() {
     const [salas, setSalas] = useState<Sala[]>([]);
     const [modalidades, setModalidades] = useState<Modalidade[]>([]);
     const [professores, setProfessores] = useState<UtilizadorProf[]>([]);
-    
-    // Controlo de Modais
+
+
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedHorario, setSelectedHorario] = useState<HorarioFixo | null>(null);
     const [isExceptionModalOpen, setIsExceptionModalOpen] = useState(false);
-    
+
     const [form, setForm] = useState<typeof initialForm>(initialForm);
     const [exceptionDate, setExceptionDate] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
-    
+
     const utilizadorService = new UtilizadorService();
 
     useEffect(() => {
@@ -165,10 +165,10 @@ export default function HorariosAdmin() {
             });
             setSuccess('Horário fixo criado com sucesso.');
             setForm(initialForm);
-            setIsCreateModalOpen(false); // Fecha o modal após sucesso
+            setIsCreateModalOpen(false);
             await refreshHorarios();
-            
-            // Limpa a mensagem de sucesso passados 3 segundos
+
+
             setTimeout(() => setSuccess(null), 3000);
         } catch (erro) {
             setError(erro instanceof Error ? erro.message : 'Erro ao criar horário.');
@@ -177,8 +177,7 @@ export default function HorariosAdmin() {
         }
     };
 
-    // --- FUNÇÕES DE LÓGICA DO CALENDÁRIO ---
-    // 1 min = 1px. Multiplicamos as horas por 60 e somamos os minutos para saber a posição do topo.
+
     const calcularPosicaoY = (horaInico: string) => {
         const date = new Date(horaInico);
         if (Number.isNaN(date.getTime())) return 0;
@@ -187,27 +186,26 @@ export default function HorariosAdmin() {
         return (horas * 60) + minutos;
     };
 
-    // Filtra as aulas de um dia específico para renderizar nessa coluna
-    // Algoritmo que calcula sobreposições e divide a largura da coluna (Estilo Google Calendar)
+
     const processarAulasDoDia = (idDia: number) => {
         const aulasDoDia = horarios.filter(h => h.Dia_Semana === idDia);
-        
-        // 1. Mapear as aulas com a posição Top e Bottom e ordenar por hora de início
+
+
         const aulasFormatadas = aulasDoDia.map(a => ({
             ...a,
             top: calcularPosicaoY(a.Hora_Inicio),
             bottom: calcularPosicaoY(a.Hora_Inicio) + a.Duracao,
-            coluna: 0, // Vai servir para saber em que "faixa" a aula fica
+            coluna: 0,
         })).sort((a, b) => a.top - b.top);
 
-        // 2. Descobrir quantas faixas (colunas) precisamos para este grupo
+
         const faixas: typeof aulasFormatadas[] = [];
 
         aulasFormatadas.forEach(aula => {
             let colocada = false;
             for (let i = 0; i < faixas.length; i++) {
                 const ultimaAula = faixas[i][faixas[i].length - 1];
-                // Se a aula atual começa no exato momento (ou depois) da última aula desta faixa acabar
+
                 if (aula.top >= ultimaAula.bottom) {
                     faixas[i].push(aula);
                     aula.coluna = i;
@@ -215,24 +213,24 @@ export default function HorariosAdmin() {
                     break;
                 }
             }
-            // Se sobrepõe a todas as faixas existentes, criamos uma faixa nova ao lado
+
             if (!colocada) {
                 faixas.push([aula]);
                 aula.coluna = faixas.length - 1;
             }
         });
 
-        // 3. O número máximo de aulas simultâneas dita a divisão da largura
+
         const maxColunas = faixas.length || 1;
 
-        // 4. Retornar as aulas já com a percentagem de largura e margem esquerda
+
         return aulasFormatadas.map(aula => ({
             ...aula,
             width: `calc(${100 / maxColunas}% - 4px)`,
             left: `calc(${aula.coluna * (100 / maxColunas)}% + 2px)`,
         }));
     };
-    // ----------------------------------------
+
 
     const openHorarioModal = (horario: HorarioFixo) => {
         setSelectedHorario(horario);
@@ -297,7 +295,7 @@ export default function HorariosAdmin() {
             setSuccess(horario.Ativa ? 'Horário desativado com sucesso.' : 'Horário ativado com sucesso.');
             await refreshHorarios();
             const refreshed = horarios.find((item) => item.ID_AulaFixa === horario.ID_AulaFixa);
-            if(refreshed) setSelectedHorario({...refreshed, Ativa: !horario.Ativa}); // Atualiza o modal instantaneamente
+            if(refreshed) setSelectedHorario({...refreshed, Ativa: !horario.Ativa});
         } catch (erro) {
             setError(erro instanceof Error ? erro.message : 'Erro ao atualizar o horário.');
         } finally {
@@ -309,7 +307,7 @@ export default function HorariosAdmin() {
         const confirmacao = window.confirm(
             'Tem a certeza que deseja eliminar esta aula fixa? Todas as exceções/cancelamentos associados também serão apagados.\n\nEsta ação não pode ser desfeita.'
         );
-        
+
         if (!confirmacao) return;
 
         setLoading(true);
@@ -319,9 +317,9 @@ export default function HorariosAdmin() {
         try {
             await horariosService.deleteHorario(idAulaFixa);
             setSuccess('Aula fixa eliminada com sucesso.');
-            closeModal(); // Fecha o modal imediatamente
-            await refreshHorarios(); // Refresca a grelha
-            
+            closeModal();
+            await refreshHorarios();
+
             setTimeout(() => setSuccess(null), 3000);
         } catch (erro) {
             setError(erro instanceof Error ? erro.message : 'Erro ao eliminar a aula.');
@@ -341,16 +339,16 @@ export default function HorariosAdmin() {
         try {
             await horariosService.deleteExcecao(idExcecao);
             setSuccess('Exceção removida com sucesso.');
-            
-            // Atualiza a grelha e o modal instantaneamente
+
+
             const updated = (await horariosService.getHorarios()) as HorarioFixo[];
             setHorarios(updated);
-            
+
             if (selectedHorario) {
                 const refreshed = updated.find((item) => item.ID_AulaFixa === selectedHorario.ID_AulaFixa) ?? null;
                 setSelectedHorario(refreshed);
             }
-            
+
             setTimeout(() => setSuccess(null), 3000);
         } catch (erro) {
             setError(erro instanceof Error ? erro.message : 'Erro ao remover exceção.');
@@ -361,7 +359,7 @@ export default function HorariosAdmin() {
 
     return (
         <div className="horarios-admin">
-            {/* CABEÇALHO */}
+
             <div className="page-header">
                 <div>
                     <h1>Horários Fixos</h1>
@@ -378,18 +376,18 @@ export default function HorariosAdmin() {
                 </div>
             )}
 
-            {/* O CALENDÁRIO */}
+
             <div className="calendario-card">
                 {loading && horarios.length === 0 ? (
                     <div className="tabela-loading"><i className="fa-solid fa-spinner fa-spin"></i> A carregar grelha...</div>
                 ) : (
                     <div className="calendario-wrapper">
-                        {/* Canto superior esquerdo vazio (acima das horas) */}
+
                         <div className="calendario-canto-vazio">
                             <i className="fa-regular fa-clock"></i>
                         </div>
 
-                        {/* Cabeçalho dos Dias (X-Axis) */}
+
                         <div className="calendario-header-dias">
                             {diasSemana.map(dia => (
                                 <div key={dia.ID_Dia} className="dia-header-item">
@@ -398,7 +396,7 @@ export default function HorariosAdmin() {
                             ))}
                         </div>
 
-                        {/* Eixo das Horas (Y-Axis) */}
+
                         <div className="calendario-eixo-horas">
                             {HORAS_DIA.map(hora => (
                                 <div key={hora} className="hora-slot">
@@ -407,22 +405,22 @@ export default function HorariosAdmin() {
                             ))}
                         </div>
 
-                        {/* O Grelha Principal onde as aulas são coladas */}
+
                         <div className="calendario-grelha">
-                            {/* Desenhar as linhas de fundo (1 por hora) */}
+
                             <div className="grelha-linhas-fundo">
                                 {HORAS_DIA.map(hora => (
                                     <div key={`linha-${hora}`} className="linha-hora"></div>
                                 ))}
                             </div>
 
-                            {/* Colunas dos Dias (onde ficam as cartas das aulas) */}
+
                             <div className="colunas-wrapper">
                                 {diasSemana.map(dia => (
                                     <div key={dia.ID_Dia} className="coluna-dia">
                                         {processarAulasDoDia(dia.ID_Dia).map(aula => (
-                                            <div 
-                                                key={aula.ID_AulaFixa} 
+                                            <div
+                                                key={aula.ID_AulaFixa}
                                                 className={`aula-card ${!aula.Ativa ? 'inativa' : ''}`}
                                                 style={{
                                                     top: `${aula.top}px`,
@@ -451,7 +449,7 @@ export default function HorariosAdmin() {
                 )}
             </div>
 
-            {/* MODAL: CRIAR NOVA AULA */}
+
             {isCreateModalOpen && (
                 <div className="modal-overlay" onClick={() => setIsCreateModalOpen(false)}>
                     <div className="modal-content form-modal" onClick={(event) => event.stopPropagation()}>
@@ -591,7 +589,7 @@ export default function HorariosAdmin() {
                 </div>
             )}
 
-            {/* MODAL: DETALHES DA AULA (QUANDO SE CLICA NO CALENDÁRIO) */}
+
             {selectedHorario && (
                 <div className="modal-overlay" onClick={closeModal}>
                     <div className="modal-content detalhes-modal" onClick={(event) => event.stopPropagation()}>
@@ -631,8 +629,8 @@ export default function HorariosAdmin() {
                             <div className="modal-row">
                                 <span>Estado da Grelha</span>
                                 <strong>
-                                    {selectedHorario.Ativa 
-                                        ? <span style={{color: '#16a34a'}}><i className="fa-solid fa-circle-check"></i> Ativa</span> 
+                                    {selectedHorario.Ativa
+                                        ? <span style={{color: '#16a34a'}}><i className="fa-solid fa-circle-check"></i> Ativa</span>
                                         : <span style={{color: '#dc2626'}}><i className="fa-solid fa-circle-xmark"></i> Suspensa</span>
                                     }
                                 </strong>
@@ -648,22 +646,22 @@ export default function HorariosAdmin() {
                             {selectedHorario.Excecao_Aula_Fixa?.length ? (
                                 <ul className="exception-list">
                                     {selectedHorario.Excecao_Aula_Fixa.map((excecao) => (
-                                        <li 
-                                            key={excecao.ID_Excecao} 
+                                        <li
+                                            key={excecao.ID_Excecao}
                                             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                                         >
                                             <span>
-                                                <i className="fa-regular fa-calendar-xmark" style={{ marginRight: '8px', color: '#dc2626' }}></i> 
+                                                <i className="fa-regular fa-calendar-xmark" style={{ marginRight: '8px', color: '#dc2626' }}></i>
                                                 {formatDate(excecao.Data_Cancelada)}
                                             </span>
-                                            
-                                            <button 
-                                                type="button" 
+
+                                            <button
+                                                type="button"
                                                 onClick={() => handleDeleteException(excecao.ID_Excecao)}
                                                 disabled={loading}
                                                 title="Remover cancelamento"
                                                 style={{
-                                                    background: 'transparent', border: 'none', cursor: 'pointer', 
+                                                    background: 'transparent', border: 'none', cursor: 'pointer',
                                                     color: '#dc2626', fontSize: '14px', padding: '4px', opacity: loading ? 0.5 : 1
                                                 }}
                                             >
@@ -675,7 +673,7 @@ export default function HorariosAdmin() {
                             ) : (
                                 <div className="empty-state" style={{padding: '16px'}}>Sem cancelamentos registados.</div>
                             )}
-                            
+
                             {!isExceptionModalOpen ? (
                                 <button type="button" className="btn-secundario" style={{width: '100%', marginTop: '10px'}} onClick={openExceptionModal}>
                                     <i className="fa-solid fa-plus"></i> Adicionar Exceção
@@ -700,7 +698,7 @@ export default function HorariosAdmin() {
                             )}
 
                         </div>
-                        
+
                         <div className="modal-footer">
                             <button
                                 type="button"
@@ -709,12 +707,12 @@ export default function HorariosAdmin() {
                                 onClick={() => handleToggleAtiva(selectedHorario)}
                                 disabled={loading}
                             >
-                                {selectedHorario.Ativa 
-                                    ? <><i className="fa-solid fa-pause"></i> Suspender</> 
+                                {selectedHorario.Ativa
+                                    ? <><i className="fa-solid fa-pause"></i> Suspender</>
                                     : <><i className="fa-solid fa-play"></i> Reativar</>
                                 }
                             </button>
-                            
+
                             <button
                                 type="button"
                                 className="btn-secundario btn-perigo"
@@ -725,11 +723,11 @@ export default function HorariosAdmin() {
                             >
                                 <i className="fa-solid fa-trash"></i> Eliminar
                             </button>
-                            
-                            <button 
-                                type="button" 
-                                className="btn-primario" 
-                                style={{ flex: 1 }} 
+
+                            <button
+                                type="button"
+                                className="btn-primario"
+                                style={{ flex: 1 }}
                                 onClick={closeModal}
                             >
                                 Fechar

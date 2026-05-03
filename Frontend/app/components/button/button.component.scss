@@ -15,7 +15,7 @@
     background-color: colors.$theme-100;
     border-radius: 4px;
     cursor: pointer;
-    border: none; // Botões nativos trazem bordas feias de origem
+    border: none;
     outline: none;
     transition: all 0.2s ease-in-out;
 
@@ -26,14 +26,14 @@
     &:hover {
         background-color: colors.$theme-80;
     }
-    // ESTADO DESATIVADO: Fundamental para a UX
+
     &:disabled {
         opacity: 0.5;
-        cursor: not-allowed; // O rato muda para o símbolo de "proibido"
-        filter: grayscale(0.8); // Fica mais "morto" visualmente
-        pointer-events: none; // Garante que o clique não passa mesmo para o JS
+        cursor: not-allowed;
+        filter: grayscale(0.8);
+        pointer-events: none;
     }
-    // Melhora o hover para ser mais suave
+
     &:not(:disabled):hover {
         transform: translateY(-1px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);

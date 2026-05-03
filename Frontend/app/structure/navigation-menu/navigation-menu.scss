@@ -1,17 +1,17 @@
-// Ficheiro: structure/navigation-menu/navigation-menu.scss
+
 @use "../../assets/styles/variables/colors";
 
 .navigation-menu {
-    /* NAVBAR Fixa (Abaixo do Header) */
+
     position: fixed;
-    top: 76px; /* Começa exatamente onde o Header de 76px acaba */
+    top: 76px;
     left: 0;
-    z-index: 90; /* Fica abaixo do Header (que tem z-index 100) */
+    z-index: 90;
 
     width: 280px;
     min-width: 280px;
-    height: calc(100vh - 76px); /* O ecrã todo MENOS a altura do header */
-    
+    height: calc(100vh - 76px);
+
     background-color: colors.$gray-8;
     color: colors.$gray-1;
     padding: 2rem 0;
@@ -23,7 +23,7 @@
         padding: 0;
         margin: 0;
     }
-    /* ITENS PRINCIPAIS DO MENU */
+
     & > ul > li {
         transition: all 0.2s ease;
         cursor: pointer;
@@ -38,15 +38,15 @@
             color: colors.$gray-1;
             box-sizing: border-box;
             text-decoration: none;
-            /* Caixa onde fica o Ícone + Texto (para ficarem alinhados) */
+
             .item-content {
                 display: flex;
                 align-items: center;
-                gap: 12px; /* O espaço perfeito entre o ícone e a palavra! */
+                gap: 12px;
 
                 i {
                     font-size: 1.1rem;
-                    width: 20px; /* Garante que os ícones ocupam todos o mesmo espaço */
+                    width: 20px;
                     text-align: center;
                 }
             }
@@ -59,7 +59,7 @@
                 }
             }
         }
-        /* ESTADOS: Ativo e Hover */
+
         &.active, &.active-parent {
             background-color: colors.$theme-100;
             font-weight: 600;
@@ -68,7 +68,7 @@
         &:not(.active):not(.active-parent):hover {
             background-color: colors.$theme-80;
         }
-        /* SUBMENUS */
+
         .submenu {
             max-height: 0;
             overflow: hidden;

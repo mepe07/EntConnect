@@ -1,4 +1,4 @@
-// Ficheiro: Frontend/app/services/marketplace.service.ts
+
 
 import type {
     FiltrosAnuncios,
@@ -14,8 +14,7 @@ import type {
 
 import { API_BASE_URL } from "../../src/config/api.config";
 
-// URL base das rotas do Marketplace.
-// A origem da API vem do .env do frontend através de VITE_API_URL.
+
 const API_URL = `${API_BASE_URL}/marketplace`;
 
 const getToken = () => localStorage.getItem('entconnect_token');
@@ -37,7 +36,7 @@ async function parseError(response: Response, fallback: string): Promise<never> 
             mensagem = erro.message;
         }
     } catch {
-        // Se a resposta não tiver JSON válido, mantém a mensagem fallback.
+
     }
 
     throw new Error(mensagem);
@@ -124,7 +123,7 @@ export const marketplaceService = {
         return response.json();
     },
 
-    // Procura o método criarAnuncio e substitui por este:
+
     async criarAnuncio(dados: CriarAnuncioPayload): Promise<Anuncio> {
         const formData = new FormData();
 
@@ -260,47 +259,41 @@ export const marketplaceService = {
         return response.json();
     },
 
-    /**
-     * Cria um novo item no inventário institucional da escola.
-     * Utiliza FormData em vez de JSON para suportar o upload da fotografia.
-     */
+
     async criarItemInventario(dados: CriarItemInventarioPayload): Promise<Anuncio> {
-        // Criamos a "caixa de encomenda" para suportar o ficheiro binário
+
         const formData = new FormData();
 
-        // 1. Enfiamos lá dentro os dados de texto
+
         formData.append('titulo', dados.titulo);
-        
-        // CORREÇÃO SÉNIOR: Enviamos apenas a quantidade total, 
-        // tal como definimos no CriarItemInventarioDto do Backend.
+
+
         formData.append('quantidade', String(dados.quantidade));
-        
-        // Apenas adicionamos a descrição se ela existir
+
+
         if (dados.descricao) {
             formData.append('descricao', dados.descricao);
         }
 
-        // 2. Enfiamos o ficheiro físico (se o utilizador tiver escolhido um na UI)
-        // O nome 'foto' aqui é VITAL: tem de ser EXATAMENTE o nome que o 
-        // @UseInterceptors(FileInterceptor('foto')) está à espera no Controller!
+
         if (dados.ficheiroFoto) {
             formData.append('foto', dados.ficheiroFoto);
         }
 
-        // 3. Fazemos o pedido ao servidor
+
         const response = await fetch(`${API_URL}/inventario`, {
             method: 'POST',
-            // CRÍTICO: Não incluímos o 'Content-Type': 'application/json' nos headers.
-            // O browser precisa de estar livre para calcular o boundary do 'multipart/form-data'.
+
+
             headers: {
-                Authorization: `Bearer ${getToken()}`, // O passe VIP
+                Authorization: `Bearer ${getToken()}`,
             },
-            body: formData, // A encomenda completa (texto + ficheiro) vai no body
+            body: formData,
         });
 
-        // 4. Tratamento de erros padrão do nosso serviço
+
         if (!response.ok) return parseError(response, 'Erro ao adicionar item ao inventário.');
-        
+
         return response.json();
     },
 };

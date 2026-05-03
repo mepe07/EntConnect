@@ -1,4 +1,4 @@
-// Ficheiro: app/views/dashboard/dashboard.tsx
+
 
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -89,15 +89,14 @@ export function Dashboard() {
 
     return (
         <main className="dashboard-wrapper">
-            {/* 1. TOPO DA DASHBOARD */}
+
             <section className="dashboard-topo">
                 <div className="dashboard-boas-vindas">
                     <h1>Olá, {nomeUtilizador}! 👋</h1>
                     <p>Aqui está o resumo para hoje, {dataHoje}.</p>
                 </div>
 
-                {/* Ações rápidas compactas.
-                    Mantemos isto separado dos eventos para não misturar responsabilidades. */}
+
                 <div className="acoes-rapidas-container">
                     <div className="botoes-acoes-topo">
                         {acoesVisiveis.map((acao) => (
@@ -163,7 +162,7 @@ export function Dashboard() {
                 </div>
             </section>
 
-            {/* 2. KPIs DA DASHBOARD */}
+
             <section className="kpi-grid">
                 <article className="kpi-card">
                     <div className="icone azul">
@@ -210,7 +209,7 @@ export function Dashboard() {
                 </article>
             </section>
 
-            {/* 3. EVENTOS REAIS DA DASHBOARD */}
+
             <ResumoEventosDashboard />
         </main>
     );

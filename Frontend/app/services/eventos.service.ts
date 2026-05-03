@@ -1,4 +1,4 @@
-// Ficheiro: app/services/eventos.service.ts
+
 
 import type {
     Evento,
@@ -10,11 +10,13 @@ import type {
 
 import { API_BASE_URL } from "../../src/config/api.config";
 
-// URL base das rotas de eventos.
-// A origem da API vem do .env do frontend através de VITE_API_URL.
+
 const API_URL = `${API_BASE_URL}/eventos`;
 const TOKEN_STORAGE_KEY = 'entconnect_token';
 
+/**
+ * Filtros aceites na listagem pública de eventos.
+ */
 export type ListarEventosPublicosParams = {
     pesquisa?: string;
     tipo?: TipoEvento | 'todos';
@@ -45,13 +47,19 @@ async function parseError(response: Response, fallback: string): Promise<never> 
             mensagem = erro.message;
         }
     } catch {
-        // Mantém mensagem fallback.
+
     }
 
     throw new Error(mensagem);
 }
 
-function criarQueryString(params?: Record<string, unknown>): string {
+/**
+ * Converte filtros de listagem para uma query string compatível com a API.
+ *
+ * @param params - Filtros com valores simples.
+ * @returns Query string pronta a anexar ao endpoint.
+ */
+function criarQueryString(params?: object): string {
     const query = new URLSearchParams();
 
     if (!params) {
@@ -75,6 +83,12 @@ function criarQueryString(params?: Record<string, unknown>): string {
     return queryString ? `?${queryString}` : '';
 }
 
+/**
+ * Constrói o `FormData` usado na criação e edição de eventos.
+ *
+ * @param dados - Dados do formulário de evento.
+ * @returns FormData preparado para envio ao backend.
+ */
 function criarFormDataEvento(dados: GuardarEventoPayload): FormData {
     const formData = new FormData();
 
@@ -113,11 +127,18 @@ function criarFormDataEvento(dados: GuardarEventoPayload): FormData {
     return formData;
 }
 
+/**
+ * Serviço de acesso aos eventos públicos e à gestão interna de eventos.
+ */
 export const eventosService = {
-    // ============================================================
-    // ROTAS PÚBLICAS
-    // ============================================================
 
+
+    /**
+     * Lista eventos disponíveis publicamente.
+     *
+     * @param params - Filtros opcionais da montra pública.
+     * @returns Eventos públicos encontrados.
+     */
     async listarEventosPublicos(
         params?: ListarEventosPublicosParams,
     ): Promise<Evento[]> {
@@ -134,6 +155,11 @@ export const eventosService = {
         return response.json();
     },
 
+    /**
+     * Lista eventos em destaque para o aviso apresentado após login.
+     *
+     * @returns Resumos dos eventos em destaque.
+     */
     async listarEventosLoginToast(): Promise<EventoResumo[]> {
         const response = await fetch(`${API_URL}/publicos/login-toast`, {
             method: 'GET',
@@ -146,6 +172,12 @@ export const eventosService = {
         return response.json();
     },
 
+    /**
+     * Obtém o detalhe público de um evento pelo slug.
+     *
+     * @param slug - Identificador textual do evento.
+     * @returns Evento público correspondente.
+     */
     async obterEventoPublicoPorSlug(slug: string): Promise<Evento> {
         const response = await fetch(`${API_URL}/publicos/${slug}`, {
             method: 'GET',
@@ -158,10 +190,13 @@ export const eventosService = {
         return response.json();
     },
 
-    // ============================================================
-    // ROTAS DE GESTÃO — COORDENADORA
-    // ============================================================
 
+    /**
+     * Lista eventos para a área de gestão.
+     *
+     * @param filtros - Filtros internos de gestão.
+     * @returns Eventos disponíveis para gestão.
+     */
     async listarEventosGestao(filtros?: FiltrosGestaoEventos): Promise<Evento[]> {
         const queryString = criarQueryString(filtros);
 
@@ -177,6 +212,12 @@ export const eventosService = {
         return response.json();
     },
 
+    /**
+     * Cria um evento.
+     *
+     * @param dados - Dados e imagem opcional do evento.
+     * @returns Evento criado.
+     */
     async criarEvento(dados: GuardarEventoPayload): Promise<Evento> {
         const formData = criarFormDataEvento(dados);
 
@@ -193,6 +234,13 @@ export const eventosService = {
         return response.json();
     },
 
+    /**
+     * Atualiza um evento existente.
+     *
+     * @param idEvento - Identificador do evento.
+     * @param dados - Dados atualizados do evento.
+     * @returns Evento atualizado.
+     */
     async atualizarEvento(
         idEvento: number,
         dados: GuardarEventoPayload,
@@ -212,6 +260,12 @@ export const eventosService = {
         return response.json();
     },
 
+    /**
+     * Remove logicamente um evento.
+     *
+     * @param idEvento - Identificador do evento.
+     * @returns Evento removido.
+     */
     async removerEvento(idEvento: number): Promise<Evento> {
         const response = await fetch(`${API_URL}/${idEvento}`, {
             method: 'DELETE',
@@ -225,6 +279,12 @@ export const eventosService = {
         return response.json();
     },
 
+    /**
+     * Reativa um evento removido.
+     *
+     * @param idEvento - Identificador do evento.
+     * @returns Evento reativado.
+     */
     async reativarEvento(idEvento: number): Promise<Evento> {
         const response = await fetch(`${API_URL}/${idEvento}/reativar`, {
             method: 'PATCH',

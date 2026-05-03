@@ -1,4 +1,4 @@
-// Ficheiro: app/routes/estatisticas.tsx
+
 import { Estatisticas } from "../views/relatorios/estatisticas/estatisticas";
 import { ProtectedRoute } from "../components/protected-route.component";
 
@@ -14,4 +14,4 @@ export default function EstatisticasRoute() {
             </ProtectedRoute>
         </>
     );
-} 
+}
