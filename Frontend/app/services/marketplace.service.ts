@@ -12,7 +12,11 @@ import type {
     RegistoModeracaoMarketplace,
 } from '../types/marketplace.types';
 
-const API_URL = 'http://localhost:3000/marketplace';
+import { API_BASE_URL } from "../../src/config/api.config";
+
+// URL base das rotas do Marketplace.
+// A origem da API vem do .env do frontend através de VITE_API_URL.
+const API_URL = `${API_BASE_URL}/marketplace`;
 
 const getToken = () => localStorage.getItem('entconnect_token');
 

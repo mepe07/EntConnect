@@ -41,6 +41,9 @@ export default [
     // NavBar diz: path: '/relatorios/faturacao'
     route("relatorios/faturacao", "routes/faturacao.tsx"),
 
+    // Rota do relatório de coaching
+    route("relatorios/relatorioCoaching", "routes/relatorioCoaching.tsx"),
+
     // Rota "Gerir Inventário"
     route("marketplace/inventario", "routes/inventario.tsx"),
 
@@ -65,7 +68,22 @@ export default [
     // Rota das marcações de coaching (Para o EE)
     route("coaching/marcacoes", "routes/marcacoes.tsx"),
 
+    route("educandos", "routes/educandos.tsx"),
+
     // Rota do perfil (para todos os utilizadores)
     route("conta", "routes/conta.tsx"),
+
+    // Rota para ver os agendamentos do professor
+    route("agenda/agendamentos", "routes/agendamentos.tsx"),
+
+    // Rota para confirmações do professor
+    route("agenda/confirmacoes", "routes/confirmacoes.tsx"),
+
+    // Rota para confirmações do EE
+    route("coaching/confirmacoes", "routes/EEconfirmacoes.tsx"),
+
+    // Rota para disponibilidades do professor
+    route("agenda/disponibilidades", "routes/profDisponibilidades.tsx")
+
 
 ] satisfies RouteConfig;

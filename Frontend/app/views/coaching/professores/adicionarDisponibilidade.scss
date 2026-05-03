@@ -1,0 +1,102 @@
+.pagina-adicionar-disponibilidade {
+  padding: 32px;
+  max-width: 800px;
+  margin: 0 auto;
+
+  .cabecalho-pagina {
+    margin-bottom: 32px;
+
+    h1 {
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    p {
+      color: #666;
+      font-size: 16px;
+    }
+  }
+
+  .card-formulario {
+    background: #ffffff;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eaeaea;
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+
+      .form-row {
+        display: flex;
+        gap: 24px;
+        
+        // Em ecrãs pequenos, fica um por baixo do outro
+        @media (max-width: 600px) {
+          flex-direction: column;
+          gap: 24px;
+        }
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        gap: 8px;
+
+        label {
+          font-weight: 600;
+          font-size: 14px;
+          color: #444;
+        }
+
+        input {
+          padding: 12px;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          font-size: 15px;
+          transition: border-color 0.2s ease;
+          color: #333; 
+          background-color: #fff;
+          color-scheme: light;
+
+          &:focus {
+            outline: none;
+            border-color: #007bff; // Cor de destaque
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+          }
+        }
+      }
+
+      .form-acoes {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 16px;
+
+        .btn-gravar {
+          background-color: #007bff;
+          color: white;
+          border: none;
+          padding: 14px 28px;
+          font-size: 16px;
+          font-weight: 600;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+
+          &:hover:not(:disabled) {
+            background-color: #0056b3;
+          }
+
+          &:disabled {
+            background-color: #a0cbfc;
+            cursor: not-allowed;
+          }
+        }
+      }
+    }
+  }
+}

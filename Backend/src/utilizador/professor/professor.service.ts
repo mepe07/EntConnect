@@ -1,11 +1,11 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { CreateProfessorDto } from '../dto/create-professor.dto';
 import { UpdateProfessorDto } from '../dto/update-professor.dto';
-import { PrismaService } from '../../prisma/prisma.service'; 
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class ProfessorService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(createProfessorDto: CreateProfessorDto) {
     try {
@@ -17,7 +17,7 @@ export class ProfessorService {
               Nome: createProfessorDto.Nome,
               Email: createProfessorDto.Email,
               // O Prisma exige que a data seja um objeto Date do JavaScript
-              Data_Nascimento: new Date(createProfessorDto.Data_Nascimento), 
+              Data_Nascimento: new Date(createProfessorDto.Data_Nascimento),
               NIF: createProfessorDto.NIF,
               Contacto: createProfessorDto.Contacto ?? "", // Se o contacto for opcional, passamos null se não for fornecido"",
               Foto: createProfessorDto.Foto,
@@ -26,7 +26,7 @@ export class ProfessorService {
         },
         // Opcional: Diz ao Prisma para devolver os dados da Pessoa junto com a resposta
         include: {
-          Pessoa: true, 
+          Pessoa: true,
         },
       });
     } catch (error: any) {
@@ -37,8 +37,8 @@ export class ProfessorService {
       throw error;
     }
   }
-    
-// MÉTODO PARA LISTAR COM PAGINAÇÃO (20 por página)
+
+  // MÉTODO PARA LISTAR COM PAGINAÇÃO (20 por página)
   async findAll(page: number = 1) {
     const limit = 20;
     const skip = (page - 1) * limit;
@@ -52,9 +52,7 @@ export class ProfessorService {
           Pessoa: true,
         },
         orderBy: {
-          Pessoa: {
-            Nome: 'asc', // Opcional: lista por ordem alfabética
-          },
+          ID_Pessoa: 'asc', // 👈 Alterado aqui para ordenar pelo ID de forma ascendente
         },
       }),
       this.prisma.professor.count(),
@@ -87,7 +85,7 @@ export class ProfessorService {
               // Passamos os dados novos para atualizar a tabela Pessoa
               Nome: updateProfessorDto.Nome,
               Email: updateProfessorDto.Email,
-              Data_Nascimento: dataNascimento, 
+              Data_Nascimento: dataNascimento,
               NIF: updateProfessorDto.NIF,
               Contacto: updateProfessorDto.Contacto,
               Foto: updateProfessorDto.Foto,
@@ -105,7 +103,7 @@ export class ProfessorService {
       throw error;
     }
   }
-// MÉTODO PARA REMOVER (DELETE)
+  // MÉTODO PARA REMOVER (DELETE)
 
   async remove(id: number) {
     try {
@@ -123,7 +121,7 @@ export class ProfessorService {
       });
 
       return professorApagado;
-      
+
     } catch (error: any) {
       // ERRO P2025: O ID já não existe na base de dados
       if (error.code === 'P2025') {
@@ -136,7 +134,7 @@ export class ProfessorService {
           'Impossível remover: Este professor tem aulas, coachings associados ou outros papéis no sistema.'
         );
       }
-      
+
       // Se for outro erro qualquer, deixa passar
       throw error;
     }

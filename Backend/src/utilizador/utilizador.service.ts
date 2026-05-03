@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { UpdatePessoalDto } from './dto/update-pessoal.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
+import { UpsertEducandoDto } from './dto/upsert-educando.dto';
 
 // Serviço para lidar com operações simples CRUD relacionados com utilizadores.
 
@@ -44,6 +45,7 @@ export class UtilizadorService {
 
       return {
         idUtilizador: user.ID_Utilizador,
+        idPessoa: user.ID_Pessoa,
         username: user.Utilizador,
         ativo: user.Ativo,
         nome: user.Pessoa?.Nome,
@@ -107,6 +109,36 @@ export class UtilizadorService {
       id: novoUtilizador.ID_Utilizador,
       username: novoUtilizador.Utilizador,
       mensagem: `Utilizador "${nome}" criado com sucesso.`,
+    };
+  }
+
+  async getRolesIds(idUtilizador: number) {
+    // 1. Vai buscar o utilizador e inclui a Pessoa com as suas respetivas tabelas de roles
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: idUtilizador },
+      include: {
+        Pessoa: {
+          include: {
+            Professor: true,
+            Enc_Educacao: true,
+            Coordenador: true,
+          },
+        },
+      },
+    });
+
+    if (!utilizador) {
+      throw new NotFoundException(`Utilizador com ID ${idUtilizador} não encontrado.`);
+    }
+
+    // 2. Formata a resposta. 
+    // Se a tabela existir (não for null), devolve o ID_Pessoa, caso contrário devolve null
+    return {
+      idProfessor: utilizador.Pessoa?.Professor ? utilizador.Pessoa.Professor.ID_Pessoa : null,
+      idEncEducacao: utilizador.Pessoa?.Enc_Educacao ? utilizador.Pessoa.Enc_Educacao.ID_Pessoa : null,
+      idCoordenador: utilizador.Pessoa?.Coordenador ? utilizador.Pessoa.Coordenador.ID_Pessoa : null,
+      // Se precisares do idPessoa base também, podes enviar:
+      idPessoaBase: utilizador.ID_Pessoa
     };
   }
 
@@ -333,8 +365,144 @@ export class UtilizadorService {
 
   async getAlunosByEE(idEncEducacao: number) {
     return this.prisma.aluno.findMany({
-      where: { ID_Enc_Educacao: idEncEducacao }
+      where: { ID_Enc_Educacao: idEncEducacao },
+      orderBy: { Nome: 'asc' },
     });
+  }
+
+  async getAlunosSemEncarregado() {
+    return this.prisma.aluno.findMany({
+      where: { ID_Enc_Educacao: null },
+      orderBy: { Nome: 'asc' },
+    });
+  }
+
+  async criarEducando(idEncEducacao: number, dto: UpsertEducandoDto) {
+    await this.garantirEncarregadoEducacao(idEncEducacao);
+
+    try {
+      return await this.prisma.aluno.create({
+        data: {
+          ID_Enc_Educacao: idEncEducacao,
+          Nome: dto.nome,
+          Data_Nascimento: new Date(dto.dataNascimento),
+          NIF: dto.nif,
+          Mail: dto.mail || null,
+          Contato: dto.contato || null,
+          Menor_Idade: this.calcularMenorIdade(dto.dataNascimento),
+        },
+      });
+    } catch (error: any) {
+      if (error?.code === 'P2002') {
+        throw new ConflictException('Ja existe um aluno com esse NIF.');
+      }
+      throw error;
+    }
+  }
+
+  async atualizarEducando(idEncEducacao: number, idAluno: number, dto: UpsertEducandoDto) {
+    await this.garantirAlunoDoEncarregado(idEncEducacao, idAluno);
+
+    try {
+      return await this.prisma.aluno.update({
+        where: { ID_aluno: idAluno },
+        data: {
+          Nome: dto.nome,
+          Data_Nascimento: new Date(dto.dataNascimento),
+          NIF: dto.nif,
+          Mail: dto.mail || null,
+          Contato: dto.contato || null,
+          Menor_Idade: this.calcularMenorIdade(dto.dataNascimento),
+        },
+      });
+    } catch (error: any) {
+      if (error?.code === 'P2002') {
+        throw new ConflictException('Ja existe um aluno com esse NIF.');
+      }
+      throw error;
+    }
+  }
+
+  async removerEducando(idEncEducacao: number, idAluno: number) {
+    await this.garantirAlunoDoEncarregado(idEncEducacao, idAluno);
+
+    await this.prisma.coaching_Aluno.updateMany({
+      where: {
+        ID_Aluno: idAluno,
+        ID_Enc_Educacao: idEncEducacao,
+      },
+      data: { ID_Enc_Educacao: null },
+    });
+
+    await this.prisma.aluno.update({
+      where: { ID_aluno: idAluno },
+      data: { ID_Enc_Educacao: null },
+    });
+
+    return { mensagem: 'Educando removido do encarregado de educacao com sucesso.' };
+  }
+
+  async associarEducando(idEncEducacao: number, idAluno: number) {
+    await this.garantirEncarregadoEducacao(idEncEducacao);
+
+    const aluno = await this.prisma.aluno.findUnique({
+      where: { ID_aluno: idAluno },
+    });
+
+    if (!aluno) {
+      throw new NotFoundException('Aluno nao encontrado.');
+    }
+
+    if (aluno.ID_Enc_Educacao) {
+      throw new ConflictException('Este aluno ja esta associado a um encarregado de educacao.');
+    }
+
+    return this.prisma.aluno.update({
+      where: { ID_aluno: idAluno },
+      data: { ID_Enc_Educacao: idEncEducacao },
+    });
+  }
+
+  private async garantirEncarregadoEducacao(idEncEducacao: number) {
+    const encarregado = await this.prisma.enc_Educacao.findUnique({
+      where: { ID_Pessoa: idEncEducacao },
+    });
+
+    if (!encarregado) {
+      throw new NotFoundException('Encarregado de educacao nao encontrado.');
+    }
+
+    return encarregado;
+  }
+
+  private async garantirAlunoDoEncarregado(idEncEducacao: number, idAluno: number) {
+    await this.garantirEncarregadoEducacao(idEncEducacao);
+
+    const aluno = await this.prisma.aluno.findFirst({
+      where: {
+        ID_aluno: idAluno,
+        ID_Enc_Educacao: idEncEducacao,
+      },
+    });
+
+    if (!aluno) {
+      throw new NotFoundException('Educando nao encontrado para este encarregado de educacao.');
+    }
+
+    return aluno;
+  }
+
+  private calcularMenorIdade(dataNascimento: string) {
+    const nascimento = new Date(dataNascimento);
+    const hoje = new Date();
+    let idade = hoje.getFullYear() - nascimento.getFullYear();
+    const mes = hoje.getMonth() - nascimento.getMonth();
+
+    if (mes < 0 || (mes === 0 && hoje.getDate() < nascimento.getDate())) {
+      idade -= 1;
+    }
+
+    return idade < 18;
   }
 
   // Ficheiro: utilizador.service.ts
@@ -381,8 +549,9 @@ export class UtilizadorService {
     return utilizador;
   }
 
-  async updateCargo(idUtilizador: number, novoCargo: string) {
+  async updateCargo(idUtilizador: number, novoCargo: string, confirmarRemocaoAssociacoes = false) {
     const cargosValidos = ['Professor', 'Coordenador', 'Direção', 'Encarregado de Educação'];
+    const cargoEncarregadoEducacao = cargosValidos[3];
     if (!cargosValidos.includes(novoCargo)) {
       throw new NotFoundException(`Cargo "${novoCargo}" não é válido.`);
     }
@@ -408,17 +577,32 @@ export class UtilizadorService {
     const idPessoa = utilizador.ID_Pessoa;
     const pessoa = utilizador.Pessoa;
 
+    if (pessoa.Enc_Educacao && novoCargo !== cargoEncarregadoEducacao) {
+      const impacto = await this.obterImpactoRemocaoEncarregadoEducacao(idPessoa);
+
+      if ((impacto.alunosAssociados > 0 || impacto.inscricoesCoachingAssociadas > 0) && !confirmarRemocaoAssociacoes) {
+        throw new ConflictException({
+          code: 'CONFIRMACAO_REMOCAO_ASSOCIACOES_ENCARREGADO',
+          message: 'Este utilizador tem alunos ou inscricoes de coaching associadas enquanto encarregado de educacao.',
+          impacto,
+        });
+      }
+    }
+
     // Apagar o cargo atual (apenas o que existir)
     if (pessoa.Professor)    await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
     if (pessoa.Coordenador)  await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
     if (pessoa.Direcao)      await this.prisma.direcao.delete({ where: { ID_Pessoa: idPessoa } });
-    if (pessoa.Enc_Educacao) await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Enc_Educacao) {
+      await this.removerAssociacoesEncarregadoEducacao(idPessoa);
+      await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
+    }
 
     // Criar o novo cargo
     if (novoCargo === 'Professor')                 await this.prisma.professor.create({ data: { ID_Pessoa: idPessoa } });
     else if (novoCargo === 'Coordenador')          await this.prisma.coordenador.create({ data: { ID_Pessoa: idPessoa } });
     else if (novoCargo === 'Direção')              await this.prisma.direcao.create({ data: { ID_Pessoa: idPessoa } });
-    else if (novoCargo === 'Encarregado de Educação') await this.prisma.enc_Educacao.create({ data: { ID_Pessoa: idPessoa } });
+    else if (novoCargo === cargoEncarregadoEducacao) await this.prisma.enc_Educacao.create({ data: { ID_Pessoa: idPessoa } });
 
     return { mensagem: `Cargo atualizado para "${novoCargo}" com sucesso.` };
   }
@@ -504,7 +688,10 @@ export class UtilizadorService {
     if (pessoa.Professor)    await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
     if (pessoa.Coordenador)  await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
     if (pessoa.Direcao)      await this.prisma.direcao.delete({ where: { ID_Pessoa: idPessoa } });
-    if (pessoa.Enc_Educacao) await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Enc_Educacao) {
+      await this.removerAssociacoesEncarregadoEducacao(idPessoa);
+      await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
+    }
 
     // Apagar Utilizador (FK para Pessoa)
     await this.prisma.utilizador.delete({ where: { ID_Utilizador: idUtilizador } });
@@ -564,5 +751,32 @@ export class UtilizadorService {
   });
 }
 
+  private async obterImpactoRemocaoEncarregadoEducacao(idPessoa: number) {
+    const [alunosAssociados, inscricoesCoachingAssociadas] = await this.prisma.$transaction([
+      this.prisma.aluno.count({
+        where: { ID_Enc_Educacao: idPessoa },
+      }),
+      this.prisma.coaching_Aluno.count({
+        where: { ID_Enc_Educacao: idPessoa },
+      }),
+    ]);
+
+    return {
+      alunosAssociados,
+      inscricoesCoachingAssociadas,
+    };
+  }
+
+  private async removerAssociacoesEncarregadoEducacao(idPessoa: number) {
+    await this.prisma.coaching_Aluno.updateMany({
+      where: { ID_Enc_Educacao: idPessoa },
+      data: { ID_Enc_Educacao: null },
+    });
+
+    await this.prisma.aluno.updateMany({
+      where: { ID_Enc_Educacao: idPessoa },
+      data: { ID_Enc_Educacao: null },
+    });
+  }
 
 }

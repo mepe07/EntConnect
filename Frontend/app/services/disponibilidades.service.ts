@@ -1,6 +1,8 @@
-
+import { API_BASE_URL } from "../../src/config/api.config";
 export class DisponibilidadesService {
-    private _apiUrl = 'http://localhost:3000';
+    // URL base da API.
+    // Vem do ficheiro .env do frontend através de VITE_API_URL.
+    private _apiUrl = API_BASE_URL;
 
     /**
          * Obtém as disponibilidades dos professores.
@@ -31,6 +33,23 @@ export class DisponibilidadesService {
             body: JSON.stringify(bodyRequest)
         });
         
+        return await response.json();
+    }
+
+    async criarDisponibilidade(dados: any) {
+        // Ajusta o URL consoante a rota que definiste no teu controller (ex: /disponibilidades/adicionar)
+        const response = await fetch(`${this._apiUrl}/utilizador/professor/adicionar-disponibilidade`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dados),
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao criar disponibilidade.');
+        }
+
         return await response.json();
     }
 }

@@ -3,8 +3,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { InputComponent } from '~/components/input/input.component';
 import { ButtonComponent } from '~/components/button/button.component';
-import { UtilizadorService } from '~/services/users.service';
 import { useSearchParams } from "react-router";
+import { ConfirmacaoRemocaoAssociacoesEncarregadoError, UtilizadorService } from '~/services/users.service';
+import { authService } from '~/services/auth.service';
+import { API_BASE_URL } from '~/config/api.config';
+import type { Educando } from '~/services/users.service';
 import './utilizadores.scss';
 
 const utilizadorService = new UtilizadorService();
@@ -12,6 +15,7 @@ const utilizadorService = new UtilizadorService();
 // Interface alinhada com o que o backend realmente devolve em getAllUsers()
 interface Utilizador {
     idUtilizador: number;
+    idPessoa: number;
     username: string;
     ativo: boolean;
     nome: string;
@@ -45,6 +49,15 @@ interface NovoUtilizadorForm {
     confirmarPassword: string;
 }
 
+interface EducandoForm {
+    idAluno?: number;
+    nome: string;
+    dataNascimento: string;
+    nif: string;
+    mail: string;
+    contato: string;
+}
+
 const FORM_VAZIO: NovoUtilizadorForm = {
     nome: '',
     username: '',
@@ -55,6 +68,14 @@ const FORM_VAZIO: NovoUtilizadorForm = {
     cargo: '',
     password: '',
     confirmarPassword: '',
+};
+
+const EDUCANDO_FORM_VAZIO: EducandoForm = {
+    nome: '',
+    dataNascimento: '',
+    nif: '',
+    mail: '',
+    contato: '',
 };
 
 export function Utilizadores() {
@@ -75,6 +96,14 @@ export function Utilizadores() {
     // ==========================================
     const [modalAberto, setModalAberto] = useState(false);
     const [utilizadorSelecionado, setUtilizadorSelecionado] = useState<Utilizador | null>(null);
+    const [educandos, setEducandos] = useState<Educando[]>([]);
+    const [alunosSemEncarregado, setAlunosSemEncarregado] = useState<Educando[]>([]);
+    const [alunoParaAssociar, setAlunoParaAssociar] = useState('');
+    const [educandoForm, setEducandoForm] = useState<EducandoForm>(EDUCANDO_FORM_VAZIO);
+    const [erroEducandos, setErroEducandos] = useState('');
+    const [loadingEducandos, setLoadingEducandos] = useState(false);
+    const [loadingSaveEducando, setLoadingSaveEducando] = useState(false);
+    const [loadingAssociarEducando, setLoadingAssociarEducando] = useState(false);
 
     // Dados pessoais editáveis
     const [editNome, setEditNome] = useState('');
@@ -147,6 +176,33 @@ export function Utilizadores() {
     const [fotosUtilizadores, setFotosUtilizadores] =
         useState<Record<number, string | null>>({});
 
+    const isEncarregadoEducacao = (utilizador?: Utilizador | null) =>
+        utilizador?.cargo?.toLowerCase().includes('encarregado') ?? false;
+
+    const formatarDataInput = (data?: string | Date | null) => {
+        if (!data) return '';
+        return new Date(data).toISOString().split('T')[0];
+    };
+
+    const carregarEducandos = async (idEncEducacao: number) => {
+        setLoadingEducandos(true);
+        setErroEducandos('');
+        try {
+            const [dados, alunosLivres] = await Promise.all([
+                utilizadorService.getEducandos(idEncEducacao),
+                utilizadorService.getAlunosSemEncarregado(),
+            ]);
+            setEducandos(dados);
+            setAlunosSemEncarregado(alunosLivres);
+        } catch (error: any) {
+            setEducandos([]);
+            setAlunosSemEncarregado([]);
+            setErroEducandos(error?.message || 'Erro ao carregar os educandos.');
+        } finally {
+            setLoadingEducandos(false);
+        }
+    };
+
     // ==========================================
     // MODAL VER / EDITAR
     // ==========================================
@@ -164,6 +220,11 @@ export function Utilizadores() {
         setFotoPreview(null);
         setFicheiroFoto(null);
         setErroFoto('');
+        setEducandos([]);
+        setAlunosSemEncarregado([]);
+        setAlunoParaAssociar('');
+        setEducandoForm(EDUCANDO_FORM_VAZIO);
+        setErroEducandos('');
         setModalAberto(true);
 
         try {
@@ -171,6 +232,10 @@ export function Utilizadores() {
             setFotoAtual(resultado.url ?? null);
         } catch {
             setFotoAtual(null);
+        }
+
+        if (isEncarregadoEducacao(utilizador) && utilizador.idPessoa) {
+            await carregarEducandos(utilizador.idPessoa);
         }
     };
 
@@ -185,6 +250,11 @@ export function Utilizadores() {
         setFotoAtual(null);
         setFotoPreview(null);
         setFicheiroFoto(null);
+        setEducandos([]);
+        setAlunosSemEncarregado([]);
+        setAlunoParaAssociar('');
+        setEducandoForm(EDUCANDO_FORM_VAZIO);
+        setErroEducandos('');
     };
 
     useEffect(() => {
@@ -397,17 +467,38 @@ export function Utilizadores() {
 
         setLoadingSaveDados(true);
         try {
+            // Guardar cargo (apenas se foi alterado)
+            if (editCargo !== utilizadorSelecionado!.cargo) {
+                try {
+                    await utilizadorService.updateCargo(utilizadorSelecionado!.idUtilizador, editCargo);
+                } catch (error: any) {
+                    if (error instanceof ConfirmacaoRemocaoAssociacoesEncarregadoError) {
+                        const { alunosAssociados, inscricoesCoachingAssociadas } = error.impacto;
+                        const confirmar = window.confirm(
+                            `Este utilizador vai deixar de ser Encarregado de Educação.\n\n` +
+                            `Ao confirmar, serão removidas as associações com:\n` +
+                            `- ${alunosAssociados} aluno(s)\n` +
+                            `- ${inscricoesCoachingAssociadas} inscrição(ões) de coaching\n\n` +
+                            `Queres continuar?`
+                        );
+
+                        if (!confirmar) {
+                            return;
+                        }
+
+                        await utilizadorService.updateCargo(utilizadorSelecionado!.idUtilizador, editCargo, true);
+                    } else {
+                        throw error;
+                    }
+                }
+            }
+
             // Guardar dados pessoais
             await utilizadorService.updatePessoal(utilizadorSelecionado!.idUtilizador, {
                 nome: editNome.trim(),
                 contacto: editContacto.trim() || undefined,
                 nif: editNif.trim() || undefined,
             });
-
-            // Guardar cargo (apenas se foi alterado)
-            if (editCargo !== utilizadorSelecionado!.cargo) {
-                await utilizadorService.updateCargo(utilizadorSelecionado!.idUtilizador, editCargo);
-            }
 
             const updated = {
                 ...utilizadorSelecionado!,
@@ -433,6 +524,128 @@ export function Utilizadores() {
             setErroDados(error?.message || 'Erro ao guardar as alterações. Tenta novamente.');
         } finally {
             setLoadingSaveDados(false);
+        }
+    };
+
+    const handleEducandoForm = (campo: keyof EducandoForm, valor: string) => {
+        setEducandoForm(prev => ({ ...prev, [campo]: valor }));
+        setErroEducandos('');
+    };
+
+    const handleEditarEducando = (educando: Educando) => {
+        setEducandoForm({
+            idAluno: educando.ID_aluno,
+            nome: educando.Nome || '',
+            dataNascimento: formatarDataInput(educando.Data_Nascimento),
+            nif: educando.NIF || '',
+            mail: educando.Mail || '',
+            contato: educando.Contato || '',
+        });
+        setErroEducandos('');
+    };
+
+    const handleCancelarEducando = () => {
+        setEducandoForm(EDUCANDO_FORM_VAZIO);
+        setErroEducandos('');
+    };
+
+    const handleAssociarEducando = async () => {
+        if (!utilizadorSelecionado?.idPessoa || !alunoParaAssociar) {
+            setErroEducandos('Seleciona um aluno para associar.');
+            return;
+        }
+
+        setLoadingAssociarEducando(true);
+        setErroEducandos('');
+        try {
+            await utilizadorService.associateEducando(
+                utilizadorSelecionado.idPessoa,
+                Number(alunoParaAssociar)
+            );
+            setAlunoParaAssociar('');
+            await carregarEducandos(utilizadorSelecionado.idPessoa);
+        } catch (error: any) {
+            setErroEducandos(error?.message || 'Erro ao associar o educando.');
+        } finally {
+            setLoadingAssociarEducando(false);
+        }
+    };
+
+    const validarEducando = () => {
+        if (!educandoForm.nome.trim() || educandoForm.nome.trim().length < 3) {
+            return 'O nome do educando deve ter pelo menos 3 caracteres.';
+        }
+        if (!educandoForm.dataNascimento) {
+            return 'A data de nascimento do educando e obrigatoria.';
+        }
+        if (!educandoForm.nif.trim()) {
+            return 'O NIF do educando e obrigatorio.';
+        }
+        if (educandoForm.mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(educandoForm.mail)) {
+            return 'Introduz um email valido para o educando.';
+        }
+        return '';
+    };
+
+    const handleGuardarEducando = async () => {
+        if (!utilizadorSelecionado?.idPessoa) return;
+
+        const erro = validarEducando();
+        if (erro) {
+            setErroEducandos(erro);
+            return;
+        }
+
+        setLoadingSaveEducando(true);
+        setErroEducandos('');
+        try {
+            const payload = {
+                nome: educandoForm.nome.trim(),
+                dataNascimento: educandoForm.dataNascimento,
+                nif: educandoForm.nif.trim(),
+                mail: educandoForm.mail.trim() || undefined,
+                contato: educandoForm.contato.trim() || undefined,
+            };
+
+            if (educandoForm.idAluno) {
+                await utilizadorService.updateEducando(
+                    utilizadorSelecionado.idPessoa,
+                    educandoForm.idAluno,
+                    payload
+                );
+            } else {
+                await utilizadorService.createEducando(utilizadorSelecionado.idPessoa, payload);
+            }
+
+            setEducandoForm(EDUCANDO_FORM_VAZIO);
+            await carregarEducandos(utilizadorSelecionado.idPessoa);
+        } catch (error: any) {
+            setErroEducandos(error?.message || 'Erro ao guardar o educando.');
+        } finally {
+            setLoadingSaveEducando(false);
+        }
+    };
+
+    const handleRemoverEducando = async (educando: Educando) => {
+        if (!utilizadorSelecionado?.idPessoa) return;
+
+        const confirmacao = window.confirm(
+            `Tens a certeza que queres remover "${educando.Nome}" da lista de educandos deste encarregado?`
+        );
+        if (!confirmacao) return;
+
+        setLoadingEducandos(true);
+        setErroEducandos('');
+        try {
+            await utilizadorService.removeEducando(utilizadorSelecionado.idPessoa, educando.ID_aluno);
+            if (educandoForm.idAluno === educando.ID_aluno) {
+                setEducandoForm(EDUCANDO_FORM_VAZIO);
+            }
+            await carregarEducandos(utilizadorSelecionado.idPessoa);
+        } catch (error: any) {
+            setErroEducandos(error?.message || 'Erro ao remover o educando.');
+        } finally {
+            setLoadingEducandos(false);
         }
     };
 
@@ -492,8 +705,8 @@ export function Utilizadores() {
         formData.append('file', file);
 
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3000/utilizador/importusersblob', {
+            const token = localStorage.getItem('entconnect_token') || authService.getToken();
+            const response = await fetch(`${API_BASE_URL}/utilizador/importusersblob`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData,
@@ -548,10 +761,10 @@ export function Utilizadores() {
     // ==========================================
     const handleDownloadModelo = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('entconnect_token') || authService.getToken();
             
             // Faz o pedido à nova rota do teu backend
-            const response = await fetch('http://localhost:3000/utilizador/download-template', {
+            const response = await fetch(`${API_BASE_URL}/utilizador/download-template`, {
                 method: 'GET',
                 headers: { 
                     'Authorization': `Bearer ${token}` 
@@ -945,6 +1158,181 @@ export function Utilizadores() {
                                 <div className="mensagem-erro">
                                     <i className="fa-solid fa-triangle-exclamation"></i> {erroDados}
                                 </div>
+                            )}
+
+                            {isEncarregadoEducacao(utilizadorSelecionado) && (
+                                <>
+                                    <div className="separador"></div>
+
+                                    <div className="secao-titulo">
+                                        <i className="fa-solid fa-user-graduate"></i> Educandos
+                                    </div>
+
+                                    <div className="educandos-grid">
+                                        <div className="educandos-lista">
+                                            {loadingEducandos ? (
+                                                <div className="educandos-vazio">
+                                                    <i className="fa-solid fa-spinner fa-spin"></i> A carregar educandos...
+                                                </div>
+                                            ) : educandos.length === 0 ? (
+                                                <div className="educandos-vazio">Sem educandos associados.</div>
+                                            ) : (
+                                                educandos.map((educando) => (
+                                                    <div className="educando-item" key={educando.ID_aluno}>
+                                                        <div>
+                                                            <strong>{educando.Nome}</strong>
+                                                                <span>
+                                                                    NIF {educando.NIF}
+                                                                {educando.Menor_Idade ? ' - Menor' : ''}
+                                                                </span>
+                                                        </div>
+                                                        <div className="educando-acoes">
+                                                            <button
+                                                                type="button"
+                                                                className="btn-educando"
+                                                                title="Editar educando"
+                                                                onClick={() => handleEditarEducando(educando)}
+                                                            >
+                                                                <i className="fa-solid fa-pen"></i>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="btn-educando remover"
+                                                                title="Remover educando"
+                                                                onClick={() => handleRemoverEducando(educando)}
+                                                            >
+                                                                <i className="fa-solid fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+
+                                        <div className="educando-form">
+                                            <div className="associar-educando">
+                                                <div className="educando-form-header">
+                                                    <strong>Associar aluno existente</strong>
+                                                </div>
+                                                <div className="associar-educando-linha">
+                                                    <select
+                                                        className="input-campo"
+                                                        value={alunoParaAssociar}
+                                                        onChange={(e) => { setAlunoParaAssociar(e.target.value); setErroEducandos(''); }}
+                                                        disabled={loadingEducandos || alunosSemEncarregado.length === 0}
+                                                    >
+                                                        <option value="">
+                                                            {alunosSemEncarregado.length === 0
+                                                                ? 'Sem alunos por associar'
+                                                                : 'Seleciona um aluno...'}
+                                                        </option>
+                                                        {alunosSemEncarregado.map((aluno) => (
+                                                            <option key={aluno.ID_aluno} value={aluno.ID_aluno}>
+                                                                {aluno.Nome} - NIF {aluno.NIF}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <button
+                                                        type="button"
+                                                        className="btn-guardar-educando"
+                                                        onClick={handleAssociarEducando}
+                                                        disabled={loadingAssociarEducando || !alunoParaAssociar}
+                                                    >
+                                                        {loadingAssociarEducando
+                                                            ? <><i className="fa-solid fa-spinner fa-spin"></i> A associar...</>
+                                                            : <><i className="fa-solid fa-link"></i> Associar</>
+                                                        }
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="separador"></div>
+
+                                            <div className="educando-form-header">
+                                                <strong>{educandoForm.idAluno ? 'Editar educando' : 'Adicionar educando'}</strong>
+                                                {educandoForm.idAluno && (
+                                                    <button type="button" onClick={handleCancelarEducando}>
+                                                        Cancelar
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            <div className="form-row">
+                                                <div className="form-group">
+                                                    <label>Nome *</label>
+                                                    <input
+                                                        type="text"
+                                                        className="input-campo"
+                                                        value={educandoForm.nome}
+                                                        onChange={(e) => handleEducandoForm('nome', e.target.value)}
+                                                        placeholder="Nome completo"
+                                                    />
+                                                </div>
+                                                <div className="form-group">
+                                                    <label>Data Nasc. *</label>
+                                                    <input
+                                                        type="date"
+                                                        className="input-campo"
+                                                        value={educandoForm.dataNascimento}
+                                                        onChange={(e) => handleEducandoForm('dataNascimento', e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="form-row">
+                                                <div className="form-group">
+                                                    <label>NIF *</label>
+                                                    <input
+                                                        type="text"
+                                                        className="input-campo"
+                                                        value={educandoForm.nif}
+                                                        onChange={(e) => handleEducandoForm('nif', e.target.value)}
+                                                        placeholder="Ex: 123456789"
+                                                    />
+                                                </div>
+                                                <div className="form-group">
+                                                    <label>Contacto</label>
+                                                    <input
+                                                        type="text"
+                                                        className="input-campo"
+                                                        value={educandoForm.contato}
+                                                        onChange={(e) => handleEducandoForm('contato', e.target.value)}
+                                                        placeholder="Ex: 912345678"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="form-group">
+                                                <label>Email</label>
+                                                <input
+                                                    type="email"
+                                                    className="input-campo"
+                                                    value={educandoForm.mail}
+                                                    onChange={(e) => handleEducandoForm('mail', e.target.value)}
+                                                    placeholder="email@exemplo.pt"
+                                                />
+                                            </div>
+
+                                            {erroEducandos && (
+                                                <div className="mensagem-erro">
+                                                    <i className="fa-solid fa-triangle-exclamation"></i> {erroEducandos}
+                                                </div>
+                                            )}
+
+                                            <button
+                                                type="button"
+                                                className="btn-guardar-educando"
+                                                onClick={handleGuardarEducando}
+                                                disabled={loadingSaveEducando}
+                                            >
+                                                {loadingSaveEducando
+                                                    ? <><i className="fa-solid fa-spinner fa-spin"></i> A guardar...</>
+                                                    : <><i className="fa-solid fa-floppy-disk"></i> {educandoForm.idAluno ? 'Guardar educando' : 'Adicionar educando'}</>
+                                                }
+                                            </button>
+                                        </div>
+                                    </div>
+                                </>
                             )}
 
                             <div className="separador"></div>

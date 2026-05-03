@@ -1,7 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateModalidadeDto } from '../dto/create-modalidade.dto';
 import { UpdateModalidadeDto } from '../dto/update-modalidade.dto';
-import { PrismaService } from '../../prisma/prisma.service'; // Ajusta o caminho conforme o teu projeto
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class ModalidadeService {

@@ -20,18 +20,18 @@ export class CoachingService {
   async inscreverAluno(idDisponibilidade: number, body: any) {
 
     const disponibilidadeInfo = await this.prisma.disponibilidade.findUnique({
-      where: {ID_Disponibilidade: idDisponibilidade},
-      select: {MaxAlunos: true}
+      where: { ID_Disponibilidade: idDisponibilidade },
+      select: { MaxAlunos: true }
     });
 
-    if ( !disponibilidadeInfo || (disponibilidadeInfo.MaxAlunos ?? 0) <= 0 ) {
+    if (!disponibilidadeInfo || (disponibilidadeInfo.MaxAlunos ?? 0) <= 0) {
       throw new Error('Não existem vagas disponíveis para esta sessão.');
-      
-      
+
+
     }
 
     let coaching = await this.prisma.coaching.findFirst({
-      //where: { ID_Disponibilidade: idDisponibilidade },
+      where: { ID_Disponibilidade: idDisponibilidade },
     });
 
     if (!coaching) {
@@ -55,14 +55,14 @@ export class CoachingService {
         ID_Aluno: body.idAluno,
         Observacoes: body.obs || null,
         Data_Inscricao: new Date(),
-        //ValorEmFalta: body.valorEmFalta,
-        //ID_Enc_Educacao: body.idEncEducacao,
+        ValorEmFalta: body.valorEmFalta,
+        ID_Enc_Educacao: body.idEncEducacao,
       },
     });
 
     await this.prisma.disponibilidade.update({
-      where: { 
-        ID_Disponibilidade: idDisponibilidade 
+      where: {
+        ID_Disponibilidade: idDisponibilidade
       },
       data: {
         MaxAlunos: {
@@ -117,8 +117,8 @@ export class CoachingService {
 
     if (coaching && coaching.ID_Disponibilidade) {
       await this.prisma.disponibilidade.update({
-        where: { 
-          ID_Disponibilidade: coaching.ID_Disponibilidade 
+        where: {
+          ID_Disponibilidade: coaching.ID_Disponibilidade
         },
         data: {
           MaxAlunos: {
@@ -170,7 +170,7 @@ export class CoachingService {
       idCoaching: session.ID_Coaching,
       nomeProfessor: session.Professor?.Pessoa?.Nome || 'N/A',
       data: session.Inicio_Coaching ? session.Inicio_Coaching.toLocaleDateString('pt-PT') : 'N/A',
-      horario: session.Inicio_Coaching && session.Duracao 
+      horario: session.Inicio_Coaching && session.Duracao
         ? `${session.Inicio_Coaching.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} - ${(new Date(session.Inicio_Coaching.getTime() + session.Duracao * 60000)).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
         : 'N/A',
       modalidade: session.Disponibilidade?.Modalidade || 'N/A',
@@ -211,11 +211,10 @@ export class CoachingService {
       },
     });
 
-    // Por validar (assumindo que estado 'Pendente' é por validar)
     const porValidar = await this.prisma.coaching.count({
       where: {
         Inicio_Coaching: {
-          gte: now,
+          lt: now,
         },
         Estado_Coaching: {
           Tipo: 'Pendente',
@@ -243,4 +242,95 @@ export class CoachingService {
       realizadasMes,
     };
   }
+
+  async getAlunoDetalhes(idAluno: number) {
+    const aluno = await this.prisma.aluno.findUnique({
+      where: { ID_aluno: idAluno },
+      include: {
+        Enc_Educacao: {
+          include: {
+            Pessoa: true,
+          },
+        },
+      },
+    });
+
+    if (!aluno) {
+      throw new Error('Aluno não encontrado.');
+    }
+
+    return {
+      idAluno: aluno.ID_aluno,
+      nome: aluno.Nome,
+      dataNascimento: aluno.Data_Nascimento?.toISOString().split('T')[0] ?? null,
+      nif: aluno.NIF,
+      email: aluno.Mail ?? null,
+      contacto: aluno.Contato ?? null,
+      menorIdade: aluno.Menor_Idade,
+      encarregado: aluno.Enc_Educacao
+        ? {
+            nome: aluno.Enc_Educacao.Pessoa?.Nome || 'Sem encarregado',
+            email: aluno.Enc_Educacao.Pessoa?.Email || null,
+            contacto: aluno.Enc_Educacao.Pessoa?.Contacto || null,
+          }
+        : null,
+    };
+  }
+  /**
+     * Obtém as marcações de Coaching (Agenda pura, sem faturação)
+     */
+  async getMarcacoesProfessor(role: string, userId: number) {
+
+    // 1. Filtro de Segurança
+    let filtroCoaching: any = {};
+
+    // Se for Professor, só vê as aulas onde ele é o professor atribuído
+    if (role === 'Professor') {
+      filtroCoaching = {
+        Professor: {
+          Pessoa: {
+            Utilizador: {
+              ID_Utilizador: userId,
+            },
+          },
+        },
+      };
+    }
+
+    // 2. Consulta à tabela PRINCIPAL de Coaching
+    const marcacoes = await this.prisma.coaching.findMany({
+      where: filtroCoaching,
+      include: {
+        Sala: true,
+        Estado_Coaching: true,             // Traz os dados da Sala
+        Coaching_Aluno: {       // Entra na tabela de ligação para ir buscar os Alunos
+          include: {
+            Aluno: true,
+          },
+        },
+      },
+      orderBy: {
+        Inicio_Coaching: 'asc', // Ordena cronologicamente
+      },
+    });
+
+    return marcacoes.map((aula) => {
+      const nomesAlunos = aula.Coaching_Aluno
+        .map(ligacao => ligacao.Aluno?.Nome)
+        .filter(nome => nome !== undefined);
+
+      return {
+        idCoaching: aula.ID_Coaching,
+        dataInicio: aula.Inicio_Coaching,
+        duracaoMinutos: aula.Duracao,
+        sala: aula.Sala?.Nome || 'Sem sala atribuída',
+        modalidade: 'Sessão de Coaching',
+        alunos: nomesAlunos,
+        totalAlunos: nomesAlunos.length,
+        estado: aula.Estado_Coaching?.Tipo || 'PENDENTE'
+      };
+    });
+  }
+
 }
+

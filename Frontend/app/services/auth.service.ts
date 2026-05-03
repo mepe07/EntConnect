@@ -1,5 +1,6 @@
 import { jwtDecode } from "jwt-decode";
 import type { User } from "~/models/interfaces/user.interface";
+import { API_BASE_URL } from "../../src/config/api.config";
 
 interface JwtPayloadBase {
     exp?: number;
@@ -8,7 +9,9 @@ interface JwtPayloadBase {
 export class AuthService {
     private _userToken: string | null = null;
     private _userInfo: User | null = null;
-    private _apiUrl = 'http://localhost:3000'; // <- O URL do teu backend
+    // URL base da API.
+    // Vem do ficheiro .env do frontend através de VITE_API_URL.
+    private _apiUrl = API_BASE_URL;
     private readonly tokenStorageKey = 'entconnect_token';
 
     async login(username: string, password: string) {

@@ -1,7 +1,10 @@
 import { authService } from './auth.service';
+import { API_BASE_URL } from "../../src/config/api.config";
 
 export class AdminService {
-    private _apiUrl = 'http://localhost:3000';
+    // URL base da API.
+    // Vem do ficheiro .env do frontend através de VITE_API_URL.
+    private _apiUrl = API_BASE_URL;
 
     /**
      * Função auxiliar para gerar os headers comuns, incluindo o Token de segurança.
@@ -51,6 +54,19 @@ export class AdminService {
 
         if (!response.ok) {
             throw new Error('Erro ao remover aluno');
+        }
+
+        return response.json();
+    }
+
+    async getAlunoDetalhes(idAluno: number): Promise<any> {
+        const response = await fetch(`${this._apiUrl}/coaching/aluno/${idAluno}/detalhes`, {
+            method: 'GET',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao buscar detalhes do aluno');
         }
 
         return response.json();

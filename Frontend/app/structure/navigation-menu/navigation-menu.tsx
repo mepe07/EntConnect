@@ -58,6 +58,7 @@ const MENU_CONFIG: MenuConfig = {
                 { titulo: 'Faturação', path: '/relatorios/faturacao' },
                 { titulo: 'Histórico Coaching', path: '/relatorios/historico-coaching' },
                 { titulo: 'Estatísticas', path: '/relatorios/estatisticas' },
+                { titulo: 'Consultar Agendas', path: '/relatorioCoaching' },
             ]
         },
         { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' }
@@ -81,8 +82,7 @@ const MENU_CONFIG: MenuConfig = {
             icone: 'fa-solid fa-file-invoice-dollar',
             submenu: [
                 { titulo: 'Faturação', path: '/relatorios/faturacao' },
-                { titulo: 'Coaching', path: '/relatorios/coaching' },
-                { titulo: 'Estatísticas', path: '/relatorios/estatisticas' },
+                { titulo: 'Coaching', path: '/relatorios/relatorioCoaching' },
             ]
         },
         {
@@ -98,6 +98,7 @@ const MENU_CONFIG: MenuConfig = {
     // --- Perfil: Encarregado de Educação ---
     encarregado: [
         { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
+        { titulo: 'Educandos', path: '/educandos', icone: 'fa-solid fa-user-graduate' },
         {
             titulo: 'Coaching',
             icone: 'fa-solid fa-handshake-angle',
@@ -113,7 +114,6 @@ const MENU_CONFIG: MenuConfig = {
             icone: 'fa-solid fa-file-invoice-dollar',
             submenu: [
                 { titulo: 'Faturação', path: '/relatorios/faturacao' },
-                { titulo: 'Estatísticas', path: '/relatorios/estatisticas' },
             ]
         },
         {
@@ -176,7 +176,9 @@ export function NavigationMenu() {
     return (
         <nav className="navigation-menu">
             <ul>
-                {menuAtivo.map((item, index) => {
+                {/* {menuAtivo.map((item, index) => { */}
+                {(menuAtivo || []).map((item, index) => {
+                    
                     
                     // Caso A: Item de navegação simples (sem submenu)
                     if (item.path && !item.submenu) {

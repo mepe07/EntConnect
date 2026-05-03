@@ -2,10 +2,12 @@
 
 import { authService } from './auth.service';
 
+import { API_BASE_URL } from "../../src/config/api.config";
+
 class FaturacaoService {
-    // 1. A MORADA COMPLETA: Dizemos explicitamente onde mora o NestJS
-    // Nota: Removi o '/api' porque o teu NestJS (no main.ts) não tem prefixo global.
-    private readonly API_URL = 'http://localhost:3000/faturacao';
+    // URL base das rotas de faturação.
+    // A origem da API vem do .env do frontend através de VITE_API_URL.
+    private readonly API_URL = `${API_BASE_URL}/faturacao`;
 
     async getRelatorio(inicio: string, fim: string) {
         

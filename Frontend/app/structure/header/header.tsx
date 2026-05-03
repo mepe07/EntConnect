@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router"; // Importado o hook de navegação
 import { authService } from "~/services/auth.service";
+import { API_BASE_URL } from "~/config/api.config";
 import logoHeader from "../../assets/media/logo_header.png";
 import './header.scss';
 import type { User } from "~/models/interfaces/user.interface";
@@ -36,8 +37,8 @@ export function Header() {
             if (!currentUserId) return;
             
             try {
-                const token = localStorage.getItem('token') || authService.getToken(); 
-                const response = await fetch(`http://localhost:3000/utilizador/${currentUserId}/foto`, {
+                const token = localStorage.getItem('entconnect_token') || authService.getToken(); 
+                const response = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/foto`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`, 

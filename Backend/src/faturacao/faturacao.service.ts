@@ -217,13 +217,86 @@ export class FaturacaoService {
         });
     }
 
+/**
+     * Relatório de histórico de coaching com filtro de segurança.
+     */
+    async getHistoricoCoaching(
+        dataInicio: Date, 
+        dataFim: Date, 
+        role: string, 
+        userId: number
+    ) {
+        // 1. Criamos o filtro base para o Coaching (Datas)
+        const filtroCoaching: Prisma.CoachingWhereInput = {
+            Inicio_Coaching: {
+                gte: dataInicio,
+                lte: this.fimDoDia(dataFim),
+            },
+        };
+
+        // 2. APLICAR SEGURANÇA: Se for Professor, ele só vê as suas próprias sessões
+        if (role === 'Professor') {
+            filtroCoaching.Professor = {
+                Pessoa: {
+                    Utilizador: {
+                        ID_Utilizador: userId,
+                    },
+                },
+            };
+        }
+
+        // 3. O Prisma executa a pesquisa filtrada
+        const aulasBD = await this.prisma.coaching_Aluno.findMany({
+            where: {
+                Coaching: filtroCoaching, // Aplicamos aqui a nossa "tranca"
+            },
+            include: {
+                Aluno: true,
+                Coaching: {
+                    include: {
+                        Professor: {
+                            include: {
+                                Pessoa: true,
+                            },
+                        },
+                        Sala: true,
+                        Estado_Coaching: true,
+                    },
+                },
+            },
+            orderBy: {
+                Coaching: {
+                    Inicio_Coaching: 'asc',
+                },
+            },
+        });
+
+        // 4. O mapeamento dos dados continua igual para o Frontend não notar a diferença
+        return aulasBD.map((registo) => {
+            const dataCrua = registo.Coaching?.Inicio_Coaching;
+            const dataDaAula = dataCrua ? new Date(dataCrua) : new Date();
+            const estadoRealDaDB = registo.Coaching?.Estado_Coaching?.Tipo || 'Sem Estado';
+
+            return {
+                idCoaching: registo.ID_Coaching,
+                idAluno: registo.ID_Aluno,
+                nomeAluno: registo.Aluno?.Nome || 'Aluno desconhecido',
+                nomeProfessor: registo.Coaching?.Professor?.Pessoa?.Nome || 'Professor desconhecido',
+                nomeSala: registo.Coaching?.Sala?.Nome || 'Sem sala',
+                dataAula: dataDaAula.toISOString(),
+                duracaoMinutos: registo.Coaching?.Duracao || 0,
+                estadoAula: estadoRealDaDB,
+            };
+        });
+    }
+
     /**
      * Relatório de histórico de coaching.
      *
      * Este relatório não depende diretamente dos valores financeiros,
      * por isso mantemos a lógica focada nos dados da aula.
      */
-    async getHistoricoCoaching(dataInicio: Date, dataFim: Date) {
+   /* async getHistoricoCoaching(dataInicio: Date, dataFim: Date) {
         const aulasBD = await this.prisma.coaching_Aluno.findMany({
             where: {
                 Coaching: {
@@ -271,7 +344,7 @@ export class FaturacaoService {
             };
         });
     }
-
+        */
     /**
      * Dashboard financeiro.
      *

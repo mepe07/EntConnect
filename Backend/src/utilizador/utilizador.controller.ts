@@ -1,19 +1,20 @@
 import { 
   Controller, Get, Post, Put, Body, Patch, Param, Delete, 
-  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator,Query, Res, HttpStatus
+  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator,Query, Res, UseGuards, Request, HttpStatus
 } from '@nestjs/common'; 
 import { FileInterceptor } from '@nestjs/platform-express';
 
 // Swagger
-import { 
-  ApiOperation, ApiTags, ApiResponse, ApiParam, ApiConsumes, ApiBody 
+import {
+  ApiOperation, ApiTags, ApiResponse, ApiParam, ApiConsumes, ApiBody
 } from '@nestjs/swagger';
 // Serviços
 import { UtilizadorService } from './utilizador.service';
 import { DispobilidadeService } from './professor/Disponibilidade.service';
 import { UtilizadorImportService } from './ImportUsers/utilizador-import.service';
-import { BlobsService } from '../Infraestrutura/Blobs/blobs.service'; 
+import { BlobsService } from '../Infraestrutura/Blobs/blobs.service';
 import { ProfessorService } from './professor/professor.service';
+import { AgendamentosService } from './professor/Agendamentos.service'
 import type { Response } from 'express';
 
 // DTOs
@@ -31,6 +32,12 @@ import { MarcacoesService } from './EE/marcacoes.service';
 // Tipagem do Multer (Se não tiver o @types/multer instalado, mas ajuda o TS)
 import 'multer';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { UpsertEducandoDto } from './dto/upsert-educando.dto';
+import { AuthGuard } from '../auth/auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../auth/enums/roles.enum';
+import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 
 // ============================================================================
 // CONTROLADOR DE UTILIZADORES
@@ -44,33 +51,83 @@ export class UtilizadorController {
     private readonly dispobilidadeService: DispobilidadeService,
     private readonly marcacoesService: MarcacoesService,
     private readonly blobsService: BlobsService,
-  ) {}
+    private readonly agendamentosService: AgendamentosService
+  ) { }
 
   @Get()
-  @ApiOperation({summary: 'Listar todos os utilizadores'})
-  @ApiResponse({status:200})
+  @ApiOperation({ summary: 'Listar todos os utilizadores' })
+  @ApiResponse({ status: 200 })
   async getAllUsers() {
     return this.utilizadorService.getAllUsers();
+  }
+
+  @Get('alunos/sem-encarregado')
+  @ApiOperation({ summary: 'Listar alunos sem encarregado de educacao associado' })
+  @ApiResponse({ status: 200 })
+  async getAlunosSemEncarregado() {
+    return this.utilizadorService.getAlunosSemEncarregado();
+  }
+
+  @Get('enc-educacao/me/alunos')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.ENC_EDUCACAO)
+  @ApiOperation({ summary: 'Listar os educandos do encarregado autenticado' })
+  async getMeusEducandos(@Request() req: { user: UtilizadorAutenticado }) {
+    return this.utilizadorService.getAlunosByEE(req.user.idPessoa);
+  }
+
+  @Post('enc-educacao/me/alunos')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.ENC_EDUCACAO)
+  @ApiOperation({ summary: 'Adicionar um educando ao encarregado autenticado' })
+  async criarMeuEducando(
+    @Request() req: { user: UtilizadorAutenticado },
+    @Body() dto: UpsertEducandoDto,
+  ) {
+    return this.utilizadorService.criarEducando(req.user.idPessoa, dto);
+  }
+
+  @Put('enc-educacao/me/alunos/:idAluno')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.ENC_EDUCACAO)
+  @ApiOperation({ summary: 'Editar um educando do encarregado autenticado' })
+  async atualizarMeuEducando(
+    @Request() req: { user: UtilizadorAutenticado },
+    @Param('idAluno', ParseIntPipe) idAluno: number,
+    @Body() dto: UpsertEducandoDto,
+  ) {
+    return this.utilizadorService.atualizarEducando(req.user.idPessoa, idAluno, dto);
+  }
+
+  @Delete('enc-educacao/me/alunos/:idAluno')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.ENC_EDUCACAO)
+  @ApiOperation({ summary: 'Remover a associacao de um educando do encarregado autenticado' })
+  async removerMeuEducando(
+    @Request() req: { user: UtilizadorAutenticado },
+    @Param('idAluno', ParseIntPipe) idAluno: number,
+  ) {
+    return this.utilizadorService.removerEducando(req.user.idPessoa, idAluno);
   }
 
   @Get('download-template')
   @ApiOperation({ summary: 'Faz o download do ficheiro CSV modelo para importar utilizadores' })
   async downloadTemplate(@Res() res: Response) {
-      try {
-          const conteudoCsv = await this.blobsService.lerFicheiroTexto('templates', 'Alunos.csv');
+    try {
+      const conteudoCsv = await this.blobsService.lerFicheiroTexto('templates', 'Alunos.csv');
 
-          res.set({
-              'Content-Type': 'text/csv',
-              'Content-Disposition': 'attachment; filename="modelo_utilizadores.csv"',
-          });
+      res.set({
+        'Content-Type': 'text/csv',
+        'Content-Disposition': 'attachment; filename="modelo_utilizadores.csv"',
+      });
 
-          res.send(conteudoCsv); 
-      } catch (error) {
-          console.error('Erro ao fazer download do modelo:', error);
-          res.status(500).send('Erro ao obter o ficheiro modelo.');
-      }
+      res.send(conteudoCsv);
+    } catch (error) {
+      console.error('Erro ao fazer download do modelo:', error);
+      res.status(500).send('Erro ao obter o ficheiro modelo.');
+    }
   }
-  
+
   @Get(':id')
   @ApiOperation({ summary: 'Obter um utilizador pelo ID (inclui dados pessoais)' })
   @ApiResponse({ status: 200, description: 'Utilizador encontrado.' })
@@ -80,26 +137,66 @@ export class UtilizadorController {
   }
 
   @Patch(':id/block')
-  @ApiOperation({summary: 'Bloquear um utilizador'})
-  @ApiResponse({status:200})
+  @ApiOperation({ summary: 'Bloquear um utilizador' })
+  @ApiResponse({ status: 200 })
   async blockUser(@Param('id') id: string) {
     await this.utilizadorService.blockUser(+id);
-    return {message: `Utilizador com ID ${id} bloqueado com sucesso.`};
+    return { message: `Utilizador com ID ${id} bloqueado com sucesso.` };
   }
 
   @Patch(':id/unlock')
-  @ApiOperation({summary: 'Desbloquear um utilizador'})
-  @ApiResponse({status:200})
+  @ApiOperation({ summary: 'Desbloquear um utilizador' })
+  @ApiResponse({ status: 200 })
   async unlockUser(@Param('id') id: string) {
     await this.utilizadorService.unlockUser(+id);
-    return {message: `Utilizador com ID ${id} desbloqueado com sucesso.`};
+    return { message: `Utilizador com ID ${id} desbloqueado com sucesso.` };
+  }
+
+  /**
+   * 
+   * @param idUtilizador  
+   * @returns O id do role do utilizador em questão
+   */
+  @Get(':id/roles-ids')
+  @ApiOperation({ summary: 'Obter os IDs de Professor, Enc. Educação e Coordenador de um utilizador' })
+  @ApiResponse({ status: 200, description: 'IDs das roles retornados com sucesso.' })
+  @ApiResponse({ status: 404, description: 'Utilizador não encontrado.' })
+  async getRolesIds(@Param('id', ParseIntPipe) id: number) {
+    return this.utilizadorService.getRolesIds(id);
   }
 
   @Get(':id/EE/marcacoes')
-  @ApiOperation({summary: 'Obter marcações por EE'})
-  @ApiResponse({status:200})
+  @ApiOperation({ summary: 'Obter marcações por EE' })
+  @ApiResponse({ status: 200 })
   async getMarcacoesbyEE(@Param('id') id: string) {
     return this.marcacoesService.getMarcacoesbyEE(+id);
+  }
+
+  @Get(':id/EE/confirmacoes')
+  @ApiOperation({ summary: 'Obter sessões passadas por EE para confirmação' })
+  @ApiResponse({ status: 200, description: 'Sessões para confirmação retornadas com sucesso.' })
+  async getConfirmacoesByEE(@Param('id') id: string) {
+    return this.marcacoesService.getConfirmacoesByEE(+id);
+  }
+
+  @Patch(':id/EE/confirmacoes/:idCoaching')
+  @ApiOperation({ summary: 'Confirmar realização ou não realização de uma sessão de coaching como EE' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        idEstadoCoaching: { type: 'number', example: 13 },
+      },
+      required: ['idEstadoCoaching'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Estado do coaching atualizado com sucesso.' })
+  async confirmarSessaoByEE(
+    @Param('id') id: string,
+    @Param('idCoaching', ParseIntPipe) idCoaching: number,
+    @Body('idEstadoCoaching', ParseIntPipe) idEstadoCoaching: number,
+  ) {
+    return this.marcacoesService.confirmarSessaoByEE(+id, idCoaching, idEstadoCoaching);
   }
 
   /**
@@ -118,11 +215,11 @@ export class UtilizadorController {
     description: 'Ficheiro CSV com os dados dos utilizadores a importar',
     schema: {
       type: 'object',
-      properties: { 
-        file: { 
-          type: 'string', 
-          format: 'binary' 
-        } 
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary'
+        }
       }
     }
   })
@@ -144,7 +241,7 @@ export class UtilizadorController {
       return resultadoImportacao;
     } catch (error) {
       await this.blobsService.apagarFicheiro('importar-csv', file.originalname);
-      throw error; 
+      throw error;
     }
   }
 
@@ -190,8 +287,8 @@ export class UtilizadorController {
 
     const nomeParaAzure = `user${id}`;
     const urlGerado = await this.blobsService.uploadFicheiro(
-      'fotos-pessoas', 
-      file, 
+      'fotos-pessoas',
+      file,
       nomeParaAzure
     );
 
@@ -205,7 +302,7 @@ export class UtilizadorController {
   async getFotoPerfil(@Param('id') id: string) {
     return this.utilizadorService.getFotoPerfil(+id);
   }
-  
+
   @Patch(':id/removephoto')
   @ApiOperation({ summary: 'Remover a foto de perfil do utilizador (coloca a null)' })
   @ApiResponse({ status: 200, description: 'A foto de perfil foi removida com sucesso.' })
@@ -232,7 +329,7 @@ export class UtilizadorController {
   }
   
   // NOVO ENDPOINT DE ATUALIZAÇÃO PESSOAL COM DTO E SWAGGER
- @Put(':id/update-cargo')
+  @Put(':id/update-cargo')
   @ApiOperation({ summary: 'Atualizar o cargo do utilizador' })
   @ApiParam({ name: 'id', description: 'ID do Utilizador', example: 1 })
   @ApiResponse({ status: 200, description: 'Cargo atualizado com sucesso.' })
@@ -240,8 +337,9 @@ export class UtilizadorController {
   async updateCargo(
     @Param('id', ParseIntPipe) id: number,
     @Body('cargo') cargo: string,
+    @Body('confirmarRemocaoAssociacoes') confirmarRemocaoAssociacoes?: boolean,
   ) {
-    return this.utilizadorService.updateCargo(id, cargo);
+    return this.utilizadorService.updateCargo(id, cargo, confirmarRemocaoAssociacoes === true);
   }
 
   @Delete(':id')
@@ -253,10 +351,10 @@ export class UtilizadorController {
     return this.utilizadorService.deleteUser(id);
   }
 
- @Put(':id/update-pessoal')
-  @ApiOperation({ 
-    summary: 'Atualizar dados pessoais (Nome, NIF e Contacto)', 
-    description: 'Permite que o utilizador altere o seu Nome, NIF e Contacto Telefónico na tabela Pessoa.' 
+  @Put(':id/update-pessoal')
+  @ApiOperation({
+    summary: 'Atualizar dados pessoais (Nome, NIF e Contacto)',
+    description: 'Permite que o utilizador altere o seu Nome, NIF e Contacto Telefónico na tabela Pessoa.'
   })
   @ApiParam({ name: 'id', description: 'ID do Utilizador', example: 1 })
   @ApiBody({ type: UpdatePessoalDto })
@@ -319,10 +417,54 @@ export class UtilizadorController {
   }
 
   @Get('enc-educacao/:id/alunos')
-  @ApiOperation({summary: 'Obter alunos de um Encarregado de Educação'})
+  @ApiOperation({ summary: 'Obter alunos de um Encarregado de Educação' })
   @ApiParam({ name: 'id', description: 'ID do Encarregado de Educação' })
   async getAlunosByEE(@Param('id') id: string) {
     return this.utilizadorService.getAlunosByEE(+id);
+  }
+
+  @Post('enc-educacao/:id/alunos')
+  @ApiOperation({ summary: 'Adicionar um educando a um Encarregado de Educacao' })
+  @ApiParam({ name: 'id', description: 'ID do Encarregado de Educacao' })
+  async criarEducando(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpsertEducandoDto,
+  ) {
+    return this.utilizadorService.criarEducando(id, dto);
+  }
+
+  @Put('enc-educacao/:id/alunos/:idAluno')
+  @ApiOperation({ summary: 'Editar um educando de um Encarregado de Educacao' })
+  @ApiParam({ name: 'id', description: 'ID do Encarregado de Educacao' })
+  @ApiParam({ name: 'idAluno', description: 'ID do aluno' })
+  async atualizarEducando(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('idAluno', ParseIntPipe) idAluno: number,
+    @Body() dto: UpsertEducandoDto,
+  ) {
+    return this.utilizadorService.atualizarEducando(id, idAluno, dto);
+  }
+
+  @Patch('enc-educacao/:id/alunos/:idAluno/associar')
+  @ApiOperation({ summary: 'Associar um aluno sem encarregado a um Encarregado de Educacao' })
+  @ApiParam({ name: 'id', description: 'ID do Encarregado de Educacao' })
+  @ApiParam({ name: 'idAluno', description: 'ID do aluno' })
+  async associarEducando(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('idAluno', ParseIntPipe) idAluno: number,
+  ) {
+    return this.utilizadorService.associarEducando(id, idAluno);
+  }
+
+  @Delete('enc-educacao/:id/alunos/:idAluno')
+  @ApiOperation({ summary: 'Remover a associacao de um educando a um Encarregado de Educacao' })
+  @ApiParam({ name: 'id', description: 'ID do Encarregado de Educacao' })
+  @ApiParam({ name: 'idAluno', description: 'ID do aluno' })
+  async removerEducando(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('idAluno', ParseIntPipe) idAluno: number,
+  ) {
+    return this.utilizadorService.removerEducando(id, idAluno);
   }
 
   @Patch(':id/password')
@@ -367,37 +509,76 @@ export class UtilizadorController {
   }
 
   /**
+   * 
+   * @param idProfessor 
+   * @returns Os agendamentos futuros do professor
+   */
+  @Get('professor/:id/agendamentos')
+  @ApiOperation({ summary: 'Obter os agendamentos de um professor' })
+  @ApiResponse({ status: 200 })
+  async getAgendamentosProfessor(
+    @Param('id') idProfessor: string
+  ) {
+    return this.agendamentosService.getAgendamentosProfessor(+idProfessor);
+  }
+
+  @Get('professor/:id/confirmacoes')
+  @ApiOperation({ summary: 'Obter as sessões passadas do professor para confirmação' })
+  @ApiResponse({ status: 200, description: 'Sessões a confirmar retornadas com sucesso.' })
+  async getConfirmacoesProfessor(
+    @Param('id') idProfessor: string
+  ) {
+    return this.agendamentosService.getConfirmacoesProfessor(+idProfessor);
+  }
+
+  @Patch('professor/:id/confirmacoes/:idCoaching')
+  @ApiOperation({ summary: 'Confirmar realização ou não realização de uma sessão de coaching' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        idEstadoCoaching: { type: 'number', example: 13 },
+      },
+      required: ['idEstadoCoaching'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Estado do coaching atualizado com sucesso.' })
+  async confirmarSessaoProfessor(
+    @Param('id') idProfessor: string,
+    @Param('idCoaching', ParseIntPipe) idCoaching: number,
+    @Body('idEstadoCoaching', ParseIntPipe) idEstadoCoaching: number,
+  ) {
+    return this.agendamentosService.atualizarConfirmacaoProfessor(+idProfessor, idCoaching, idEstadoCoaching);
+  }
+
+  /**
    * Obtém a lista de disponibilidades dos professores.
    * @returns A lista de disponibilidades dos professores.
    */
   @Get('professor/disponibilidade')
-  @ApiOperation({summary: 'Obter disponibilidades dos professores'})
-  @ApiResponse({status:200})
+  @ApiOperation({ summary: 'Obter disponibilidades dos professores' })
+  @ApiResponse({ status: 200 })
   async getDisponibilidades() {
     return this.dispobilidadeService.getAvailabilities();
   }
 
-  @Post('professor/:id/adicionar-disponibilidade')
-  @ApiOperation({summary: 'Criar disponibilidade para um professor'})
-  @ApiParam({ name: 'id', description: 'Identificador único (ID) do professor', example: 1, type: Number })
-  @ApiResponse({status:201})
-  async createDisponibility(
-    @Param('id') id: string, 
-    @Body() createDisponibilidadeDto: CreateDisponibilidadeDto
-  ) {
-    return this.dispobilidadeService.createAvailability(+id, createDisponibilidadeDto);
+  @Post('professor/adicionar-disponibilidade')
+  @ApiOperation({ summary: 'Adicionar nova disponibilidade de calendário para o professor' })
+  @ApiResponse({ status: 201, description: 'Disponibilidade criada com sucesso.' })
+  async adicionarDisponibilidade(@Body() dto: CreateDisponibilidadeDto) {
+    return this.dispobilidadeService.criarDisponibilidade(dto);
   }
 
   @Patch('professor/disponibilidade/:id/atualizar-disponibilidade')
-  @ApiOperation({summary: 'Atualizar disponibilidade - Ex: aprovar'})
+  @ApiOperation({ summary: 'Atualizar disponibilidade - Ex: aprovar' })
   @ApiParam({ name: 'id', description: 'Identificador único (ID) da Disponibilidade', example: 1, type: Number })
-  @ApiResponse({status:200})
+  @ApiResponse({ status: 200 })
   async updateDisponibility(
     @Param('id') idDisponibilidade: string,
     @Body() updateDisponibilidadeDto: UpdateDisponibilidadeDto
   ) {
     return this.dispobilidadeService.updateAvailability(+idDisponibilidade, updateDisponibilidadeDto);
-  } 
+  }
 } // <-- Fim do UtilizadorController
 
 
@@ -407,8 +588,8 @@ export class UtilizadorController {
 @ApiTags('Professores')
 @Controller('professor')
 export class ProfessorController {
-  
-  constructor(private readonly professorService: ProfessorService) {}
+
+  constructor(private readonly professorService: ProfessorService) { }
 
   @Post()
   @ApiOperation({ summary: 'Criar um novo professor (e a respetiva pessoa)' })
@@ -418,7 +599,7 @@ export class ProfessorController {
     return this.professorService.create(createProfessorDto);
   }
 
-// ENDPOINT PARA LISTAR COM PAGINAÇÃO
+  // ENDPOINT PARA LISTAR COM PAGINAÇÃO
   @Get()
   @ApiOperation({ summary: 'Listar professores com paginação (20 por página)' })
   findAll(@Query('page') page: string) {
