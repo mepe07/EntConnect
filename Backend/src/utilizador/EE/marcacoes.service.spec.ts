@@ -13,6 +13,7 @@ describe('MarcacoesService', () => {
       count: jest.fn(),
     },
     coaching: {
+      findUnique: jest.fn(),
       update: jest.fn(),
     },
   };
@@ -81,20 +82,59 @@ describe('MarcacoesService', () => {
     }));
   });
 
-  it('deve confirmar sessão e finalizar quando não há pendentes', async () => {
+  it('deve confirmar o EE quando não há pendentes sem concluir se o professor ainda não confirmou', async () => {
     prismaMock.coaching_Aluno.count.mockResolvedValue(0);
+    prismaMock.coaching.findUnique.mockResolvedValue({
+      ID_Estado_Coaching: 7,
+      confirmacao_prof: false,
+    });
 
     await expect(service.confirmarSessaoByEE(10, 5, 13)).resolves.toEqual({
-      message: 'Sessão finalizada com sucesso (todos os alunos confirmaram).',
+      message: 'Confirmação do encarregado registada. A aguardar confirmação do professor.',
     });
     expect(prismaMock.coaching_Aluno.updateMany).toHaveBeenCalledWith({
       where: { ID_Enc_Educacao: 10, ID_Coaching: 5 },
       data: { confirmado: true },
     });
+    expect(prismaMock.coaching.findUnique).toHaveBeenCalledWith({
+      where: { ID_Coaching: 5 },
+      select: {
+        ID_Estado_Coaching: true,
+        confirmacao_prof: true,
+      },
+    });
+    expect(prismaMock.coaching.update).toHaveBeenCalledWith({
+      where: { ID_Coaching: 5 },
+      data: { ID_Estado_Coaching: 7, confirmacao_EE: true },
+    });
+  });
+
+  it('deve concluir a sessão quando todos os alunos e o professor já confirmaram', async () => {
+    prismaMock.coaching_Aluno.count.mockResolvedValue(0);
+    prismaMock.coaching.findUnique.mockResolvedValue({
+      ID_Estado_Coaching: 7,
+      confirmacao_prof: true,
+    });
+
+    await expect(service.confirmarSessaoByEE(10, 5, 13)).resolves.toEqual({
+      message: 'Sessão finalizada com sucesso (professor e encarregado confirmaram).',
+    });
+
     expect(prismaMock.coaching.update).toHaveBeenCalledWith({
       where: { ID_Coaching: 5 },
       data: { ID_Estado_Coaching: 13, confirmacao_EE: true },
     });
+  });
+
+  it('deve manter a sessão sem confirmacao_EE global enquanto houver alunos pendentes', async () => {
+    prismaMock.coaching_Aluno.count.mockResolvedValue(1);
+
+    await expect(service.confirmarSessaoByEE(10, 5, 13)).resolves.toEqual({
+      message: 'Confirmação registada. A aguardar confirmação dos restantes alunos.',
+    });
+
+    expect(prismaMock.coaching.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.coaching.update).not.toHaveBeenCalled();
   });
 
   it('deve rejeitar estado inválido e não atualizar', async () => {
