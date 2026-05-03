@@ -106,21 +106,18 @@ export default function VerConfirmacoes() {
                     },
                     actions: [
                         {
-                            label: 'Ver',
                             icon: 'fa-solid fa-eye',
                             tooltip: 'Ver detalhes da sessão',
                             config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Theme, size: SizeEnum.Regular },
                             onClick: (row: any) => abrirModal(row),
                         },
                         {
-                            label: 'Realizada',
                             icon: 'fa-solid fa-check',
                             tooltip: 'Confirmar que a sessão foi realizada',
                             config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Theme, size: SizeEnum.Regular },
                             onClick: (row: any) => handleConfirmacao(row, 13),
                         },
                         {
-                            label: 'Não aconteceu',
                             icon: 'fa-solid fa-xmark',
                             tooltip: 'Indicar que a sessão não aconteceu',
                             config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Error, size: SizeEnum.Regular },

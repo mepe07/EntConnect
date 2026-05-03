@@ -1,36 +1,39 @@
-// Ficheiro: button.component.tsx
 import type { ButtonComponentProps } from './button-props.interface';
 import './button.component.scss';
 
-export function ButtonComponent({ 
-    label, 
-    icon, 
-    tooltip, 
-    disabled, 
-    config, 
-    onClick 
+export function ButtonComponent({
+    label,
+    icon,
+    tooltip,
+    ariaLabel,
+    disabled,
+    buttonType = 'button',
+    form,
+    className = '',
+    style,
+    config,
+    onClick
 }: ButtonComponentProps) {
-    // Definimos as classes de forma dinâmica e limpa
     const typeClass = config?.type ?? '';
     const colorClass = config?.color ?? '';
     const sizeClass = config?.size ?? '';
-    
-    // Unimos todas as classes num único array e filtramos espaços vazios
-    const classes = ['button-container', typeClass, colorClass, sizeClass].join(' ').trim();
+    const classes = ['button-container', typeClass, colorClass, sizeClass, className]
+        .filter(Boolean)
+        .join(' ');
 
     return (
-        <button 
-            type="button" // Evita que o botão submeta formulários por acidente
-            className={classes} 
-            disabled={disabled} // Agora o 'disabled' funciona mesmo!
-            onClick={onClick} 
+        <button
+            type={buttonType}
+            form={form}
+            className={classes}
+            disabled={disabled}
+            onClick={onClick}
             title={tooltip}
+            aria-label={ariaLabel ?? tooltip}
+            style={style}
         >
-            {/* Se houver ícone, renderiza. Não forçamos o prefixo 'fa' aqui */}
             {icon && <i className={icon} aria-hidden="true" />}
-            
-            {/* Se houver label, renderiza dentro de um span para melhor controlo de CSS */}
             {label && <span>{label}</span>}
         </button>
     );
-} 
+}

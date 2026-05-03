@@ -92,6 +92,7 @@ header {
                     }
                 }
 
+                .account-link,
                 .logout-link {
                     display: block;
                     width: 100%;
@@ -101,9 +102,20 @@ header {
                     cursor: pointer;
                     background: none;
                     border: none;
+                    text-decoration: none;
+                    padding: 6px 0;
 
                     i { font-size: 12px; margin-right: 6px; }
+                }
 
+                .account-link {
+                    &:hover {
+                        color: colors.$theme-100;
+                        & i { color: colors.$theme-100; }
+                    }
+                }
+
+                .logout-link {
                     &:hover {
                         color: colors.$error-100;
                         & i { color: colors.$error-100; }
@@ -146,10 +158,22 @@ header {
                     }
                 }
 
+                .account-link,
                 .logout-link {
-                    color: #cbd5e1; // Texto logout cinza claro
+                    color: #cbd5e1; // Texto cinza claro
+                }
+
+                .account-link {
+                    &:hover {
+                        color: #f8fafc;
+                        & i { color: #f8fafc; }
+                    }
+                }
+
+                .logout-link {
                     &:hover {
                         color: #ef4444; // Mantém vermelho ao passar o rato
+                        & i { color: #ef4444; }
                     }
                 }
             }

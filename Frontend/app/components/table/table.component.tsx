@@ -73,7 +73,7 @@ export function TableComponent(options: TableComponentProps) {
                                 {column.value}
                             </th>
                         ))}
-                        {options.config.actions && <th>Ações</th>}
+                        {options.config.actions && <th className="actions-header">Ações</th>}
                     </tr>
                 </thead>
                 <tbody>
@@ -98,16 +98,18 @@ export function TableComponent(options: TableComponentProps) {
 
                                     return visibleActions.length > 0 ? (
                                         <td className='row-actions'>
-                                            {visibleActions.map((action, actionIndex) => (
-                                                <ButtonComponent
-                                                    key={actionIndex}
-                                                    label={action.label}
-                                                    tooltip={action.tooltip}
-                                                    icon={action.icon}
-                                                    config={action.config}
-                                                    onClick={() => action.onClick(row)}
-                                                />
-                                            ))}
+                                            <div className="row-actions-content">
+                                                {visibleActions.map((action, actionIndex) => (
+                                                    <ButtonComponent
+                                                        key={actionIndex}
+                                                        label={action.label}
+                                                        tooltip={action.tooltip}
+                                                        icon={action.icon}
+                                                        config={action.config}
+                                                        onClick={() => action.onClick(row)}
+                                                    />
+                                                ))}
+                                            </div>
                                         </td>
                                     ) : null;
                                 })()

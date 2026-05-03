@@ -46,6 +46,12 @@
                 color: colors.$gray-7; 
                 background-color: colors.$gray-2;
                 border-bottom: 2px solid colors.$gray-3;
+
+                &.actions-header {
+                    text-align: center;
+                    width: 1%;
+                    white-space: nowrap;
+                }
             }
         }
 
@@ -95,8 +101,15 @@
                     }
 
                     &.row-actions {
-                        display: flex;
-                        gap: 8px;
+                        width: 1%;
+                        white-space: nowrap;
+
+                        .row-actions-content {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                        }
                     }
                 }
             }

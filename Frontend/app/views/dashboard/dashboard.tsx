@@ -51,7 +51,7 @@ export function Dashboard() {
     const authService = new AuthService();
     const userInfo = authService.getUserInfo();
 
-    const nomeUtilizador = userInfo?.username || 'Diretora';
+    const nomeUtilizador = userInfo?.nome || userInfo?.username || 'Diretora';
 
     const [editandoAcoes, setEditandoAcoes] = useState(false);
     const [acoesRapidas, setAcoesRapidas] = useState<AcaoRapida[]>(

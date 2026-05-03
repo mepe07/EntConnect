@@ -6,6 +6,21 @@ import logoHeader from "../../assets/media/logo_header.png";
 import './header.scss';
 import type { User } from "~/models/interfaces/user.interface";
 
+const roleDisplayNames: Record<string, string> = {
+    Coordenador: 'Coordenador',
+    Professor: 'Professor',
+    Enc_Educacao: 'Enc. Educação',
+    EncEducacao: 'Enc. Educação',
+    Direcao: 'Direção',
+    Direção: 'Direção',
+};
+
+function formatRoleName(role?: string) {
+    if (!role) return '';
+
+    return roleDisplayNames[role] ?? role.replaceAll('_', ' ');
+}
+
 export function Header() {
     // Inicializado o hook de navegação
     const navigate = useNavigate(); 
@@ -27,7 +42,9 @@ export function Header() {
         }
     }, []);
 
-    const userLetter = userInfo?.username ? userInfo.username.charAt(0).toUpperCase() : 'U';
+    const userDisplayName = userInfo?.nome || userInfo?.username;
+    const userRoleDisplayName = formatRoleName(userInfo?.role);
+    const userLetter = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : 'U';
 
     // 3. Este useEffect agora reage quando o userInfo for atualizado
     useEffect(() => {
@@ -136,9 +153,19 @@ export function Header() {
                         ref={subMenuRef}
                     >
                         <div className='user-info'>
-                            <p>{userInfo?.username}</p>
-                            <p>{userInfo?.role}</p>
+                            <p>{userDisplayName}</p>
+                            <p>{userRoleDisplayName}</p>
                         </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSubMenuVisible(false);
+                                navigate('/conta');
+                            }}
+                            className="account-link"
+                        >
+                            <i className="fa-solid fa-user-gear"></i> A Minha Conta
+                        </button>
                         <a href="#" onClick={(e) => authService.logout(e)} className="logout-link">
                             <i className="fa fa-arrow-right-from-bracket"></i> Sair
                         </a>

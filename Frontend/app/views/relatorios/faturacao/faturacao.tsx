@@ -166,11 +166,13 @@ export function Faturacao() {
                                 <div className="cabecalho-detalhe">
                                     <div className="info-selecionada">
                                         {profFocado?.foto && <img src={profFocado.foto} className="foto-grande" alt="" />}
-                                        <h2>{professorSelecionado}</h2>
-                                    </div>
-                                    <div className="kpis">
-                                        <div className="kpi-box"><span className="label">Aulas</span><span className="valor">{profFocado?.totalAulas}</span></div>
-                                        <div className="kpi-box"><span className="label">Total</span><span className="valor">{profFocado?.totalDinheiro.toFixed(2)}€</span></div>
+                                        <div className="texto-professor">
+                                            <h2>{professorSelecionado}</h2>
+                                            <div className="kpis">
+                                                <div className="kpi-box"><span className="label">Aulas</span><span className="valor">{profFocado?.totalAulas}</span></div>
+                                                <div className="kpi-box"><span className="label">Total</span><span className="valor">{profFocado?.totalDinheiro.toFixed(2)}€</span></div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <TableComponent 
