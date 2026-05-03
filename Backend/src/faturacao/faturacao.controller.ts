@@ -50,14 +50,6 @@ export class FaturacaoController {
         const role = userPayload.role;
         const userId = userPayload.sub; // No teu JWT (que me mostraste), o ID está no "sub"
 
-        // ==========================================
-        // TESTE DO SUSPEITO 1: Verifica o terminal!
-        // ==========================================
-        console.log("=== DEBUG SEGURANÇA ===");
-        console.log("CARGO:", role);
-        console.log("ID:", userId);
-        console.log("=======================");
-
         const dataInicio = new Date(inicioStr);
         const dataFim = new Date(fimStr);
 
