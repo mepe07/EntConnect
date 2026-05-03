@@ -1,20 +1,42 @@
-// Ficheiro: src/marketplace/marketplace-fotos.helpers.ts
+// Ficheiro: src/marketplace/helpers/marketplace-fotos.helpers.ts
 
 import { BadRequestException } from '@nestjs/common';
 
 /*
-    Valida uma foto enviada para o Marketplace.
+    Marketplace Fotos Helper
 
-    Esta função fica fora do MarketplaceService porque é uma regra auxiliar:
-    - valida o tipo do ficheiro;
-    - valida o tamanho máximo;
-    - não precisa de BD;
-    - não precisa de serviços externos.
+    Este helper centraliza a validação de imagens enviadas para o Marketplace.
 
-    Assim, o service principal fica mais focado na lógica do marketplace.
+    A função fica fora do MarketplaceService porque é uma regra pura:
+    - não precisa de aceder à base de dados;
+    - não precisa de serviços externos;
+    - não depende de estado interno do service;
+    - apenas valida o ficheiro recebido.
+
+    O upload em si continua no MarketplaceService, porque depende do BlobsService,
+    que é injetado pelo NestJS.
+*/
+
+/*
+    Valida uma fotografia enviada para o Marketplace.
+
+    Regras aplicadas:
+    - o ficheiro tem de ser uma imagem com formato permitido;
+    - o ficheiro não pode ultrapassar o limite máximo de tamanho.
+
+    Esta validação acontece antes do upload para a cloud.
+    Assim evitamos gastar recursos a enviar ficheiros inválidos para o Azure.
 */
 export function validarFotoMarketplace(file: Express.Multer.File): void {
-    // Tipos de imagem permitidos no Marketplace.
+    /*
+        Validação do tipo MIME.
+
+        Aceitamos apenas formatos de imagem usados no Marketplace:
+        - jpeg/jpg;
+        - png;
+        - webp;
+        - jfif.
+    */
     const extensoesPermitidas = /image\/(jpeg|png|webp|jfif)/i;
 
     if (!extensoesPermitidas.test(file.mimetype)) {
@@ -23,7 +45,12 @@ export function validarFotoMarketplace(file: Express.Multer.File): void {
         );
     }
 
-    // Limite máximo de tamanho para evitar uploads demasiado pesados.
+    /*
+        Validação do tamanho máximo.
+
+        O limite de 10MB protege a aplicação contra uploads demasiado pesados
+        e ajuda a controlar armazenamento, tráfego e performance.
+    */
     const limiteMB = 10;
     const limiteBytes = limiteMB * 1024 * 1024;
 

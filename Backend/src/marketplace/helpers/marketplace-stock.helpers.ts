@@ -1,4 +1,4 @@
-// Ficheiro: src/marketplace/marketplace-stock.helpers.ts
+// Ficheiro: src/marketplace/helpers/marketplace-stock.helpers.ts
 
 import { BadRequestException } from '@nestjs/common';
 import { TipoAnuncio } from '../enums/tipo-anuncio.enum';
@@ -8,10 +8,34 @@ import {
 } from '../types/marketplace.prisma-types';
 
 /*
-    Parâmetros necessários para calcular a distribuição de stock
-    entre venda e aluguer.
+    Marketplace Stock Helper
 
-    Esta interface existe para evitar `any` e deixar claro o que a função precisa.
+    Este helper centraliza as regras relacionadas com stock do Marketplace.
+
+    Responsabilidades:
+    - validar quantidades;
+    - calcular distribuição entre venda e aluguer;
+    - derivar o tipo real do anúncio com base nessa distribuição;
+    - obter o stock principal de um artigo;
+    - calcular a quantidade disponível atual.
+
+    Mantemos esta lógica fora do MarketplaceService para que o service fique
+    focado nos fluxos principais e não nos detalhes matemáticos de stock.
+*/
+
+/*
+    Parâmetros necessários para resolver a distribuição de stock.
+
+    O Marketplace permite dois modos:
+
+    1. Quantidade disponível simples:
+       - usada quando o anúncio é apenas venda ou apenas aluguer.
+
+    2. Distribuição explícita:
+       - usada quando existe quantidade separada para venda e aluguer.
+
+    Os campos quantidadeVendaAtual e quantidadeAluguerAtual são usados na edição,
+    quando o utilizador não envia nova distribuição e queremos manter a atual.
 */
 interface ResolverDistribuicaoStockParams {
     tipoAnuncio: TipoAnuncio;
@@ -27,11 +51,11 @@ interface ResolverDistribuicaoStockParams {
 /*
     Resultado final da distribuição de stock.
 
-    O Marketplace trabalha com:
-    - quantidade total no inventário;
-    - quantidade disponível no marketplace;
+    Este resultado é usado pelo service e pelo mapper para atualizar:
+    - tipo do anúncio;
     - quantidade para venda;
-    - quantidade para aluguer.
+    - quantidade para aluguer;
+    - quantidade total disponível no Marketplace.
 */
 interface DistribuicaoStockResultado {
     tipoAnuncio: TipoAnuncio;
@@ -43,11 +67,11 @@ interface DistribuicaoStockResultado {
 /*
     Valida se a quantidade disponível não ultrapassa a quantidade total.
 
-    Exemplo:
-    - quantidade total: 5
-    - quantidade disponível: 8
+    Exemplo inválido:
+    - quantidade total: 5;
+    - quantidade disponível: 8.
 
-    Isto seria inválido, porque não podes anunciar mais unidades do que tens.
+    Isto evita publicar mais unidades do que existem em stock.
 */
 function validarQuantidades(
     quantidadeTotal: number,
@@ -61,12 +85,14 @@ function validarQuantidades(
 }
 
 /*
-    Decide automaticamente o tipo do anúncio com base nas quantidades.
+    Deriva automaticamente o tipo real do anúncio com base nas quantidades.
 
-    Exemplos:
-    - venda > 0 e aluguer > 0 -> ambos
-    - só aluguer > 0 -> aluguer
-    - caso contrário -> venda
+    Regras:
+    - se houver venda e aluguer, o tipo passa a AMBOS;
+    - se houver apenas aluguer, o tipo passa a ALUGUER;
+    - nos restantes casos, o tipo passa a VENDA.
+
+    Isto garante que o tipo do anúncio fica coerente com a distribuição real.
 */
 function derivarTipoAnuncio(
     quantidadeVenda: number,
@@ -86,19 +112,26 @@ function derivarTipoAnuncio(
 /*
     Resolve a distribuição de stock de um anúncio.
 
-    Esta função é usada quando:
-    - criamos um anúncio;
-    - atualizamos um anúncio;
-    - publicamos um item do inventário no marketplace.
+    Esta função é usada em três fluxos principais:
+    - criação de anúncio;
+    - edição de anúncio;
+    - publicação de item do inventário da escola.
 
-    A função suporta dois modos:
-    1. Distribuição explícita:
-       quantidadeVenda + quantidadeAluguer
+    A função decide como dividir o stock entre venda e aluguer,
+    garantindo sempre que a quantidade disponível não ultrapassa a quantidade total.
 
-    2. Quantidade disponível simples:
-       quantidadeDisponivel
+    Casos tratados:
+    1. Recebe quantidadeVenda e/ou quantidadeAluguer:
+       usa distribuição explícita.
 
-    Também permite manter a distribuição atual quando estamos a editar um anúncio.
+    2. Não recebe distribuição, mas pode manter a atual:
+       reaproveita quantidadeVendaAtual + quantidadeAluguerAtual.
+
+    3. Recebe apenas quantidadeDisponivel:
+       distribui tudo para venda ou aluguer, conforme o tipoAnuncio.
+
+    4. tipoAnuncio = AMBOS sem quantidades separadas:
+       lança erro, porque "ambos" exige divisão explícita.
 */
 export function resolverDistribuicaoStock(
     params: ResolverDistribuicaoStockParams,
@@ -185,9 +218,13 @@ export function resolverDistribuicaoStock(
 }
 
 /*
-    Obtém o primeiro registo de stock associado ao artigo.
+    Obtém o stock principal associado a um artigo.
 
-    Atualmente, o Marketplace trabalha com o stock principal do artigo.
+    Atualmente o Marketplace trabalha com o primeiro registo de Stock_Armazem
+    associado ao artigo.
+
+    Se no futuro existirem vários stocks por localização, lote ou escola,
+    esta função será o ponto ideal para evoluir essa regra.
 */
 export function obterStockPrincipal(
     artigo: ArtigoComBase,
@@ -200,16 +237,15 @@ export function obterStockPrincipal(
 }
 
 /*
-    Calcula a quantidade disponível atual com base no tipo do anúncio.
+    Calcula a quantidade atualmente disponível no Marketplace.
 
-    Venda:
-    - usa Quantidade_Venda
+    A quantidade depende do tipo do anúncio:
+    - VENDA: usa Quantidade_Venda;
+    - ALUGUER: usa Quantidade_Aluguer;
+    - AMBOS: soma venda e aluguer.
 
-    Aluguer:
-    - usa Quantidade_Aluguer
-
-    Ambos:
-    - soma venda + aluguer
+    Esta função evita repetir a mesma regra sempre que precisamos de calcular
+    a disponibilidade real de um artigo.
 */
 export function obterQuantidadeDisponivelAtual(
     artigo: ArtigoComBase,

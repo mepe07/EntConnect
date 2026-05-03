@@ -53,23 +53,58 @@ import {
 } from './permissions/marketplace.permissoes';
 
 
+/*
+    MarketplaceService
+
+    Este service funciona como o orquestrador principal do Marketplace.
+
+    Responsabilidades principais:
+    - listar anúncios;
+    - criar anúncios;
+    - publicar itens do inventário da escola;
+    - atualizar anúncios;
+    - alterar estados;
+    - moderar anúncios;
+    - registar e listar interesses.
+
+    Regras auxiliares foram separadas para ficheiros próprios:
+    - helpers/marketplace-stock.helpers.ts      -> regras de stock/distribuição;
+    - helpers/marketplace-fotos.helpers.ts      -> validação de imagens;
+    - helpers/marketplace-moderacao.helpers.ts  -> cálculo do resultado da moderação;
+    - mappers/marketplace-artigo.mapper.ts      -> construção dos objetos data do Prisma;
+    - permissions/marketplace.permissoes.ts     -> regras de permissões;
+    - types/marketplace.prisma-types.ts         -> tipos Prisma usados pelo módulo.
+
+    Assim, este ficheiro fica focado no fluxo principal e não em detalhes auxiliares.
+*/
+
 @Injectable()
-/**
- * Serviço responsável pela gestão de anúncios, inventário e moderação do Marketplace.
- */
 export class MarketplaceService {
     constructor(
         private readonly prisma: PrismaService, 
         private readonly blobsService: BlobsService
-    ) 
-    { }
+    ) { }
 
-    /**
-     * Lista anúncios do Marketplace com base nos filtros recebidos.
-     *
-     * @param filtros - Filtros da consulta de anúncios.
-     * @returns Lista de anúncios compatíveis com os filtros.
-     */
+    // ============================================================================
+    // CONSULTA E LISTAGEM
+    // ============================================================================
+    // Métodos responsáveis por devolver anúncios, inventário e dados de moderação.
+    // A lógica de filtros fica aqui porque depende diretamente das queries Prisma.
+    // ============================================================================
+
+    /*
+    Lista anúncios do Marketplace com filtros opcionais.
+
+    Usa Prisma.ArtigoWhereInput para garantir que os campos usados no where
+    existem no schema Prisma. Isto evita erros silenciosos e substitui o uso de any.
+
+    Exemplos de filtros:
+    - estado do anúncio;
+    - tipo de anúncio;
+    - origem;
+    - criador;
+    - pesquisa textual.
+    */
     async listarAnuncios(filtros: ListarAnunciosMarketplaceDto) {
         const where: Prisma.ArtigoWhereInput = {
             Publicado_No_Marketplace: filtros.publicado ?? true,
@@ -119,6 +154,18 @@ export class MarketplaceService {
         return artigo;
     }
 
+    /*
+    Lista os anúncios disponíveis para análise/moderação.
+
+    Esta operação é exclusiva da Coordenadora/moderação.
+    Antes de consultar a base de dados, validamos a role do utilizador.
+
+    São devolvidos anúncios em vários estados relevantes para moderação:
+    - ativo;
+    - reservado;
+    - concluído;
+    - removido.
+    */
     async listarAnunciosModeracao(utilizador: UtilizadorAutenticado) {
         garantirPermissaoDeModeracao(utilizador.role);
 
@@ -138,6 +185,18 @@ export class MarketplaceService {
         });
     }
 
+    /*
+    Lista o histórico de moderação do Marketplace.
+
+    Cada registo permite perceber:
+    - que anúncio foi moderado;
+    - quem fez a ação;
+    - qual era o estado anterior;
+    - qual passou a ser o novo estado;
+    - qual foi o motivo da moderação.
+
+    Isto garante rastreabilidade e transparência nas ações administrativas.
+    */
     async listarRegistoModeracao(utilizador: UtilizadorAutenticado) {
         garantirPermissaoDeModeracao(utilizador.role);
 
@@ -166,6 +225,12 @@ export class MarketplaceService {
         });
     }
 
+    /*
+    Lista os anúncios criados pelo utilizador autenticado.
+
+    A filtragem é feita através do ID do utilizador presente no token JWT.
+    Assim, cada utilizador vê apenas os anúncios que criou.
+    */
     async listarMeusAnuncios(utilizador: UtilizadorAutenticado) {
         return this.prisma.artigo.findMany({
             where: {
@@ -176,8 +241,15 @@ export class MarketplaceService {
         });
     }
 
+    /*
+    Lista todos os itens registados como inventário da escola.
+
+    Esta listagem é restrita a utilizadores com permissão de inventário.
+    Atualmente, esta responsabilidade pertence à Coordenadora.
+
+    Os itens devolvidos podem ou não estar publicados no Marketplace.
+    */
     async listarInventarioDaEscola(utilizador: UtilizadorAutenticado) {
-        // Apenas utilizadores com permissão de inventário passam daqui.
         garantirAcessoAoInventarioDaEscola(utilizador.role);
 
         return this.prisma.artigo.findMany({
@@ -192,6 +264,16 @@ export class MarketplaceService {
         });
     }
 
+    /*
+    Lista itens do inventário da escola ainda não publicados no Marketplace.
+
+    Esta rota é usada para permitir à Coordenadora escolher que itens internos
+    podem ser disponibilizados para venda, aluguer ou ambos.
+
+    O filtro principal é:
+    - origem = INVENTARIO_ESCOLA;
+    - Publicado_No_Marketplace = false.
+    */
     async listarInventarioDisponivelParaPublicacao(
         utilizador: UtilizadorAutenticado,
     ) {
@@ -207,11 +289,27 @@ export class MarketplaceService {
         });
     }
 
-    // ========================================================================
-    // 2. CRIAÇÃO E PUBLICAÇÃO
-    // ========================================================================
+    // ============================================================================
+    // CRIAÇÃO, PUBLICAÇÃO E ATUALIZAÇÃO
+    // ============================================================================
+    // Métodos que criam ou alteram anúncios e itens de inventário.
+    // Sempre que há alteração conjunta em Artigo + Stock_Armazem, usamos transação.
+    // Isto garante consistência: ou tudo é gravado, ou nada é gravado.
+    // ============================================================================
 
-async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutenticado, file?: Express.Multer.File) {
+    /*
+    Cria um anúncio no Marketplace.
+
+    Fluxo:
+    1. valida e guarda a imagem, se existir;
+    2. resolve a distribuição de stock entre venda e aluguer;
+    3. cria o Artigo;
+    4. cria o Stock_Armazem associado.
+
+    A criação do artigo e do stock acontece numa transação para evitar anúncios
+    sem stock ou stock sem artigo associado.
+    */
+    async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutenticado, file?: Express.Multer.File) {
         const urlFoto = file
             ? await this.guardarFotoMarketplace(
                 file,
@@ -254,6 +352,19 @@ async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutent
         });
     }
 
+
+    /*
+    Publica um item do inventário da escola no Marketplace.
+
+    Apenas a Coordenadora pode executar esta ação.
+
+    O item já existe como Artigo de origem INVENTARIO_ESCOLA.
+    Este método apenas:
+    - valida permissões;
+    - calcula a distribuição de venda/aluguer;
+    - atualiza o stock;
+    - marca o artigo como publicado no Marketplace.
+    */
     async publicarInventarioDaEscola(
         dto: PublicarInventarioEscolaDto,
         utilizador: UtilizadorAutenticado,
@@ -303,10 +414,16 @@ async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutent
         });
     }
 
-    // ========================================================================
-    // 3. GESTÃO DO DONO
-    // ========================================================================
 
+    /*
+    Atualiza um anúncio existente.
+
+    Regras importantes:
+    - apenas o dono do anúncio ou um moderador autorizado pode atualizar;
+    - se for enviada nova imagem, ela é validada e guardada;
+    - o stock é recalculado com base nos novos valores enviados;
+    - a atualização do artigo e do stock acontece dentro da mesma transação.
+    */
     async atualizarAnuncio(
         idArtigo: number,
         dto: AtualizarAnuncioMarketplaceDto,
@@ -371,6 +488,24 @@ async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutent
         });
     }
 
+    // ============================================================================
+    // ESTADO E MODERAÇÃO
+    // ============================================================================
+    // Métodos relacionados com alterações de estado e moderação de anúncios.
+    // A moderação tem histórico próprio para garantir rastreabilidade.
+    // ============================================================================
+
+    /*
+    Altera o estado de um anúncio.
+
+    Este método é usado para mudanças de estado feitas pelo dono do anúncio
+    ou por utilizadores com permissão de moderação.
+
+    Antes de atualizar, validamos:
+    - se o utilizador pode aceder ao anúncio;
+    - se a transição de estado é permitida;
+    - se uma remoção administrativa está a ser feita pelo fluxo correto.
+    */
     async alterarEstado(
         idArtigo: number,
         dto: AlterarEstadoAnuncioDto,
@@ -404,6 +539,14 @@ async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutent
         });
     }
 
+    /*
+    Remove logicamente um anúncio criado pelo próprio utilizador.
+
+    Não apagamos o registo da base de dados.
+    Em vez disso, alteramos o estado para REMOVIDO e deixamos de o publicar.
+
+    Esta abordagem preserva histórico e evita perda de informação.
+    */
     async removerAnuncio(idArtigo: number, utilizador: UtilizadorAutenticado) {
         const artigo = await this.obterArtigoOuFalhar(idArtigo);
 
@@ -422,6 +565,25 @@ async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutent
         });
     }
 
+
+    /*
+    Modera um anúncio.
+
+    A ação de moderação pode:
+    - remover;
+    - reativar;
+    - arquivar.
+
+    O cálculo do novo estado foi extraído para marketplace-moderacao.helpers.ts,
+    deixando este método responsável apenas por:
+    - validar permissões;
+    - carregar o artigo;
+    - atualizar o artigo;
+    - criar o registo de moderação.
+
+    A atualização e o registo são feitos na mesma transação para garantir
+    que nunca existe uma moderação sem histórico.
+    */
     async moderarAnuncio(
         idArtigo: number,
         dto: ModerarAnuncioMarketplaceDto,
@@ -473,10 +635,21 @@ async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutent
         });
     }
 
-    // ========================================================================
-    // 4. INTERESSE / CONTACTO
-    // ========================================================================
+    // ============================================================================
+    // INTERESSES
+    // ============================================================================
+    // Métodos relacionados com demonstração de interesse em anúncios.
+    // Um utilizador não pode registar interesse no próprio anúncio.
+    // ============================================================================
 
+    /*
+    Regista interesse de um utilizador num anúncio.
+
+    Regras:
+    - o anúncio tem de estar ativo e publicado;
+    - o dono do anúncio não pode registar interesse no próprio anúncio;
+    - o interesse fica associado ao stock principal do artigo.
+    */
     async registarInteresse(
         idArtigo: number,
         dto: RegistarInteresseMarketplaceDto,
@@ -513,6 +686,15 @@ async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutent
         });
     }
 
+    /*
+    Lista os utilizadores interessados num determinado anúncio.
+
+    O acesso é validado antes da consulta:
+    - o dono do anúncio pode ver os interessados;
+    - a moderação também pode consultar esta informação.
+
+    Os interesses são associados ao stock principal do artigo.
+    */
     async listarInteressesDoAnuncio(
         idArtigo: number,
         utilizador: UtilizadorAutenticado,
@@ -542,8 +724,23 @@ async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutent
         });
     }
 
+    // ============================================================================
+    // INVENTÁRIO DA ESCOLA
+    // ============================================================================
+    // Métodos usados pela Coordenadora para gerir itens internos da escola.
+    // Estes itens podem existir apenas como inventário ou ser publicados no Marketplace.
+    // ============================================================================
+
+    /*
+    Cria um item no inventário da escola.
+
+    O item nasce como Artigo, mas ainda não fica publicado no Marketplace.
+    A publicação é feita posteriormente através de publicarInventarioDaEscola().
+
+    Também é criado o stock associado, com quantidades de venda/aluguer a zero,
+    porque essas quantidades só são definidas quando o item for publicado.
+    */
     async criarItemInventario(dto: CriarItemInventarioDto, utilizador: UtilizadorAutenticado, file?: Express.Multer.File) {
-        // 1. Garantir que apenas a coordenadora tem acesso a esta rota
         garantirAcessoAoInventarioDaEscola(utilizador.role);
 
         const urlFoto = file
@@ -576,10 +773,19 @@ async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutent
     });
     }
 
-    // ========================================================================
-    // 5. HELPERS PRIVADOS
-    // ========================================================================
+    // ============================================================================
+    // HELPERS PRIVADOS DO SERVICE
+    // ============================================================================
+    // Métodos auxiliares que continuam neste service porque dependem diretamente
+    // de Prisma, BlobsService ou do contexto interno do MarketplaceService.
+    // ============================================================================
 
+    /*
+    Obtém um artigo com as relações base usadas pelo Marketplace.
+
+    Se o artigo não existir, lança NotFoundException.
+    Isto evita repetir a mesma validação em vários métodos públicos.
+    */
     private async obterArtigoOuFalhar(idArtigo: number): Promise<ArtigoComBase> {
         const artigo = await this.prisma.artigo.findUnique({
             where: { ID_Artigo: idArtigo },
@@ -593,6 +799,12 @@ async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutent
         return artigo;
     }
 
+    /*
+    Valida e guarda uma fotografia do Marketplace.
+
+    A validação da imagem está num helper puro.
+    O upload fica aqui porque depende do BlobsService, que é injetado pelo NestJS.
+    */
     private async guardarFotoMarketplace(
         file: Express.Multer.File,
         nomeFicheiro: string,
@@ -607,10 +819,28 @@ async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutent
         );
     }
 
+    /*
+    Devolve o include base usado nas queries de Artigo do Marketplace.
+
+    O include está centralizado em marketplace.prisma-types.ts para garantir
+    que todas as consultas carregam as mesmas relações essenciais:
+    - stock;
+    - cor;
+    - estado;
+    - tamanho;
+    - criador;
+    - moderador.
+    */
     private includeBaseArtigo(): typeof INCLUDE_BASE_ARTIGO {
         return INCLUDE_BASE_ARTIGO;
     }
 
+    /*
+    Verifica se o utilizador autenticado é o criador do anúncio.
+
+    Esta validação é usada em operações onde o dono pode gerir o próprio anúncio,
+    como editar, remover ou consultar interessados.
+    */
     private ehDonoDoAnuncio(artigo: ArtigoComBase, utilizador: UtilizadorAutenticado) : boolean 
     {
         return Boolean(
@@ -619,6 +849,15 @@ async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutent
         );
     }
 
+    /*
+    Garante que o utilizador pode gerir ou consultar informação sensível do anúncio.
+
+    O acesso é permitido quando:
+    - o utilizador é dono do anúncio;
+    - o utilizador tem permissões de moderação.
+
+    Caso contrário, é lançada uma exceção ForbiddenException.
+    */
     private garantirAcessoAoAnuncio(artigo: ArtigoComBase, utilizador: UtilizadorAutenticado) {
         const dono = this.ehDonoDoAnuncio(artigo, utilizador);
         const moderador = podeModerarMarketplace(utilizador.role);
@@ -628,6 +867,14 @@ async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutent
         }
     }
 
+    /*
+    Valida se uma alteração de estado é permitida.
+
+    Regras principais:
+    - anúncios removidos só podem ser reativados pela moderação;
+    - remoções administrativas devem passar pelo endpoint de moderação;
+    - evita que utilizadores comuns executem ações reservadas à Coordenadora.
+    */
     private validarTransicaoDeEstado(
         estadoAtual: string,
         novoEstado: EstadoAnuncio,
@@ -646,7 +893,13 @@ async criarAnuncio(dto: CriarAnuncioMarketplaceDto, utilizador: UtilizadorAutent
         }
     }
 
-   private async criarRegistoModeracao(
+    /*
+    Cria o histórico de moderação de um anúncio.
+
+    Recebe o transaction client para garantir que o registo de moderação
+    é criado na mesma transação que altera o artigo.
+    */
+    private async criarRegistoModeracao(
        tx: Prisma.TransactionClient,
        params: {
            idArtigo: number;
