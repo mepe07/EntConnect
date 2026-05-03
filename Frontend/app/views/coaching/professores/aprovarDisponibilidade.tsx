@@ -10,6 +10,7 @@ import { DisponibilidadesService } from '../../../services/disponibilidades.serv
 import { authService } from '~/services/auth.service';
 import type { User } from '../../../models/interfaces/user.interface';
 import { SalasService } from '../../../services/salas.service';
+import { horariosService } from '~/services/horarios.service';
 
 
 export interface Disponibilidade {
@@ -30,6 +31,125 @@ export interface Estudio {
     Disponivel: boolean;
 }
 
+interface ExcecaoAulaFixa {
+    Data_Cancelada: string;
+}
+
+interface AulaFixa {
+    ID_AulaFixa: number;
+    Dia_Semana: number;
+    Hora_Inicio: string;
+    Duracao: number;
+    ID_Estudio: number;
+    Ativa: boolean;
+    Dias_Semana?: {
+        Nome_Dia: string;
+    };
+    Excecao_Aula_Fixa?: ExcecaoAulaFixa[];
+}
+
+const DIAS_SEMANA_PT: Record<number, string[]> = {
+    0: ['domingo'],
+    1: ['segunda', 'segunda-feira'],
+    2: ['terca', 'terca-feira', 'terça', 'terça-feira'],
+    3: ['quarta', 'quarta-feira'],
+    4: ['quinta', 'quinta-feira'],
+    5: ['sexta', 'sexta-feira'],
+    6: ['sabado', 'sábado'],
+};
+
+function normalizarTexto(valor: string) {
+    return valor
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+}
+
+function parseDataDisponibilidade(data: string) {
+    const [dia, mes, ano] = data.split('/').map(Number);
+    return new Date(ano, mes - 1, dia);
+}
+
+function dataLocalIso(data: Date) {
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const dia = String(data.getDate()).padStart(2, '0');
+
+    return `${ano}-${mes}-${dia}`;
+}
+
+function dataIsoDeValor(valor: string) {
+    const isoMatch = valor.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (isoMatch) return isoMatch[1];
+
+    const data = new Date(valor);
+    if (Number.isNaN(data.getTime())) return valor.slice(0, 10);
+
+    return dataLocalIso(data);
+}
+
+function minutosDeHora(valor: string) {
+    const data = new Date(valor);
+    if (!Number.isNaN(data.getTime())) {
+        return data.getHours() * 60 + data.getMinutes();
+    }
+
+    const match = valor.match(/(\d{1,2}):(\d{2})/);
+    if (!match) return 0;
+
+    return Number(match[1]) * 60 + Number(match[2]);
+}
+
+function intervalosSobrepostos(inicioA: number, fimA: number, inicioB: number, fimB: number) {
+    return inicioA < fimB && inicioB < fimA;
+}
+
+function aulaFixaAconteceNoDia(aula: AulaFixa, dataDisponibilidade: Date) {
+    const nomeDia = aula.Dias_Semana?.Nome_Dia;
+
+    if (nomeDia) {
+        const nomeNormalizado = normalizarTexto(nomeDia);
+        return DIAS_SEMANA_PT[dataDisponibilidade.getDay()].some(dia => nomeNormalizado.includes(normalizarTexto(dia)));
+    }
+
+    const diaSemanaPt = dataDisponibilidade.getDay() === 0 ? 7 : dataDisponibilidade.getDay();
+    return aula.Dia_Semana === diaSemanaPt;
+}
+
+function aulaFixaTemExcecaoNestaData(aula: AulaFixa, dataDisponibilidade: Date) {
+    const dataIso = dataLocalIso(dataDisponibilidade);
+
+    return aula.Excecao_Aula_Fixa?.some(excecao => dataIsoDeValor(excecao.Data_Cancelada) === dataIso) ?? false;
+}
+
+function calcularEstudiosLivres(disponibilidade: Disponibilidade | null, estudios: Estudio[], aulasFixas: AulaFixa[]) {
+    if (!disponibilidade) return estudios;
+
+    const dataDisponibilidade = parseDataDisponibilidade(disponibilidade.data);
+    const [horaInicioStr, horaFimStr] = disponibilidade.horario.split(' - ');
+    const inicioDisponibilidade = minutosDeHora(horaInicioStr);
+    const fimDisponibilidade = minutosDeHora(horaFimStr);
+
+    const estudiosOcupados = new Set(
+        aulasFixas
+            .filter(aula => aula.Ativa !== false)
+            .filter(aula => aulaFixaAconteceNoDia(aula, dataDisponibilidade))
+            .filter(aula => !aulaFixaTemExcecaoNestaData(aula, dataDisponibilidade))
+            .filter(aula => {
+                const inicioAula = minutosDeHora(aula.Hora_Inicio);
+                return intervalosSobrepostos(
+                    inicioDisponibilidade,
+                    fimDisponibilidade,
+                    inicioAula,
+                    inicioAula + aula.Duracao
+                );
+            })
+            .map(aula => aula.ID_Estudio)
+    );
+
+    return estudios.filter(estudio => !estudiosOcupados.has(estudio.ID_Sala));
+}
+
 
 export default function ApproveAvailability() {
     const userInfo = authService.getUserInfo() as User;
@@ -40,6 +160,7 @@ export default function ApproveAvailability() {
 
     const [disponibilidades, setDisponibilidades] = useState<Disponibilidade[]>([]);
     const [listaEstudios, setListaEstudios] = useState<Estudio[]>([]);
+    const [aulasFixas, setAulasFixas] = useState<AulaFixa[]>([]);
 
     const [modalAberto, setModalAberto] = useState<boolean>(false);
     const [linhaSelecionada, setLinhaSelecionada] = useState<any>(null);
@@ -49,7 +170,7 @@ export default function ApproveAvailability() {
 
     async function fetchDisponibilidades() {
         try {
-            const data = await disponibilidadesService.getAvailability();
+            const data = await disponibilidadesService.getAvailability() as Disponibilidade[];
 
 
             const dadosOrdenados = data.sort((a, b) => {
@@ -79,10 +200,20 @@ export default function ApproveAvailability() {
         }
     }
 
+    async function fetchAulasFixas() {
+        try {
+            const data = await horariosService.getHorarios();
+            setAulasFixas(data);
+        } catch (error) {
+            console.error('Erro ao carregar as aulas fixas:', error);
+        }
+    }
+
     useEffect(() => {
         if (isCoordenador) {
             fetchDisponibilidades();
             fetchEstudios();
+            fetchAulasFixas();
         }
     }, [isCoordenador]);
 
@@ -170,6 +301,7 @@ export default function ApproveAvailability() {
         { value: "", label: "Todos" },
         ...professoresUnicos.map(nome => ({ value: nome, label: nome }))
     ];
+    const estudiosLivres = calcularEstudiosLivres(linhaSelecionada, listaEstudios, aulasFixas);
 
     return (
         <div className="pagina-aprovacoes">
@@ -256,12 +388,17 @@ export default function ApproveAvailability() {
                                     onChange={(e) => setEstudioSelecionado(e.target.value)}
                                 >
                                     <option value="">Selecione um estúdio...</option>
-                                    {listaEstudios.map(estudio => (
+                                    {estudiosLivres.map(estudio => (
                                         <option key={estudio.ID_Sala} value={estudio.ID_Sala}>
                                             {estudio.Nome}
                                         </option>
                                     ))}
                                 </select>
+                                {estudiosLivres.length === 0 && (
+                                    <p style={{ margin: '0 0 15px', color: '#dc2626', fontSize: '13px' }}>
+                                        Nenhum estÃºdio livre para este dia e horÃ¡rio.
+                                    </p>
+                                )}
                             </div>
 
                             <div className="form-group">
@@ -282,7 +419,7 @@ export default function ApproveAvailability() {
                                 <button
                                     className="btn-confirmar"
                                     onClick={confirmarAprovacao}
-                                    disabled={!estudioSelecionado || !valorPorAluno}
+                                    disabled={!estudioSelecionado || !valorPorAluno || estudiosLivres.length === 0}
                                 >
                                     Confirmar Aprovação
                                 </button>
