@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
+/**
+ * Serviço responsável por agregar eventos e sessões para a vista de calendário.
+ */
 export class CalendarioService {
   constructor(private readonly prisma: PrismaService) {}
 

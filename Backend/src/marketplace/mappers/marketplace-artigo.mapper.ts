@@ -1,5 +1,3 @@
-// Ficheiro: src/marketplace/marketplace-artigo.mapper.ts
-
 import { Prisma } from '@prisma/client';
 
 import { CriarAnuncioMarketplaceDto } from '../dto/criar-anuncio-marketplace.dto';
@@ -15,16 +13,9 @@ import {
     type StockPrincipalMarketplace,
 } from '../types/marketplace.prisma-types';
 
-/*
-    Este ficheiro centraliza a criação dos objetos `data` usados pelo Prisma.
-
-    Vantagem:
-    - o MarketplaceService fica mais limpo;
-    - evitamos blocos grandes de data: { ... } espalhados;
-    - se algum campo mudar no Prisma, corrigimos aqui;
-    - mantemos a lógica de construção de dados num sítio próprio.
-*/
-
+/**
+ * Estrutura intermédia usada para transportar a distribuição de stock nos mappers.
+ */
 interface DistribuicaoStockMapper {
     tipoAnuncio: string;
     quantidadeVenda: number;
@@ -32,6 +23,12 @@ interface DistribuicaoStockMapper {
     quantidadeDisponivel: number;
 }
 
+/**
+ * Monta os dados Prisma para criar um anúncio de utilizador.
+ *
+ * @param params - Dados necessários para construir o artigo.
+ * @returns Payload Prisma para criação do artigo.
+ */
 export function montarDadosCriacaoAnuncio(params: {
     dto: CriarAnuncioMarketplaceDto;
     idUtilizadorCriador: number;
@@ -60,6 +57,12 @@ export function montarDadosCriacaoAnuncio(params: {
     };
 }
 
+/**
+ * Monta os dados Prisma para criar o stock inicial de um anúncio.
+ *
+ * @param params - Identificador do artigo e DTO de criação.
+ * @returns Payload Prisma para criação de stock.
+ */
 export function montarDadosStockCriacaoAnuncio(params: {
     idArtigo: number;
     dto: CriarAnuncioMarketplaceDto;
@@ -74,6 +77,12 @@ export function montarDadosStockCriacaoAnuncio(params: {
     };
 }
 
+/**
+ * Monta os dados Prisma para criar um item de inventário interno.
+ *
+ * @param params - Dados do item de inventário.
+ * @returns Payload Prisma para criação do artigo.
+ */
 export function montarDadosCriacaoItemInventario(params: {
     dto: CriarItemInventarioDto;
     idUtilizadorCriador: number;
@@ -100,6 +109,12 @@ export function montarDadosCriacaoItemInventario(params: {
     };
 }
 
+/**
+ * Monta os dados Prisma para criar stock de inventário interno.
+ *
+ * @param params - Identificador do artigo e DTO do inventário.
+ * @returns Payload Prisma para criação de stock.
+ */
 export function montarDadosStockItemInventario(params: {
     idArtigo: number;
     dto: CriarItemInventarioDto;
@@ -114,6 +129,12 @@ export function montarDadosStockItemInventario(params: {
     };
 } 
 
+/**
+ * Monta os dados Prisma para atualizar o stock ao publicar inventário escolar.
+ *
+ * @param params - Distribuição final de stock.
+ * @returns Payload Prisma para atualização de stock.
+ */
 export function montarDadosStockPublicacaoInventario(params: {
         distribuicao: DistribuicaoStockMapper;
     }): Prisma.Stock_ArmazemUncheckedUpdateInput {
@@ -125,6 +146,12 @@ export function montarDadosStockPublicacaoInventario(params: {
     };
 }
 
+/**
+ * Monta os dados Prisma para publicar um artigo do inventário escolar no Marketplace.
+ *
+ * @param params - Dados de publicação e artigo base.
+ * @returns Payload Prisma para atualização do artigo.
+ */
 export function montarDadosPublicacaoInventario(params: {
     dto: PublicarInventarioEscolaDto;
     artigo: ArtigoComBase;
@@ -150,6 +177,12 @@ export function montarDadosPublicacaoInventario(params: {
     };
 }
 
+/**
+ * Monta os dados Prisma para atualizar o stock de um anúncio existente.
+ *
+ * @param params - DTO, stock principal e distribuição final.
+ * @returns Payload Prisma para atualização do stock.
+ */
 export function montarDadosStockAtualizacaoAnuncio(params: {
     dto: AtualizarAnuncioMarketplaceDto;
     stockPrincipal: StockPrincipalMarketplace;
@@ -173,6 +206,12 @@ export function montarDadosStockAtualizacaoAnuncio(params: {
     };
 }
 
+/**
+ * Monta os dados Prisma para atualizar um anúncio existente.
+ *
+ * @param params - DTO, artigo base e foto final.
+ * @returns Payload Prisma para atualização do artigo.
+ */
 export function montarDadosAtualizacaoAnuncio(params: {
     dto: AtualizarAnuncioMarketplaceDto;
     artigo: ArtigoComBase;

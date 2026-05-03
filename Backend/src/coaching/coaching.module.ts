@@ -9,4 +9,7 @@ import { ModalidadeService } from './modalidade/modalidade.service';
   controllers: [CoachingController, ModalidadeController],
   providers: [CoachingService, GestaoEstudiosService, ModalidadeService],
 })
+/**
+ * Módulo responsável pela gestão de sessões de coaching, estúdios e modalidades.
+ */
 export class CoachingModule {}

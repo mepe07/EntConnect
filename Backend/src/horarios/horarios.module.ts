@@ -8,4 +8,7 @@ import { HorariosService } from './horarios.service';
   controllers: [HorariosController],
   providers: [HorariosService],
 })
+/**
+ * Módulo responsável pela gestão de horários fixos e respetivas exceções.
+ */
 export class HorariosModule {}

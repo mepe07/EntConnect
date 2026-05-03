@@ -1,20 +1,11 @@
-// Ficheiro: src/marketplace/marketplace-fotos.helpers.ts
-
 import { BadRequestException } from '@nestjs/common';
 
-/*
-    Valida uma foto enviada para o Marketplace.
-
-    Esta função fica fora do MarketplaceService porque é uma regra auxiliar:
-    - valida o tipo do ficheiro;
-    - valida o tamanho máximo;
-    - não precisa de BD;
-    - não precisa de serviços externos.
-
-    Assim, o service principal fica mais focado na lógica do marketplace.
-*/
+/**
+ * Valida o ficheiro de imagem enviado para o Marketplace.
+ *
+ * @param file - Ficheiro recebido pelo endpoint.
+ */
 export function validarFotoMarketplace(file: Express.Multer.File): void {
-    // Tipos de imagem permitidos no Marketplace.
     const extensoesPermitidas = /image\/(jpeg|png|webp|jfif)/i;
 
     if (!extensoesPermitidas.test(file.mimetype)) {
@@ -23,7 +14,6 @@ export function validarFotoMarketplace(file: Express.Multer.File): void {
         );
     }
 
-    // Limite máximo de tamanho para evitar uploads demasiado pesados.
     const limiteMB = 10;
     const limiteBytes = limiteMB * 1024 * 1024;
 

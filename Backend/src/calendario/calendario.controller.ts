@@ -9,6 +9,9 @@ import { CalendarioService } from './calendario.service';
 @ApiTags('Calendário')
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('calendario')
+/**
+ * Controller que expõe a vista agregada de calendário para a coordenação.
+ */
 export class CalendarioController {
   constructor(private readonly calendarioService: CalendarioService) {}
 

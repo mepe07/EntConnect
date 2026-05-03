@@ -1,15 +1,10 @@
-// Ficheiro: src/marketplace/marketplace-moderacao.helpers.ts
-
 import { BadRequestException } from '@nestjs/common';
 import { AcaoModeracao } from '../enums/acao-moderacao.enum';
 import { EstadoAnuncio } from '../enums/estado-anuncio.enum';
 
-/*
-    Parâmetros necessários para calcular o resultado de uma ação de moderação.
-
-    Esta função não mexe na BD.
-    Só decide qual deve ser o novo estado do anúncio.
-*/
+/**
+ * Parâmetros usados no cálculo do resultado de uma ação de moderação.
+ */
 interface CalcularResultadoModeracaoParams {
     acao: AcaoModeracao;
     estadoAtual: EstadoAnuncio | string;
@@ -17,34 +12,21 @@ interface CalcularResultadoModeracaoParams {
     motivoAtual?: string | null;
 }
 
-/*
-    Resultado final que o MarketplaceService vai usar para atualizar o artigo.
-*/
+/**
+ * Resultado final usado para atualizar o anúncio após moderação.
+ */
 interface ResultadoModeracao {
     estadoNovo: EstadoAnuncio;
     publicadoNoMarketplace: boolean;
     motivoFinal: string | null;
 }
 
-/*
-    Calcula o resultado de uma ação de moderação.
-
-    Regras:
-    - remover:
-      anúncio não pode já estar removido;
-      passa para removido;
-      deixa de estar publicado.
-
-    - reativar:
-      só anúncios removidos podem ser reativados;
-      passa para ativo;
-      volta a estar publicado.
-
-    - arquivar:
-      anúncio não pode já estar arquivado;
-      passa para arquivado;
-      deixa de estar publicado.
-*/
+/**
+ * Calcula o novo estado de um anúncio após uma ação de moderação.
+ *
+ * @param params - Estado atual, ação pedida e motivo opcional.
+ * @returns Resultado final a persistir no anúncio.
+ */
 export function calcularResultadoModeracao(
     params: CalcularResultadoModeracaoParams,
 ): ResultadoModeracao {

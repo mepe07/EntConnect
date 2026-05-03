@@ -9,4 +9,7 @@ import { CalendarioService } from './calendario.service';
   controllers: [CalendarioController],
   providers: [CalendarioService],
 })
+/**
+ * Módulo responsável pela agregação de dados do calendário.
+ */
 export class CalendarioModule {}

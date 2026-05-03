@@ -4,6 +4,12 @@ import { CreateAulaFixaDto } from './dto/create-aula-fixa.dto';
 import { CreateExcecaoAulaFixaDto } from './dto/create-excecao-aula-fixa.dto';
 import { UpdateAulaFixaDto } from './dto/update-aula-fixa.dto';
 
+/**
+ * Converte uma hora `HH:mm` para um objeto `Date` técnico.
+ *
+ * @param time - Hora no formato `HH:mm`.
+ * @returns Data auxiliar com a hora convertida.
+ */
 function parseTimeToDate(time: string) {
   const [hoursRaw, minutesRaw] = time.split(':');
   const hours = Number(hoursRaw);
@@ -23,6 +29,12 @@ function parseTimeToDate(time: string) {
   return new Date(1970, 0, 1, hours, minutes, 0, 0);
 }
 
+/**
+ * Normaliza uma data para o início do dia.
+ *
+ * @param dateString - Data recebida como texto.
+ * @returns Data normalizada para `00:00:00.000`.
+ */
 function normalizeDate(dateString: string) {
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) {
@@ -33,6 +45,9 @@ function normalizeDate(dateString: string) {
 }
 
 @Injectable()
+/**
+ * Serviço responsável pela gestão de horários fixos e exceções.
+ */
 export class HorariosService {
   constructor(private readonly prisma: PrismaService) {}
 

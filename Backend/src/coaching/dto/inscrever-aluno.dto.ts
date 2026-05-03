@@ -1,8 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsNotEmpty, IsString } from 'class-validator';
 
+/**
+ * DTO usado para inscrever um aluno numa sessão de coaching.
+ */
 export class InscreverAlunoDto {
-  
   @ApiProperty({ description: 'ID do Aluno a inscrever na sessão', example: 1 })
   @IsNotEmpty()
   @IsInt()
@@ -55,6 +57,4 @@ export class InscreverAlunoDto {
   @IsNotEmpty()
   @IsInt()
   valorEmFalta!: number;
-
-
 }

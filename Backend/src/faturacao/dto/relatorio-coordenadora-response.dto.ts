@@ -1,3 +1,6 @@
+/**
+ * DTO de resposta usado no relatório de faturação da coordenação.
+ */
 export class RelatorioCoordenadoraResponseDto {
     idCoaching!: number;
     dataAula!: Date;

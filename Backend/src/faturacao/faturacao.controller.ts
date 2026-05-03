@@ -5,6 +5,9 @@ import { UpdateFaturacaoDto } from './dto/update-faturacao.dto';
 import { ApiOperation } from '@nestjs/swagger';
 
 @Controller('faturacao')
+/**
+ * Controller dos endpoints de faturação e relatórios associados.
+ */
 export class FaturacaoController {
     constructor(private readonly faturacaoService: FaturacaoService) { }
 

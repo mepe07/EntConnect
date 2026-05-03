@@ -1,14 +1,9 @@
 import { ApiProperty as ApiPropertyOptional, ApiPropertyOptional as ApiProperty } from "@nestjs/swagger";
 
+/**
+ * DTO usado para criar uma sessão de coaching.
+ */
 export class CreateCoachingDto {
-  
-  // @ApiProperty({ 
-  //   example: '2026-04-10T14:30:00.000Z',
-  //   description: "Data de início do coaching"
-  //  })
-
-  // Todos os campos abaixo são opcionais (por causa do '?' no Prisma)
-
   @ApiPropertyOptional({ example: 3, description: "ID da direção" })
   ID_Direcao: number;
   

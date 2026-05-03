@@ -1,9 +1,10 @@
-// Ficheiro: Backend/src/marketplace/dto/publicar-inventario-escola.dto.ts
-
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { TipoAnuncio } from '../enums/tipo-anuncio.enum';
 
+/**
+ * DTO usado para publicar um item do inventário da escola no Marketplace.
+ */
 export class PublicarInventarioEscolaDto {
     @Type(() => Number)
     @IsInt({ message: 'O ID do artigo é obrigatório.' })

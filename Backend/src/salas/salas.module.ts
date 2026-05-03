@@ -6,4 +6,7 @@ import { SalasController } from './salas.controller';
   controllers: [SalasController],
   providers: [SalasService],
 })
+/**
+ * Módulo responsável pela gestão de salas.
+ */
 export class SalasModule {}

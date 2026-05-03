@@ -4,24 +4,17 @@ import { CreateSalaDto } from './dto/create-sala.dto';
 import { UpdateSalaDto } from './dto/update-sala.dto';
 
 @Controller('salas')
+/**
+ * Controller dos endpoints de gestão de salas.
+ */
 export class SalasController {
-
-    // Injetamos o serviço de Salas no construtor do controlador.
   constructor(private readonly salasService: SalasService) {}
 
-    // ==========================================
-    // RECEBER UM POST (Criar nova sala)
-    // ==========================================
-    @Post()
-    create(@Body() createSalaDto: CreateSalaDto) {
-        // O @Body() extrai os dados que vêm colados no pedido do React 
-        // e atira-os para o Service processar.
+  @Post()
+  create(@Body() createSalaDto: CreateSalaDto) {
         return this.salasService.create(createSalaDto);
     }
 
-    // ==========================================
-    // RECEBER UM GET (Devolver todas as salas)
-    // ==========================================
     @Get()
     findAll() {
         return this.salasService.findAll();

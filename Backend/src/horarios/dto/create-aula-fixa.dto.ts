@@ -1,5 +1,8 @@
 import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 
+/**
+ * DTO usado para criar um horário fixo.
+ */
 export class CreateAulaFixaDto {
   @IsInt()
   @Min(1)

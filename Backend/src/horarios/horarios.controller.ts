@@ -7,6 +7,9 @@ import { UpdateAulaFixaDto } from './dto/update-aula-fixa.dto';
 
 @ApiTags('Horários')
 @Controller('horarios')
+/**
+ * Controller dos endpoints de gestão de horários fixos.
+ */
 export class HorariosController {
   constructor(private readonly horariosService: HorariosService) {}
 

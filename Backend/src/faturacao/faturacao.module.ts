@@ -8,4 +8,7 @@ import { PrismaModule } from '../prisma/prisma.module';
   controllers: [FaturacaoController],
   providers: [FaturacaoService],
 })
+/**
+ * Módulo responsável pela faturação e relatórios financeiros.
+ */
 export class FaturacaoModule { }

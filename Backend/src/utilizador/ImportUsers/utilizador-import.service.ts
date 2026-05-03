@@ -3,20 +3,25 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { BlobsService } from '../../Infraestrutura/Blobs/blobs.service';
 
 @Injectable()
+/**
+ * Serviço responsável por importar utilizadores a partir de ficheiros CSV em Azure Blob.
+ */
 export class UtilizadorImportService {
-  
-  // Injetamos o Prisma E o nosso novo serviço de Blobs!
+
   constructor(
     private readonly prisma: PrismaService,
-    private readonly blobsService: BlobsService 
+    private readonly blobsService: BlobsService
   ) {}
 
+  /**
+   * Importa utilizadores a partir de um ficheiro existente no blob storage.
+   *
+   * @param nomeFicheiro - Nome do ficheiro CSV armazenado no blob.
+   * @returns Resumo da importação efetuada.
+   */
   async importarDeBlob(nomeFicheiro: string) {
-    
-    // 1. Pedimos ao BlobsService para ir buscar o texto à nuvem, AGORA COM O CONTENTOR!
     const conteudo = await this.blobsService.lerFicheiroTexto('importar-csv', nomeFicheiro);
 
-    // 2. Daqui para a frente, é a lógica de CSV que já tinhas feita!
     const linhas = conteudo.split(/\r?\n/);
     const cabecalho = linhas[0].trim();
     const delimitador = cabecalho.includes(';') ? ';' : ',';

@@ -2,9 +2,18 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { createTransport, Transporter } from 'nodemailer';
 
 @Injectable()
+/**
+ * Serviço responsável pelo envio de emails transacionais da aplicação.
+ */
 export class MailService {
     private transporter?: Transporter;
 
+    /**
+     * Envia um email com o link de reposição de password.
+     *
+     * @param to - Endereço de email do destinatário.
+     * @param resetLink - Link de reposição de password.
+     */
     async sendPasswordResetEmail(to: string, resetLink: string) {
         const transporter = this.getTransporter();
 
@@ -29,6 +38,11 @@ export class MailService {
         });
     }
 
+    /**
+     * Devolve um transporter SMTP reutilizável com base na configuração atual.
+     *
+     * @returns Transporter pronto a enviar emails.
+     */
     private getTransporter() {
         if (this.transporter) {
             return this.transporter;

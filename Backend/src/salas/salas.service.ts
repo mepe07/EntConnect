@@ -4,18 +4,20 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateSalaDto } from './dto/create-sala.dto';
 
 @Injectable()
+/**
+ * Serviço responsável pela gestão de salas e respetiva modalidade associada.
+ */
 export class SalasService {
 
-    // Injetamos o Prisma no construtor. 
-    // Agora o nosso "Cozinheiro" tem acesso direto à base de dados SQL Server!
     constructor(private prisma: PrismaService) { }
 
-    // ==========================================
-    // CREATE (Criar uma nova sala)
-    // ==========================================
-    // Substituímos o 'any' pelo tipo correto!
+    /**
+     * Cria uma nova sala.
+     *
+     * @param createSalaDto - Dados da sala.
+     * @returns Sala criada e formatada para o frontend.
+     */
     async create(createSalaDto: CreateSalaDto) { 
-        // ... (manténs toda a lógica que já cá tinhas, sem mexer numa vírgula!)
         const novaSala = await this.prisma.sala.create({
             data: {
                 Nome: createSalaDto.nome,
@@ -23,7 +25,7 @@ export class SalasService {
                 ID_Modalidade: parseInt(createSalaDto.modalidade as string) || null
             },
             include: {
-                Modalidade: true 
+            Modalidade: true 
             }
         });
         
@@ -35,19 +37,19 @@ export class SalasService {
         };
     }
 
-    // ==========================================
-    // READ (Buscar todas as salas)
-    // ==========================================
+    /**
+     * Lista todas as salas.
+     *
+     * @returns Salas formatadas para consumo no frontend.
+     */
     async findAll() {
-        // 1. Vamos buscar as salas ao SQL Server e pedimos para INCLUIR os dados da tabela Modalidade
         const salasDaBD = await this.prisma.sala.findMany({
             orderBy: { ID_Sala: 'asc' },
             include: {
-                Modalidade: true // Faz um JOIN automático com a tabela Modalidade!
+                Modalidade: true
             }
         });
 
-        // 2. Formatamos os dados EXATAMENTE para a interface que o teu React (Frontend) está à espera
         return salasDaBD.map(sala => ({
             ID_Sala: sala.ID_Sala,
             Nome: sala.Nome,
@@ -60,12 +62,14 @@ export class SalasService {
         return `This action returns a #${id} sala`;
     }
 
-    // ==========================================
-    // UPDATE (Atualizar uma sala)
-    // ==========================================
+    /**
+     * Atualiza uma sala existente.
+     *
+     * @param id - Identificador da sala.
+     * @param updateSalaDto - Dados atualizados da sala.
+     * @returns Sala atualizada.
+     */
     async update(id: number, updateSalaDto: any) {
-        // LÓGICA DE SÉNIOR: O Prisma precisa do 'where' para saber que linha alterar,
-        // e do 'data' para saber o que escrever por cima dos dados velhos.
         const salaAtualizada = await this.prisma.sala.update({
             where: { ID_Sala: id },
             data: {
@@ -74,7 +78,7 @@ export class SalasService {
                 ID_Modalidade: parseInt(updateSalaDto.modalidade) || null
             },
             include: {
-                Modalidade: true // Fazemos o include aqui também para manter a consistência!
+                Modalidade: true
             }
         });
 

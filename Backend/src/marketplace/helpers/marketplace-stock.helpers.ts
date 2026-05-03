@@ -1,5 +1,3 @@
-// Ficheiro: src/marketplace/marketplace-stock.helpers.ts
-
 import { BadRequestException } from '@nestjs/common';
 import { TipoAnuncio } from '../enums/tipo-anuncio.enum';
 import {
@@ -7,12 +5,9 @@ import {
     type StockPrincipalMarketplace,
 } from '../types/marketplace.prisma-types';
 
-/*
-    Parâmetros necessários para calcular a distribuição de stock
-    entre venda e aluguer.
-
-    Esta interface existe para evitar `any` e deixar claro o que a função precisa.
-*/
+/**
+ * Parâmetros aceites no cálculo da distribuição de stock de um anúncio.
+ */
 interface ResolverDistribuicaoStockParams {
     tipoAnuncio: TipoAnuncio;
     quantidadeTotal: number;
@@ -24,15 +19,9 @@ interface ResolverDistribuicaoStockParams {
     permitirManterDistribuicaoAtual?: boolean;
 }
 
-/*
-    Resultado final da distribuição de stock.
-
-    O Marketplace trabalha com:
-    - quantidade total no inventário;
-    - quantidade disponível no marketplace;
-    - quantidade para venda;
-    - quantidade para aluguer.
-*/
+/**
+ * Resultado final da distribuição de stock entre venda e aluguer.
+ */
 interface DistribuicaoStockResultado {
     tipoAnuncio: TipoAnuncio;
     quantidadeVenda: number;
@@ -40,15 +29,12 @@ interface DistribuicaoStockResultado {
     quantidadeDisponivel: number;
 }
 
-/*
-    Valida se a quantidade disponível não ultrapassa a quantidade total.
-
-    Exemplo:
-    - quantidade total: 5
-    - quantidade disponível: 8
-
-    Isto seria inválido, porque não podes anunciar mais unidades do que tens.
-*/
+/**
+ * Valida se a quantidade disponível não excede o stock total.
+ *
+ * @param quantidadeTotal - Quantidade total em inventário.
+ * @param quantidadeDisponivel - Quantidade a disponibilizar no Marketplace.
+ */
 function validarQuantidades(
     quantidadeTotal: number,
     quantidadeDisponivel: number,
@@ -60,14 +46,13 @@ function validarQuantidades(
     }
 }
 
-/*
-    Decide automaticamente o tipo do anúncio com base nas quantidades.
-
-    Exemplos:
-    - venda > 0 e aluguer > 0 -> ambos
-    - só aluguer > 0 -> aluguer
-    - caso contrário -> venda
-*/
+/**
+ * Deduz o tipo de anúncio a partir da distribuição de stock.
+ *
+ * @param quantidadeVenda - Quantidade alocada para venda.
+ * @param quantidadeAluguer - Quantidade alocada para aluguer.
+ * @returns Tipo de anúncio coerente com a distribuição recebida.
+ */
 function derivarTipoAnuncio(
     quantidadeVenda: number,
     quantidadeAluguer: number,
@@ -83,23 +68,12 @@ function derivarTipoAnuncio(
     return TipoAnuncio.VENDA;
 }
 
-/*
-    Resolve a distribuição de stock de um anúncio.
-
-    Esta função é usada quando:
-    - criamos um anúncio;
-    - atualizamos um anúncio;
-    - publicamos um item do inventário no marketplace.
-
-    A função suporta dois modos:
-    1. Distribuição explícita:
-       quantidadeVenda + quantidadeAluguer
-
-    2. Quantidade disponível simples:
-       quantidadeDisponivel
-
-    Também permite manter a distribuição atual quando estamos a editar um anúncio.
-*/
+/**
+ * Resolve a distribuição final de stock de um anúncio.
+ *
+ * @param params - Dados de stock recebidos do pedido atual.
+ * @returns Distribuição final validada para venda e aluguer.
+ */
 export function resolverDistribuicaoStock(
     params: ResolverDistribuicaoStockParams,
 ): DistribuicaoStockResultado {
@@ -184,11 +158,12 @@ export function resolverDistribuicaoStock(
     };
 }
 
-/*
-    Obtém o primeiro registo de stock associado ao artigo.
-
-    Atualmente, o Marketplace trabalha com o stock principal do artigo.
-*/
+/**
+ * Obtém o stock principal associado a um artigo do Marketplace.
+ *
+ * @param artigo - Artigo carregado com relações base.
+ * @returns Primeiro registo de stock, quando existe.
+ */
 export function obterStockPrincipal(
     artigo: ArtigoComBase,
 ): StockPrincipalMarketplace | null {
