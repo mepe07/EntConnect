@@ -200,12 +200,12 @@ export default function PagamentosCoachingAdmin() {
 
     return (
         <div className="pagamentos-coaching">
-            <header className="pagamentos-header">
+            <div className="pagamentos-header">
                 <div>
                     <h1>Gerir pagamentos</h1>
                     <p>Registo e consulta de pagamentos de sessoes de coaching.</p>
                 </div>
-            </header>
+            </div>
 
             <form className="pagamentos-filtros" onSubmit={handleSubmitFiltros}>
                 <label>
