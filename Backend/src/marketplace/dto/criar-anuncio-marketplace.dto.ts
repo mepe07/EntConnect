@@ -4,6 +4,9 @@ import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { TipoAnuncio } from '../enums/tipo-anuncio.enum';
 
+/**
+ * DTO usado para criar um anúncio no Marketplace.
+ */
 export class CriarAnuncioMarketplaceDto {
     @IsString({ message: 'O titulo do anúncio é obrigatório.' })
     @MaxLength(255)

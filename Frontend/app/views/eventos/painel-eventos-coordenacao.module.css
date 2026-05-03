@@ -1,4 +1,4 @@
-/* Ficheiro: app/views/eventos/painel-eventos-coordenacao.module.css */
+
 
 .page {
     display: flex;
@@ -303,7 +303,6 @@
     border-color: #bbf7d0;
 }
 
-/* Modal */
 
 .modalOverlay {
     position: fixed;

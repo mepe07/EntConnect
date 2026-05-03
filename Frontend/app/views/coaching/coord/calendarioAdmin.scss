@@ -335,7 +335,7 @@
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
-  align-items: flex-start; /* Mudamos de 'center' para 'flex-start' para alinhar bem textos longos (como a Descrição) */
+  align-items: flex-start;
   padding: 12px 16px;
   border-radius: 14px;
   background: #f8fafc;
@@ -345,15 +345,15 @@
   color: #6b7280;
   font-size: 0.85rem;
   font-weight: 700;
-  min-width: 80px; /* Garante que a label não é esmagada se o texto da direita for muito grande */
+  min-width: 80px;
 }
 
 .modal-row span:not(.modal-label) {
-  color: #111827; /* Cor bem escura para contraste perfeito */
+  color: #111827;
   font-weight: 500;
   font-size: 0.9rem;
-  flex: 1; /* Ocupa o restante espaço disponível */
-  text-align: right; /* Encosta o texto à direita */
+  flex: 1;
+  text-align: right;
   line-height: 1.4;
 }
 

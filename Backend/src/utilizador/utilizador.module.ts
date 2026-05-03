@@ -23,4 +23,7 @@ import { AuthModule } from '../auth/auth.module';
     AgendamentosService,
     PrismaService],
 })
+/**
+ * Módulo responsável pela gestão de utilizadores, professores e educandos.
+ */
 export class UtilizadorModule {}

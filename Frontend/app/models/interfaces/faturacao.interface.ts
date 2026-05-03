@@ -11,16 +11,17 @@ export interface LinhaFaturacaoCoaching {
     emailEncarregado?: string | null;
     contactoEncarregado?: string | null;
 
-    // Valor total da aula por aluno.
+
     valorTotal: number;
 
     // Valor ja pago.
     valorPago?: number;
 
     // Valor que ainda falta pagar.
+
     valorEmFalta?: number;
 
-    // Estado do pagamento.
+
     estaPago: boolean;
     estadoPagamento?: 'atrasado' | 'pendente' | 'pago';
     estadoCoaching?: string;

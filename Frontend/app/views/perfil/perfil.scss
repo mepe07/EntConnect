@@ -1,8 +1,6 @@
 @use "../../assets/styles/variables/colors";
 
-// ==========================================
-// VARIÁVEIS DE DESIGN
-// ==========================================
+
 $fonte-base: 'Inter', 'Segoe UI', sans-serif;
 $cor-texto-escuro: #0f172a;
 $cor-texto-medio: #334155;
@@ -19,9 +17,7 @@ $cor-fundo-app: #f1f5f9;
     background-color: $cor-fundo-app;
     font-family: $fonte-base;
 
-    /* ============================
-       SIDEBAR
-       ============================ */
+
     .perfil-sidebar {
         width: 260px;
         background: white;
@@ -66,9 +62,7 @@ $cor-fundo-app: #f1f5f9;
         }
     }
 
-    /* ============================
-       CONTEÚDO PRINCIPAL
-       ============================ */
+
     .perfil-conteudo {
         flex: 1;
         padding: 2.5rem;
@@ -94,9 +88,7 @@ $cor-fundo-app: #f1f5f9;
         }
     }
 
-    /* ============================
-       HEADER (FOTO E NOME)
-       ============================ */
+
     .perfil-header-topo {
         display: flex;
         justify-content: space-between;
@@ -135,25 +127,25 @@ $cor-fundo-app: #f1f5f9;
         .input-file-escondido {
             display: none !important;
         }
-        
+
         .nome-principal {
             color: #000000 !important;
             font-size: 1.4rem;
             font-weight: 700;
-            margin: 0; 
+            margin: 0;
         }
 
         .nome-meta {
             color: $cor-texto-claro;
             font-size: 0.95rem;
-            margin: 0; 
+            margin: 0;
             font-weight: 500;
         }
 
         .email-utilizador {
             font-size: 0.9rem;
             color: $cor-texto-medio;
-            margin-bottom: 4px; 
+            margin-bottom: 4px;
         }
 
         .aviso-tamanho {
@@ -162,11 +154,11 @@ $cor-fundo-app: #f1f5f9;
             display: flex;
             align-items: center;
             gap: 6px;
-            margin-bottom: 8px; 
+            margin-bottom: 8px;
             i { color: $cor-azul-destaque; }
         }
 
-        /* 🔥 NOVO: GRUPO DE BOTÕES DA FOTO */
+
         .botoes-foto-wrapper {
             display: flex;
             gap: 12px;
@@ -199,7 +191,7 @@ $cor-fundo-app: #f1f5f9;
                     transform: none;
                 }
 
-                /* 🔥 Estilo específico para remover foto */
+
                 &.btn-remover {
                     border-color: #ef4444;
                     color: #ef4444;
@@ -219,9 +211,7 @@ $cor-fundo-app: #f1f5f9;
         border-top: 1px solid #eee;
     }
 
-    /* ============================
-       GRID LAYOUT (CARTÕES)
-       ============================ */
+
     .perfil-grid-layout {
         display: flex;
         gap: 40px;
@@ -254,7 +244,7 @@ $cor-fundo-app: #f1f5f9;
 
             .cartao-info-extra {
                 background-color: #f8fafc;
-                
+
                 .item-info {
                     display: flex;
                     justify-content: space-between;
@@ -262,7 +252,7 @@ $cor-fundo-app: #f1f5f9;
                     .label { color: $cor-texto-claro; font-size: 0.9rem; font-weight: 500; }
                     .valor-cargo { font-weight: 600; color: $cor-texto-escuro; }
 
-                    /* 🔥 NOVO: DESIGN DO CARGO MINIMALISTA (Sem parecer botão) */
+
                     &.cargo-info {
                         flex-direction: row;
                         align-items: center;
@@ -272,15 +262,15 @@ $cor-fundo-app: #f1f5f9;
                             display: inline-flex;
                             align-items: center;
                             gap: 8px;
-                            background: transparent; /* Sem fundo */
-                            color: $cor-texto-escuro; /* Cor de texto normal */
-                            padding: 0; /* Sem padding de botão */
-                            box-shadow: none; /* Sem sombra */
+                            background: transparent;
+                            color: $cor-texto-escuro;
+                            padding: 0;
+                            box-shadow: none;
                             font-size: 0.95rem;
-                            font-weight: 700; /* Texto um pouco mais forte para destacar */
+                            font-weight: 700;
 
                             i {
-                                color: $cor-primaria; /* Apenas o ícone leva a cor da marca */
+                                color: $cor-primaria;
                                 font-size: 1.1rem;
                             }
                         }
@@ -293,9 +283,7 @@ $cor-fundo-app: #f1f5f9;
         }
     }
 
-    /* ============================
-       FORMULÁRIO E INPUTS
-       ============================ */
+
     .form-pessoal {
         display: grid;
         gap: 1.5rem;
@@ -310,13 +298,13 @@ $cor-fundo-app: #f1f5f9;
 
             input {
                 &.input-erro {
-                    border-color: #ef4444 !important; // Vermelho vivo
+                    border-color: #ef4444 !important;
                     background-color: #fef2f2;
                 }
             }
 
             .legenda-erro {
-                color: #dc2626; // Vermelho escuro
+                color: #dc2626;
                 font-size: 0.75rem;
                 font-weight: 600;
                 margin-top: 2px;
@@ -330,8 +318,8 @@ $cor-fundo-app: #f1f5f9;
                 border: 1px solid #cbd5e1;
                 border-radius: 8px;
                 font-size: 0.95rem;
-                
-                // Força o texto a preto sempre
+
+
                 color: #000000 !important;
                 -webkit-text-fill-color: #000000 !important;
                 opacity: 1 !important;
@@ -352,9 +340,7 @@ $cor-fundo-app: #f1f5f9;
         }
     }
 
-    /* ============================
-       BOTÕES
-       ============================ */
+
     .btn-editar {
         padding: 10px 20px;
         background-color: $cor-primaria;
@@ -397,9 +383,7 @@ $cor-fundo-app: #f1f5f9;
         &:hover { text-decoration: underline; }
     }
 
-    /* ============================
-       TABELAS E ETIQUETAS
-       ============================ */
+
     .tabela-custom {
         width: 100%;
         border-collapse: collapse;
@@ -418,18 +402,16 @@ $cor-fundo-app: #f1f5f9;
         &.vermelha { background: #fee2e2; color: #991b1b; }
     }
 
-    /* ==========================================
-       MODAIS (FOTO E PASSWORD)
-       ========================================== */
+
     .modal-corte-overlay {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(15, 23, 42, 0.9); // Azul escuro profundo
+        background: rgba(15, 23, 42, 0.9);
         display: flex;
         justify-content: center;
         align-items: center;
         z-index: 10000;
-        backdrop-filter: blur(4px); 
+        backdrop-filter: blur(4px);
     }
 
     .modal-corte-container {
@@ -443,21 +425,21 @@ $cor-fundo-app: #f1f5f9;
         .modal-header {
             text-align: center;
             margin-bottom: 1.5rem;
-            
-            h3 { 
-                color: $cor-texto-escuro; 
-                margin-bottom: 5px; 
-                font-size: 1.25rem; 
-                font-weight: 700; 
+
+            h3 {
+                color: $cor-texto-escuro;
+                margin-bottom: 5px;
+                font-size: 1.25rem;
+                font-weight: 700;
             }
-            
-            p { 
-                color: $cor-texto-claro; 
-                font-size: 0.9rem; 
+
+            p {
+                color: $cor-texto-claro;
+                font-size: 0.9rem;
             }
         }
 
-        /* Área do Editor de Imagem */
+
         .cropper-wrapper {
             position: relative;
             width: 100%;
@@ -465,9 +447,9 @@ $cor-fundo-app: #f1f5f9;
             border-radius: 12px;
             overflow: hidden;
             background: #334155;
-            
-            // Fundo Quadriculado Profissional
-            background-image: 
+
+
+            background-image:
                 linear-gradient(45deg, #475569 25%, transparent 25%),
                 linear-gradient(-45deg, #475569 25%, transparent 25%),
                 linear-gradient(45deg, transparent 75%, #475569 75%),
@@ -476,7 +458,7 @@ $cor-fundo-app: #f1f5f9;
             background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
 
-        /* Controlos de Zoom e Inputs */
+
         .controles-corte {
             margin-top: 1.5rem;
 
@@ -492,12 +474,12 @@ $cor-fundo-app: #f1f5f9;
                     accent-color: $cor-primaria;
                     cursor: pointer;
                 }
-                
+
                 i { color: $cor-texto-claro; font-size: 0.9rem; }
             }
         }
 
-        /* Contentor de Botões Reutilizável */
+
         .botoes-modal {
             display: flex;
             gap: 12px;
@@ -505,7 +487,7 @@ $cor-fundo-app: #f1f5f9;
             width: 100%;
 
             button {
-                flex: 1; 
+                flex: 1;
                 padding: 12px 20px;
                 border-radius: 8px;
                 font-weight: 600;
@@ -521,7 +503,7 @@ $cor-fundo-app: #f1f5f9;
             .btn-modal-cancelar {
                 background-color: #f1f5f9;
                 color: #475569;
-                
+
                 &:hover {
                     background-color: #e2e8f0;
                     color: #0f172a;
@@ -551,25 +533,23 @@ $cor-fundo-app: #f1f5f9;
         .input-file-escondido { display: none; }
     }
 
-    // Animação suave para o erro aparecer
+
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(-5px); }
         to { opacity: 1; transform: translateY(0); }
     }
 }
 
-/* =========================================================================
-   DARK MODE
-   ========================================================================= */
+
 @media (prefers-color-scheme: dark) {
 
     .coluna-detalhes .cartao-info-extra .item-info.cargo-info .cargo-badge {
-        color: #f8fafc; // Texto branco
-        i { color: #2dd4bf; } // Ícone num verde mais claro para destacar no fundo escuro
+        color: #f8fafc;
+        i { color: #2dd4bf; }
     }
-    
+
     .perfil-container {
-        // Garantir que os botões com fundo branco ficam transparentes no modo escuro
+
         .botoes-foto-wrapper .btn-link-foto {
             background-color: transparent;
             &.btn-remover {

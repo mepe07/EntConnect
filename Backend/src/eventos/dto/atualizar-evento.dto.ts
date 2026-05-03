@@ -12,6 +12,9 @@ import {
 import { transformarBoolean } from './transformar-boolean';
 import { TipoEvento } from '../enums/tipo-evento.enum';
 
+/**
+ * DTO usado para atualizar parcialmente um evento existente.
+ */
 export class AtualizarEventoDto {
     @IsOptional()
     @IsString()

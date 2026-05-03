@@ -4,14 +4,23 @@ import { authService } from '~/services/auth.service';
 import { API_BASE_URL } from '~/config/api.config';
 import './perfil.scss';
 import { getCroppedImg } from '../utils/cropImage';
+import { useLocation } from 'react-router';
 
-type AbaTipo = 'dados_pessoais' | 'minhas_aulas';
+type AbaTipo = 'dados_pessoais' | 'meus_coachings' | 'minhas_faturas';
 
 export function Perfil() {
-    const [abaAtiva, setAbaAtiva] = useState<AbaTipo>('dados_pessoais');
-    const [minhasAulas, setMinhasAulas] = useState<any[]>([]);
-    const [loading, setLoading] = useState(false);
+    
+    // 1. O hook location TEM de estar aqui dentro
+    const location = useLocation();
+    
+    // 2. Inicializamos o estado lendo o que vem do navigate da Dashboard!
+    // Se não vier nada (abriu o menu normal), vai para 'dados_pessoais'
+    const [abaAtiva, setAbaAtiva] = useState<AbaTipo>(location.state?.abaAtiva || 'dados_pessoais');
+    
+    const [meusCoachings, setMeusCoachings] = useState<any[]>([]);
+    const [minhasFaturas, setMinhasFaturas] = useState<any[]>([]);
 
+    const [loading, setLoading] = useState(false);
     const [fotoUrl, setFotoUrl] = useState<string | null>(null);
     const [loadingFoto, setLoadingFoto] = useState(false);
     const [modalCorteAberto, setModalCorteAberto] = useState(false);
@@ -93,13 +102,27 @@ export function Perfil() {
                 setEmail(p?.Email || '');
             }
 
-            if (abaAtiva === 'minhas_aulas') {
-                const resAulas = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/aulas`, { headers });
-                if (resAulas.ok) {
-                    const dadosAulas = await resAulas.json();
-                    setMinhasAulas(dadosAulas);
+            if (abaAtiva === 'meus_coachings') {
+                const resCoachings = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/coachings`, { headers });
+                if (resCoachings.ok) {
+                    const dadosCoachings = await resCoachings.json();
+                    setMeusCoachings(dadosCoachings);
                 }
             }
+
+            if (abaAtiva === 'minhas_faturas') {
+                //Garante que o caminho é /utilizador/encarregado/ e não /faturacao/
+                const resFaturas = await fetch(`http://localhost:3000/utilizador/encarregado/${currentUserId}`, { headers });
+                
+                if (resFaturas.ok) {
+                    const dadosFaturas = await resFaturas.json();
+                    console.log("Faturas recebidas no React:", dadosFaturas); // Adiciona este log para debug
+                    setMinhasFaturas(Array.isArray(dadosFaturas) ? dadosFaturas : []);
+                } else {
+                    console.error("Erro ao procurar faturas. Status:", resFaturas.status);
+                }
+            }
+
         } catch (error: any) {
             console.error("Erro ao carregar dados:", error);
         } finally {
@@ -145,7 +168,7 @@ export function Perfil() {
             if (response.ok) {
                 alert("Foto atualizada com sucesso!");
                 buscarFotoAtual();
-                window.dispatchEvent(new Event('fotoPerfilAtualizada')); 
+                window.dispatchEvent(new Event('fotoPerfilAtualizada'));
                 setModalCorteAberto(false);
             }
         } catch (error) {
@@ -156,7 +179,7 @@ export function Perfil() {
         }
     };
 
-    // NOVA FUNÇÃO: Remover Foto
+
     const removerFoto = async () => {
         const confirmacao = window.confirm("Tens a certeza que queres remover a tua foto de perfil?");
         if (!confirmacao) return;
@@ -168,10 +191,10 @@ export function Perfil() {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            
+
             if (response.ok) {
                 setFotoUrl(null);
-                window.dispatchEvent(new Event('fotoPerfilAtualizada')); // Atualiza o Header
+                window.dispatchEvent(new Event('fotoPerfilAtualizada')); 
                 alert("Foto removida com sucesso!");
             } else {
                 alert("Erro ao remover a foto.");
@@ -189,7 +212,7 @@ export function Perfil() {
             const token = localStorage.getItem('entconnect_token') || authService.getToken();
             const response = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/update-pessoal`, {
                 method: 'PUT',
-                headers: { 
+                headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
@@ -215,9 +238,9 @@ export function Perfil() {
             const token = authService.getToken();
             const response = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/change-password`, {
                 method: 'PUT',
-                headers: { 
-                    'Authorization': `Bearer ${token}`, 
-                    'Content-Type': 'application/json' 
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ passAtual, passNova })
             });
@@ -243,6 +266,10 @@ export function Perfil() {
         setModalPasswordAberto(false);
     };
 
+    const formatarEuros = (valor: number) => {
+        return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(valor || 0);
+    };
+
     return (
         <div className="perfil-container">
             <aside className="perfil-sidebar">
@@ -251,8 +278,11 @@ export function Perfil() {
                     <button className={abaAtiva === 'dados_pessoais' ? 'ativo' : ''} onClick={() => setAbaAtiva('dados_pessoais')}>
                         👤 O Meu Perfil
                     </button>
-                    <button className={abaAtiva === 'minhas_aulas' ? 'ativo' : ''} onClick={() => setAbaAtiva('minhas_aulas')}>
-                        📅 O Meu Horário
+                    <button className={abaAtiva === 'meus_coachings' ? 'ativo' : ''} onClick={() => setAbaAtiva('meus_coachings')}>
+                        🎯 Os Meus Coachings
+                    </button>
+                    <button className={abaAtiva === 'minhas_faturas' ? 'ativo' : ''} onClick={() => setAbaAtiva('minhas_faturas')}>
+                        🧾 As Minhas Faturas
                     </button>
                 </nav>
             </aside>
@@ -266,7 +296,7 @@ export function Perfil() {
                             <section className="seccao-perfil">
                                 <div className="perfil-header-topo">
                                     <h3>O Meu Perfil</h3>
-                                    <button 
+                                    <button
                                         className="btn-editar"
                                         onClick={() => editando ? guardarAlteracoes() : setEditando(true)}
                                         disabled={guardando}
@@ -274,7 +304,7 @@ export function Perfil() {
                                         {guardando ? 'A guardar...' : editando ? '✅ Guardar' : '✏️ Editar Dados'}
                                     </button>
                                 </div>
-                                
+
                                 <div className="perfil-info-principal">
                                     <div className="foto-moldura">
                                         {loadingFoto ? (
@@ -290,20 +320,21 @@ export function Perfil() {
                                         <h4 className="nome-principal">{nome || 'Utilizador'}</h4>
                                         <p className="nome-meta">@{userInfo?.username || 'utilizador'}</p>
                                         <p className="email-utilizador">{email || 'Sem email registado'}</p>
-                                        
+
                                         <p className="aviso-tamanho">
                                             <i className="fa fa-info-circle"></i> Tamanho máximo: 10MB
                                         </p>
 
                                         <input type="file" accept="image/*" ref={fileInputRef} className="input-file-escondido" onChange={lidarComSelecaoFicheiro} />
                                         
-                                        {/* GRUPO DE BOTÕES DA FOTO */}
+
+
                                         <div className="botoes-foto-wrapper">
                                             <button className="btn-link-foto" onClick={() => fileInputRef.current?.click()} disabled={loadingFoto}>
                                                 <i className="fa fa-camera"></i>
                                                 {fotoUrl ? 'Alterar Foto' : 'Carregar Foto'}
                                             </button>
-                                            
+
                                             {fotoUrl && (
                                                 <button className="btn-link-foto btn-remover" onClick={removerFoto} disabled={loadingFoto}>
                                                     <i className="fa fa-trash"></i> Remover
@@ -349,7 +380,8 @@ export function Perfil() {
                                                 </span>
                                             </div>
                                             
-                                            {/*  CARGO COM NOVO DESIGN */}
+
+
                                             <div className="item-info cargo-info">
                                                 <span className="label">Cargo / Função:</span>
                                                 <div className="cargo-badge">
@@ -357,7 +389,7 @@ export function Perfil() {
                                                     <span>{cargo}</span>
                                                 </div>
                                             </div>
-                                            
+
                                             <hr />
                                             <h4>Segurança</h4>
                                             <p className="texto-seguranca">Protege a tua conta alterando a palavra-passe regularmente.</p>
@@ -368,39 +400,44 @@ export function Perfil() {
                                         </div>
                                     </div>
                                 </div>
-                            </section> 
+                            </section>
                         )}
 
-                        {abaAtiva === 'minhas_aulas' && (
+                        {/* ========================================== */}
+                        {/* ABA: OS MEUS COACHINGS */}
+                        {/* ========================================== */}
+                        {abaAtiva === 'meus_coachings' && (
                             <section className="seccao-aulas">
-                                <h3>As Minhas Aulas / Horário</h3>
-                                {minhasAulas.length === 0 ? (
-                                    <div className="mensagem-vazia">
-                                        <i className="fa fa-calendar-times-o"></i>
-                                        <p>Ainda não tens aulas agendadas no sistema.</p>
+                                <h3>As Minhas Sessões de Coaching</h3>
+                                {meusCoachings.length === 0 ? (
+                                    <div className="mensagem-vazia" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0', color: '#64748b' }}>
+                                        <i className="fa-solid fa-calendar-xmark" style={{ fontSize: '2.5rem', marginBottom: '15px', color: '#94a3b8' }}></i>
+                                        <p style={{ margin: 0, fontWeight: 500, fontSize: '1.1rem' }}>Ainda não tens sessões de coaching agendadas.</p>
                                     </div>
                                 ) : (
                                     <div className="tabela-container">
                                         <table className="tabela-custom">
                                             <thead>
                                                 <tr>
-                                                    <th>Foco / Coreografia</th>
-                                                    <th>{userInfo?.role === 'Professor' ? 'Cliente' : 'Professor(a)'}</th>
+                                                    {/* Nomes atualizados conforme o print */}
+                                                    <th>Coaching</th>
+                                                    <th>Professor</th>
                                                     <th>Data</th>
                                                     <th>Horário</th>
-                                                    <th>Local / Formato</th>
+                                                    <th>Estúdio</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {minhasAulas.map((aula, index) => (
+                                                {meusCoachings.map((sessao, index) => (
                                                     <tr key={index}>
-                                                        <td><strong>{aula.sessao || aula.Sessao}</strong></td>
-                                                        <td>{aula.coach || aula.cliente || 'N/A'}</td>
-                                                        <td>{aula.data || aula.Data}</td>
-                                                        <td>{aula.horario || aula.Horario}</td>
+                                                        <td><strong>{sessao.tema || sessao.sessao || sessao.Sessao || 'Coaching'}</strong></td>
+                                                        <td>{sessao.coach || sessao.cliente || sessao.bailarino || 'N/A'}</td>
+                                                        <td>{sessao.data || sessao.Data}</td>
+                                                        <td>{sessao.horario || sessao.Horario}</td>
                                                         <td>
-                                                            <span className={`etiqueta ${String(aula.formato || '').toLowerCase().includes('online') ? 'verde' : 'amarela'}`}>
-                                                                {aula.formato || 'Presencial'}
+                                                            {/* Texto em maiúsculas para o Estúdio */}
+                                                            <span className={`etiqueta ${String(sessao.formato || '').toLowerCase().includes('online') ? 'verde' : 'amarela'}`}>
+                                                                {String(sessao.formato || 'Presencial').toUpperCase()}
                                                             </span>
                                                         </td>
                                                     </tr>
@@ -411,10 +448,63 @@ export function Perfil() {
                                 )}
                             </section>
                         )}
+
+                        {/* ========================================== */}
+                        {/* ABA: AS MINHAS FATURAS */}
+                        {/* ========================================== */}
+                        {abaAtiva === 'minhas_faturas' && (
+                            <section className="seccao-aulas">
+                                <h3>Histórico de Faturação</h3>
+                                {minhasFaturas.length === 0 ? (
+                                    <div className="mensagem-vazia" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0', color: '#64748b' }}>
+                                        <i className="fa-solid fa-file-invoice-dollar" style={{ fontSize: '2.5rem', marginBottom: '15px', color: '#94a3b8' }}></i>
+                                        <p style={{ margin: 0, fontWeight: 500, fontSize: '1.1rem' }}>Não tens registos de faturação pendentes ou pagos.</p>
+                                    </div>
+                                ) : (
+                                    <div className="tabela-container">
+                                        <table className="tabela-custom">
+                                            <thead>
+                                                <tr>
+                                                    {/* Nomes atualizados conforme o print e o teu pedido */}
+                                                    <th>Data</th>
+                                                    <th>Modalidade</th>
+                                                    <th>Valor</th>
+                                                    <th>Estado</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {minhasFaturas.map((fatura, index) => {
+                                                    const valor = fatura.Valor || fatura.valor || fatura.ValorEmFalta || 0;
+                                                    // "Modalidade" agora mapeia para a descrição/observações
+                                                    const modalidade = fatura.Descricao || fatura.descricao || fatura.Observacoes || 'Coaching';
+                                                    const dataStr = fatura.Data || fatura.data || fatura.Data_Inscricao || '--/--/----';
+                                                    const isEmDivida = fatura.estado === 'Em Dívida' || fatura.ValorEmFalta > 0 || fatura.Pago === false;
+                                                    
+                                                    return (
+                                                        <tr key={index}>
+                                                            <td>{new Date(dataStr).toLocaleDateString('pt-PT') !== 'Invalid Date' ? new Date(dataStr).toLocaleDateString('pt-PT') : dataStr}</td>
+                                                            <td><strong>{modalidade}</strong></td>
+                                                            <td>{formatarEuros(valor)}</td>
+                                                            <td>
+                                                                {/* Texto em maiúsculas: EM DÍVIDA ou PAGO */}
+                                                                <span className={`etiqueta ${isEmDivida ? 'vermelha' : 'verde'}`}>
+                                                                    {isEmDivida ? 'EM DÍVIDA' : 'PAGO'}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </section>
+                        )}
+
                     </div>
                 )}
 
-                {/* MODAL DE CORTE DE FOTO */}
+
                 {modalCorteAberto && (
                     <div className="modal-corte-overlay">
                         <div className="modal-corte-container">
@@ -448,7 +538,7 @@ export function Perfil() {
                     </div>
                 )}
 
-                {/* MODAL DE MUDAR PASSWORD */}
+
                 {modalPasswordAberto && (
                     <div className="modal-corte-overlay">
                         <div className="modal-corte-container" style={{ maxWidth: '400px' }}>
@@ -460,9 +550,9 @@ export function Perfil() {
                             <div className="form-pessoal">
                                 <div className="campo">
                                     <label>Password Atual</label>
-                                    <input 
-                                        type="password" 
-                                        value={passAtual} 
+                                    <input
+                                        type="password"
+                                        value={passAtual}
                                         onChange={(e) => setPassAtual(e.target.value)}
                                         autoComplete="new-password"
                                     />
@@ -470,20 +560,20 @@ export function Perfil() {
 
                                 <div className="campo">
                                     <label>Nova Password</label>
-                                    <input 
-                                        type="password" 
-                                        value={passNova} 
-                                        onChange={(e) => setPassNova(e.target.value)} 
+                                    <input
+                                        type="password"
+                                        value={passNova}
+                                        onChange={(e) => setPassNova(e.target.value)}
                                         autoComplete="new-password"
                                     />
                                 </div>
 
                                 <div className="campo">
                                     <label>Confirmar Nova Password</label>
-                                    <input 
-                                        type="password" 
-                                        value={passConfirma} 
-                                        onChange={(e) => setPassConfirma(e.target.value)} 
+                                    <input
+                                        type="password"
+                                        value={passConfirma}
+                                        onChange={(e) => setPassConfirma(e.target.value)}
                                         autoComplete="new-password"
                                         className={passConfirma && passNova !== passConfirma ? 'input-erro' : ''}
                                     />
@@ -494,9 +584,9 @@ export function Perfil() {
 
                                 <div className="botoes-modal" style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
                                     <button className="btn-modal-cancelar" style={{ flex: 1 }} onClick={fecharModalPassword}>Cancelar</button>
-                                    <button 
-                                        className="btn-modal-confirmar" 
-                                        style={{ flex: 1 }} 
+                                    <button
+                                        className="btn-modal-confirmar"
+                                        style={{ flex: 1 }}
                                         onClick={lidarComMudarPassword}
                                         disabled={!passAtual || !passNova || passNova !== passConfirma}
                                     >

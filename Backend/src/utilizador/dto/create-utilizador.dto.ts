@@ -1,6 +1,9 @@
 import { IsString, IsEmail, IsOptional, MinLength, IsNotEmpty, IsDateString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+/**
+ * DTO usado para criar um utilizador manualmente.
+ */
 export class CreateUtilizadorDto {
 
     @ApiProperty({ example: 'João Silva' })

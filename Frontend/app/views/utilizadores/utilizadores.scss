@@ -1,23 +1,21 @@
 @use "../../assets/styles/variables/colors";
 
-/* =======================================================
-   ESTRUTURA PRINCIPAL
-   ======================================================= */
+
 .crud-container {
     padding: 40px;
     max-width: 1200px;
     margin: 0 auto;
     animation: fadeEntrada 0.4s ease-out;
 
-    // Grupo de botões no cabeçalho
+
     .header-acoes {
         display: flex;
         gap: 10px;
         align-items: center;
         flex-wrap: wrap;
     }
-    
-    // Input genérico para o modal de criação
+
+
     .input-campo {
         width: 100%;
         padding: 10px 12px;
@@ -30,21 +28,21 @@
         box-sizing: border-box;
         background-color: #fff;
         font-family: inherit;
-    
+
         &:focus {
             border-color: colors.$theme-60;
             box-shadow: 0 0 0 3px rgba(colors.$theme-100, 0.08);
         }
-    
+
         &.input-erro {
             border-color: colors.$error-100;
-    
+
             &:focus {
                 box-shadow: 0 0 0 3px rgba(colors.$error-100, 0.1);
             }
         }
     }
-    
+
     select.input-campo {
         appearance: none;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
@@ -53,20 +51,20 @@
         padding-right: 32px;
         cursor: pointer;
     }
-    
-    // Mensagem de erro por campo
+
+
     .campo-erro {
         font-size: 12px;
         color: colors.$error-100;
         font-weight: 500;
         margin-top: 2px;
-    
+
         &::before {
             content: '⚠ ';
         }
     }
-    
-    // Loading state no modal de importação
+
+
     .import-loading {
         display: flex;
         align-items: center;
@@ -81,7 +79,7 @@
         margin-top: 8px;
     }
 
-    /* CABEÇALHO */
+
     .crud-header {
         display: flex;
         justify-content: space-between;
@@ -96,7 +94,7 @@
                 font-weight: 700;
             }
             p {
-                color: #475569; /* Cinza escuro legível para fundo branco */
+                color: #475569;
                 font-size: 0.95rem;
                 line-height: 1.5;
                 margin-bottom: 16px;
@@ -104,7 +102,7 @@
         }
     }
 
-    /* BARRA DE FERRAMENTAS */
+
     .crud-toolbar {
         background-color: #fff;
         padding: 16px 24px;
@@ -114,7 +112,7 @@
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
     }
 
-    /* TABELA */
+
     .tabela-wrapper {
         background-color: #fff;
         border: 1px solid colors.$gray-3;
@@ -129,14 +127,14 @@
         border-collapse: collapse;
         table-layout: fixed;
 
-        // Larguras fixas por coluna
-        th:nth-child(1) { width: 70px; }   // ID
-        th:nth-child(2) { width: 200px; }  // Nome
-        th:nth-child(3) { width: 140px; }  // Username
-        th:nth-child(4) { width: auto; }   // Email (ocupa o espaço restante)
-        th:nth-child(5) { width: 140px; }  // Cargo
-        th:nth-child(6) { width: 110px; }  // Estado
-        th:nth-child(7) { width: 100px; }  // Ações
+
+        th:nth-child(1) { width: 70px; }
+        th:nth-child(2) { width: 200px; }
+        th:nth-child(3) { width: 140px; }
+        th:nth-child(4) { width: auto; }
+        th:nth-child(5) { width: 140px; }
+        th:nth-child(6) { width: 110px; }
+        th:nth-child(7) { width: 100px; }
 
         th {
             background-color: #fafafa;
@@ -177,7 +175,7 @@
             font-size: 13px;
         }
 
-        /* Avatar + nome inline */
+
         .user-info {
             display: flex;
             align-items: center;
@@ -199,7 +197,7 @@
             }
         }
 
-        /* Tag de role */
+
         .tag-role {
             padding: 4px 10px;
             border-radius: 20px;
@@ -210,27 +208,35 @@
         }
 
         /* Tag de estado */
-        .tag-estado {
+       .tag-estado {
             padding: 5px 12px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 700;
+            display: inline-block;
 
             &.sucesso {
-                background-color: #dcfce7;
-                color: #16a34a;
+                background-color: #dcfce7 !important;
+                color: #16a34a !important; 
             }
+            
             &.aviso {
-                background-color: #fee2e2;
-                color: #dc2626;
+                background-color: #fef3c7 !important; /* Mudei para amarelo/laranja para parecer mais "Aviso" */
+                color: #d97706 !important; 
             }
+
+            &.erro {
+                background-color: #fee2e2 !important;
+                color: #dc2626 !important;
+            }
+            
             &.small {
                 padding: 3px 8px;
                 font-size: 11px;
             }
         }
 
-        /* Botões de ação por linha */
+
         .acoes-coluna {
             text-align: right;
             display: flex;
@@ -300,9 +306,7 @@
     }
 }
 
-/* =======================================================
-   MODAL
-   ======================================================= */
+
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -325,7 +329,7 @@
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         animation: slideUp 0.3s ease-out;
 
-        /* HEADER DO MODAL */
+
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -408,7 +412,7 @@
             }
         }
 
-        /* BODY DO MODAL */
+
         .modal-body {
             padding: 24px;
             display: flex;
@@ -417,7 +421,7 @@
             max-height: 60vh;
             overflow-y: auto;
 
-            /* Título de secção */
+
             .secao-titulo {
                 font-size: 12px;
                 font-weight: 700;
@@ -435,7 +439,7 @@
                 margin: 4px 0;
             }
 
-            /* Barra de ações da foto (upload / remover) */
+
             .foto-actions {
                 display: flex;
                 align-items: center;
@@ -662,7 +666,7 @@
                     letter-spacing: 0.4px;
                 }
 
-                /* Campo apenas leitura */
+
                 &.readonly .input-readonly {
                     padding: 10px 12px;
                     background-color: colors.$gray-2;
@@ -675,7 +679,7 @@
                     align-items: center;
                 }
 
-                /* Campo de password com botão de toggle */
+
                 &.password-group {
                     .password-wrapper {
                         position: relative;
@@ -724,7 +728,7 @@
                 }
             }
 
-            /* Mensagem de erro */
+
             .mensagem-erro {
                 background-color: colors.$error-20;
                 border: 1px solid colors.$error-40;
@@ -738,9 +742,7 @@
                 gap: 8px;
             }
 
-            /* =========================================================================
-               CAIXA DE DOWNLOAD DO MODELO EXCEL
-               ========================================================================= */
+
             .box-modelo-excel {
                 display: flex;
                 align-items: center;
@@ -759,7 +761,7 @@
 
                     .icone-excel {
                         font-size: 28px;
-                        color: #16a34a; 
+                        color: #16a34a;
                     }
 
                     div {
@@ -791,7 +793,7 @@
                     border-radius: 6px;
                     font-size: 0.85rem;
                     font-weight: 600;
-                    text-decoration: none; 
+                    text-decoration: none;
                     transition: all 0.2s ease;
                     white-space: nowrap;
 
@@ -803,7 +805,7 @@
             }
         }
 
-        /* FOOTER DO MODAL */
+
         .modal-footer {
             padding: 16px 24px;
             background-color: #fafafa;
@@ -852,25 +854,23 @@
     }
 }
 
-/* =========================================================================
-   MODO ESCURO (DARK MODE)
-   ========================================================================= */
+
 @media (prefers-color-scheme: dark) {
     .modal-body {
         p {
-            color: #0f172a; /* Corrigido para Cinza Claro! */
+            color: #0f172a;
         }
-        
+
         .import-loading {
-            color: #2dd4bf; 
+            color: #2dd4bf;
             span {
-                color: #f8fafc; 
+                color: #f8fafc;
             }
         }
 
-        /* Caixa Download Modelo Dark Mode */
+
         .box-modelo-excel {
-            background-color: #0f172a; 
+            background-color: #0f172a;
             border-color: #334155;
 
             .info-modelo {
@@ -882,21 +882,19 @@
 
             .btn-download-modelo {
                 background-color: transparent;
-                color: #2dd4bf; 
+                color: #2dd4bf;
                 border-color: #2dd4bf;
 
                 &:hover {
                     background-color: #2dd4bf;
-                    color: #0f172a; 
+                    color: #0f172a;
                 }
             }
         }
     }
 }
 
-/* =======================================================
-   PAGINAÇÃO
-   ======================================================= */
+
 .paginacao {
     display: flex;
     align-items: center;
@@ -979,9 +977,24 @@
     }
 }
 
+.modal-overlay {
+    position: fixed !important; /* Obriga a sair da caixa do conteúdo */
+    top: 0;
+    left: 0;
+    width: 100vw; /* 100% da largura do ecrã */
+    height: 100vh; /* 100% da altura do ecrã */
+    background: rgba(15, 23, 42, 0.7); /* Cor escura transparente */
+    z-index: 99999; /* Fica por cima de absolutamente tudo (incluindo menu) */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px); /* Efeito premium de desfoque no fundo */
+}
+
 /* =======================================================
    ANIMAÇÕES
    ======================================================= */
+
 @keyframes fadeEntrada {
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }

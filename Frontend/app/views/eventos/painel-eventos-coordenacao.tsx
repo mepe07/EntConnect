@@ -1,7 +1,7 @@
-// Ficheiro: app/views/eventos/painel-eventos-coordenacao.tsx
+
 
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { eventosService } from '~/services/eventos.service';
 import type {
     Evento,
@@ -121,6 +121,8 @@ export function PainelEventosCoordenacao() {
     const [tipoFiltro, setTipoFiltro] = useState<FiltroTipo>('todos');
     const [estadoFiltro, setEstadoFiltro] = useState<FiltroEstadoEventoGestao>('ativos');
 
+    const [searchParams, setSearchParams] = useSearchParams();
+
     const [modalAberto, setModalAberto] = useState(false);
     const [eventoEdicao, setEventoEdicao] = useState<Evento | null>(null);
     const [form, setForm] = useState<EstadoFormularioEvento>(FORM_INICIAL);
@@ -171,6 +173,16 @@ export function PainelEventosCoordenacao() {
             login: eventos.filter((evento) => evento.destaqueLogin && evento.ativo).length,
         };
     }, [eventos]);
+
+    useEffect(() => {
+        if (!loading && searchParams.get('novo') === 'true') {
+            abrirCriacao();
+            
+            // Limpa o URL
+            searchParams.delete('novo');
+            setSearchParams(searchParams, { replace: true });
+        }
+    }, [loading, searchParams, setSearchParams]);
 
     function abrirCriacao() {
         setEventoEdicao(null);
@@ -717,4 +729,4 @@ export function PainelEventosCoordenacao() {
             )}
         </main>
     );
-} 
+}

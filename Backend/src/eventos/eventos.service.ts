@@ -24,6 +24,9 @@ import { ListarEventosGestaoDto } from './dto/listar-eventos-gestao.dto';
 import { TipoEvento } from './enums/tipo-evento.enum';
 
 @Injectable()
+/**
+ * Serviço responsável pelas regras de negócio de eventos públicos e de gestão.
+ */
 export class EventosService {
     constructor(
         private readonly prisma: PrismaService,

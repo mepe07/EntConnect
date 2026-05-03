@@ -1,6 +1,12 @@
 import type { SelectBoxComponentProps } from './selectbox-props.interface';
 import './selectbox.component.scss';
 
+/**
+ * Select partilhado para listas de opções simples.
+ *
+ * @param options - Propriedades e opções do select.
+ * @returns Campo `select` configurado.
+ */
 export function SelectBoxComponent(options: SelectBoxComponentProps) {
   return (
     <>

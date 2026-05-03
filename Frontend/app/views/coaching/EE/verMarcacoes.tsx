@@ -13,16 +13,16 @@ import { SizeEnum } from '~/components/models/enums/size.enum';
 
 export default function VerMarcacoes() {
 
-    // Validar o role do utilizador 
+
     const userInfo = authService.getUserInfo() as User;
-    console.log('Informações do utilizador:', userInfo); // Log para depuração
+    console.log('Informações do utilizador:', userInfo);
     if (userInfo.role !== 'Enc_Educacao') {
         return null;
     }
 
     const eeService = new EEService();
 
-    // States para filtros e dados
+
     const [filtroModalidade, setFiltroModalidade] = useState('');
     const [filtroProfessor, setFiltroProfessor] = useState('');
     const [marcacoes, setMarcacoes] = useState<any[]>([]);
@@ -43,9 +43,9 @@ export default function VerMarcacoes() {
         fetchMarcacoes();
     }, []);
 
-    // Mapear para formato tabela, extraindo informações necessárias
+
     const tableData = marcacoes.map((marcacao) => {
-        // Formatar datas usando os dados do Coaching
+
         const inicio = new Date(marcacao.Coaching?.Inicio_Coaching);
         const fim = new Date(inicio.getTime() + (marcacao.Coaching?.Duracao || 0) * 60000);
 
@@ -63,8 +63,8 @@ export default function VerMarcacoes() {
             valor: marcacao.ValorEmFalta ? `${marcacao.ValorEmFalta} €` : '0 €',
             nomeSala: marcacao.Coaching?.Sala?.Nome || 'Não definido',
             observacoes: marcacao.Observacoes || 'Nenhuma observação.',
-            dataInscricao: dataInscricao 
-            ? `${dataInscricao.toLocaleDateString('pt-PT')} às ${formatHora(dataInscricao)}` 
+            dataInscricao: dataInscricao
+            ? `${dataInscricao.toLocaleDateString('pt-PT')} às ${formatHora(dataInscricao)}`
             : 'Desconhecida'
         };
     });
@@ -77,7 +77,7 @@ export default function VerMarcacoes() {
             try {
                 await eeService.removerAlunoCoaching(row.idAluno, row.idCoaching);
                 alert('Inscrição cancelada com sucesso!');
-                fetchMarcacoes(); // Recarregar a tabela
+                fetchMarcacoes();
             } catch (error) {
                 alert('Erro ao cancelar inscrição.');
             }
@@ -85,13 +85,13 @@ export default function VerMarcacoes() {
     }
 
     function handleVerDetalhes(row: any) {
-        setMarcacaoSelecionada(row); // Guarda os dados da linha clicada
-        setIsModalAberto(true);      // Abre o modal
+        setMarcacaoSelecionada(row);
+        setIsModalAberto(true);
     }
 
     function fecharModal() {
         setIsModalAberto(false);
-        setMarcacaoSelecionada(null); // Limpa os dados
+        setMarcacaoSelecionada(null);
     }
 
     return (
@@ -168,9 +168,8 @@ export default function VerMarcacoes() {
 
                         <div className="modal-cabecalho">
                             <h2>Detalhes da Marcação</h2>
-                            {/* <button className="btn-fechar-icon" onClick={fecharModal}>
-                                <i className="fa-solid fa-xmark"></i>
-                            </button> */}
+
+
                         </div>
 
                         <div className="detalhes-grid">

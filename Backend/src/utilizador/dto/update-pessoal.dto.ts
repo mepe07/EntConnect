@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, Length, MinLength, IsNumberString } from 'class-validator';
 
+/**
+ * DTO usado para atualizar os dados pessoais editáveis de um utilizador.
+ */
 export class UpdatePessoalDto {
   @ApiProperty({
     description: 'O nome completo do utilizador',

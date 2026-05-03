@@ -1,6 +1,6 @@
 .pagina-agendamentos {
     padding: 32px;
-    background-color: #f8fafc; // Fundo cinza super claro
+    background-color: #f8fafc;
     min-height: 100vh;
 
     h1 {
@@ -17,11 +17,6 @@ table button {
 }
 
 
-
-
-/* ==========================================================================
-   MODAL DE GESTÃO DE ALUNOS
-   ========================================================================== */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -29,9 +24,9 @@ table button {
     width: 100vw;
     height: 100vh;
     background-color: rgba(15, 23, 42, 0.6);
-    /* Fundo escuro azulado */
+
     backdrop-filter: blur(4px);
-    /* Efeito de desfocagem do fundo (moderno) */
+
     display: flex;
     justify-content: center;
     align-items: center;
@@ -46,7 +41,7 @@ table button {
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         max-height: 90vh;
         overflow-y: auto;
-        /* Permite scroll se a lista de alunos for gigante */
+
 
         .modal-cabecalho {
             display: flex;
@@ -102,7 +97,7 @@ table button {
             }
         }
 
-        /* Lista de alunos inscritos */
+
         h3 {
             font-size: 1.1rem;
             color: #334155;

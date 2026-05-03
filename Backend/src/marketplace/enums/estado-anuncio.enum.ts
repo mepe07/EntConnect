@@ -1,5 +1,6 @@
-// Ficheiro: Backend/src/marketplace/enums/estado-anuncio.enum.ts
-
+/**
+ * Estados possíveis de um anúncio no Marketplace.
+ */
 export enum EstadoAnuncio {
     ATIVO = 'ativo',
     RESERVADO = 'reservado',

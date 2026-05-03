@@ -1,18 +1,15 @@
-// Ficheiro: structure/navigation-menu/navigation-menu.tsx
+
 import './navigation-menu.scss';
-import { useLocation, Link } from 'react-router'; 
+import { useLocation, Link } from 'react-router';
 import { useState } from 'react';
 import { authService } from '~/services/auth.service';
 import type { MenuConfig } from '../../models/interfaces/menu.interface';
 import type { User } from '../../models/interfaces/user.interface';
 
-// ============================================================================
-// DICIONÁRIO DE ROTAS (Configuration-Driven UI)
-// Centraliza a estrutura de navegação consoante o nível de acesso do utilizador.
-// ============================================================================
+
 const MENU_CONFIG: MenuConfig = {
-    
-    // --- Perfil: Coordenação ---
+
+
     coordenacao: [
         { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
         { titulo: 'Gestão de Eventos', path: '/admin/eventos', icone: 'fa-solid fa-calendar-days' },
@@ -65,7 +62,7 @@ const MENU_CONFIG: MenuConfig = {
         { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' }
     ],
 
-    // --- Perfil: Professor ---
+
     professor: [
         { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
         {
@@ -93,10 +90,10 @@ const MENU_CONFIG: MenuConfig = {
                 { titulo: 'Marketplace', path: '/marketplace/anuncios' },
             ]
         },
-        { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' } // 👈 Intacto!
+        { titulo: 'A Minha Conta', path: '/conta', icone: 'fa-solid fa-user-gear' }
     ],
 
-    // --- Perfil: Encarregado de Educação ---
+
     encarregado: [
         { titulo: 'Dashboard', path: '/', icone: 'fa-solid fa-chart-pie' },
         { titulo: 'Educandos', path: '/educandos', icone: 'fa-solid fa-user-graduate' },
@@ -128,23 +125,21 @@ const MENU_CONFIG: MenuConfig = {
     ]
 };
 
-// ============================================================================
-// COMPONENTE PRINCIPAL
-// ============================================================================
+
 export function NavigationMenu() {
     const location = useLocation();
-    const path = location.pathname.toLowerCase(); 
+    const path = location.pathname.toLowerCase();
 
-    // Guarda o título do menu atualmente expandido (comportamento de acordeão)
+
     const [menuAberto, setMenuAberto] = useState<string | null>(null);
 
     const userInfo = authService.getUserInfo() as User;
-    const roleDoUser = userInfo?.role; 
+    const roleDoUser = userInfo?.role;
 
-    // Fallback de segurança: assume o perfil com menos privilégios por defeito
-    let menuAtivo = MENU_CONFIG.encarregado; 
-    
-    // Mapeamento do dicionário consoante a role do utilizador
+
+    let menuAtivo = MENU_CONFIG.encarregado;
+
+
     if (roleDoUser === 'Coordenador') {
         menuAtivo = MENU_CONFIG.coordenacao;
     } else if (roleDoUser === 'Professor') {
@@ -165,11 +160,11 @@ export function NavigationMenu() {
         });
     }
 
-    // Avalia se as rotas atuais correspondem ao menu para aplicar estilos ativos
+
     const isActive = (route: string) => path === route;
     const isSubmenuActive = (submenu: any[]) => submenu.some(item => path === item.path);
 
-    // Gere a abertura e fecho exclusivo das secções expansíveis
+
     const toggleMenu = (titulo: string) => {
         setMenuAberto(menuAberto === titulo ? null : titulo);
     };
@@ -177,11 +172,10 @@ export function NavigationMenu() {
     return (
         <nav className="navigation-menu">
             <ul>
-                {/* {menuAtivo.map((item, index) => { */}
+
                 {(menuAtivo || []).map((item, index) => {
-                    
-                    
-                    // Caso A: Item de navegação simples (sem submenu)
+
+
                     if (item.path && !item.submenu) {
                         return (
                             <li key={index} className={isActive(item.path) ? 'active' : ''}>
@@ -195,10 +189,10 @@ export function NavigationMenu() {
                         );
                     }
 
-                    // Caso B: Categoria expansível (com submenu)
+
                     if (item.submenu) {
                         const isAberto = menuAberto === item.titulo || isSubmenuActive(item.submenu);
-                        
+
                         return (
                             <li key={index} className={`menu-dropdown ${isSubmenuActive(item.submenu) ? 'active-parent' : ''}`}>
                                 <div className="dropdown-titulo" onClick={() => toggleMenu(item.titulo)}>
@@ -206,15 +200,15 @@ export function NavigationMenu() {
                                         {item.icone && <i className={item.icone}></i>}
                                         <span>{item.titulo}</span>
                                     </div>
-                                    <svg 
-                                        className={`seta ${isAberto ? 'aberta' : ''}`} 
+                                    <svg
+                                        className={`seta ${isAberto ? 'aberta' : ''}`}
                                         width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
                                     >
                                         <polyline points="6 9 12 15 18 9"></polyline>
                                     </svg>
                                 </div>
-                                
-                                {/* Renderização dos itens filhos */}
+
+
                                 <ul className={`submenu ${isAberto ? 'open' : ''}`}>
                                     {item.submenu?.map((subItem, subIndex) => (
                                         <li key={subIndex} className={`sub-item ${isActive(subItem.path || '') ? 'active' : ''}`}>
@@ -234,4 +228,4 @@ export function NavigationMenu() {
             </ul>
         </nav>
     );
-} 
+}

@@ -1,59 +1,89 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router"; // Importado o hook de navegação
+import { useNavigate } from "react-router";
 import { authService } from "~/services/auth.service";
 import { API_BASE_URL } from "~/config/api.config";
 import logoHeader from "../../assets/media/logo_header.png";
 import './header.scss';
 import type { User } from "~/models/interfaces/user.interface";
 
+const roleDisplayNames: Record<string, string> = {
+    Coordenador: 'Coordenador',
+    Professor: 'Professor',
+    Enc_Educacao: 'Enc. Educação',
+    EncEducacao: 'Enc. Educação',
+    Direcao: 'Direção',
+    Direção: 'Direção',
+};
+
+/**
+ * Normaliza a apresentação do cargo guardado no token do utilizador.
+ *
+ * @param role - Cargo devolvido pela autenticação.
+ * @returns Nome legível para apresentar no cabeçalho.
+ */
+function formatRoleName(role?: string) {
+    if (!role) return '';
+
+    return roleDisplayNames[role] ?? role.replaceAll('_', ' ');
+}
+
+/**
+ * Cabeçalho autenticado da aplicação.
+ *
+ * @remarks
+ * Mostra a identidade do utilizador, sincroniza a fotografia de perfil e
+ * disponibiliza o acesso à conta e ao logout.
+ */
 export function Header() {
-    // Inicializado o hook de navegação
-    const navigate = useNavigate(); 
-    
-    // 1. Guarda a info do utilizador num estado para garantir reatividade
+
+    const navigate = useNavigate();
+
+
     const [userInfo, setUserInfo] = useState<User | null>(null);
     const [subMenuVisible, setSubMenuVisible] = useState(false);
     const [fotoPerfilUrl, setFotoPerfilUrl] = useState<string | null>(null);
-    
+
     const profilePictureRef = useRef<HTMLDivElement>(null);
     const subMenuRef = useRef<HTMLDivElement>(null);
 
-    // 2. Carrega a info do utilizador apenas uma vez quando o componente monta
+
     useEffect(() => {
         const info = authService.getUserInfo() as User;
-        
+
         if (info) {
             setUserInfo(info as User);
         }
     }, []);
 
-    const userLetter = userInfo?.username ? userInfo.username.charAt(0).toUpperCase() : 'U';
+    const userDisplayName = userInfo?.nome || userInfo?.username;
+    const userRoleDisplayName = formatRoleName(userInfo?.role);
+    const userLetter = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : 'U';
 
-    // 3. Este useEffect agora reage quando o userInfo for atualizado
+
     useEffect(() => {
-        const currentUserId = userInfo?.sub; 
-        
+        const currentUserId = userInfo?.sub;
+
         async function fetchFotoPerfil() {
             if (!currentUserId) return;
-            
+
             try {
-                const token = localStorage.getItem('entconnect_token') || authService.getToken(); 
+                const token = localStorage.getItem('entconnect_token') || authService.getToken();
                 const response = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/foto`, {
                     method: 'GET',
                     headers: {
-                        'Authorization': `Bearer ${token}`, 
+                        'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     }
                 });
-                
+
                 if (response.ok) {
                     const data = await response.json();
-                    
+
                     if (data.url) {
-                        // TRUQUE DA CACHE NO HEADER TAMBÉM!
+
                         const separador = data.url.includes('?') ? '&' : '?';
                         const urlSemCache = `${data.url}${separador}t=${new Date().getTime()}`;
-                        
+
                         setFotoPerfilUrl(urlSemCache);
                     } else {
                         setFotoPerfilUrl(null);
@@ -64,17 +94,17 @@ export function Header() {
             }
         }
 
-        // 1. Vai buscar a foto a primeira vez que o Header carrega
+
         fetchFotoPerfil();
 
-        // 2. Fica à escuta (Listener) de quando o Perfil avisa que a foto mudou!
+
         window.addEventListener('fotoPerfilAtualizada', fetchFotoPerfil);
 
-        // 3. Limpeza do Listener quando o utilizador sai da aplicação
+
         return () => {
             window.removeEventListener('fotoPerfilAtualizada', fetchFotoPerfil);
         };
-        
+
     }, [userInfo]);
 
     useEffect(() => {
@@ -99,14 +129,14 @@ export function Header() {
     return (
         <header>
             <div className="header-container">
-                {/*3. Logo agora é clicável e redireciona para o Dashboard que é o / */}
-                <img 
-                    src={logoHeader} 
-                    className="logo" 
-                    alt="EntConnect Logo" 
-                    onClick={() => navigate('/')} // o / corresponde à rota do Dashboard, que é a página principal após o login
+
+                <img
+                    src={logoHeader}
+                    className="logo"
+                    alt="EntConnect Logo"
+                    onClick={() => navigate('/')}
                 />
-                
+
                 <div className="menu">
                     <div
                         className="profile-picture"
@@ -118,13 +148,13 @@ export function Header() {
                         style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >
                         {fotoPerfilUrl ? (
-                            <img 
-                                src={fotoPerfilUrl} 
-                                alt="Perfil" 
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            <img
+                                src={fotoPerfilUrl}
+                                alt="Perfil"
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
                         ) : (
-                            /*4. A Letra Dinâmica agora está dentro de um span com a classe correta para o SCSS agarrar */
+
                             <span className="letra-dinamica">
                                 {userLetter}
                             </span>
@@ -136,9 +166,19 @@ export function Header() {
                         ref={subMenuRef}
                     >
                         <div className='user-info'>
-                            <p>{userInfo?.username}</p>
-                            <p>{userInfo?.role}</p>
+                            <p>{userDisplayName}</p>
+                            <p>{userRoleDisplayName}</p>
                         </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSubMenuVisible(false);
+                                navigate('/conta');
+                            }}
+                            className="account-link"
+                        >
+                            <i className="fa-solid fa-user-gear"></i> A Minha Conta
+                        </button>
                         <a href="#" onClick={(e) => authService.logout(e)} className="logout-link">
                             <i className="fa fa-arrow-right-from-bracket"></i> Sair
                         </a>

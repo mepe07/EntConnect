@@ -6,14 +6,24 @@ interface JwtPayloadBase {
     exp?: number;
 }
 
+/**
+ * Gere autenticação, sessão local e leitura dos dados do utilizador autenticado.
+ */
 export class AuthService {
     private _userToken: string | null = null;
     private _userInfo: User | null = null;
-    // URL base da API.
-    // Vem do ficheiro .env do frontend através de VITE_API_URL.
+
+
     private _apiUrl = API_BASE_URL;
     private readonly tokenStorageKey = 'entconnect_token';
 
+    /**
+     * Autentica o utilizador e guarda o token recebido no armazenamento local.
+     *
+     * @param username - Nome de utilizador.
+     * @param password - Password introduzida pelo utilizador.
+     * @returns `true` quando o login é concluído com sucesso.
+     */
     async login(username: string, password: string) {
         try {
             const response = await fetch(`${this._apiUrl}/auth/login`, {
@@ -48,6 +58,12 @@ export class AuthService {
         }
     }
 
+    /**
+     * Pede ao backend o início do fluxo de recuperação de password.
+     *
+     * @param email - Email associado à conta.
+     * @returns Mensagem devolvida pela API e, quando disponível, o link de reset.
+     */
     async forgotPassword(email: string) {
         const response = await fetch(`${this._apiUrl}/auth/forgot-password`, {
             method: 'POST',
@@ -64,6 +80,13 @@ export class AuthService {
         return data as { message: string; resetLink?: string };
     }
 
+    /**
+     * Define uma nova password usando o token de recuperação.
+     *
+     * @param token - Token recebido no fluxo de recuperação.
+     * @param password - Nova password.
+     * @returns Mensagem de confirmação devolvida pela API.
+     */
     async resetPassword(token: string, password: string) {
         const response = await fetch(`${this._apiUrl}/auth/reset-password`, {
             method: 'POST',
@@ -80,6 +103,11 @@ export class AuthService {
         return data as { message: string };
     }
 
+    /**
+     * Termina a sessão atual e redireciona o utilizador para o login.
+     *
+     * @param event - Evento opcional do link de logout.
+     */
     logout(event?: React.MouseEvent<HTMLAnchorElement>) {
         event?.preventDefault();
 
@@ -87,12 +115,21 @@ export class AuthService {
         window.location.href = '/login';
     }
 
+    /**
+     * Remove o token e os dados de utilizador mantidos em memória e localStorage.
+     */
     limparSessao() {
         this._userToken = null;
         this._userInfo = null;
         localStorage.removeItem(this.tokenStorageKey);
     }
 
+    /**
+     * Verifica se um JWT já expirou.
+     *
+     * @param token - Token JWT a validar.
+     * @returns `true` quando o token está expirado ou inválido.
+     */
     isTokenExpired(token: string): boolean {
         try {
             const decoded = jwtDecode<JwtPayloadBase>(token);
@@ -107,6 +144,11 @@ export class AuthService {
         }
     }
 
+    /**
+     * Obtém o token de autenticação atual.
+     *
+     * @returns Token válido ou `null` quando não existe sessão ativa.
+     */
     getToken() {
         if (!this._userToken) {
             this._userToken = localStorage.getItem(this.tokenStorageKey);
@@ -124,10 +166,20 @@ export class AuthService {
         return this._userToken;
     }
 
+    /**
+     * Indica se existe uma sessão autenticada válida.
+     *
+     * @returns `true` quando há token válido.
+     */
     isAuthenticated(): boolean {
         return this.getToken() !== null;
     }
 
+    /**
+     * Lê os dados do utilizador a partir do token da sessão.
+     *
+     * @returns Dados do utilizador autenticado ou `null` se a sessão não for válida.
+     */
     getUserInfo(): User | null {
         const token = this.getToken();
 
@@ -145,6 +197,35 @@ export class AuthService {
         }
 
         return this._userInfo;
+    }
+
+    /**
+     * 🚀 NOVO MÉTODO: Envia as preferências de Ações Rápidas para o Backend
+     */
+    async updateQuickActionPreferences(userId: number, acoesIds: number[]) {
+        const token = this.getToken(); 
+        
+        if (!token) {
+            throw new Error('Utilizador não autenticado.');
+        }
+
+        // Usa o apiUrl que já está definido no topo da tua classe
+        const apiUrl = `${this._apiUrl}/utilizador/${userId}/preferencias-acoes`;
+
+        const response = await fetch(apiUrl, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify(acoesIds) 
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erro ao atualizar as preferências: ${response.statusText}`);
+        }
+
+        return await response.json();
     }
 }
 

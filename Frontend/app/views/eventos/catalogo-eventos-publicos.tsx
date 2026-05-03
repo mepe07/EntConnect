@@ -1,4 +1,4 @@
-// Ficheiro: app/views/eventos/catalogo-eventos-publicos.tsx
+
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
@@ -319,4 +319,4 @@ export function CatalogoEventosPublicos() {
             )}
         </main>
     );
-} 
+}

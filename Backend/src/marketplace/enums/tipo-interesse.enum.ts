@@ -1,5 +1,6 @@
-// Ficheiro: Backend/src/marketplace/enums/tipo-interesse.enum.ts
-
+/**
+ * Tipos de interesse que um utilizador pode registar num anúncio.
+ */
 export enum TipoInteresse {
     CONTACTO = 'Contacto',
     COMPRA = 'Compra',

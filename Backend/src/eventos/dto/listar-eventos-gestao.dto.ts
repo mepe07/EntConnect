@@ -20,6 +20,9 @@ function transformarBoolean(value: unknown): boolean | undefined {
     return value === true || value === 'true' || value === 1 || value === '1';
 }
 
+/**
+ * DTO com filtros aceites na listagem interna de eventos.
+ */
 export class ListarEventosGestaoDto {
     @IsOptional()
     @IsString()

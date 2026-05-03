@@ -1,4 +1,4 @@
-// Ficheiro: app/components/eventos/resumo-eventos-dashboard.component.tsx
+
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';

@@ -3,9 +3,18 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 
 @Injectable()
+/**
+ * Serviço responsável pelas marcações e confirmações do encarregado de educação.
+ */
 export class MarcacoesService {
     constructor(private readonly prisma: PrismaService) { }
 
+    /**
+     * Lista marcações associadas a um encarregado de educação.
+     *
+     * @param idEE - Identificador do encarregado de educação.
+     * @returns Marcações registadas para o encarregado.
+     */
     async getMarcacoesbyEE(idEE: number) {
         return this.prisma.coaching_Aluno.findMany({
             where: {

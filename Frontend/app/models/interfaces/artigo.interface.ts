@@ -1,4 +1,4 @@
-// Ficheiro: src/models/interfaces/artigo.interface.ts
+
 
 export interface LoteStock {
     ID_Stock: number;
@@ -14,7 +14,7 @@ export interface Artigo {
     ID_Artigo: number;
     Nome: string;
     Notas: string | null;
-    Foto?: string | null; 
+    Foto?: string | null;
     Stock_Armazem: LoteStock[];
 }
 

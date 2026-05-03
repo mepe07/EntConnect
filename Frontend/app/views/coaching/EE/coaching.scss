@@ -57,7 +57,7 @@
 
     table {
 
-        // Tudo alinhado ao centro
+
         th,
         td {
             text-align: center !important;
@@ -66,8 +66,8 @@
 
     td.row-actions {
         display: flex !important;
-        justify-content: center !important; // Centra os botões na horizontal
-        align-items: center !important; // Centra na vertical
+        justify-content: center !important;
+        align-items: center !important;
         gap: 16px !important;
         min-height: 100%;
         height: 100%;

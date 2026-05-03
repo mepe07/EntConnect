@@ -33,8 +33,8 @@
       .form-row {
         display: flex;
         gap: 24px;
-        
-        // Em ecrãs pequenos, fica um por baixo do outro
+
+
         @media (max-width: 600px) {
           flex-direction: column;
           gap: 24px;
@@ -59,13 +59,13 @@
           border-radius: 8px;
           font-size: 15px;
           transition: border-color 0.2s ease;
-          color: #333; 
+          color: #333;
           background-color: #fff;
           color-scheme: light;
 
           &:focus {
             outline: none;
-            border-color: #007bff; // Cor de destaque
+            border-color: #007bff;
             box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
           }
         }

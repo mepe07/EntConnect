@@ -1,6 +1,6 @@
 import { 
-  Controller, Get, Post, Put, Body, Patch, Param, Delete, 
-  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator,Query, Res, UseGuards, Request
+  Controller, Get, Post, Put, Body, Patch, Param, Delete, ForbiddenException,
+  UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator,Query, Res, UseGuards, Request, HttpStatus
 } from '@nestjs/common'; 
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -39,11 +39,11 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/roles.enum';
 import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 
-// ============================================================================
-// CONTROLADOR DE UTILIZADORES
-// ============================================================================
 @ApiTags('Utilizadores')
 @Controller('utilizador')
+/**
+ * Controller dos endpoints de gestão de utilizadores, fotografias e educandos.
+ */
 export class UtilizadorController {
   constructor(
     private readonly utilizadorService: UtilizadorService,
@@ -79,35 +79,25 @@ export class UtilizadorController {
   @Post('enc-educacao/me/alunos')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.ENC_EDUCACAO)
-  @ApiOperation({ summary: 'Adicionar um educando ao encarregado autenticado' })
-  async criarMeuEducando(
-    @Request() req: { user: UtilizadorAutenticado },
-    @Body() dto: UpsertEducandoDto,
-  ) {
-    return this.utilizadorService.criarEducando(req.user.idPessoa, dto);
+  @ApiOperation({ summary: 'Adicionar educando ao encarregado autenticado (bloqueado)' })
+  async criarMeuEducando() {
+    throw new ForbiddenException('A gestão de educandos deve ser feita pela coordenação ou direção.');
   }
 
   @Put('enc-educacao/me/alunos/:idAluno')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.ENC_EDUCACAO)
-  @ApiOperation({ summary: 'Editar um educando do encarregado autenticado' })
-  async atualizarMeuEducando(
-    @Request() req: { user: UtilizadorAutenticado },
-    @Param('idAluno', ParseIntPipe) idAluno: number,
-    @Body() dto: UpsertEducandoDto,
-  ) {
-    return this.utilizadorService.atualizarEducando(req.user.idPessoa, idAluno, dto);
+  @ApiOperation({ summary: 'Editar educando do encarregado autenticado (bloqueado)' })
+  async atualizarMeuEducando() {
+    throw new ForbiddenException('A gestão de educandos deve ser feita pela coordenação ou direção.');
   }
 
   @Delete('enc-educacao/me/alunos/:idAluno')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.ENC_EDUCACAO)
-  @ApiOperation({ summary: 'Remover a associacao de um educando do encarregado autenticado' })
-  async removerMeuEducando(
-    @Request() req: { user: UtilizadorAutenticado },
-    @Param('idAluno', ParseIntPipe) idAluno: number,
-  ) {
-    return this.utilizadorService.removerEducando(req.user.idPessoa, idAluno);
+  @ApiOperation({ summary: 'Remover associacao de educando do encarregado autenticado (bloqueado)' })
+  async removerMeuEducando() {
+    throw new ForbiddenException('A gestão de educandos deve ser feita pela coordenação ou direção.');
   }
 
   @Get('download-template')
@@ -320,17 +310,14 @@ export class UtilizadorController {
     return this.utilizadorService.createUser(createUtilizadorDto);
   }
 
-  /*
-  @Get(':id/aulas')
-  @ApiOperation({ summary: 'Obter o horário de aulas/ensaios (Professor ou Aluno)' })
-  @ApiResponse({ status: 200, description: 'Lista de aulas devolvida com sucesso.' })
+  @Get(':id/coachings')
+  @ApiOperation({ summary: 'Obter o horário das sessões de coaching (Coach ou Bailarino)' })
+  @ApiResponse({ status: 200, description: 'Lista de coachings devolvida com sucesso.' })
   @ApiResponse({ status: 404, description: 'Utilizador não encontrado.' })
-  async getMinhasAulas(@Param('id') id: string) {
-    return this.utilizadorService.getMinhasAulas(+id);
+  async getMeusCoachings(@Param('id') id: string) {
+    return this.utilizadorService.getMeusCoachings(+id);
   }
-
-  }*/
-
+  
   // NOVO ENDPOINT DE ATUALIZAÇÃO PESSOAL COM DTO E SWAGGER
   @Put(':id/update-cargo')
   @ApiOperation({ summary: 'Atualizar o cargo do utilizador' })
@@ -381,6 +368,44 @@ export class UtilizadorController {
     return this.utilizadorService.mudarPassword(id, dto);
   }
 
+  @Get('encarregado/:id')
+  @ApiOperation({ 
+    summary: 'Obter histórico de faturação de um Encarregado de Educação',
+    description: 'Devolve todas as faturas (pagas e em dívida) associadas aos educandos de um determinado utilizador (Encarregado de Educação). O ID fornecido deve ser o ID_Utilizador da conta.'
+  })
+  @ApiParam({ 
+    name: 'id', 
+    description: 'ID do Utilizador (Conta) do Encarregado de Educação',
+    type: 'number',
+    example: 3
+  })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Lista de faturas devolvida com sucesso.',
+    schema: {
+      example: [
+        {
+          Data: '2026-05-02T11:00:00.000Z',
+          Descricao: 'Aula Extra Preparação',
+          Valor: 25.00,
+          Pago: false,
+          estado: 'Em Dívida'
+        }
+      ]
+    }
+  })
+  @ApiResponse({ 
+    status: HttpStatus.NOT_FOUND, 
+    description: 'Utilizador não encontrado no sistema.' 
+  })
+  @ApiResponse({ 
+    status: HttpStatus.UNAUTHORIZED, 
+    description: 'Não tem permissão para aceder a estes dados.' 
+  })
+  async getFaturas(@Param('id', ParseIntPipe) id: number) {
+    return this.utilizadorService.getFaturasEncarregado(id); 
+  }
+
   @Get('enc-educacao/:id/alunos')
   @ApiOperation({ summary: 'Obter alunos de um Encarregado de Educação' })
   @ApiParam({ name: 'id', description: 'ID do Encarregado de Educação' })
@@ -389,6 +414,8 @@ export class UtilizadorController {
   }
 
   @Post('enc-educacao/:id/alunos')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.COORDENADOR)
   @ApiOperation({ summary: 'Adicionar um educando a um Encarregado de Educacao' })
   @ApiParam({ name: 'id', description: 'ID do Encarregado de Educacao' })
   async criarEducando(
@@ -399,6 +426,8 @@ export class UtilizadorController {
   }
 
   @Put('enc-educacao/:id/alunos/:idAluno')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.COORDENADOR)
   @ApiOperation({ summary: 'Editar um educando de um Encarregado de Educacao' })
   @ApiParam({ name: 'id', description: 'ID do Encarregado de Educacao' })
   @ApiParam({ name: 'idAluno', description: 'ID do aluno' })
@@ -411,6 +440,8 @@ export class UtilizadorController {
   }
 
   @Patch('enc-educacao/:id/alunos/:idAluno/associar')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.COORDENADOR)
   @ApiOperation({ summary: 'Associar um aluno sem encarregado a um Encarregado de Educacao' })
   @ApiParam({ name: 'id', description: 'ID do Encarregado de Educacao' })
   @ApiParam({ name: 'idAluno', description: 'ID do aluno' })
@@ -422,6 +453,8 @@ export class UtilizadorController {
   }
 
   @Delete('enc-educacao/:id/alunos/:idAluno')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.COORDENADOR)
   @ApiOperation({ summary: 'Remover a associacao de um educando a um Encarregado de Educacao' })
   @ApiParam({ name: 'id', description: 'ID do Encarregado de Educacao' })
   @ApiParam({ name: 'idAluno', description: 'ID do aluno' })
@@ -445,6 +478,33 @@ export class UtilizadorController {
     return { message: `Password do utilizador ${id} atualizada com sucesso.` };
   }
 
+  @Put(':id/preferencias-acoes')
+  @ApiOperation({ 
+    summary: 'Atualizar as preferências de ações rápidas do utilizador',
+    description: 'Guarda um array de IDs das ações que o utilizador escolheu ver na Dashboard.' 
+  })
+  @ApiParam({ name: 'id', description: 'ID do Utilizador', example: 1 })
+  @ApiBody({ 
+    description: 'Array de IDs das ações rápidas (ex: [1, 3, 6])',
+    schema: {
+      type: 'array',
+      items: { type: 'number' },
+      example: [1, 3, 6]
+    }
+  })
+  @ApiResponse({ status: 200, description: 'Preferências atualizadas com sucesso.' })
+  @ApiResponse({ status: 404, description: 'Utilizador não encontrado.' })
+  async updatePreferenciasAcoes(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() acoesIds: number[],
+  ) {
+    // Validação simples para garantir que recebemos um array
+    if (!Array.isArray(acoesIds)) {
+      throw new BadRequestException('O corpo da requisição deve ser um array de números.');
+    }
+
+    return this.utilizadorService.updatePreferenciasAcoes(id, acoesIds);
+  }
 
   /**
    * 

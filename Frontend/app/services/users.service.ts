@@ -1,5 +1,8 @@
 import { API_BASE_URL } from "../../src/config/api.config";
 
+/**
+ * Dados necessários para criar um utilizador.
+ */
 export interface CreateUtilizadorPayload {
     nome: string;
     username: string;
@@ -11,11 +14,17 @@ export interface CreateUtilizadorPayload {
     password: string;
 }
 
+/**
+ * Impacto calculado antes de remover associações de um encarregado de educação.
+ */
 export interface ImpactoRemocaoAssociacoesEncarregado {
     alunosAssociados: number;
     inscricoesCoachingAssociadas: number;
 }
 
+/**
+ * Erro usado quando a alteração de cargo exige confirmação adicional.
+ */
 export class ConfirmacaoRemocaoAssociacoesEncarregadoError extends Error {
     impacto: ImpactoRemocaoAssociacoesEncarregado;
 
@@ -26,6 +35,9 @@ export class ConfirmacaoRemocaoAssociacoesEncarregadoError extends Error {
     }
 }
 
+/**
+ * Dados de um aluno associado a um encarregado de educação.
+ */
 export interface Educando {
     ID_aluno: number;
     ID_Enc_Educacao?: number | null;
@@ -37,6 +49,9 @@ export interface Educando {
     Menor_Idade: boolean;
 }
 
+/**
+ * Payload usado para criar ou atualizar educandos.
+ */
 export interface UpsertEducandoPayload {
     nome: string;
     dataNascimento: string;
@@ -45,13 +60,19 @@ export interface UpsertEducandoPayload {
     contato?: string;
 }
 
+/**
+ * Serviço responsável pela gestão de utilizadores, fotografias e educandos.
+ */
 export class UtilizadorService {
-    // URL base da API.
-    // Vem do ficheiro .env do frontend através de VITE_API_URL.
+
+
     private _apiUrl = API_BASE_URL;
 
+
     /**
-     * Obtém a lista de utilizadores da API.
+     * Obtém todos os utilizadores registados.
+     *
+     * @returns Lista de utilizadores devolvida pela API.
      */
     async getUsers() {
         const response = await fetch(`${this._apiUrl}/utilizador`, {
@@ -61,8 +82,12 @@ export class UtilizadorService {
         return await response.json();
     }
 
+
     /**
      * Cria um novo utilizador.
+     *
+     * @param payload - Dados do utilizador a criar.
+     * @returns Utilizador criado pela API.
      */
     async createUser(payload: CreateUtilizadorPayload) {
         const token = localStorage.getItem('entconnect_token');
@@ -83,8 +108,12 @@ export class UtilizadorService {
         return await response.json();
     }
 
+
     /**
-     * Bloqueia um utilizador com base no seu ID.
+     * Bloqueia o acesso de um utilizador.
+     *
+     * @param userId - Identificador do utilizador.
+     * @returns Resposta da API.
      */
     async blockUser(userId: number) {
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/block`, {
@@ -94,8 +123,12 @@ export class UtilizadorService {
         return await response.json();
     }
 
+
     /**
-     * Desbloqueia um utilizador com base no seu ID.
+     * Reativa o acesso de um utilizador bloqueado.
+     *
+     * @param userId - Identificador do utilizador.
+     * @returns Resposta da API.
      */
     async unlockUser(userId: number) {
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/unlock`, {
@@ -105,8 +138,12 @@ export class UtilizadorService {
         return await response.json();
     }
 
+
     /**
-     * Obtém o URL da foto de perfil de um utilizador.
+     * Obtém a fotografia de perfil de um utilizador.
+     *
+     * @param userId - Identificador do utilizador.
+     * @returns Dados da fotografia devolvidos pela API.
      */
     async getFoto(userId: number) {
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/foto`, {
@@ -116,9 +153,13 @@ export class UtilizadorService {
         return await response.json();
     }
 
+
     /**
-     * Faz upload de uma foto de perfil para um utilizador.
-     * Usa multipart/form-data, tal como o backend espera.
+     * Envia uma nova fotografia de perfil.
+     *
+     * @param userId - Identificador do utilizador.
+     * @param file - Ficheiro de imagem.
+     * @returns Dados da fotografia atualizada.
      */
     async uploadFoto(userId: number, file: File) {
         const formData = new FormData();
@@ -127,7 +168,7 @@ export class UtilizadorService {
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/uploadphoto`, {
             method: 'PUT',
             body: formData,
-            // Não definir Content-Type: o browser define automaticamente com o boundary correto
+
         });
 
         if (!response.ok) {
@@ -138,8 +179,12 @@ export class UtilizadorService {
         return await response.json();
     }
 
+
     /**
-     * Remove a foto de perfil de um utilizador.
+     * Remove a fotografia de perfil de um utilizador.
+     *
+     * @param userId - Identificador do utilizador.
+     * @returns Resposta da API.
      */
     async removerFoto(userId: number) {
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/removephoto`, {
@@ -155,6 +200,12 @@ export class UtilizadorService {
         return await response.json();
     }
 
+    /**
+     * Elimina um utilizador.
+     *
+     * @param userId - Identificador do utilizador.
+     * @returns Resposta da API.
+     */
     async deleteUser(userId: number) {
         const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}`, {
@@ -173,6 +224,14 @@ export class UtilizadorService {
         return await response.json();
     }
 
+    /**
+     * Atualiza o cargo de um utilizador.
+     *
+     * @param userId - Identificador do utilizador.
+     * @param cargo - Novo cargo.
+     * @param confirmarRemocaoAssociacoes - Confirma a remoção de associações dependentes.
+     * @returns Utilizador atualizado.
+     */
     async updateCargo(userId: number, cargo: string, confirmarRemocaoAssociacoes = false) {
         const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/update-cargo`, {
@@ -198,6 +257,13 @@ export class UtilizadorService {
         return await response.json();
     }
 
+    /**
+     * Atualiza dados pessoais editáveis.
+     *
+     * @param userId - Identificador do utilizador.
+     * @param dados - Campos pessoais a atualizar.
+     * @returns Utilizador atualizado.
+     */
     async updatePessoal(userId: number, dados: { nome?: string; contacto?: string; nif?: string }) {
         const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/update-pessoal`, {
@@ -217,6 +283,13 @@ export class UtilizadorService {
         return await response.json();
     }
 
+    /**
+     * Atualiza a password de um utilizador.
+     *
+     * @param userId - Identificador do utilizador.
+     * @param newPassword - Nova password.
+     * @returns Resposta da API.
+     */
     async updatePassword(userId: number, newPassword: string) {
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/password`, {
             method: 'PATCH',
@@ -232,6 +305,12 @@ export class UtilizadorService {
         return await response.json();
     }
 
+    /**
+     * Lista os educandos associados a um encarregado de educação.
+     *
+     * @param idEncEducacao - Identificador do encarregado de educação.
+     * @returns Educandos associados.
+     */
     async getEducandos(idEncEducacao: number): Promise<Educando[]> {
         const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/${idEncEducacao}/alunos`, {
             method: 'GET',
@@ -246,6 +325,11 @@ export class UtilizadorService {
         return await response.json();
     }
 
+    /**
+     * Lista alunos que ainda não têm encarregado de educação associado.
+     *
+     * @returns Alunos disponíveis para associação.
+     */
     async getAlunosSemEncarregado(): Promise<Educando[]> {
         const response = await fetch(`${this._apiUrl}/utilizador/alunos/sem-encarregado`, {
             method: 'GET',
@@ -260,6 +344,13 @@ export class UtilizadorService {
         return await response.json();
     }
 
+    /**
+     * Cria um educando associado a um encarregado de educação.
+     *
+     * @param idEncEducacao - Identificador do encarregado de educação.
+     * @param payload - Dados do educando.
+     * @returns Educando criado.
+     */
     async createEducando(idEncEducacao: number, payload: UpsertEducandoPayload): Promise<Educando> {
         const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/${idEncEducacao}/alunos`, {
@@ -279,6 +370,14 @@ export class UtilizadorService {
         return await response.json();
     }
 
+    /**
+     * Atualiza um educando associado a um encarregado de educação.
+     *
+     * @param idEncEducacao - Identificador do encarregado de educação.
+     * @param idAluno - Identificador do aluno.
+     * @param payload - Dados a atualizar.
+     * @returns Educando atualizado.
+     */
     async updateEducando(idEncEducacao: number, idAluno: number, payload: UpsertEducandoPayload): Promise<Educando> {
         const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/${idEncEducacao}/alunos/${idAluno}`, {
@@ -298,6 +397,13 @@ export class UtilizadorService {
         return await response.json();
     }
 
+    /**
+     * Remove a associação de um educando a um encarregado de educação.
+     *
+     * @param idEncEducacao - Identificador do encarregado de educação.
+     * @param idAluno - Identificador do aluno.
+     * @returns Resposta da API.
+     */
     async removeEducando(idEncEducacao: number, idAluno: number) {
         const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/${idEncEducacao}/alunos/${idAluno}`, {
@@ -316,6 +422,13 @@ export class UtilizadorService {
         return await response.json();
     }
 
+    /**
+     * Associa um aluno existente a um encarregado de educação.
+     *
+     * @param idEncEducacao - Identificador do encarregado de educação.
+     * @param idAluno - Identificador do aluno.
+     * @returns Educando associado.
+     */
     async associateEducando(idEncEducacao: number, idAluno: number): Promise<Educando> {
         const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/${idEncEducacao}/alunos/${idAluno}/associar`, {

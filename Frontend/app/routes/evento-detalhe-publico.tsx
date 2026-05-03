@@ -1,4 +1,4 @@
-// Ficheiro: app/routes/evento-detalhe-publico.tsx
+
 
 import { EventoDetalhePublico } from '../views/eventos/evento-detalhe-publico';
 
@@ -12,4 +12,4 @@ export default function EventoDetalhePublicoRoute() {
             <EventoDetalhePublico />
         </>
     );
-} 
+}

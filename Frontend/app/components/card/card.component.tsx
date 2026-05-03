@@ -1,6 +1,12 @@
 import type { CardComponentProps } from './card-props.interface';
 import './card.component.scss';
 
+/**
+ * Card partilhado para apresentar conteúdo compacto com configuração visual.
+ *
+ * @param options - Propriedades do card.
+ * @returns Elemento de card configurado.
+ */
 export function CardComponent(options: CardComponentProps) {
   return (
     <>

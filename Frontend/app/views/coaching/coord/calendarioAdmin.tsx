@@ -111,7 +111,7 @@ function formatTime(dateString: string) {
 function getWeekRange(date: Date) {
     const copy = new Date(date);
     const weekday = copy.getDay();
-    const offset = (weekday + 6) % 7; // Monday = 0
+    const offset = (weekday + 6) % 7;
     copy.setHours(0, 0, 0, 0);
     copy.setDate(copy.getDate() - offset);
 
@@ -133,7 +133,7 @@ function getWeekDates(date: Date): Date[] {
 function getMonthGrid(date: Date): Date[] {
     const firstOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
     const firstDayOfWeek = firstOfMonth.getDay();
-    const startOffset = (firstDayOfWeek + 6) % 7; // Monday-first
+    const startOffset = (firstDayOfWeek + 6) % 7;
 
     const start = new Date(firstOfMonth);
     start.setDate(start.getDate() - startOffset);

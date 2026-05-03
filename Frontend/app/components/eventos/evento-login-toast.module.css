@@ -1,11 +1,9 @@
-/* Ficheiro: Frontend/app/components/eventos/evento-login-toast.module.css */
+
 
 .toast {
     position: absolute;
-    /*
-        Colocamos o toast na zona esquerda do painel verde,
-        entre o texto principal e a citação inferior.
-    */
+
+
     top: 34%;
     left: 4rem;
     right: auto;
