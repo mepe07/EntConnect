@@ -1,8 +1,9 @@
-// Ficheiro: src/views/atividades/partials/modalPropostas.tsx
-
 import React, { useState, useEffect } from 'react';
 import { marketplaceService } from '../../../services/artigo.service';
 
+/**
+ * Defines the properties accepted by the proposals modal.
+ */
 interface ModalPropostasProps {
     isOpen: boolean;
     onClose: () => void;
@@ -11,6 +12,12 @@ interface ModalPropostasProps {
     onAtualizacao: () => void; 
 }
 
+/**
+ * Displays pending proposals for a marketplace stock item and lets users accept or reject them.
+ *
+ * @param props Component properties.
+ * @returns Modal with stock proposals when open.
+ */
 export function ModalPropostas({ isOpen, onClose, idStock, nomeArtigo, onAtualizacao }: ModalPropostasProps) {
     const [propostas, setPropostas] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -21,6 +28,9 @@ export function ModalPropostas({ isOpen, onClose, idStock, nomeArtigo, onAtualiz
         }
     }, [isOpen, idStock]);
 
+    /**
+     * Loads the proposals associated with the selected stock item.
+     */
     const carregarPropostas = async () => {
         setLoading(true);
         try {
@@ -33,6 +43,12 @@ export function ModalPropostas({ isOpen, onClose, idStock, nomeArtigo, onAtualiz
         }
     };
 
+    /**
+     * Persists the selected decision for a proposal.
+     *
+     * @param idInteresse Proposal identifier.
+     * @param decisao Decision to apply.
+     */
     const handleDecisao = async (idInteresse: number, decisao: 'Aprovado' | 'Rejeitado') => {
         const mensagem = decisao === 'Aprovado' 
             ? 'Tens a certeza que queres aprovar esta requisição? O stock será atualizado automaticamente.' 

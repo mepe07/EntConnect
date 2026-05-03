@@ -18,6 +18,9 @@ import { Login } from "./views/login/login";
 import { useEffect, useState } from "react";
 import { authService } from "./services/auth.service";
 
+/**
+ * Folha de links globais carregados pela aplicação.
+ */
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
@@ -43,6 +46,12 @@ export const links: Route.LinksFunction = () => [
   }
 ];
 
+/**
+ * Layout base da aplicação React Router.
+ *
+ * @param props - Conteúdo da página atual.
+ * @returns Estrutura HTML principal da aplicação.
+ */
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <>
@@ -128,6 +137,12 @@ export default function App() {
     return page;
 }
 
+/**
+ * Boundary de erro global das rotas da aplicação.
+ *
+ * @param props - Erro devolvido pelo React Router.
+ * @returns Interface de fallback para erros de navegação ou runtime.
+ */
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let message = "Oops!";
   let details = "An unexpected error occurred.";

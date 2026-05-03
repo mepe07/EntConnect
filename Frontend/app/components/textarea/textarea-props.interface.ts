@@ -1,3 +1,6 @@
+/**
+ * Propriedades aceites pela textarea partilhada.
+ */
 export interface TextareaComponentProps {
   id: string;
   label?: string;

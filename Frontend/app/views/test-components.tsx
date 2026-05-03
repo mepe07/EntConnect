@@ -13,6 +13,9 @@ import { InfoTypesEnum } from "~/components/models/enums/info-types.enum";
 import { CardComponent } from "~/components/card/card.component";
 import { CardTypeEnum } from "~/components/card/models/enums/card-type.enum";
 
+/**
+ * Showcases the shared UI components used across the frontend.
+ */
 export function TestComponents() {
   const [inputValue, setInputValue] = useState("");
   const [selectedOption, setSelectedOption] = useState("option2");

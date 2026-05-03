@@ -1,6 +1,12 @@
 import type { TextareaComponentProps } from './textarea-props.interface';
 import './textarea.component.scss';
 
+/**
+ * Área de texto reutilizável da aplicação.
+ *
+ * @param options - Propriedades de configuração da textarea.
+ * @returns Campo multilinha configurado.
+ */
 export function TextareaComponent(options: TextareaComponentProps) {
   return (
     <>

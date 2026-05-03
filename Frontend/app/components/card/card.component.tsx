@@ -1,6 +1,12 @@
 import type { CardComponentProps } from './card-props.interface';
 import './card.component.scss';
 
+/**
+ * Card reutilizável para apresentar informação compacta.
+ *
+ * @param options - Propriedades do card.
+ * @returns Card renderizado.
+ */
 export function CardComponent(options: CardComponentProps) {
   return (
     <>

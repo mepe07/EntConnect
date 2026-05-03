@@ -1,6 +1,9 @@
 import logoDark from "./logo-dark.svg";
 import logoLight from "./logo-light.svg";
 
+/**
+ * Renders the default React Router welcome screen.
+ */
 export function Welcome() {
   return (
     <main className="flex items-center justify-center pt-16 pb-4">
@@ -46,6 +49,9 @@ export function Welcome() {
   );
 }
 
+/**
+ * Stores external resources suggested in the welcome screen.
+ */
 const resources = [
   {
     href: "https://reactrouter.com/docs",

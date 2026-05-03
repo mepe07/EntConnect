@@ -76,6 +76,9 @@ function formatarData(valor?: string) {
     }
 }
 
+/**
+ * Vista principal do Marketplace com montra, detalhe, gestão própria e moderação.
+ */
 export function Marketplace() {
     const utilizador = authService.getUserInfo() as User;
     const isCoordenadora = utilizador?.role === 'Coordenador';

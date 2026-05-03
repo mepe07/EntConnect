@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Cropper from 'react-easy-crop';
 import { authService } from '~/services/auth.service';
 import { API_BASE_URL } from '~/config/api.config';
@@ -7,6 +7,9 @@ import { getCroppedImg } from '../utils/cropImage';
 
 type AbaTipo = 'dados_pessoais' | 'minhas_aulas';
 
+/**
+ * Renders the authenticated user profile page and personal data workflows.
+ */
 export function Perfil() {
     const [abaAtiva, setAbaAtiva] = useState<AbaTipo>('dados_pessoais');
     const [minhasAulas, setMinhasAulas] = useState<any[]>([]);
@@ -48,11 +51,16 @@ export function Perfil() {
         }
     }, [currentUserId]);
 
+    /**
+     * Fetches the current profile photo for the logged-in user.
+     */
     const buscarFotoAtual = async () => {
         try {
             const response = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/foto`);
+
             if (response.ok) {
                 const data = await response.json();
+
                 if (data.url) {
                     const separador = data.url.includes('?') ? '&' : '?';
                     const urlSemCache = `${data.url}${separador}t=${new Date().getTime()}`;
@@ -62,54 +70,68 @@ export function Perfil() {
                 }
             }
         } catch (error) {
-            console.error("Erro ao buscar foto:", error);
+            console.error('Erro ao buscar foto:', error);
         }
     };
 
+    /**
+     * Loads account data and scheduled lessons for the active tab.
+     */
     const carregarDados = async () => {
         setLoading(true);
+
         try {
             const token = localStorage.getItem('entconnect_token') || authService.getToken();
-            const headers = { 'Authorization': `Bearer ${token}` };
+            const headers = { Authorization: `Bearer ${token}` };
 
             const resUser = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}`, { headers });
+
             if (resUser.ok) {
                 const dadosUser = await resUser.json();
                 setAtivo(dadosUser.Ativo === 1 || dadosUser.Ativo === true);
 
-                const p = dadosUser.Pessoa;
+                const pessoa = dadosUser.Pessoa;
                 let cargoDetectado = 'Utilizador Registado';
-                if (p) {
+
+                if (pessoa) {
                     const funcoes = [];
-                    if (p.Direcao) funcoes.push('Direção');
-                    if (p.Professor) funcoes.push('Professor');
-                    if (p.Enc_Educacao) funcoes.push('Enc. Educação');
+                    if (pessoa.Direcao) funcoes.push('Direcao');
+                    if (pessoa.Professor) funcoes.push('Professor');
+                    if (pessoa.Enc_Educacao) funcoes.push('Enc. Educacao');
                     if (funcoes.length > 0) cargoDetectado = funcoes.join(' / ');
                 }
+
                 setCargo(cargoDetectado);
-                setNome(p?.Nome || '');
-                setNif(p?.NIF || '');
-                setContacto(p?.Contacto || '');
-                setEmail(p?.Email || '');
+                setNome(pessoa?.Nome || '');
+                setNif(pessoa?.NIF || '');
+                setContacto(pessoa?.Contacto || '');
+                setEmail(pessoa?.Email || '');
             }
 
             if (abaAtiva === 'minhas_aulas') {
                 const resAulas = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/aulas`, { headers });
+
                 if (resAulas.ok) {
                     const dadosAulas = await resAulas.json();
                     setMinhasAulas(dadosAulas);
                 }
             }
         } catch (error: any) {
-            console.error("Erro ao carregar dados:", error);
+            console.error('Erro ao carregar dados:', error);
         } finally {
             setLoading(false);
         }
     };
 
+    /**
+     * Reads the selected image file before opening the crop modal.
+     *
+     * @param event File input change event.
+     */
     const lidarComSelecaoFicheiro = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
+
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = () => {
@@ -118,128 +140,167 @@ export function Perfil() {
         };
     };
 
+    /**
+     * Stores the selected crop area returned by the cropper.
+     *
+     * @param _ Ignored crop area in percentages.
+     * @param pixels Crop area in pixels.
+     */
     const aoCortarCompletado = (_: any, pixels: any) => {
         setCroppedAreaPixels(pixels);
     };
 
+    /**
+     * Creates the cropped image blob and starts the upload flow.
+     */
     const finalizarCorte = async () => {
         try {
             const blobFinal = await getCroppedImg(imagemOriginal!, croppedAreaPixels);
             executarUpload(blobFinal);
-        } catch (e) {
-            console.error("Erro ao processar imagem:", e);
+        } catch (error) {
+            console.error('Erro ao processar imagem:', error);
         }
     };
 
+    /**
+     * Uploads the final cropped profile image.
+     *
+     * @param blobFinal Image blob to upload.
+     */
     const executarUpload = async (blobFinal: Blob) => {
         setLoadingFoto(true);
         const formData = new FormData();
-        formData.append("file", blobFinal, "perfil.jpg");
+        formData.append('file', blobFinal, 'perfil.jpg');
+
         try {
             const token = localStorage.getItem('entconnect_token') || authService.getToken();
             const response = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/uploadphoto`, {
-                method: "PUT",
-                headers: { 'Authorization': `Bearer ${token}` },
+                method: 'PUT',
+                headers: { Authorization: `Bearer ${token}` },
                 body: formData,
             });
+
             if (response.ok) {
-                alert("Foto atualizada com sucesso!");
+                alert('Foto atualizada com sucesso!');
                 buscarFotoAtual();
-                window.dispatchEvent(new Event('fotoPerfilAtualizada')); 
+                window.dispatchEvent(new Event('fotoPerfilAtualizada'));
                 setModalCorteAberto(false);
             }
         } catch (error) {
-            console.error("Erro no upload:", error);
+            console.error('Erro no upload:', error);
         } finally {
             setLoadingFoto(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
-    // NOVA FUNÇÃO: Remover Foto
+    /**
+     * Removes the current profile photo from the user account.
+     */
     const removerFoto = async () => {
-        const confirmacao = window.confirm("Tens a certeza que queres remover a tua foto de perfil?");
+        const confirmacao = window.confirm('Tens a certeza que queres remover a tua foto de perfil?');
         if (!confirmacao) return;
 
         setLoadingFoto(true);
+
         try {
             const token = localStorage.getItem('entconnect_token') || authService.getToken();
             const response = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/removephoto`, {
                 method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
-            
+
             if (response.ok) {
                 setFotoUrl(null);
-                window.dispatchEvent(new Event('fotoPerfilAtualizada')); // Atualiza o Header
-                alert("Foto removida com sucesso!");
+                window.dispatchEvent(new Event('fotoPerfilAtualizada'));
+                alert('Foto removida com sucesso!');
             } else {
-                alert("Erro ao remover a foto.");
+                alert('Erro ao remover a foto.');
             }
         } catch (error) {
-            alert("Erro de ligação ao servidor.");
+            alert('Erro de ligacao ao servidor.');
         } finally {
             setLoadingFoto(false);
         }
     };
 
+    /**
+     * Persists the edited personal information.
+     */
     const guardarAlteracoes = async () => {
         setGuardando(true);
+
         try {
             const token = localStorage.getItem('entconnect_token') || authService.getToken();
             const response = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/update-pessoal`, {
                 method: 'PUT',
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ nome, nif, contacto })
+                body: JSON.stringify({ nome, nif, contacto }),
             });
+
             if (response.ok) {
-                alert("Dados atualizados com sucesso!");
+                alert('Dados atualizados com sucesso!');
                 setEditando(false);
             }
         } catch (error) {
-            alert("Erro de ligação.");
+            alert('Erro de ligacao.');
         } finally {
             setGuardando(false);
         }
     };
 
+    /**
+     * Submits the password change request for the current user.
+     */
     const lidarComMudarPassword = async () => {
         if (passNova !== passConfirma) {
-            alert("A nova password e a confirmação não coincidem.");
+            alert('A nova password e a confirmacao nao coincidem.');
             return;
         }
+
         try {
             const token = authService.getToken();
             const response = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/change-password`, {
                 method: 'PUT',
-                headers: { 
-                    'Authorization': `Bearer ${token}`, 
-                    'Content-Type': 'application/json' 
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ passAtual, passNova })
+                body: JSON.stringify({ passAtual, passNova }),
             });
             const resultado = await response.json();
+
             if (response.ok) {
-                alert("Password alterada com sucesso!");
+                alert('Password alterada com sucesso!');
                 fecharModalPassword();
             } else {
-                alert(resultado.message || "Erro ao mudar password.");
+                alert(resultado.message || 'Erro ao mudar password.');
             }
-        } catch (e) {
-            alert("Erro de ligação ao servidor.");
+        } catch (error) {
+            alert('Erro de ligacao ao servidor.');
         }
     };
 
+    /**
+     * Opens the password modal with cleared fields.
+     */
     const abrirModalPassword = () => {
-        setPassAtual(''); setPassNova(''); setPassConfirma('');
+        setPassAtual('');
+        setPassNova('');
+        setPassConfirma('');
         setModalPasswordAberto(true);
     };
 
+    /**
+     * Closes the password modal and clears its fields.
+     */
     const fecharModalPassword = () => {
-        setPassAtual(''); setPassNova(''); setPassConfirma('');
+        setPassAtual('');
+        setPassNova('');
+        setPassConfirma('');
         setModalPasswordAberto(false);
     };
 
@@ -249,32 +310,32 @@ export function Perfil() {
                 <h2>A Minha Conta</h2>
                 <nav>
                     <button className={abaAtiva === 'dados_pessoais' ? 'ativo' : ''} onClick={() => setAbaAtiva('dados_pessoais')}>
-                        👤 O Meu Perfil
+                        O Meu Perfil
                     </button>
                     <button className={abaAtiva === 'minhas_aulas' ? 'ativo' : ''} onClick={() => setAbaAtiva('minhas_aulas')}>
-                        📅 O Meu Horário
+                        O Meu Horario
                     </button>
                 </nav>
             </aside>
 
             <main className="perfil-conteudo">
                 {loading ? (
-                    <div className="mensagem-centro">A carregar informações...</div>
+                    <div className="mensagem-centro">A carregar informacoes...</div>
                 ) : (
                     <div className="cartao-branco">
                         {abaAtiva === 'dados_pessoais' && (
                             <section className="seccao-perfil">
                                 <div className="perfil-header-topo">
                                     <h3>O Meu Perfil</h3>
-                                    <button 
+                                    <button
                                         className="btn-editar"
                                         onClick={() => editando ? guardarAlteracoes() : setEditando(true)}
                                         disabled={guardando}
                                     >
-                                        {guardando ? 'A guardar...' : editando ? '✅ Guardar' : '✏️ Editar Dados'}
+                                        {guardando ? 'A guardar...' : editando ? 'Guardar' : 'Editar Dados'}
                                     </button>
                                 </div>
-                                
+
                                 <div className="perfil-info-principal">
                                     <div className="foto-moldura">
                                         {loadingFoto ? (
@@ -290,20 +351,19 @@ export function Perfil() {
                                         <h4 className="nome-principal">{nome || 'Utilizador'}</h4>
                                         <p className="nome-meta">@{userInfo?.username || 'utilizador'}</p>
                                         <p className="email-utilizador">{email || 'Sem email registado'}</p>
-                                        
+
                                         <p className="aviso-tamanho">
-                                            <i className="fa fa-info-circle"></i> Tamanho máximo: 10MB
+                                            <i className="fa fa-info-circle"></i> Tamanho maximo: 10MB
                                         </p>
 
                                         <input type="file" accept="image/*" ref={fileInputRef} className="input-file-escondido" onChange={lidarComSelecaoFicheiro} />
-                                        
-                                        {/* GRUPO DE BOTÕES DA FOTO */}
+
                                         <div className="botoes-foto-wrapper">
                                             <button className="btn-link-foto" onClick={() => fileInputRef.current?.click()} disabled={loadingFoto}>
                                                 <i className="fa fa-camera"></i>
                                                 {fotoUrl ? 'Alterar Foto' : 'Carregar Foto'}
                                             </button>
-                                            
+
                                             {fotoUrl && (
                                                 <button className="btn-link-foto btn-remover" onClick={removerFoto} disabled={loadingFoto}>
                                                     <i className="fa fa-trash"></i> Remover
@@ -322,15 +382,15 @@ export function Perfil() {
                                             <div className="form-pessoal">
                                                 <div className="campo">
                                                     <label>Nome Completo</label>
-                                                    <input type="text" value={nome} disabled={!editando} onChange={(e) => setNome(e.target.value)} />
+                                                    <input type="text" value={nome} disabled={!editando} onChange={(event) => setNome(event.target.value)} />
                                                 </div>
                                                 <div className="campo">
-                                                    <label>NIF (Número de Contribuinte)</label>
-                                                    <input type="text" value={nif} disabled={!editando} onChange={(e) => setNif(e.target.value)} />
+                                                    <label>NIF (Numero de Contribuinte)</label>
+                                                    <input type="text" value={nif} disabled={!editando} onChange={(event) => setNif(event.target.value)} />
                                                 </div>
                                                 <div className="campo">
-                                                    <label>Contacto Telefónico</label>
-                                                    <input type="text" value={contacto} disabled={!editando} onChange={(e) => setContacto(e.target.value)} />
+                                                    <label>Contacto Telefonico</label>
+                                                    <input type="text" value={contacto} disabled={!editando} onChange={(event) => setContacto(event.target.value)} />
                                                 </div>
                                                 {editando && (
                                                     <button className="btn-cancelar" onClick={() => { setEditando(false); carregarDados(); }}>Cancelar</button>
@@ -341,43 +401,42 @@ export function Perfil() {
 
                                     <div className="coluna-detalhes">
                                         <div className="cartao-info-extra">
-                                            <h4>Informações de Conta</h4>
+                                            <h4>Informacoes de Conta</h4>
                                             <div className="item-info">
                                                 <span className="label">Estado da Conta:</span>
                                                 <span className={`etiqueta ${ativo ? 'verde' : 'vermelha'}`}>
                                                     {ativo ? 'Ativo' : 'Inativo'}
                                                 </span>
                                             </div>
-                                            
-                                            {/*  CARGO COM NOVO DESIGN */}
+
                                             <div className="item-info cargo-info">
-                                                <span className="label">Cargo / Função:</span>
+                                                <span className="label">Cargo / Funcao:</span>
                                                 <div className="cargo-badge">
                                                     <i className="fa-solid fa-user-tie"></i>
                                                     <span>{cargo}</span>
                                                 </div>
                                             </div>
-                                            
+
                                             <hr />
-                                            <h4>Segurança</h4>
+                                            <h4>Seguranca</h4>
                                             <p className="texto-seguranca">Protege a tua conta alterando a palavra-passe regularmente.</p>
                                             <button className="btn-secundario" onClick={abrirModalPassword}>
-                                                <i className="fa fa-lock" style={{marginRight: '8px'}}></i>
+                                                <i className="fa fa-lock" style={{ marginRight: '8px' }}></i>
                                                 Alterar Palavra-passe
                                             </button>
                                         </div>
                                     </div>
                                 </div>
-                            </section> 
+                            </section>
                         )}
 
                         {abaAtiva === 'minhas_aulas' && (
                             <section className="seccao-aulas">
-                                <h3>As Minhas Aulas / Horário</h3>
+                                <h3>As Minhas Aulas / Horario</h3>
                                 {minhasAulas.length === 0 ? (
                                     <div className="mensagem-vazia">
                                         <i className="fa fa-calendar-times-o"></i>
-                                        <p>Ainda não tens aulas agendadas no sistema.</p>
+                                        <p>Ainda nao tens aulas agendadas no sistema.</p>
                                     </div>
                                 ) : (
                                     <div className="tabela-container">
@@ -387,7 +446,7 @@ export function Perfil() {
                                                     <th>Foco / Coreografia</th>
                                                     <th>{userInfo?.role === 'Professor' ? 'Cliente' : 'Professor(a)'}</th>
                                                     <th>Data</th>
-                                                    <th>Horário</th>
+                                                    <th>Horario</th>
                                                     <th>Local / Formato</th>
                                                 </tr>
                                             </thead>
@@ -414,7 +473,6 @@ export function Perfil() {
                     </div>
                 )}
 
-                {/* MODAL DE CORTE DE FOTO */}
                 {modalCorteAberto && (
                     <div className="modal-corte-overlay">
                         <div className="modal-corte-container">
@@ -437,7 +495,7 @@ export function Perfil() {
                             </div>
                             <div className="controles-corte">
                                 <div className="zoom-slider">
-                                    <input type="range" min={1} max={3} step={0.1} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} />
+                                    <input type="range" min={1} max={3} step={0.1} value={zoom} onChange={(event) => setZoom(Number(event.target.value))} />
                                 </div>
                                 <div className="botoes-modal">
                                     <button className="btn-modal-cancelar" onClick={() => setModalCorteAberto(false)}>Cancelar</button>
@@ -448,55 +506,54 @@ export function Perfil() {
                     </div>
                 )}
 
-                {/* MODAL DE MUDAR PASSWORD */}
                 {modalPasswordAberto && (
                     <div className="modal-corte-overlay">
                         <div className="modal-corte-container" style={{ maxWidth: '400px' }}>
                             <div className="modal-header">
-                                <h3>Segurança da Conta</h3>
+                                <h3>Seguranca da Conta</h3>
                                 <p>Atualiza a tua password de acesso.</p>
                             </div>
 
                             <div className="form-pessoal">
                                 <div className="campo">
                                     <label>Password Atual</label>
-                                    <input 
-                                        type="password" 
-                                        value={passAtual} 
-                                        onChange={(e) => setPassAtual(e.target.value)}
+                                    <input
+                                        type="password"
+                                        value={passAtual}
+                                        onChange={(event) => setPassAtual(event.target.value)}
                                         autoComplete="new-password"
                                     />
                                 </div>
 
                                 <div className="campo">
                                     <label>Nova Password</label>
-                                    <input 
-                                        type="password" 
-                                        value={passNova} 
-                                        onChange={(e) => setPassNova(e.target.value)} 
+                                    <input
+                                        type="password"
+                                        value={passNova}
+                                        onChange={(event) => setPassNova(event.target.value)}
                                         autoComplete="new-password"
                                     />
                                 </div>
 
                                 <div className="campo">
                                     <label>Confirmar Nova Password</label>
-                                    <input 
-                                        type="password" 
-                                        value={passConfirma} 
-                                        onChange={(e) => setPassConfirma(e.target.value)} 
+                                    <input
+                                        type="password"
+                                        value={passConfirma}
+                                        onChange={(event) => setPassConfirma(event.target.value)}
                                         autoComplete="new-password"
                                         className={passConfirma && passNova !== passConfirma ? 'input-erro' : ''}
                                     />
                                     {passConfirma && passNova !== passConfirma && (
-                                        <span className="legenda-erro">As passwords não coincidem</span>
+                                        <span className="legenda-erro">As passwords nao coincidem</span>
                                     )}
                                 </div>
 
                                 <div className="botoes-modal" style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
                                     <button className="btn-modal-cancelar" style={{ flex: 1 }} onClick={fecharModalPassword}>Cancelar</button>
-                                    <button 
-                                        className="btn-modal-confirmar" 
-                                        style={{ flex: 1 }} 
+                                    <button
+                                        className="btn-modal-confirmar"
+                                        style={{ flex: 1 }}
                                         onClick={lidarComMudarPassword}
                                         disabled={!passAtual || !passNova || passNova !== passConfirma}
                                     >

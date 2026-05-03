@@ -1,21 +1,20 @@
-import { authService } from './auth.service'; // Ajusta o caminho se for preciso
+import { authService } from './auth.service';
 import { API_BASE_URL } from "../../src/config/api.config";
 
+/**
+ * Serviço responsável pelas operações do encarregado de educação.
+ */
 export class EEService {
-    // URL base da API.
-    // Vem do ficheiro .env do frontend através de VITE_API_URL.
     private _apiUrl = API_BASE_URL;
 
     /**
      * Função auxiliar para gerar os headers comuns, incluindo o Token de segurança.
      */
     private getHeaders() {
-        // Exemplo: Buscar o token ao localStorage ou ao teu AuthService
         const token = authService.getToken(); 
         
         return {
             'Content-Type': 'application/json',
-            // Só adiciona o Authorization se o token existir
             ...(token ? { 'Authorization': `Bearer ${token}` } : {}) 
         };
     }
@@ -36,6 +35,11 @@ export class EEService {
         return await response.json();
     }
 
+    /**
+     * Obtém os educandos do encarregado autenticado.
+     *
+     * @returns Lista de educandos.
+     */
     async getMeusEducandos() {
         const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/me/alunos`, {
             method: 'GET',
@@ -50,6 +54,12 @@ export class EEService {
         return await response.json();
     }
 
+    /**
+     * Cria um educando para o encarregado autenticado.
+     *
+     * @param payload - Dados do educando.
+     * @returns Educando criado.
+     */
     async criarMeuEducando(payload: any) {
         const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/me/alunos`, {
             method: 'POST',
@@ -65,6 +75,13 @@ export class EEService {
         return await response.json();
     }
 
+    /**
+     * Atualiza um educando existente.
+     *
+     * @param idAluno - Identificador do aluno.
+     * @param payload - Dados atualizados do educando.
+     * @returns Educando atualizado.
+     */
     async atualizarMeuEducando(idAluno: number, payload: any) {
         const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/me/alunos/${idAluno}`, {
             method: 'PUT',

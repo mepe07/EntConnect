@@ -10,6 +10,9 @@ import { ButtonComponent } from '../../../components/button/button.component';
 import { InputComponent } from '../../../components/input/input.component';
 import { faturacaoService } from "../../../services/faturacao.service";
 
+/**
+ * Vista de relatório de faturação.
+ */
 export function Faturacao() {
     // ==========================================
     // 1. ESTADOS DA APLICAÇÃO (A Memória)

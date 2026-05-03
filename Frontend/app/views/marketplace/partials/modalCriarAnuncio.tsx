@@ -1,13 +1,22 @@
 import React, { useState } from 'react';
 import { TipoAnuncio, type CriarAnuncioPayload } from '../../../types/marketplace.types';
-import '../marketplace.scss'; // Usa os mesmos estilos globais
+import '../marketplace.scss';
 
+/**
+ * Defines the properties accepted by the marketplace ad creation modal.
+ */
 interface ModalCriarAnuncioProps {
     isOpen: boolean;
     onClose: () => void;
     onGuardar: (payload: CriarAnuncioPayload) => Promise<void>;
 }
 
+/**
+ * Renders the form used to publish a new marketplace ad.
+ *
+ * @param props Component properties.
+ * @returns Modal for ad creation when open.
+ */
 export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnuncioProps) {
     const [loading, setLoading] = useState(false);
     const [form, setForm] = useState<CriarAnuncioPayload>({
@@ -29,6 +38,11 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
     const totalDistribuido = (form.quantidadeVenda ?? 0) + (form.quantidadeAluguer ?? 0);
     const usaDistribuicao = form.tipoAnuncio === TipoAnuncio.AMBOS;
 
+    /**
+     * Updates the form distribution when the ad type changes.
+     *
+     * @param tipoAnuncio Selected advertisement type.
+     */
     const handleTipoChange = (tipoAnuncio: TipoAnuncio) => {
         if (tipoAnuncio === TipoAnuncio.VENDA) {
             setForm({
@@ -61,6 +75,11 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
         });
     };
 
+    /**
+     * Synchronizes quantity fields after a change to the total stock.
+     *
+     * @param quantidadeTotal New total quantity.
+     */
     const handleQuantidadeTotalChange = (quantidadeTotal: number) => {
         const totalFinal = quantidadeTotal > 0 ? quantidadeTotal : 1;
 
@@ -93,6 +112,9 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
         });
     };
 
+    /**
+     * Validates the form and submits the new advertisement payload.
+     */
     const handleSubmit = async () => {
         if (!form.titulo || form.quantidadeTotal < 1) {
             alert('Por favor, preenche o título e a quantidade.');

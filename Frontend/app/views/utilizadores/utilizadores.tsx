@@ -77,6 +77,9 @@ const EDUCANDO_FORM_VAZIO: EducandoForm = {
     contato: '',
 };
 
+/**
+ * Vista administrativa de gestão de utilizadores e educandos.
+ */
 export function Utilizadores() {
     const [utilizadores, setUtilizadores] = useState<Utilizador[]>([]);
     const [termoPesquisa, setTermoPesquisa] = useState('');

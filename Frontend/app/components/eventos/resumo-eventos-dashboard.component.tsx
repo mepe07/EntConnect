@@ -1,11 +1,15 @@
-// Ficheiro: app/components/eventos/resumo-eventos-dashboard.component.tsx
-
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { eventosService } from '~/services/eventos.service';
 import type { Evento } from '~/types/eventos.types';
 import styles from './resumo-eventos-dashboard.module.css';
 
+/**
+ * Resolves the badge label shown for a public event type.
+ *
+ * @param tipo Event type key.
+ * @returns Localized event type label.
+ */
 function obterEtiquetaTipo(tipo: string): string {
     const etiquetas: Record<string, string> = {
         evento: 'Evento',
@@ -19,12 +23,24 @@ function obterEtiquetaTipo(tipo: string): string {
     return etiquetas[tipo] ?? 'Evento';
 }
 
+/**
+ * Formats the event day for compact date badges.
+ *
+ * @param data Event date.
+ * @returns Two-digit day label.
+ */
 function formatarDia(data: string): string {
     return new Intl.DateTimeFormat('pt-PT', {
         day: '2-digit',
     }).format(new Date(data));
 }
 
+/**
+ * Formats the event month for compact date badges.
+ *
+ * @param data Event date.
+ * @returns Uppercase short month label.
+ */
 function formatarMes(data: string): string {
     return new Intl.DateTimeFormat('pt-PT', {
         month: 'short',
@@ -34,6 +50,12 @@ function formatarMes(data: string): string {
         .toUpperCase();
 }
 
+/**
+ * Formats the full event date shown in the featured card.
+ *
+ * @param data Event date.
+ * @returns Long-form localized date.
+ */
 function formatarDataCompleta(data: string): string {
     return new Intl.DateTimeFormat('pt-PT', {
         weekday: 'long',
@@ -43,6 +65,12 @@ function formatarDataCompleta(data: string): string {
     }).format(new Date(data));
 }
 
+/**
+ * Formats the event time shown in event cards.
+ *
+ * @param data Event date.
+ * @returns Localized time label.
+ */
 function formatarHora(data: string): string {
     return new Intl.DateTimeFormat('pt-PT', {
         hour: '2-digit',
@@ -50,6 +78,12 @@ function formatarHora(data: string): string {
     }).format(new Date(data));
 }
 
+/**
+ * Resolves the current status of an event based on its dates.
+ *
+ * @param evento Event to evaluate.
+ * @returns Current event status label.
+ */
 function obterEstadoEvento(evento: Evento): string {
     const agora = new Date();
     const inicio = new Date(evento.dataInicio);
@@ -66,6 +100,9 @@ function obterEstadoEvento(evento: Evento): string {
     return 'Terminado';
 }
 
+/**
+ * Shows a dashboard summary with upcoming public events.
+ */
 export function ResumoEventosDashboard() {
     const [eventos, setEventos] = useState<Evento[]>([]);
     const [loading, setLoading] = useState(true);

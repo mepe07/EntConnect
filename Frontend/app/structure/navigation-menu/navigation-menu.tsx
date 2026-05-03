@@ -127,9 +127,9 @@ const MENU_CONFIG: MenuConfig = {
     ]
 };
 
-// ============================================================================
-// COMPONENTE PRINCIPAL
-// ============================================================================
+/**
+ * Menu lateral principal da aplicação, adaptado à role do utilizador autenticado.
+ */
 export function NavigationMenu() {
     const location = useLocation();
     const path = location.pathname.toLowerCase(); 

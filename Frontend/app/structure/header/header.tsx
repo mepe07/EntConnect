@@ -6,6 +6,12 @@ import logoHeader from "../../assets/media/logo_header.png";
 import './header.scss';
 import type { User } from "~/models/interfaces/user.interface";
 
+/**
+ * Cabeçalho autenticado da aplicação.
+ *
+ * @remarks
+ * Mostra o acesso rápido à conta e sincroniza a fotografia de perfil do utilizador.
+ */
 export function Header() {
     // Inicializado o hook de navegação
     const navigate = useNavigate(); 

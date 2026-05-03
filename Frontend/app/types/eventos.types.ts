@@ -1,7 +1,6 @@
-// Ficheiro: Frontend/app/types/eventos.types.ts
-
-// Tipos permitidos para eventos.
-// Têm de bater certo com os valores que existem no backend/SQL.
+/**
+ * Tipos de evento suportados pelo frontend e pelo backend.
+ */
 export type TipoEvento =
     | 'evento'
     | 'workshop'
@@ -10,6 +9,9 @@ export type TipoEvento =
     | 'aviso'
     | 'outro';
 
+/**
+ * Estrutura resumida de um evento usada em listagens e destaques.
+ */
 export interface EventoResumo {
     id: number;
     titulo: string;
@@ -22,6 +24,9 @@ export interface EventoResumo {
     dataFim?: string | null;
 }
 
+/**
+ * Estrutura completa de um evento usada em detalhe e gestão.
+ */
 export interface Evento extends EventoResumo {
     descricao?: string | null;
     publico: boolean;
@@ -37,8 +42,14 @@ export interface Evento extends EventoResumo {
     dataRemocao?: string | null;
 }
 
+/**
+ * Estados de filtro disponíveis na gestão interna de eventos.
+ */
 export type FiltroEstadoEventoGestao = 'todos' | 'ativos' | 'removidos';
 
+/**
+ * Filtros usados na listagem interna de eventos.
+ */
 export interface FiltrosGestaoEventos {
     pesquisa?: string;
     tipo?: TipoEvento | 'todos';
@@ -50,6 +61,9 @@ export interface FiltrosGestaoEventos {
     limite?: number;
 }
 
+/**
+ * Payload usado para criar ou atualizar eventos no frontend.
+ */
 export interface GuardarEventoPayload {
     titulo: string;
     slug?: string;

@@ -15,6 +15,9 @@ const SUBTITULO_COMPLETO = "A plataforma inteligente para a gestão escolar do f
 
 type ModoFormulario = 'login' | 'forgot' | 'reset';
 
+/**
+ * Vista de autenticação com login, recuperação e reposição de password.
+ */
 export function Login() {
     const authService = useMemo(() => new AuthService(), []);
     const [searchParams, setSearchParams] = useSearchParams();

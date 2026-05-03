@@ -1,5 +1,6 @@
-// Ficheiro: src/models/interfaces/artigo.interface.ts
-
+/**
+ * Lote de stock associado a um artigo.
+ */
 export interface LoteStock {
     ID_Stock: number;
     Quantidade_Total: number;
@@ -10,6 +11,9 @@ export interface LoteStock {
     Tamanho?: { Descricao: string };
 }
 
+/**
+ * Estrutura resumida de artigo usada no inventário.
+ */
 export interface Artigo {
     ID_Artigo: number;
     Nome: string;
@@ -18,7 +22,9 @@ export interface Artigo {
     Stock_Armazem: LoteStock[];
 }
 
-
+/**
+ * Estrutura de lote usada nas vistas de Marketplace.
+ */
 export interface LoteMarketplace {
     ID_Stock: number;
     Quantidade_Venda: number;

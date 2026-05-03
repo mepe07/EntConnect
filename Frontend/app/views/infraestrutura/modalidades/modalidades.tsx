@@ -10,6 +10,9 @@ interface Modalidade {
     Descricao: string;
 }
 
+/**
+ * Vista administrativa de gestão de modalidades.
+ */
 export function Modalidades() {
     const [modalidades, setModalidades] = useState<Modalidade[]>([]); 
     const [termoPesquisa, setTermoPesquisa] = useState(''); 

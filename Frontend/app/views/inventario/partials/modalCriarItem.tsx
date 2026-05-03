@@ -1,6 +1,9 @@
 import React from 'react';
 import type { CriarItemInventarioPayload } from '../../../types/marketplace.types';
 
+/**
+ * Defines the properties accepted by the inventory item creation modal.
+ */
 interface Props {
     form: CriarItemInventarioPayload;
     setForm: (f: CriarItemInventarioPayload) => void;
@@ -8,6 +11,12 @@ interface Props {
     onGuardar: () => void;
 }
 
+/**
+ * Renders the form used to create a new inventory item.
+ *
+ * @param props Component properties.
+ * @returns Modal for inventory item creation.
+ */
 export function ModalCriarItem({ form, setForm, onClose, onGuardar }: Props) {
     return (
         <>

@@ -1,6 +1,12 @@
 import type { InputComponentProps } from './input-props.interface';
 import './input.component.scss';
 
+/**
+ * Input de texto reutilizável da aplicação.
+ *
+ * @param options - Propriedades de configuração do input.
+ * @returns Campo de input configurado.
+ */
 export function InputComponent(options: InputComponentProps) {
   return (
     <>

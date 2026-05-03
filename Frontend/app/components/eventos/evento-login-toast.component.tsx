@@ -1,5 +1,3 @@
-// Ficheiro: Frontend/app/components/eventos/evento-login-toast.component.tsx
-
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { eventosService } from '~/services/eventos.service';
@@ -9,9 +7,6 @@ import styles from './evento-login-toast.module.css';
 const TEMPO_ENTRADA_MS = 900;
 const TEMPO_VISIVEL_MS = 7500;
 const STORAGE_KEY = 'entconnect_eventos_login_vistos';
-
-// Tempo durante o qual o mesmo evento não volta a aparecer no toast.
-// Neste caso: 24 horas.
 const TEMPO_BLOQUEIO_TOAST_MS = 24 * 60 * 60 * 1000;
 
 type EventoVistoStorage = {
@@ -20,11 +15,9 @@ type EventoVistoStorage = {
 };
 
 /**
- * Lê os eventos já mostrados no login.
+ * Reads the event ids that have already been shown in the login toast.
  *
- * Nota:
- * O localStorage pode ter dados antigos, inválidos ou alterados manualmente.
- * Por isso, validamos a estrutura antes de confiar nos dados.
+ * @returns Stored event visibility records.
  */
 function obterEventosVistos(): EventoVistoStorage[] {
     try {
@@ -52,12 +45,9 @@ function obterEventosVistos(): EventoVistoStorage[] {
 }
 
 /**
- * Remove do localStorage eventos vistos há mais de 24 horas.
+ * Removes expired event visibility entries from local storage.
  *
- * Assim:
- * - não mostramos spam ao utilizador;
- * - mas também não bloqueamos o evento para sempre;
- * - e evitamos acumular lixo no localStorage.
+ * @returns Valid event visibility records.
  */
 function limparEventosVistosExpirados(): EventoVistoStorage[] {
     const agora = Date.now();
@@ -78,7 +68,10 @@ function limparEventosVistosExpirados(): EventoVistoStorage[] {
 }
 
 /**
- * Verifica se o evento já apareceu nas últimas 24 horas.
+ * Checks whether an event has already been shown recently.
+ *
+ * @param idEvento Event identifier.
+ * @returns `true` when the event is still inside the blocking window.
  */
 function eventoFoiVistoRecentemente(idEvento: number): boolean {
     const eventosVistos = limparEventosVistosExpirados();
@@ -87,9 +80,9 @@ function eventoFoiVistoRecentemente(idEvento: number): boolean {
 }
 
 /**
- * Guarda que este evento foi mostrado agora.
+ * Stores that a given event has been shown in the login toast.
  *
- * Se o evento já existir no storage, atualizamos a data.
+ * @param idEvento Event identifier.
  */
 function guardarEventoVisto(idEvento: number): void {
     const eventosVistos = limparEventosVistosExpirados();
@@ -110,6 +103,12 @@ function guardarEventoVisto(idEvento: number): void {
     );
 }
 
+/**
+ * Formats the event schedule shown in the toast.
+ *
+ * @param data Event date.
+ * @returns Localized date and time label.
+ */
 function formatarDataEvento(data: string): string {
     return new Intl.DateTimeFormat('pt-PT', {
         day: '2-digit',
@@ -119,12 +118,18 @@ function formatarDataEvento(data: string): string {
     }).format(new Date(data));
 }
 
+/**
+ * Resolves the label shown for the event type badge.
+ *
+ * @param tipo Event type key.
+ * @returns Localized event type label.
+ */
 function obterEtiquetaTipo(tipo: string): string {
     const etiquetas: Record<string, string> = {
         evento: 'Evento',
         workshop: 'Workshop',
         concerto: 'Concerto',
-        audicao: 'Audição',
+        audicao: 'Audicao',
         aviso: 'Aviso',
         outro: 'Novidade',
     };
@@ -132,6 +137,9 @@ function obterEtiquetaTipo(tipo: string): string {
     return etiquetas[tipo] ?? 'Evento';
 }
 
+/**
+ * Displays a temporary login toast with the next unseen public event.
+ */
 export function EventoLoginToast() {
     const navigate = useNavigate();
 
@@ -161,10 +169,6 @@ export function EventoLoginToast() {
             try {
                 const eventos = await eventosService.listarEventosLoginToast();
 
-                /*
-                 * Escolhemos o primeiro evento que ainda não apareceu
-                 * nas últimas 24 horas.
-                 */
                 const proximoEvento = eventos.find(
                     (item) => !eventoFoiVistoRecentemente(item.id)
                 );
@@ -178,13 +182,7 @@ export function EventoLoginToast() {
                 timeoutEntrada = window.setTimeout(() => {
                     setVisivel(true);
                 }, TEMPO_ENTRADA_MS);
-            } catch {
-                /*
-                 * Importante:
-                 * O login nunca pode falhar só porque os eventos falharam.
-                 * Por isso, o erro é ignorado de forma silenciosa.
-                 */
-            }
+            } catch {}
         }
 
         carregarEventoToast();
@@ -208,6 +206,9 @@ export function EventoLoginToast() {
         };
     }, [evento, visivel, fechadoManual, pausado]);
 
+    /**
+     * Closes the toast and marks the event as seen.
+     */
     function fecharToast() {
         if (evento) {
             guardarEventoVisto(evento.id);
@@ -217,6 +218,9 @@ export function EventoLoginToast() {
         setFechadoManual(true);
     }
 
+    /**
+     * Opens the selected event detail page.
+     */
     function abrirEvento() {
         if (!evento) {
             return;
@@ -251,7 +255,7 @@ export function EventoLoginToast() {
                     eventoClick.stopPropagation();
                     fecharToast();
                 }}
-                aria-label="Fechar notificação de evento"
+                aria-label="Fechar notificacao de evento"
             >
                 ×
             </button>
@@ -280,9 +284,8 @@ export function EventoLoginToast() {
             </div>
 
             <div
-                className={`${styles.barraProgresso} ${pausado ? styles.barraPausada : ''
-                    }`}
+                className={`${styles.barraProgresso} ${pausado ? styles.barraPausada : ''}`}
             />
         </div>
     );
-} 
+}

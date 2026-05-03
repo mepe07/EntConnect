@@ -1,13 +1,20 @@
-// Ficheiro: Frontend/app/types/marketplace.types.ts
-
+/**
+ * Ações de moderação disponíveis no Marketplace.
+ */
 export type AcaoModeracao = 'remover' | 'reativar' | 'arquivar' | 'moderacao';
 
+/**
+ * Tipos de anúncio suportados pelo Marketplace.
+ */
 export enum TipoAnuncio {
     VENDA = 'venda',
     ALUGUER = 'aluguer',
     AMBOS = 'ambos',
 }
 
+/**
+ * Estados possíveis de um anúncio.
+ */
 export enum EstadoAnuncio {
     ATIVO = 'ativo',
     RESERVADO = 'reservado',
@@ -16,17 +23,26 @@ export enum EstadoAnuncio {
     REMOVIDO = 'removido',
 }
 
+/**
+ * Origem de um artigo apresentado no Marketplace.
+ */
 export enum OrigemRegisto {
     UTILIZADOR = 'utilizador',
     INVENTARIO_ESCOLA = 'inventario_escola',
 }
 
+/**
+ * Tipos de interesse que um utilizador pode registar num anúncio.
+ */
 export enum TipoInteresse {
     CONTACTO = 'Contacto',
     COMPRA = 'Compra',
     ALUGUER = 'Aluguer',
 }
 
+/**
+ * Resumo de pessoa usado nas relações do Marketplace.
+ */
 export interface PessoaResumo {
     ID_Pessoa: number;
     Nome: string;
@@ -34,26 +50,41 @@ export interface PessoaResumo {
     Mail?: string;
 }
 
+/**
+ * Resumo de utilizador usado nas relações do Marketplace.
+ */
 export interface UtilizadorResumo {
     ID_Utilizador: number;
     Pessoa?: PessoaResumo;
 }
 
+/**
+ * Resumo de cor de peça.
+ */
 export interface CorResumo {
     ID_Cor: number;
     Descricao: string;
 }
 
+/**
+ * Resumo do estado físico de uma peça.
+ */
 export interface EstadoPecaResumo {
     ID_Estado: number;
     Descricao: string;
 }
 
+/**
+ * Resumo do tamanho de uma peça.
+ */
 export interface TamanhoResumo {
     ID_Tamanho: number;
     Descricao: string;
 }
 
+/**
+ * Registo de stock associado a um artigo.
+ */
 export interface StockArmazem {
     ID_Stock: number;
     Quantidade_Total: number;
@@ -64,6 +95,9 @@ export interface StockArmazem {
     Tamanho?: TamanhoResumo;
 }
 
+/**
+ * Estrutura principal de anúncio usada no frontend.
+ */
 export interface Anuncio {
     ID_Artigo: number;
     Nome: string;
@@ -85,6 +119,9 @@ export interface Anuncio {
     Stock_Armazem?: StockArmazem[];
 }
 
+/**
+ * Interesse ou proposta registada sobre um anúncio.
+ */
 export interface Proposta {
     ID_Interesse: number;
     Data_Registo: string;
@@ -96,6 +133,9 @@ export interface Proposta {
     Stock_Armazem?: StockArmazem;
 }
 
+/**
+ * Filtros usados na listagem de anúncios.
+ */
 export interface FiltrosAnuncios {
     pesquisa?: string;
     tipoAnuncio?: TipoAnuncio;
@@ -105,6 +145,9 @@ export interface FiltrosAnuncios {
     publicado?: boolean;
 }
 
+/**
+ * Payload usado para criar anúncios no Marketplace.
+ */
 export interface CriarAnuncioPayload {
     titulo: string;
     descricao?: string;
@@ -121,6 +164,9 @@ export interface CriarAnuncioPayload {
     idTamanho?: number;
 }
 
+/**
+ * Payload usado para publicar artigos do inventário da escola.
+ */
 export interface PublicarInventarioEscolaPayload {
     idArtigo: number;
     titulo?: string;
@@ -132,12 +178,18 @@ export interface PublicarInventarioEscolaPayload {
     quantidadeAluguer?: number;
 }
 
+/**
+ * Payload usado para registar interesse num anúncio.
+ */
 export interface RegistarInteressePayload {
     tipo?: TipoInteresse;
     mensagem?: string;
     dataRecolhaPrevista?: string;
 }
 
+/**
+ * Payload usado para criar itens no inventário interno.
+ */
 export interface CriarItemInventarioPayload {
     titulo: string;
     descricao?: string;
@@ -149,6 +201,9 @@ export interface CriarItemInventarioPayload {
     quantidade: number;
 }
 
+/**
+ * Estrutura de registo de moderação devolvida pelo backend.
+ */
 export interface RegistoModeracaoMarketplace {
     ID_Registo_Moderacao: number;
     ID_Artigo: number;

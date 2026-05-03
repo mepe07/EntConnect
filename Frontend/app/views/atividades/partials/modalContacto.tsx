@@ -1,7 +1,8 @@
-// Ficheiro: src/views/atividades/partials/modalContacto.tsx
-
 import React from 'react';
 
+/**
+ * Defines the properties accepted by the seller contact modal.
+ */
 interface ModalContactoProps {
     isOpen: boolean;
     onClose: () => void;
@@ -13,6 +14,12 @@ interface ModalContactoProps {
     nomeArtigo: string;
 }
 
+/**
+ * Displays the seller contact details after a request is approved.
+ *
+ * @param props Component properties.
+ * @returns Modal with seller contact data when available.
+ */
 export function ModalContacto({ isOpen, onClose, vendedor, nomeArtigo }: ModalContactoProps) {
     if (!isOpen || !vendedor) return null;
 

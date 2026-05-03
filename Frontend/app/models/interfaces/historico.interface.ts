@@ -1,3 +1,6 @@
+/**
+ * Linha de histórico de coaching apresentada em relatórios.
+ */
 export interface LinhaHistoricoCoaching {
     idCoaching: number;
     idAluno: number;

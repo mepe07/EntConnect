@@ -1,3 +1,6 @@
+/**
+ * Propriedades aceites pelo input partilhado.
+ */
 export interface InputComponentProps {
   id: string;
   label?: string;

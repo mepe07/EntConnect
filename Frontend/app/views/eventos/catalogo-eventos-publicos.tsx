@@ -60,6 +60,9 @@ function obterEstadoEvento(evento: Evento): string {
     return 'Terminado';
 }
 
+/**
+ * Catálogo público de eventos disponível sem autenticação.
+ */
 export function CatalogoEventosPublicos() {
     const [eventos, setEventos] = useState<Evento[]>([]);
     const [loading, setLoading] = useState(true);

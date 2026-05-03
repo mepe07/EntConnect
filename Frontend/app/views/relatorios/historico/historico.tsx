@@ -8,6 +8,9 @@ import { InputComponent } from '../../../components/input/input.component';
 import { faturacaoService } from "../../../services/faturacao.service"; 
 import type { LinhaHistoricoCoaching } from '../../../models/interfaces/historico.interface'
 
+/**
+ * Vista de relatório de histórico de coaching.
+ */
 export function HistoricoCoaching() {
     // ==========================================
     // 1. ESTADOS (A Memória do Ecrã)

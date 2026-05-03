@@ -1,7 +1,8 @@
 import { API_BASE_URL } from "../../src/config/api.config";
+/**
+ * Serviço responsável pelas disponibilidades dos professores.
+ */
 export class DisponibilidadesService {
-    // URL base da API.
-    // Vem do ficheiro .env do frontend através de VITE_API_URL.
     private _apiUrl = API_BASE_URL;
 
     /**
@@ -16,11 +17,23 @@ export class DisponibilidadesService {
         return await response.json();
     };
 
+    /**
+     * Atualiza o estado de uma disponibilidade.
+     *
+     * @param idDisponibilidade - Identificador da disponibilidade.
+     * @param novoEstado - Novo estado da disponibilidade.
+     * @param horaInicio - Hora de início da disponibilidade.
+     * @param duracao - Duração em minutos.
+     * @param alteradoPor - Utilizador que realiza a alteração.
+     * @param idEstudio - Estúdio associado, quando aplicável.
+     * @param valorPorAluno - Valor por aluno, quando aplicável.
+     * @returns Resposta do backend.
+     */
     async atualizarEstado(idDisponibilidade: number, novoEstado: number, horaInicio: string, duracao: number, alteradoPor: number, idEstudio?: number, valorPorAluno?: number) {
         
         const bodyRequest = {
-            Hora_Inicio: horaInicio, // Agora já recebe "2026-04-06T14:00:00.000Z"
-            Duracao: duracao,        // Agora já recebe ex: 90
+            Hora_Inicio: horaInicio,
+            Duracao: duracao,
             AlteradoPorUtilizadorID: alteradoPor,
             EstadoDisponibilidadeID: novoEstado,
             IdEstudio: idEstudio,
@@ -36,8 +49,13 @@ export class DisponibilidadesService {
         return await response.json();
     }
 
+    /**
+     * Cria uma nova disponibilidade.
+     *
+     * @param dados - Dados da disponibilidade.
+     * @returns Disponibilidade criada.
+     */
     async criarDisponibilidade(dados: any) {
-        // Ajusta o URL consoante a rota que definiste no teu controller (ex: /disponibilidades/adicionar)
         const response = await fetch(`${this._apiUrl}/utilizador/professor/adicionar-disponibilidade`, {
             method: 'POST',
             headers: {

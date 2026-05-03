@@ -113,6 +113,9 @@ function criarFormularioDeEvento(evento: Evento): EstadoFormularioEvento {
     };
 }
 
+/**
+ * Painel interno de coordenação para gestão completa de eventos.
+ */
 export function PainelEventosCoordenacao() {
     const [eventos, setEventos] = useState<Evento[]>([]);
     const [loading, setLoading] = useState(true);

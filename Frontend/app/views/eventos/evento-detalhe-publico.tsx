@@ -48,6 +48,9 @@ function formatarIntervaloEvento(evento: Evento): string {
     return `${dataInicio} · ${horaInicio} - ${horaFim}`;
 }
 
+/**
+ * Página pública de detalhe de um evento identificado por slug.
+ */
 export function EventoDetalhePublico() {
     const { slug } = useParams();
     const navigate = useNavigate();

@@ -16,6 +16,9 @@ interface Sala {
     Modalidade: string;
 }
 
+/**
+ * Vista administrativa de gestão de salas.
+ */
 export function Salas() {
     const [salas, setSalas] = useState<Sala[]>([]); 
     const [termoPesquisa, setTermoPesquisa] = useState(''); 

@@ -45,6 +45,9 @@ const ACOES_RAPIDAS_INICIAIS: AcaoRapida[] = [
     },
 ];
 
+/**
+ * Dashboard principal da aplicação para utilizadores autenticados.
+ */
 export function Dashboard() {
     const navigate = useNavigate();
 

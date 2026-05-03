@@ -33,6 +33,9 @@ const ESTADO_LABEL: Record<string, string> = {
 
 type Vista = 'lista' | 'detalhe' | 'publicados';
 
+/**
+ * Vista de inventário escolar com criação, detalhe e publicação de itens.
+ */
 export function Inventario() {
     const [vista, setVista] = useState<Vista>('lista');
     const [inventario, setInventario] = useState<Anuncio[]>([]);

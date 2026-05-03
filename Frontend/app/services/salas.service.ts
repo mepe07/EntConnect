@@ -1,28 +1,24 @@
-// LÓGICA: Importamos o nosso segurança para podermos usar o Token JWT dele!
 import { authService } from './auth.service';
 import { API_BASE_URL } from "../../src/config/api.config";
-// URL base das rotas de salas.
-// A origem da API vem do .env do frontend através de VITE_API_URL.
 const API_URL = `${API_BASE_URL}/salas`;
 
+/**
+ * Serviço responsável pelo acesso às operações de salas.
+ */
 export class SalasService {
-    
-    // ==========================================
-    // Função Utilitária (O Carimbo do Segurança)
-    // ==========================================
     private getHeaders() {
         const token = authService.getToken();
         return {
             'Content-Type': 'application/json',
-            // LÓGICA: Enviamos o crachá de identificação em todos os pedidos!
-            // Se o teu NestJS estiver protegido, ele precisa disto para te deixar entrar.
             'Authorization': `Bearer ${token}` 
         };
     }
 
-    // ==========================================
-    // READ: Ir buscar todas as salas ao Backend
-    // ==========================================
+    /**
+     * Obtém todas as salas disponíveis.
+     *
+     * @returns Lista de salas devolvida pelo backend.
+     */
     async getSalas() {
         try {
             const response = await fetch(API_URL, {
@@ -34,7 +30,6 @@ export class SalasService {
                 throw new Error('Falha ao carregar as salas do servidor.');
             }
 
-            // Transforma a resposta do servidor num array de JavaScript
             return await response.json();
         } catch (erro) {
             console.error('Erro no getSalas:', erro);
@@ -42,15 +37,17 @@ export class SalasService {
         }
     }
 
-    // ==========================================
-    // CREATE: Enviar uma nova sala para o Backend
-    // ==========================================
+    /**
+     * Cria uma nova sala.
+     *
+     * @param dadosNovaSala - Dados da sala a criar.
+     * @returns Sala criada.
+     */
     async createSala(dadosNovaSala: { nome: string; modalidade: string; disponivel: boolean }) {
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: this.getHeaders(),
-                // O JSON.stringify transforma o nosso objeto num texto que a internet entende
                 body: JSON.stringify(dadosNovaSala),
             });
 
@@ -65,9 +62,12 @@ export class SalasService {
         }
     }
 
-    // ==========================================
-    // DELETE: Enviar ordem para apagar ao Backend
-    // ==========================================
+    /**
+     * Remove uma sala existente.
+     *
+     * @param id - Identificador da sala.
+     * @returns Resposta do backend.
+     */
     async deleteSala(id: number) {
         try {
             const response = await fetch(`${API_URL}/${id}`, {

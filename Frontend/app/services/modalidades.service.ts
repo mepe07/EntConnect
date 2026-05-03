@@ -1,28 +1,25 @@
 import { authService } from './auth.service';
 import { API_BASE_URL } from "../../src/config/api.config";
 
-// URL base das rotas de modalidades.
-// A origem da API vem do .env do frontend através de VITE_API_URL.
 const API_URL = `${API_BASE_URL}/modalidade`;
 
+/**
+ * Serviço responsável pelo acesso às operações de modalidades.
+ */
 class ModalidadesService {
-    
-    // ==========================================
-    // Função Utilitária (O Carimbo do Segurança)
-    // ==========================================
     private getHeaders() {
         const token = authService.getToken();
         return {
             'Content-Type': 'application/json',
-            // LÓGICA: Enviamos o crachá de identificação em todos os pedidos!
-            // Se o teu NestJS estiver protegido, ele precisa disto para te deixar entrar.
             'Authorization': `Bearer ${token}` 
         };
     }
 
-    // ==========================================
-    // READ: Ir buscar todas as salas ao Backend
-    // ==========================================
+    /**
+     * Obtém todas as modalidades disponíveis.
+     *
+     * @returns Lista de modalidades.
+     */
     async getModalidades() {
         try {
             const response = await fetch(API_URL, {
@@ -34,7 +31,6 @@ class ModalidadesService {
                 throw new Error('Falha ao carregar as modalidades do servidor.');
             }
 
-            // Transforma a resposta do servidor num array de JavaScript
             return await response.json();
         } catch (erro) {
             console.error('Erro no getModalidades:', erro);
@@ -42,25 +38,21 @@ class ModalidadesService {
         }
     }
 
-    // ==========================================
-    // CREATE: Enviar uma nova modalidade para o Backend
-    // ==========================================
-// =====================================================================
-  // CREATE: Enviar uma nova modalidade para o Backend
-  // =====================================================================
+  /**
+   * Cria uma nova modalidade.
+   *
+   * @param dadosNovaModalidade - Dados da modalidade a criar.
+   * @returns Modalidade criada.
+   */
   async createModalidade(dadosNovaModalidade: { descricao: string; }) {
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
-        headers: this.getHeaders(), // Mantemos os teus headers de segurança!
-        
-        // 👇 AQUI ESTÁ A CORREÇÃO:
-        // Mapeamos o "descricao" do frontend para "Descricao" (com D maiúsculo) para o backend aceitar
+        headers: this.getHeaders(),
         body: JSON.stringify({ Descricao: dadosNovaModalidade.descricao }),
       });
 
       if (!response.ok) {
-        // Se quiseres ver o erro real do backend na consola, podes adicionar isto:
         const erroReal = await response.text();
         console.error("Motivo da recusa do backend:", erroReal);
         
@@ -74,9 +66,12 @@ class ModalidadesService {
     }
   }
 
-    // ==========================================
-    // DELETE: Enviar ordem para apagar ao Backend
-    // ==========================================
+    /**
+     * Remove uma modalidade.
+     *
+     * @param id - Identificador da modalidade.
+     * @returns Resposta do backend.
+     */
     async deleteModalidade(id: number) {
         try {
             const response = await fetch(`${API_URL}/${id}`, {

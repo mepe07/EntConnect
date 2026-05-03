@@ -1,12 +1,17 @@
 import type { ButtonComponentProps } from "../button/button-props.interface";
 import type { TableColumnTypesEnum } from "./models/enums/table-column-types.enum";
 
-// Usamos Omit para remover o onClick original do botão e substituir pelo nosso que recebe a row
+/**
+ * Ação renderizada por linha na tabela reutilizável.
+ */
 export interface TableAction extends Omit<ButtonComponentProps, 'onClick'> {
   show?: (row: any) => boolean;
   onClick: (row: any) => void | Promise<void>;
 }
 
+/**
+ * Propriedades aceites pela tabela reutilizável.
+ */
 export interface TableComponentProps {
   config: { 
     columns: { key: string; value: string; type?: TableColumnTypesEnum }[],

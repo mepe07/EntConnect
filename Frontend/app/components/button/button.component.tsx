@@ -2,6 +2,12 @@
 import type { ButtonComponentProps } from './button-props.interface';
 import './button.component.scss';
 
+/**
+ * Botão reutilizável com suporte para variantes visuais e ícone.
+ *
+ * @param options - Propriedades do botão.
+ * @returns Botão configurado para a interface.
+ */
 export function ButtonComponent({ 
     label, 
     icon, 
@@ -10,12 +16,10 @@ export function ButtonComponent({
     config, 
     onClick 
 }: ButtonComponentProps) {
-    // Definimos as classes de forma dinâmica e limpa
     const typeClass = config?.type ?? '';
     const colorClass = config?.color ?? '';
     const sizeClass = config?.size ?? '';
     
-    // Unimos todas as classes num único array e filtramos espaços vazios
     const classes = ['button-container', typeClass, colorClass, sizeClass].join(' ').trim();
 
     return (

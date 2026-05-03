@@ -16,6 +16,9 @@ interface Professor {
     };
 }
 
+/**
+ * Vista administrativa de gestão de professores.
+ */
 export function Professores() {
     const [professores, setProfessores] = useState<Professor[]>([]);
     const [termoPesquisa, setTermoPesquisa] = useState('');

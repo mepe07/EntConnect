@@ -6,6 +6,9 @@ import './atividades.scss';
 
 type FiltroAcao = 'todas' | 'remover' | 'reativar' | 'arquivar';
 
+/**
+ * Displays the marketplace moderation history for coordination users.
+ */
 export function Atividades() {
     const [registos, setRegistos] = useState<RegistoModeracaoMarketplace[]>([]);
     const [loading, setLoading] = useState(false);
@@ -20,6 +23,9 @@ export function Atividades() {
         carregarRegistoModeracao();
     }, []);
 
+    /**
+     * Loads the moderation log entries from the marketplace service.
+     */
     const carregarRegistoModeracao = async () => {
         setLoading(true);
         setErro(null);
@@ -39,10 +45,22 @@ export function Atividades() {
         }
     };
 
+    /**
+     * Resolves the article name associated with a moderation record.
+     *
+     * @param registo Moderation log entry.
+     * @returns Article display name.
+     */
     const obterNomeArtigo = (registo: RegistoModeracaoMarketplace) => {
         return registo.Artigo?.Nome ?? `Artigo #${registo.ID_Artigo}`;
     };
 
+    /**
+     * Resolves the moderator name associated with a log entry.
+     *
+     * @param registo Moderation log entry.
+     * @returns Moderator display name.
+     */
     const obterNomeModerador = (registo: RegistoModeracaoMarketplace) => {
         return registo.Utilizador?.Pessoa?.Nome
             ?? registo.Utilizador_Moderador?.Pessoa?.Nome
@@ -71,6 +89,12 @@ export function Atividades() {
         });
     }, [registos, pesquisa, acaoFiltro]);
 
+    /**
+     * Formats a moderation timestamp for display.
+     *
+     * @param data Raw date string.
+     * @returns Formatted date label.
+     */
     const formatarData = (data?: string) => {
         if (!data) return '-';
 
@@ -83,6 +107,12 @@ export function Atividades() {
         }).format(new Date(data));
     };
 
+    /**
+     * Converts a moderation action key into a human-readable label.
+     *
+     * @param acao Action identifier.
+     * @returns Localized action label.
+     */
     const formatarAcao = (acao: string) => {
         const labels: Record<string, string> = {
             remover: 'Removido',
@@ -94,6 +124,12 @@ export function Atividades() {
         return labels[acao] ?? acao;
     };
 
+    /**
+     * Converts an advertisement status into a human-readable label.
+     *
+     * @param estado Status identifier.
+     * @returns Localized state label.
+     */
     const formatarEstado = (estado?: string | null) => {
         if (!estado) return '-';
 
@@ -108,6 +144,12 @@ export function Atividades() {
         return labels[estado] ?? estado;
     };
 
+    /**
+     * Resolves the CSS class used by each moderation action badge.
+     *
+     * @param acao Action identifier.
+     * @returns CSS class name.
+     */
     const classeAcao = (acao: string) => {
         switch (acao) {
             case 'remover':
@@ -121,20 +163,39 @@ export function Atividades() {
         }
     };
 
+    /**
+     * Opens the detail modal for the selected moderation entry.
+     *
+     * @param registo Moderation log entry to inspect.
+     */
     const abrirModal = (registo: RegistoModeracaoMarketplace) => {
         setRegistoSelecionado(registo);
     };
 
+    /**
+     * Closes the moderation detail modal.
+     */
     const fecharModal = () => {
         setRegistoSelecionado(null);
     };
 
+    /**
+     * Checks whether the selected record can trigger a reactivation action.
+     *
+     * @param registo Moderation log entry.
+     * @returns `true` when the associated ad is removed.
+     */
     const podeReativar = (registo: RegistoModeracaoMarketplace) => {
         const estadoAtual = registo.Artigo?.Estado_Anuncio ?? registo.Estado_Novo;
 
         return estadoAtual === EstadoAnuncio.REMOVIDO || estadoAtual === 'removido';
     };
 
+    /**
+     * Reactivates the advertisement associated with a moderation record.
+     *
+     * @param registo Moderation log entry.
+     */
     const reativarAnuncio = async (registo: RegistoModeracaoMarketplace) => {
         const confirmar = window.confirm(`Pretendes reativar o anúncio "${obterNomeArtigo(registo)}"?`);
         if (!confirmar) return;
@@ -166,6 +227,12 @@ export function Atividades() {
         }
     };
 
+    /**
+     * Formats the previous advertisement state shown in the log.
+     *
+     * @param registo Moderation log entry.
+     * @returns Previous state label.
+     */
     const formatarEstadoAnterior = (registo: RegistoModeracaoMarketplace) => {
         if (registo.Estado_Anterior) {
             return formatarEstado(registo.Estado_Anterior);

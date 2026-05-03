@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { TipoAnuncio } from '../../../types/marketplace.types';
 
+/**
+ * Defines the properties accepted by the inventory publication modal.
+ */
 interface ModalPublicarProps {
     isOpen: boolean;
     onClose: () => void;
@@ -20,6 +23,12 @@ interface ModalPublicarProps {
     } | null;
 }
 
+/**
+ * Configures how an inventory batch is distributed in the marketplace.
+ *
+ * @param props Component properties.
+ * @returns Modal for publication settings.
+ */
 export function ModalPublicar({ isOpen, onClose, onConfirm, loteInfo }: ModalPublicarProps) {
     const [venda, setVenda] = useState(0);
     const [aluguer, setAluguer] = useState(0);
@@ -39,6 +48,9 @@ export function ModalPublicar({ isOpen, onClose, onConfirm, loteInfo }: ModalPub
     const totalAlocado = venda + aluguer;
     const ultrapassouLimite = totalAlocado > maximoPermitido;
 
+    /**
+     * Validates the selected distribution and confirms publication.
+     */
     const handleSalvar = () => {
         if (ultrapassouLimite || totalAlocado === 0) return;
 

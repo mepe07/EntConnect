@@ -6,6 +6,12 @@ import { SelectBoxComponent } from '../selectbox/selectbox.component';
 import { ButtonComponent } from '../button/button.component';
 import type { TableComponentProps } from './table-props.interface';
 
+/**
+ * Tabela reutilizável com pesquisa, filtros e ações por linha.
+ *
+ * @param options - Configuração estrutural da tabela e respetivos dados.
+ * @returns Tabela renderizada com base na configuração recebida.
+ */
 export function TableComponent(options: TableComponentProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [filterValue, setFilterValue] = useState({} as { [key: string]: string });
