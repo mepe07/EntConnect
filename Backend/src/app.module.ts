@@ -9,7 +9,9 @@ import { SalasModule } from './salas/salas.module';
 import { MarketplaceModule } from './marketplace/marketplace.module';
 import { EventosModule } from './eventos/eventos.module';
 import { EstatisticasModule } from './estatistica/estatisticas.module';
+import { CalendarioModule } from './calendario/calendario.module';
 import { ConfigModule } from '@nestjs/config';
+import { HorariosModule } from './horarios/horarios.module';
 
 @Module({
   imports: [
@@ -27,6 +29,11 @@ import { ConfigModule } from '@nestjs/config';
     SalasModule,
     EventosModule,
     EstatisticasModule,
+    CalendarioModule,
+    HorariosModule,
   ],
 })
+/**
+ * Módulo raiz da aplicação EntConnect.
+ */
 export class AppModule {}

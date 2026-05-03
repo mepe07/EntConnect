@@ -1,4 +1,4 @@
-// Ficheiro: app/views/utilizadores/utilizadores.tsx
+
 
 import React, { useState, useEffect, useRef } from 'react';
 import { InputComponent } from '~/components/input/input.component';
@@ -12,7 +12,7 @@ import './utilizadores.scss';
 
 const utilizadorService = new UtilizadorService();
 
-// Interface alinhada com o que o backend realmente devolve em getAllUsers()
+
 interface Utilizador {
     idUtilizador: number;
     idPessoa: number;
@@ -25,7 +25,7 @@ interface Utilizador {
     cargo: string;
 }
 
-// Mapeamento de cargos para etiquetas mais curtas se necessário
+
 const cargoLabel: Record<string, string> = {
     'Encarregado de Educação': 'Enc. Educação',
 };
@@ -91,9 +91,7 @@ export function Utilizadores() {
     const [paginaAtual, setPaginaAtual] = useState(1);
     const [itensPorPagina, setItensPorPagina] = useState(10);
 
-    // ==========================================
-    // ESTADO DO MODAL VER/EDITAR
-    // ==========================================
+
     const [modalAberto, setModalAberto] = useState(false);
     const [utilizadorSelecionado, setUtilizadorSelecionado] = useState<Utilizador | null>(null);
     const [educandos, setEducandos] = useState<Educando[]>([]);
@@ -105,7 +103,7 @@ export function Utilizadores() {
     const [loadingSaveEducando, setLoadingSaveEducando] = useState(false);
     const [loadingAssociarEducando, setLoadingAssociarEducando] = useState(false);
 
-    // Dados pessoais editáveis
+
     const [editNome, setEditNome] = useState('');
     const [editContacto, setEditContacto] = useState('');
     const [editNif, setEditNif] = useState('');
@@ -113,13 +111,13 @@ export function Utilizadores() {
     const [erroDados, setErroDados] = useState('');
     const [loadingSaveDados, setLoadingSaveDados] = useState(false);
 
-    // Password
+
     const [novaPassword, setNovaPassword] = useState('');
     const [confirmarPassword, setConfirmarPassword] = useState('');
     const [mostrarPassword, setMostrarPassword] = useState(false);
     const [erroPassword, setErroPassword] = useState('');
 
-    // Foto
+
     const [fotoAtual, setFotoAtual] = useState<string | null>(null);
     const [fotoPreview, setFotoPreview] = useState<string | null>(null);
     const [ficheiroFoto, setFicheiroFoto] = useState<File | null>(null);
@@ -127,23 +125,19 @@ export function Utilizadores() {
     const [erroFoto, setErroFoto] = useState('');
     const inputFotoRef = useRef<HTMLInputElement>(null);
 
-    // Import de Utilizadores
+
     const [modalImportOpen, setModalImportOpen] = useState(false);
     const [loadingImport, setLoadingImport] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // ==========================================
-    // ESTADO DO MODAL CRIAR UTILIZADOR
-    // ==========================================
+
     const [modalCriarAberto, setModalCriarAberto] = useState(false);
     const [formNovo, setFormNovo] = useState<NovoUtilizadorForm>(FORM_VAZIO);
     const [mostrarPasswordNovo, setMostrarPasswordNovo] = useState(false);
     const [errosCriar, setErrosCriar] = useState<Partial<NovoUtilizadorForm>>({});
     const [loadingCriar, setLoadingCriar] = useState(false);
 
-    // ==========================================
-    // CARREGAR DADOS
-    // ==========================================
+
     useEffect(() => {
         carregarUtilizadores();
     }, []);
@@ -203,9 +197,7 @@ export function Utilizadores() {
         }
     };
 
-    // ==========================================
-    // MODAL VER / EDITAR
-    // ==========================================
+
     const abrirModal = async (utilizador: Utilizador) => {
         setUtilizadorSelecionado(utilizador);
         setEditNome(utilizador.nome || '');
@@ -271,6 +263,7 @@ export function Utilizadores() {
     // ==========================================
     // MODAL CRIAR UTILIZADOR
     // ==========================================
+
     const abrirModalCriar = () => {
         setFormNovo(FORM_VAZIO);
         setErrosCriar({});
@@ -284,7 +277,7 @@ export function Utilizadores() {
 
     const handleFormNovo = (campo: keyof NovoUtilizadorForm, valor: string) => {
         setFormNovo(prev => ({ ...prev, [campo]: valor }));
-        // Limpa o erro do campo ao editar
+
         if (errosCriar[campo]) {
             setErrosCriar(prev => ({ ...prev, [campo]: '' }));
         }
@@ -342,9 +335,7 @@ export function Utilizadores() {
         }
     };
 
-    // ==========================================
-    // FOTO
-    // ==========================================
+
     const handleSelecionarFoto = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -431,14 +422,12 @@ export function Utilizadores() {
         if (inputFotoRef.current) inputFotoRef.current.value = '';
     };
 
-    // ==========================================
-    // GUARDAR TUDO (dados pessoais + password opcional)
-    // ==========================================
+
     const handleGuardarTudo = async () => {
         setErroDados('');
         setErroPassword('');
 
-        // Validação dos dados pessoais
+
         if (!editNome.trim() || editNome.trim().length < 3) {
             setErroDados('O nome deve ter pelo menos 3 caracteres.');
             return;
@@ -452,7 +441,7 @@ export function Utilizadores() {
             return;
         }
 
-        // Validação da password — só se pelo menos um dos campos estiver preenchido
+
         const passwordPreenchida = novaPassword || confirmarPassword;
         if (passwordPreenchida) {
             if (novaPassword.length < 6) {
@@ -467,7 +456,7 @@ export function Utilizadores() {
 
         setLoadingSaveDados(true);
         try {
-            // Guardar cargo (apenas se foi alterado)
+
             if (editCargo !== utilizadorSelecionado!.cargo) {
                 try {
                     await utilizadorService.updateCargo(utilizadorSelecionado!.idUtilizador, editCargo);
@@ -493,7 +482,7 @@ export function Utilizadores() {
                 }
             }
 
-            // Guardar dados pessoais
+
             await utilizadorService.updatePessoal(utilizadorSelecionado!.idUtilizador, {
                 nome: editNome.trim(),
                 contacto: editContacto.trim() || undefined,
@@ -512,7 +501,7 @@ export function Utilizadores() {
                 prev.map(u => u.idUtilizador === updated.idUtilizador ? updated : u)
             );
 
-            // Guardar password (apenas se preenchida)
+
             if (passwordPreenchida) {
                 await utilizadorService.updatePassword(utilizadorSelecionado!.idUtilizador, novaPassword);
                 setNovaPassword('');
@@ -649,9 +638,7 @@ export function Utilizadores() {
         }
     };
 
-    // ==========================================
-    // BLOQUEAR / DESBLOQUEAR
-    // ==========================================
+
     const handleToggleAtivo = async (utilizador: Utilizador) => {
         const acao = utilizador.ativo ? 'bloquear' : 'desbloquear';
         const confirmacao = window.confirm(
@@ -675,9 +662,7 @@ export function Utilizadores() {
         }
     };
 
-    // ==========================================
-    // ELIMINAR UTILIZADOR
-    // ==========================================
+
     const handleEliminarUtilizador = async (utilizador: Utilizador) => {
         const confirmacao = window.confirm(
             `Tens a certeza que queres eliminar o utilizador "${utilizador.nome}"?\nEsta ação é irreversível.`
@@ -692,9 +677,7 @@ export function Utilizadores() {
         }
     };
 
-    // ==========================================
-    // IMPORT DE UTILIZADORES
-    // ==========================================
+
     const lidarComUploadDireto = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -730,9 +713,7 @@ export function Utilizadores() {
         }
     };
 
-    // ==========================================
-    // FILTRO
-    // ==========================================
+
     const utilizadoresFiltrados = utilizadores.filter(u =>
         u.nome?.toLowerCase().includes(termoPesquisa.toLowerCase()) ||
         u.username?.toLowerCase().includes(termoPesquisa.toLowerCase()) ||
@@ -756,18 +737,15 @@ export function Utilizadores() {
     const fotoModalSrc = fotoPreview ?? fotoAtual;
 
 
-    // ==========================================
-    // DOWNLOAD DO MODELO (DO AZURE VIA BACKEND)
-    // ==========================================
     const handleDownloadModelo = async () => {
         try {
             const token = localStorage.getItem('entconnect_token') || authService.getToken();
-            
-            // Faz o pedido à nova rota do teu backend
+
+
             const response = await fetch(`${API_BASE_URL}/utilizador/download-template`, {
                 method: 'GET',
-                headers: { 
-                    'Authorization': `Bearer ${token}` 
+                headers: {
+                    'Authorization': `Bearer ${token}`
                 },
             });
 
@@ -775,16 +753,16 @@ export function Utilizadores() {
                 throw new Error('Erro ao obter o ficheiro modelo do servidor.');
             }
 
-            // Transforma a resposta num Blob (objeto binário)
+
             const blob = await response.blob();
 
-            // Cria um link invisível na memória do browser para forçar o download
+
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = 'modelo_utilizadores.csv'; // O nome com que o ficheiro vai ser guardado
-            
-            // Clica no link invisível e depois limpa-o
+            link.download = 'modelo_utilizadores.csv';
+
+
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -796,13 +774,11 @@ export function Utilizadores() {
         }
     };
 
-    // ==========================================
-    // RENDER
-    // ==========================================
+
     return (
         <div className="crud-container">
 
-            {/* CABEÇALHO */}
+
             <div className="crud-header">
                 <div className="textos">
                     <h1>Gestão de Utilizadores</h1>
@@ -822,7 +798,7 @@ export function Utilizadores() {
                 </div>
             </div>
 
-            {/* BARRA DE PESQUISA */}
+
             <div className="crud-toolbar">
                 <div style={{ width: '320px' }}>
                     <InputComponent
@@ -834,7 +810,7 @@ export function Utilizadores() {
                 </div>
             </div>
 
-            {/* TABELA */}
+
             <div className="tabela-wrapper">
                 <table className="tabela-crud">
                     <thead>
@@ -922,7 +898,7 @@ export function Utilizadores() {
                 </table>
             </div>
 
-            {/* PAGINAÇÃO */}
+
             {!loading && utilizadoresFiltrados.length > 0 && (
                 <div className="paginacao">
                     <div className="paginacao-info">
@@ -998,9 +974,7 @@ export function Utilizadores() {
                 </div>
             )}
 
-            {/* ==========================================
-                MODAL DE VISUALIZAÇÃO / EDIÇÃO
-            ========================================== */}
+
             {modalAberto && utilizadorSelecionado && (
                 <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) fecharModal(); }}>
                     <div className="modal-content">
@@ -1008,7 +982,7 @@ export function Utilizadores() {
                         <div className="modal-header">
                             <div className="modal-header-info">
 
-                                {/* AVATAR CLICÁVEL */}
+
                                 <div className="modal-avatar-wrapper">
                                     <div
                                         className="modal-avatar"
@@ -1047,7 +1021,7 @@ export function Utilizadores() {
 
                         <div className="modal-body">
 
-                            {/* BARRA DE AÇÕES DA FOTO */}
+
                             {(ficheiroFoto || fotoAtual) && (
                                 <div className="foto-actions">
                                     {ficheiroFoto ? (
@@ -1090,7 +1064,7 @@ export function Utilizadores() {
                                 </div>
                             )}
 
-                            {/* DADOS DO UTILIZADOR */}
+
                             <div className="secao-titulo">
                                 <i className="fa-solid fa-circle-info"></i> Dados do Utilizador
                             </div>
@@ -1337,7 +1311,7 @@ export function Utilizadores() {
 
                             <div className="separador"></div>
 
-                            {/* PASSWORD */}
+
                             <div className="secao-titulo">
                                 <i className="fa-solid fa-key"></i> Alterar Password
                             </div>
@@ -1404,9 +1378,7 @@ export function Utilizadores() {
                 </div>
             )}
 
-            {/* ==========================================
-                MODAL CRIAR UTILIZADOR
-            ========================================== */}
+
             {modalCriarAberto && (
                 <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) fecharModalCriar(); }}>
                     <div className="modal-content">
@@ -1428,7 +1400,7 @@ export function Utilizadores() {
 
                         <div className="modal-body">
 
-                            {/* DADOS PESSOAIS */}
+
                             <div className="secao-titulo">
                                 <i className="fa-solid fa-circle-info"></i> Dados do Utilizador
                             </div>
@@ -1534,7 +1506,7 @@ export function Utilizadores() {
 
                             <div className="separador"></div>
 
-                            {/* PASSWORD */}
+
                             <div className="secao-titulo">
                                 <i className="fa-solid fa-key"></i> Definir Password
                             </div>
@@ -1600,7 +1572,7 @@ export function Utilizadores() {
                 </div>
             )}
 
-            {/* INPUT HIDDEN PARA IMPORT */}
+
             <input
                 ref={fileInputRef}
                 type="file"
@@ -1609,7 +1581,7 @@ export function Utilizadores() {
                 onChange={lidarComUploadDireto}
             />
 
-            {/* MODAL DE IMPORT */}
+
             {modalImportOpen && (
                 <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget && !loadingImport) setModalImportOpen(false); }}>
                     <div className="modal-content" style={{ maxWidth: '480px' }}>
@@ -1623,11 +1595,11 @@ export function Utilizadores() {
                                 <i className="fa-solid fa-xmark"></i>
                             </button>
                         </div>
-                        
+
                         <div className="modal-body">
                             <p>Seleciona um ficheiro Excel ou CSV com os dados dos utilizadores para importar.</p>
-                            
-                            {/* CAIXA DE DOWNLOAD DO MODELO EXCEL */}
+
+
                             <div className="box-modelo-excel">
                                 <div className="info-modelo">
                                     <i className="fa-solid fa-file-excel icone-excel"></i>
@@ -1636,17 +1608,17 @@ export function Utilizadores() {
                                         <span>Descarrega o ficheiro base para preencheres os dados corretamente.</span>
                                     </div>
                                 </div>
-                                
-                                {/* 👇 ALTERAÇÃO AQUI: Passou de <a> para <button> */}
-                                <button 
+
+
+                                <button
                                     type="button"
-                                    onClick={handleDownloadModelo} 
+                                    onClick={handleDownloadModelo}
                                     className="btn-download-modelo"
                                 >
                                     <i className="fa-solid fa-download"></i> Descarregar
                                 </button>
-                                {/* 👆 FIM DA ALTERAÇÃO */}
-                                
+
+
                             </div>
 
                             {loadingImport && (

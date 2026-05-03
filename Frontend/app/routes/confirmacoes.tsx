@@ -1,7 +1,7 @@
-import VerConfirmacoes from "../views/coaching/professores/verConfirmacoes";
+import Confirmacoes from "../views/utilizadores/professores/confirmacoes";
 
 const title = "Confirmações | EntConnect";
 
 export default function ConfirmacoesRoute() {
-    return <VerConfirmacoes />;
+    return <Confirmacoes />;
 }

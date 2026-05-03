@@ -7,14 +7,19 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
 import { UpsertEducandoDto } from './dto/upsert-educando.dto';
 
-// Serviço para lidar com operações simples CRUD relacionados com utilizadores.
-
 @Injectable()
+/**
+ * Serviço responsável pela gestão de utilizadores, cargos, passwords e educandos.
+ */
 export class UtilizadorService {
 
   constructor(private prisma: PrismaService) {}
 
-  // WIP
+  /**
+   * Lista utilizadores com os respetivos dados base e cargo resolvido.
+   *
+   * @returns Utilizadores formatados para a camada de apresentação.
+   */
   async getAllUsers() {
     const utilizadoresRaw = await this.prisma.utilizador.findMany({
       include: {
@@ -31,7 +36,7 @@ export class UtilizadorService {
 
     return utilizadoresRaw.map((user) => {
       
-      let cargoAtribuido = 'Sem Cargo'; 
+      let cargoAtribuido = 'Sem Cargo';
 
       if (user.Pessoa?.Professor) {
         cargoAtribuido = 'Professor';
@@ -57,10 +62,15 @@ export class UtilizadorService {
     });
   }
 
+  /**
+   * Cria um utilizador com pessoa e role inicial associadas.
+   *
+   * @param createUtilizadorDto - Dados do novo utilizador.
+   * @returns Resumo do utilizador criado.
+   */
   async createUser(createUtilizadorDto: CreateUtilizadorDto) {
     const { nome, username, email, contacto, nif, dataNascimento, cargo, password } = createUtilizadorDto;
 
-    // 1. Verificar se username ou email já existem
     const existente = await this.prisma.utilizador.findFirst({
       where: {
         OR: [
@@ -74,10 +84,8 @@ export class UtilizadorService {
       throw new ConflictException('Já existe um utilizador com esse username ou email.');
     }
 
-    // 2. Hash da password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 3. Construir os dados do cargo dinamicamente
     const dadosCargo =
       cargo === 'Professor'                  ? { Professor: { create: {} } } :
       cargo === 'Coordenador'                ? { Coordenador: { create: {} } } :
@@ -85,7 +93,6 @@ export class UtilizadorService {
       cargo === 'Encarregado de Educação'    ? { Enc_Educacao: { create: {} } } :
       {};
 
-    // 4. Criar Pessoa + Utilizador
     const novoUtilizador = await this.prisma.utilizador.create({
       data: {
         Utilizador: username,
@@ -112,8 +119,13 @@ export class UtilizadorService {
     };
   }
 
+  /**
+   * Obtém os identificadores específicos de cada role associada ao utilizador.
+   *
+   * @param idUtilizador - Identificador do utilizador.
+   * @returns IDs resolvidos para professor, encarregado de educação e coordenador.
+   */
   async getRolesIds(idUtilizador: number) {
-    // 1. Vai buscar o utilizador e inclui a Pessoa com as suas respetivas tabelas de roles
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: idUtilizador },
       include: {
@@ -131,13 +143,10 @@ export class UtilizadorService {
       throw new NotFoundException(`Utilizador com ID ${idUtilizador} não encontrado.`);
     }
 
-    // 2. Formata a resposta. 
-    // Se a tabela existir (não for null), devolve o ID_Pessoa, caso contrário devolve null
     return {
       idProfessor: utilizador.Pessoa?.Professor ? utilizador.Pessoa.Professor.ID_Pessoa : null,
       idEncEducacao: utilizador.Pessoa?.Enc_Educacao ? utilizador.Pessoa.Enc_Educacao.ID_Pessoa : null,
       idCoordenador: utilizador.Pessoa?.Coordenador ? utilizador.Pessoa.Coordenador.ID_Pessoa : null,
-      // Se precisares do idPessoa base também, podes enviar:
       idPessoaBase: utilizador.ID_Pessoa
     };
   }

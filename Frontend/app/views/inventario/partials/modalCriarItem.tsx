@@ -69,4 +69,4 @@ export function ModalCriarItem({ form, setForm, onClose, onGuardar }: Props) {
             </div>
         </>
     );
-} 
+}

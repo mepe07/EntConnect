@@ -1,4 +1,3 @@
-// Ficheiro: app/views/dashboard/dashboard.tsx
 import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { AuthService } from '~/services/auth.service';
@@ -197,7 +196,7 @@ export function Dashboard() {
         <main className="dashboard-wrapper">
             <section className="dashboard-topo">
                 <div className="dashboard-boas-vindas">
-                    <h1>Olá, {primeiroNome}! 👋 ✨</h1>
+                    <h1>Olá, {primeiroNome}! 👋</h1>
                     <p>Aqui está o resumo para hoje, {dataHoje}.</p>
                 </div>
 
@@ -422,6 +421,7 @@ export function Dashboard() {
                     )}
                 </section>
             )}
+
 
             <ResumoEventosDashboard />
         </main>

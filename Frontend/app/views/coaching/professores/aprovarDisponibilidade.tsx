@@ -11,9 +11,7 @@ import { authService } from '~/services/auth.service';
 import type { User } from '../../../models/interfaces/user.interface';
 import { SalasService } from '../../../services/salas.service';
 
-/**
- * Representa os dados de uma disponibilidade na tabela.
- */
+
 export interface Disponibilidade {
     idDisponibilidade: number;
     nomeProfessor: string;
@@ -25,26 +23,21 @@ export interface Disponibilidade {
     maxAlunos: number;
 }
 
-/**
- * Representa um estúdio ou sala disponível para atribuição.
- */
+
 export interface Estudio {
     ID_Sala: number;
     Nome: string;
     Disponivel: boolean;
 }
 
-/**
- * Componente principal para gestão e aprovação de disponibilidades de professores.
- * Exclusivo para utilizadores com a permissão de Coordenação.
- */
+
 export default function ApproveAvailability() {
     const userInfo = authService.getUserInfo() as User;
     const isCoordenador = userInfo?.role?.toLowerCase().includes('coord');
 
     const disponibilidadesService = new DisponibilidadesService();
     const salasService = new SalasService();
-    
+
     const [disponibilidades, setDisponibilidades] = useState<Disponibilidade[]>([]);
     const [listaEstudios, setListaEstudios] = useState<Estudio[]>([]);
 
@@ -53,14 +46,12 @@ export default function ApproveAvailability() {
     const [estudioSelecionado, setEstudioSelecionado] = useState<string>('');
     const [valorPorAluno, setValorPorAluno] = useState<string>('');
 
-    /**
-     * Obtém a lista de disponibilidades através do serviço correspondente.
-     */
+
     async function fetchDisponibilidades() {
         try {
             const data = await disponibilidadesService.getAvailability();
 
-            // Ordenar por data (ascendente)
+
             const dadosOrdenados = data.sort((a, b) => {
                 const [diaA, mesA, anoA] = a.data.split('/').map(Number);
                 const [diaB, mesB, anoB] = b.data.split('/').map(Number);
@@ -77,9 +68,7 @@ export default function ApproveAvailability() {
         }
     }
 
-    /**
-     * Obtém a lista de estúdios/salas através do serviço correspondente e mostra apenas as disponíveis.
-     */
+
     async function fetchEstudios() {
         try {
             const data = await salasService.getSalas();
@@ -105,9 +94,7 @@ export default function ApproveAvailability() {
         );
     }
 
-    /**
-     * Mapeia os dados das disponibilidades para incluir as configurações visuais da tabela.
-     */
+
     const tableData = disponibilidades.map(disp => {
         let infoType = InfoTypesEnum.Info;
         if (disp.estado === 'Aprovado') infoType = InfoTypesEnum.Success;
@@ -120,10 +107,7 @@ export default function ApproveAvailability() {
         };
     });
 
-    /**
-     * Prepara e abre o modal de aprovação para a linha selecionada.
-     * @param row - Os dados da linha selecionada na tabela.
-     */
+
     function abrirModalAprovacao(row: any) {
         setLinhaSelecionada(row);
         setEstudioSelecionado('');
@@ -131,17 +115,13 @@ export default function ApproveAvailability() {
         setModalAberto(true);
     }
 
-    /**
-     * Fecha o modal de aprovação e limpa os estados temporários.
-     */
+
     function fecharModal() {
         setModalAberto(false);
         setLinhaSelecionada(null);
     }
 
-    /**
-     * Valida as entradas do modal e processa a aprovação da disponibilidade.
-     */
+
     async function confirmarAprovacao() {
         if (!estudioSelecionado || !valorPorAluno) {
             alert('Por favor, selecione um estúdio e insira o valor por aluno.');
@@ -152,23 +132,17 @@ export default function ApproveAvailability() {
         fecharModal();
     }
 
-    /**
-     * Processa a alteração de estado (Aprovar/Rejeitar) e envia os dados para a API.
-     * @param row - Os dados originais da disponibilidade.
-     * @param novoEstado - ID do novo estado (ex: 1 para Aprovado, 3 para Rejeitado).
-     * @param idEstudio - (Opcional) ID do estúdio atribuído na aprovação.
-     * @param valorPorAluno - (Opcional) Valor por aluno definido na aprovação.
-     */
+
     async function handleAtualizarEstado(row: any, novoEstado: number, idEstudio?: number, valorPorAluno?: number) {
-        const alteradoPor = userInfo.idUtilizador;         
-        
-        const [horaInicioStr, horaFimStr] = row.horario.split(' - '); 
-        const [dia, mes, ano] = row.data.split('/'); 
+        const alteradoPor = userInfo.idUtilizador;
+
+        const [horaInicioStr, horaFimStr] = row.horario.split(' - ');
+        const [dia, mes, ano] = row.data.split('/');
 
         const dataInicio = new Date(`${ano}-${mes}-${dia}T${horaInicioStr}:00`);
         const dataFim = new Date(`${ano}-${mes}-${dia}T${horaFimStr}:00`);
         const duracaoMinutos = (dataFim.getTime() - dataInicio.getTime()) / 60000;
-        const horaInicioIso = dataInicio.toISOString(); 
+        const horaInicioIso = dataInicio.toISOString();
 
         if (novoEstado === 3) {
             if (!window.confirm('Tem a certeza que deseja rejeitar este horário?')) return;
@@ -176,16 +150,16 @@ export default function ApproveAvailability() {
 
         try {
             await disponibilidadesService.atualizarEstado(
-                row.idDisponibilidade, 
-                novoEstado, 
-                horaInicioIso, 
+                row.idDisponibilidade,
+                novoEstado,
+                horaInicioIso,
                 duracaoMinutos,
                 alteradoPor,
-                idEstudio, 
+                idEstudio,
                 valorPorAluno
             );
-            
-            fetchDisponibilidades(); 
+
+            fetchDisponibilidades();
         } catch (error) {
             alert('Erro ao atualizar a disponibilidade.');
         }
@@ -222,7 +196,7 @@ export default function ApproveAvailability() {
                         {
                             key: "estadoChip",
                             label: "Estado",
-                            value: "Pendente", 
+                            value: "Pendente",
                             options: [
                                 { value: "", label: "Todos" },
                                 { value: "Pendente", label: "Pendentes" },
@@ -275,7 +249,7 @@ export default function ApproveAvailability() {
 
                             <div className="form-group" style={{ marginTop: '20px' }}>
                                 <label>Atribuir Estúdio</label>
-                                <select 
+                                <select
                                     className="select-box"
                                     style={{ width: '100%', padding: '8px', marginBottom: '15px' }}
                                     value={estudioSelecionado}
@@ -292,7 +266,7 @@ export default function ApproveAvailability() {
 
                             <div className="form-group">
                                 <label>Valor por aluno (€)</label>
-                                <input 
+                                <input
                                     type="number"
                                     style={{ width: '100%', padding: '8px' }}
                                     placeholder="Ex: 25.50"

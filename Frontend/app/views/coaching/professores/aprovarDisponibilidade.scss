@@ -1,8 +1,8 @@
-// Ficheiro: app/views/coaching/professores/aprovacoes.scss
+
 
 .pagina-aprovacoes {
     padding: 32px;
-    background-color: #f8fafc; // Fundo cinza super claro
+    background-color: #f8fafc;
     min-height: 100vh;
 
     h1 {
@@ -13,7 +13,7 @@
         letter-spacing: -1px;
     }
 
-    // Para evitar que a borda dos botões da tabela apareça
+
     .table-container {
         button {
             border: none !important;
@@ -37,22 +37,22 @@
         justify-content: center;
         align-items: center;
         z-index: 9999;
-        /* Garante que fica por cima da Tabela! */
+
 
         .modal-conteudo {
             background: white;
-            color: #333; /* Força o texto a ser escuro! */
+            color: #333;
             padding: 30px;
             border-radius: 8px;
             width: 450px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 
-            /* Garante que os títulos não herdam cores esquisitas */
+
             h2, h3, p, label, strong {
                 color: #333;
             }
 
-            /* Garante que as caixas de texto ficam visíveis */
+
             select, input[type="number"] {
                 border: 1px solid #ccc;
                 border-radius: 4px;

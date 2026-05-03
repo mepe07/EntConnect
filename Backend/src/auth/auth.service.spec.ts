@@ -81,6 +81,7 @@ describe('AuthService', () => {
         Ativo: true,
         ID_Pessoa: 10,
         Pessoa: {
+            Nome: 'Simao Silva',
             Professor: null,
             Coordenador: { ID_Pessoa: 10 },
             Direcao: null,
@@ -120,7 +121,13 @@ describe('AuthService', () => {
 
         // Valida que a password foi comparada e que o token foi gerado.
         expect(bcrypt.compare).toHaveBeenCalledWith(loginDto.password, utilizador.Password);
-        expect(jwtServiceMock.signAsync).toHaveBeenCalled();
+        expect(jwtServiceMock.signAsync).toHaveBeenCalledWith({
+            sub: utilizador.ID_Utilizador,
+            username: utilizador.Utilizador,
+            nome: utilizador.Pessoa.Nome,
+            role: Role.COORDENADOR,
+            idPessoa: utilizador.ID_Pessoa,
+        });
 
         // Valida o resultado final devolvido pelo login.
         expect(resultado).toEqual({

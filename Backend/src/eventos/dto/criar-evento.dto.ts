@@ -19,6 +19,9 @@ function transformarBoolean(value: unknown): boolean | undefined {
     return value === true || value === 'true' || value === 1 || value === '1';
 }
 
+/**
+ * DTO usado para criar um novo evento.
+ */
 export class CriarEventoDto {
     @IsString({ message: 'O título do evento é obrigatório.' })
     @MaxLength(150)

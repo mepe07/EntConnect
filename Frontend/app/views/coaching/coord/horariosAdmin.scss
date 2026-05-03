@@ -1,0 +1,428 @@
+@use "../../../assets/styles/variables/colors";
+
+.horarios-admin {
+    padding: 1.5rem;
+    color: #111827;
+    animation: fadeEntrada 0.4s ease-out;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 2rem;
+
+    h1 {
+        color: colors.$gray-8;
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    p {
+        color: #475569;
+        font-size: 0.95rem;
+    }
+}
+
+
+.calendario-card {
+    background: #fff;
+    border: 1px solid colors.$gray-3;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+}
+
+
+.calendario-wrapper {
+    display: grid;
+
+    grid-template-columns: 60px 1fr;
+    grid-template-rows: 50px 1fr;
+    max-height: 75vh;
+    overflow-y: auto;
+
+
+    &::-webkit-scrollbar { width: 8px; }
+    &::-webkit-scrollbar-thumb { background-color: colors.$gray-3; border-radius: 4px; }
+}
+
+.calendario-canto-vazio {
+    grid-column: 1;
+    grid-row: 1;
+    background-color: #fafafa;
+    border-bottom: 1px solid colors.$gray-3;
+    border-right: 1px solid colors.$gray-3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: colors.$gray-4;
+    font-size: 1.2rem;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+
+.calendario-header-dias {
+    grid-column: 2;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background-color: #fafafa;
+    border-bottom: 1px solid colors.$gray-3;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+    .dia-header-item {
+        padding: 14px 10px;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 700;
+        color: colors.$gray-7;
+        text-transform: uppercase;
+        border-right: 1px solid colors.$gray-3;
+
+        &:last-child { border-right: none; }
+    }
+}
+
+.calendario-eixo-horas {
+    grid-column: 1;
+    grid-row: 2;
+    background-color: #fafafa;
+    border-right: 1px solid colors.$gray-3;
+
+    .hora-slot {
+        height: 60px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 8px;
+        box-sizing: border-box;
+
+        span {
+            font-size: 12px;
+            color: colors.$gray-5;
+            font-weight: 600;
+        }
+    }
+}
+
+.calendario-grelha {
+    grid-column: 2;
+    grid-row: 2;
+    position: relative;
+
+    height: 1440px;
+
+    .grelha-linhas-fundo {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        z-index: 1;
+
+        .linha-hora {
+            height: 60px;
+            border-bottom: 1px solid colors.$gray-2;
+            box-sizing: border-box;
+        }
+    }
+
+    .colunas-wrapper {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        height: 100%;
+        position: relative;
+        z-index: 2;
+
+        .coluna-dia {
+            border-right: 1px solid colors.$gray-2;
+            position: relative;
+
+            &:last-child { border-right: none; }
+
+
+            .aula-card {
+                position: absolute;
+
+                background-color: rgba(colors.$theme-100, 0.1);
+                border-left: 4px solid colors.$theme-100;
+                border-radius: 4px;
+                padding: 6px;
+                cursor: pointer;
+                overflow: hidden;
+                box-sizing: border-box;
+                transition: all 0.2s ease;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+                z-index: 5;
+
+
+                &:hover {
+                    min-width: 140px;
+                    z-index: 100;
+                    transform: scale(1.02);
+                    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+                    background-color: #fff;
+                }
+
+                .aula-titulo {
+                    font-size: 12px;
+                    font-weight: 700;
+                    color: colors.$theme-100;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    margin-bottom: 2px;
+                }
+
+                .aula-info {
+                    font-size: 11px;
+                    color: colors.$theme-80;
+                    margin-bottom: 4px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .aula-prof {
+                    font-size: 10px;
+                    color: colors.$gray-7;
+                    font-weight: 600;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+
+                &.inativa {
+                    background-color: #f1f5f9;
+                    border-left-color: #94a3b8;
+                    opacity: 0.8;
+
+                    &:hover { background-color: #fff; }
+                    .aula-titulo { color: #475569; text-decoration: line-through; }
+                    .aula-info, .aula-prof { color: #64748b; }
+                }
+            }
+        }
+    }
+}
+
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+
+    label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        font-size: 12px;
+        font-weight: 600;
+        color: colors.$gray-7;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+}
+
+.full-width { grid-column: span 2; }
+
+.input-campo {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid colors.$gray-3;
+    border-radius: 6px;
+    font-size: 14px;
+    color: colors.$gray-8;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+    background-color: #fff;
+    font-family: inherit;
+    color-scheme: light;
+
+    &::-webkit-calendar-picker-indicator { cursor: pointer; }
+    &:focus {
+        border-color: colors.$theme-60;
+        box-shadow: 0 0 0 3px rgba(colors.$theme-100, 0.08);
+    }
+}
+
+select.input-campo {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 32px;
+}
+
+.checkbox-row {
+    align-items: center;
+    display: flex;
+    flex-direction: row !important;
+    gap: 0.75rem;
+    font-size: 14px !important;
+    text-transform: none !important;
+    color: colors.$gray-8 !important;
+    font-weight: 500 !important;
+}
+
+
+.btn-primario, .btn-secundario {
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.btn-primario {
+    background: colors.$theme-100;
+    border: 1px solid colors.$theme-100;
+    color: #fff;
+    &:hover:not(:disabled) { background: colors.$theme-80; transform: translateY(-1px); }
+}
+
+.btn-secundario {
+    background: #fff;
+    border: 1px solid colors.$gray-4;
+    color: colors.$gray-7;
+    &:hover:not(:disabled) { background: colors.$gray-2; }
+
+    &.btn-perigo {
+        color: #dc2626; border-color: #fca5a5;
+        &:hover:not(:disabled) { background: #fee2e2; }
+    }
+
+    &.btn-sucesso {
+        color: #16a34a; border-color: #86efac;
+        &:hover:not(:disabled) { background: #dcfce7; }
+    }
+}
+
+.status-message {
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.25rem;
+    font-weight: 500;
+}
+.status-error { background: colors.$error-20; border: 1px solid colors.$error-40; color: colors.$error-100; }
+.status-success { background: #e8f7ea; border: 1px solid #a7d7ad; color: #266636; }
+
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    background-color: #fff;
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    animation: fadeEntrada 0.2s ease-out;
+
+    &.form-modal { max-width: 650px; }
+    &.detalhes-modal { max-width: 480px; }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 20px 24px;
+        border-bottom: 1px solid colors.$gray-3;
+
+        h3 { margin: 0; color: colors.$gray-8; font-size: 18px; }
+
+        .btn-fechar {
+            background: transparent;
+            border: none;
+            font-size: 18px;
+            color: colors.$gray-5;
+            cursor: pointer;
+            padding: 4px;
+            &:hover { color: colors.$error-100; }
+        }
+    }
+
+    .modal-body {
+        padding: 24px;
+        max-height: 65vh;
+        overflow-y: auto;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 16px 24px;
+        background-color: #fafafa;
+        border-top: 1px solid colors.$gray-3;
+        border-radius: 0 0 12px 12px;
+    }
+}
+
+.modal-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+    font-size: 14px;
+
+    span { color: colors.$gray-5; }
+    strong { color: colors.$gray-8; text-align: right;}
+}
+
+.modal-divider {
+    border-top: 1px dashed colors.$gray-3;
+    margin: 1.25rem 0;
+}
+
+.exception-list {
+    list-style: none; margin: 0; padding: 0;
+    li {
+        margin-bottom: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: #f8fafc;
+        border: 1px solid colors.$gray-3;
+        border-radius: 8px;
+        font-size: 14px;
+        color: colors.$gray-8;
+    }
+}
+
+.excecao-form-inline {
+    background-color: #fafafa;
+    border: 1px solid colors.$gray-3;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 10px;
+
+    .form-group {
+        display: flex; flex-direction: column; gap: 4px;
+        label { font-size: 12px; font-weight: 600; color: colors.$gray-7; text-transform: uppercase; }
+    }
+}
+
+.empty-state { text-align: center; color: colors.$gray-4; font-style: italic; font-size: 14px; }
+.tabela-loading { text-align: center; padding: 48px; color: colors.$theme-60; font-size: 15px; }
+
+@keyframes fadeEntrada {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}

@@ -1,4 +1,4 @@
-// Ficheiro: app/routes/eventos-publicos.tsx
+
 
 import { CatalogoEventosPublicos } from '~/views/eventos/catalogo-eventos-publicos';
 
@@ -12,4 +12,4 @@ export default function EventosPublicosRoute() {
             <CatalogoEventosPublicos />
         </>
     );
-} 
+}

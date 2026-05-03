@@ -1,7 +1,6 @@
-// Ficheiro: src/auth/enums/roles.enum.ts
-
-// Enum com as roles válidas da aplicação.
-// Isto evita strings soltas espalhadas pelo projeto.
+/**
+ * Roles suportadas pela aplicação para autenticação e autorização.
+ */
 export enum Role {
     COORDENADOR = 'Coordenador',
     PROFESSOR = 'Professor',

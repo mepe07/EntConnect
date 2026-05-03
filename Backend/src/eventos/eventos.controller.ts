@@ -29,6 +29,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import 'multer';
 
 @Controller('eventos')
+/**
+ * Controller dos endpoints públicos e internos de eventos.
+ */
 export class EventosController {
     constructor(private readonly eventosService: EventosService) { }
 

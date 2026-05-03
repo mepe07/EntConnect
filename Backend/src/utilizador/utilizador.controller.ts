@@ -1,5 +1,5 @@
 import { 
-  Controller, Get, Post, Put, Body, Patch, Param, Delete, 
+  Controller, Get, Post, Put, Body, Patch, Param, Delete, ForbiddenException,
   UseInterceptors, UploadedFile, BadRequestException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator,Query, Res, UseGuards, Request, HttpStatus
 } from '@nestjs/common'; 
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -39,11 +39,11 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/roles.enum';
 import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 
-// ============================================================================
-// CONTROLADOR DE UTILIZADORES
-// ============================================================================
 @ApiTags('Utilizadores')
 @Controller('utilizador')
+/**
+ * Controller dos endpoints de gestão de utilizadores, fotografias e educandos.
+ */
 export class UtilizadorController {
   constructor(
     private readonly utilizadorService: UtilizadorService,
@@ -79,35 +79,25 @@ export class UtilizadorController {
   @Post('enc-educacao/me/alunos')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.ENC_EDUCACAO)
-  @ApiOperation({ summary: 'Adicionar um educando ao encarregado autenticado' })
-  async criarMeuEducando(
-    @Request() req: { user: UtilizadorAutenticado },
-    @Body() dto: UpsertEducandoDto,
-  ) {
-    return this.utilizadorService.criarEducando(req.user.idPessoa, dto);
+  @ApiOperation({ summary: 'Adicionar educando ao encarregado autenticado (bloqueado)' })
+  async criarMeuEducando() {
+    throw new ForbiddenException('A gestão de educandos deve ser feita pela coordenação ou direção.');
   }
 
   @Put('enc-educacao/me/alunos/:idAluno')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.ENC_EDUCACAO)
-  @ApiOperation({ summary: 'Editar um educando do encarregado autenticado' })
-  async atualizarMeuEducando(
-    @Request() req: { user: UtilizadorAutenticado },
-    @Param('idAluno', ParseIntPipe) idAluno: number,
-    @Body() dto: UpsertEducandoDto,
-  ) {
-    return this.utilizadorService.atualizarEducando(req.user.idPessoa, idAluno, dto);
+  @ApiOperation({ summary: 'Editar educando do encarregado autenticado (bloqueado)' })
+  async atualizarMeuEducando() {
+    throw new ForbiddenException('A gestão de educandos deve ser feita pela coordenação ou direção.');
   }
 
   @Delete('enc-educacao/me/alunos/:idAluno')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.ENC_EDUCACAO)
-  @ApiOperation({ summary: 'Remover a associacao de um educando do encarregado autenticado' })
-  async removerMeuEducando(
-    @Request() req: { user: UtilizadorAutenticado },
-    @Param('idAluno', ParseIntPipe) idAluno: number,
-  ) {
-    return this.utilizadorService.removerEducando(req.user.idPessoa, idAluno);
+  @ApiOperation({ summary: 'Remover associacao de educando do encarregado autenticado (bloqueado)' })
+  async removerMeuEducando() {
+    throw new ForbiddenException('A gestão de educandos deve ser feita pela coordenação ou direção.');
   }
 
   @Get('download-template')
@@ -424,6 +414,8 @@ export class UtilizadorController {
   }
 
   @Post('enc-educacao/:id/alunos')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.COORDENADOR)
   @ApiOperation({ summary: 'Adicionar um educando a um Encarregado de Educacao' })
   @ApiParam({ name: 'id', description: 'ID do Encarregado de Educacao' })
   async criarEducando(
@@ -434,6 +426,8 @@ export class UtilizadorController {
   }
 
   @Put('enc-educacao/:id/alunos/:idAluno')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.COORDENADOR)
   @ApiOperation({ summary: 'Editar um educando de um Encarregado de Educacao' })
   @ApiParam({ name: 'id', description: 'ID do Encarregado de Educacao' })
   @ApiParam({ name: 'idAluno', description: 'ID do aluno' })
@@ -446,6 +440,8 @@ export class UtilizadorController {
   }
 
   @Patch('enc-educacao/:id/alunos/:idAluno/associar')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.COORDENADOR)
   @ApiOperation({ summary: 'Associar um aluno sem encarregado a um Encarregado de Educacao' })
   @ApiParam({ name: 'id', description: 'ID do Encarregado de Educacao' })
   @ApiParam({ name: 'idAluno', description: 'ID do aluno' })
@@ -457,6 +453,8 @@ export class UtilizadorController {
   }
 
   @Delete('enc-educacao/:id/alunos/:idAluno')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.COORDENADOR)
   @ApiOperation({ summary: 'Remover a associacao de um educando a um Encarregado de Educacao' })
   @ApiParam({ name: 'id', description: 'ID do Encarregado de Educacao' })
   @ApiParam({ name: 'idAluno', description: 'ID do aluno' })

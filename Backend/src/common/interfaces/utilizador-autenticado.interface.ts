@@ -13,9 +13,13 @@
  */
 import { Role } from '../../auth/enums/roles.enum';
 
+/**
+ * Payload mínimo colocado no request após validação do JWT.
+ */
 export interface UtilizadorAutenticado {
     sub: number;
     username: string;
+    nome?: string;
     role: Role;
     idPessoa: number;
 }

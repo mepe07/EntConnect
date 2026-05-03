@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class InscreverAlunoDto {
   
@@ -35,7 +35,7 @@ export class InscreverAlunoDto {
 
   @ApiProperty({ description: 'Valor a pagar por aluno inscrito', example: 1 })
   @IsNotEmpty()
-  @IsInt()
+  @IsNumber()
   valorPorAluno!: number;
 
   @ApiProperty({ example: '2026-05-10T14:30:00Z', description: 'Data e hora de início' })
@@ -53,7 +53,7 @@ export class InscreverAlunoDto {
 
   @ApiProperty({ description: 'Valor em falta', example: 100 })
   @IsNotEmpty()
-  @IsInt()
+  @IsNumber()
   valorEmFalta!: number;
 
 

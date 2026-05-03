@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TipoAnuncio, type CriarAnuncioPayload } from '../../../types/marketplace.types';
-import '../marketplace.scss'; // Usa os mesmos estilos globais
+import '../marketplace.scss';
 
 interface ModalCriarAnuncioProps {
     isOpen: boolean;
@@ -136,13 +136,13 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
                 </p>
 
                 <div className="form-grid" style={{ display: 'grid', gap: '16px' }}>
-                    
+
                     <div className="form-grupo">
                         <label style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Título do Anúncio *</label>
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             placeholder="Ex: Calculadora Gráfica TI-84"
-                            value={form.titulo} 
+                            value={form.titulo}
                             onChange={(e) => setForm({ ...form, titulo: e.target.value })}
                             style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                         />
@@ -151,8 +151,8 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
                     <div className="form-grupo" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         <div>
                             <label style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Tipo de Negócio *</label>
-                            <select 
-                                value={form.tipoAnuncio} 
+                            <select
+                                value={form.tipoAnuncio}
                                 onChange={(e) => handleTipoChange(e.target.value as TipoAnuncio)}
                                 style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                             >
@@ -163,9 +163,9 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
                         </div>
                         <div>
                             <label style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Quantidade *</label>
-                            <input 
-                                type="number" min="1" 
-                                value={form.quantidadeTotal} 
+                            <input
+                                type="number" min="1"
+                                value={form.quantidadeTotal}
                                 onChange={(e) => handleQuantidadeTotalChange(parseInt(e.target.value) || 1)}
                                 style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                             />
@@ -203,13 +203,13 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
                     <div className="form-grupo">
                         <label style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Fotografia</label>
                         <div style={{ border: '1px dashed #cbd5e1', padding: '12px', borderRadius: '8px', background: '#f8fafc' }}>
-                            <input 
-                                type="file" 
+                            <input
+                                type="file"
                                 accept="image/*"
                                 onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if (file) setForm({ ...form, ficheiroFoto: file });
-                                }} 
+                                }}
                                 style={{ width: '100%', fontSize: '14px' }}
                             />
                             {form.ficheiroFoto && (
@@ -222,9 +222,9 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
 
                     <div className="form-grupo">
                         <label>Categoria</label>
-                        <input 
-                            value={form.notasInternas} 
-                            onChange={(e) => setForm({ ...form, notasInternas: e.target.value })} 
+                        <input
+                            value={form.notasInternas}
+                            onChange={(e) => setForm({ ...form, notasInternas: e.target.value })}
                             placeholder="Ex: T-shirt, Calças..."
                         />
                     </div>
@@ -248,12 +248,12 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
                             </select>
                         </div>
                     </div>
-                    
+
                     <div className="form-grupo">
                         <label style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Descrição para o Público</label>
-                        <textarea 
+                        <textarea
                             placeholder="Descreve o estado do item, preço sugerido ou condições..."
-                            value={form.descricao} 
+                            value={form.descricao}
                             onChange={(e) => setForm({ ...form, descricao: e.target.value })}
                             rows={3}
                             style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', resize: 'vertical' }}
@@ -262,15 +262,15 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
                 </div>
 
                 <div className="modal-acoes" style={{ marginTop: '24px', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                    <button 
-                        className="btn-secundario" 
+                    <button
+                        className="btn-secundario"
                         onClick={onClose}
                         disabled={loading}
                     >
                         Cancelar
                     </button>
-                    <button 
-                        className="btn-principal" 
+                    <button
+                        className="btn-principal"
                         onClick={handleSubmit}
                         disabled={loading}
                     >
@@ -280,4 +280,4 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
             </div>
         </>
     );
-} 
+}

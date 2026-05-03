@@ -60,28 +60,36 @@ export default function VerConfirmacoesEE() {
     }
 
     async function handleConfirmacao(sessao: any, idEstadoCoaching: number) {
-        if (!idEE) return;
+    if (!idEE) return;
 
-        const mensagem = idEstadoCoaching === 13
-            ? 'Confirma que esta sessão foi realizada?'
-            : 'Indica que esta sessão não aconteceu?';
 
-        if (!window.confirm(mensagem)) {
-            return;
-        }
+    const mensagem = idEstadoCoaching === 13
+        ? `Confirma que a sessão de ${sessao.modalidade} foi realizada pelos alunos: ${sessao.alunos}?`
+        : 'Indica que esta sessão não aconteceu?';
 
-        setIsAguardar(true);
-        try {
-            await eeService.confirmarSessaoEE(idEE, sessao.idCoaching, idEstadoCoaching);
-            alert('Estado atualizado com sucesso.');
-            fetchConfirmacoes();
-        } catch (error) {
-            console.error('Erro ao confirmar sessão EE:', error);
-            alert('Erro ao atualizar o estado da sessão.');
-        } finally {
-            setIsAguardar(false);
-        }
+    if (!window.confirm(mensagem)) return;
+
+    setIsAguardar(true);
+    try {
+
+        await eeService.confirmarSessaoEE(idEE, sessao.idCoaching, idEstadoCoaching);
+
+
+        alert('Confirmação registada!');
+
+
+        setConfirmacoes((listaAtual) =>
+            listaAtual.filter((item) => item.idCoaching !== sessao.idCoaching)
+        );
+
+        fecharModal();
+    } catch (error: any) {
+        console.error('Erro ao confirmar sessão EE:', error);
+        alert(error.message || 'Erro ao atualizar o estado da sessão.');
+    } finally {
+        setIsAguardar(false);
     }
+}
 
     const tableData = confirmacoes.map((sessao) => ({
         idCoaching: sessao.idCoaching,
@@ -120,21 +128,18 @@ export default function VerConfirmacoesEE() {
                     },
                     actions: [
                         {
-                            label: 'Ver',
                             icon: 'fa-solid fa-eye',
                             tooltip: 'Ver detalhes da sessão',
                             config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Theme, size: SizeEnum.Regular },
                             onClick: (row: any) => abrirModal(row),
                         },
                         {
-                            label: 'Realizada',
                             icon: 'fa-solid fa-check',
                             tooltip: 'Confirmar que a sessão foi realizada',
                             config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Theme, size: SizeEnum.Regular },
                             onClick: (row: any) => handleConfirmacao(row, 13),
                         },
                         {
-                            label: 'Não aconteceu',
                             icon: 'fa-solid fa-xmark',
                             tooltip: 'Indicar que a sessão não aconteceu',
                             config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Error, size: SizeEnum.Regular },

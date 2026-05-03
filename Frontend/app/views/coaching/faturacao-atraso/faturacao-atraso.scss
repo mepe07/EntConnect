@@ -1,3 +1,4 @@
+@use "sass:color";
 @use "../../../assets/styles/variables/colors";
 
 .faturacao-container {
@@ -7,7 +8,7 @@
 	animation: fadeEntrada 0.5s ease-out;
 
 	.hero-header {
-		background: linear-gradient(135deg, colors.$gray-4 0%, lighten(colors.$gray-8, 12%) 100%);
+		background: linear-gradient(135deg, colors.$gray-4 0%, color.adjust(colors.$gray-8, $lightness: 12%) 100%);
 		border-radius: 12px;
 		padding: 30px 40px;
 		margin-bottom: 30px;
@@ -403,7 +404,7 @@
 			transition: all 0.3s ease;
 
 			&:hover {
-				background-color: darken(colors.$theme-100, 10%);
+				background-color: color.adjust(colors.$theme-100, $lightness: -10%);
 				transform: translateY(-2px);
 			}
 		}

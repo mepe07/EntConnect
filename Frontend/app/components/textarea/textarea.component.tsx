@@ -1,6 +1,12 @@
 import type { TextareaComponentProps } from './textarea-props.interface';
 import './textarea.component.scss';
 
+/**
+ * Área de texto partilhada com label.
+ *
+ * @param options - Propriedades da textarea.
+ * @returns Campo de texto multilinha configurado.
+ */
 export function TextareaComponent(options: TextareaComponentProps) {
   return (
     <>

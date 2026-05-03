@@ -9,7 +9,7 @@ interface MarcacaoCoaching {
     sala: string;
     modalidade: string;
     alunos: string[];
-    estado: string; //
+    estado: string;
 }
 
 export default function ListagemCoaching() {
@@ -43,18 +43,18 @@ export default function ListagemCoaching() {
         setFiltroDataFim(dataFimInput);
     };
 
-    // Função para desenhar a etiqueta colorida do estado
+
 const renderBadgeEstado = (estado: string) => {
     const e = estado?.toUpperCase();
     switch (e) {
-        case 'VALIDADO': 
-        case 'ACEITE': 
+        case 'VALIDADO':
+        case 'ACEITE':
             return <span className="badge-estado validado">Validado</span>;
-        case 'PENDENTE': 
+        case 'PENDENTE':
             return <span className="badge-estado pendente">Pendente</span>;
-        case 'RECUSADO': 
+        case 'RECUSADO':
             return <span className="badge-estado recusado">Recusado</span>;
-        default: 
+        default:
             return <span className="badge-estado">{estado}</span>;
     }
 };
@@ -112,7 +112,7 @@ const renderBadgeEstado = (estado: string) => {
                                 <th>Hora</th>
                                 <th>Duração</th>
                                 <th>Sala</th>
-                                <th>Estado</th> {/* */}
+                                <th>Estado</th>
                                 <th>Alunos Inscritos</th>
                             </tr>
                         </thead>
@@ -124,13 +124,13 @@ const renderBadgeEstado = (estado: string) => {
                                         <td>{new Date(aula.dataInicio).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</td>
                                         <td>{aula.duracaoMinutos} min</td>
                                         <td>{aula.sala}</td>
-                                        <td>{renderBadgeEstado(aula.estado)}</td> {/* */}
+                                        <td>{renderBadgeEstado(aula.estado)}</td>
                                         <td>{aula.alunos.join(', ')}</td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={6} className="sem-dados"> {/* Aumentado para 6 colunas */}
+                                    <td colSpan={6} className="sem-dados">
                                         Não foram encontradas marcações para estas datas.
                                     </td>
                                 </tr>

@@ -1,4 +1,4 @@
-// Ficheiro: app/views/eventos/painel-eventos-coordenacao.tsx
+
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
@@ -729,4 +729,4 @@ export function PainelEventosCoordenacao() {
             )}
         </main>
     );
-} 
+}

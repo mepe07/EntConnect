@@ -1,5 +1,3 @@
-// Ficheiro: Backend/src/marketplace/marketplace.service.ts
-
 import {
     BadRequestException,
     ForbiddenException,
@@ -56,6 +54,9 @@ import {
 
 
 @Injectable()
+/**
+ * Serviço responsável pela gestão de anúncios, inventário e moderação do Marketplace.
+ */
 export class MarketplaceService {
     constructor(
         private readonly prisma: PrismaService, 
@@ -63,14 +64,13 @@ export class MarketplaceService {
     ) 
     { }
 
-
-    // ========================================================================
-    // 1. CONSULTA / LISTAGEM
-    // ========================================================================
-
+    /**
+     * Lista anúncios do Marketplace com base nos filtros recebidos.
+     *
+     * @param filtros - Filtros da consulta de anúncios.
+     * @returns Lista de anúncios compatíveis com os filtros.
+     */
     async listarAnuncios(filtros: ListarAnunciosMarketplaceDto) {
-        // Prisma.ArtigoWhereInput valida os campos usados no where.
-        // Se escrevermos um campo errado, o TypeScript avisa logo.
         const where: Prisma.ArtigoWhereInput = {
             Publicado_No_Marketplace: filtros.publicado ?? true,
             Estado_Anuncio:
@@ -108,6 +108,12 @@ export class MarketplaceService {
         });
     }
 
+    /**
+     * Obtém o detalhe de um anúncio.
+     *
+     * @param idArtigo - Identificador do artigo.
+     * @returns Anúncio completo.
+     */
     async obterAnuncio(idArtigo: number) {
         const artigo = await this.obterArtigoOuFalhar(idArtigo);
         return artigo;

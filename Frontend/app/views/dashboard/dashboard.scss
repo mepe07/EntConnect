@@ -1,4 +1,4 @@
-// Ficheiro: app/views/dashboard/dashboard.scss
+
 
 @use "../../assets/styles/variables/colors";
 
@@ -8,19 +8,7 @@
     margin: 0 auto;
     padding: 40px;
     animation: dashboardFadeIn 0.35s ease-in-out;
-    /*
-        Importante:
-        Este ficheiro só deve controlar a estrutura base da dashboard:
-        - topo
-        - ações rápidas
-        - KPIs
 
-        A secção de eventos tem CSS isolado no module.css do componente:
-        resumo-eventos-dashboard.module.css
-    */
-    /* =========================================================================
-       1. TOPO: BOAS-VINDAS + AÇÕES RÁPIDAS
-       ========================================================================= */
 
     .dashboard-topo {
         display: flex;
@@ -48,9 +36,7 @@
             line-height: 1.5;
         }
     }
-    /* =========================================================================
-       1.1. AÇÕES RÁPIDAS COMPACTAS
-       ========================================================================= */
+
 
     .acoes-rapidas-container {
         position: relative;
@@ -178,9 +164,7 @@
             color: #94a3b8;
         }
     }
-    /* =========================================================================
-       2. KPIs
-       ========================================================================= */
+
 
     .kpi-grid {
         display: grid;
@@ -258,9 +242,7 @@
             }
         }
     }
-    /* =========================================================================
-       3. RESPONSIVO
-       ========================================================================= */
+
 
     @media (max-width: 1180px) {
         .kpi-grid {
@@ -320,9 +302,6 @@
     }
 }
 
-/* =========================================================================
-   ANIMAÇÃO BASE
-   ========================================================================= */
 
 @keyframes dashboardFadeIn {
     from {
@@ -336,9 +315,6 @@
     }
 }
 
-/* =========================================================================
-   PROTEÇÃO PARA DARK MODE DO BROWSER
-   ========================================================================= */
 
 @media (prefers-color-scheme: dark) {
     .dashboard-wrapper {

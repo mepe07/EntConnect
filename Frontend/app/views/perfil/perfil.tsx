@@ -168,7 +168,7 @@ export function Perfil() {
             if (response.ok) {
                 alert("Foto atualizada com sucesso!");
                 buscarFotoAtual();
-                window.dispatchEvent(new Event('fotoPerfilAtualizada')); 
+                window.dispatchEvent(new Event('fotoPerfilAtualizada'));
                 setModalCorteAberto(false);
             }
         } catch (error) {
@@ -178,6 +178,7 @@ export function Perfil() {
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
+
 
     const removerFoto = async () => {
         const confirmacao = window.confirm("Tens a certeza que queres remover a tua foto de perfil?");
@@ -190,7 +191,7 @@ export function Perfil() {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            
+
             if (response.ok) {
                 setFotoUrl(null);
                 window.dispatchEvent(new Event('fotoPerfilAtualizada')); 
@@ -211,7 +212,7 @@ export function Perfil() {
             const token = localStorage.getItem('entconnect_token') || authService.getToken();
             const response = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/update-pessoal`, {
                 method: 'PUT',
-                headers: { 
+                headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
@@ -237,9 +238,9 @@ export function Perfil() {
             const token = authService.getToken();
             const response = await fetch(`${API_BASE_URL}/utilizador/${currentUserId}/change-password`, {
                 method: 'PUT',
-                headers: { 
-                    'Authorization': `Bearer ${token}`, 
-                    'Content-Type': 'application/json' 
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ passAtual, passNova })
             });
@@ -295,7 +296,7 @@ export function Perfil() {
                             <section className="seccao-perfil">
                                 <div className="perfil-header-topo">
                                     <h3>O Meu Perfil</h3>
-                                    <button 
+                                    <button
                                         className="btn-editar"
                                         onClick={() => editando ? guardarAlteracoes() : setEditando(true)}
                                         disabled={guardando}
@@ -303,7 +304,7 @@ export function Perfil() {
                                         {guardando ? 'A guardar...' : editando ? '✅ Guardar' : '✏️ Editar Dados'}
                                     </button>
                                 </div>
-                                
+
                                 <div className="perfil-info-principal">
                                     <div className="foto-moldura">
                                         {loadingFoto ? (
@@ -319,19 +320,21 @@ export function Perfil() {
                                         <h4 className="nome-principal">{nome || 'Utilizador'}</h4>
                                         <p className="nome-meta">@{userInfo?.username || 'utilizador'}</p>
                                         <p className="email-utilizador">{email || 'Sem email registado'}</p>
-                                        
+
                                         <p className="aviso-tamanho">
                                             <i className="fa fa-info-circle"></i> Tamanho máximo: 10MB
                                         </p>
 
                                         <input type="file" accept="image/*" ref={fileInputRef} className="input-file-escondido" onChange={lidarComSelecaoFicheiro} />
                                         
+
+
                                         <div className="botoes-foto-wrapper">
                                             <button className="btn-link-foto" onClick={() => fileInputRef.current?.click()} disabled={loadingFoto}>
                                                 <i className="fa fa-camera"></i>
                                                 {fotoUrl ? 'Alterar Foto' : 'Carregar Foto'}
                                             </button>
-                                            
+
                                             {fotoUrl && (
                                                 <button className="btn-link-foto btn-remover" onClick={removerFoto} disabled={loadingFoto}>
                                                     <i className="fa fa-trash"></i> Remover
@@ -377,6 +380,8 @@ export function Perfil() {
                                                 </span>
                                             </div>
                                             
+
+
                                             <div className="item-info cargo-info">
                                                 <span className="label">Cargo / Função:</span>
                                                 <div className="cargo-badge">
@@ -384,7 +389,7 @@ export function Perfil() {
                                                     <span>{cargo}</span>
                                                 </div>
                                             </div>
-                                            
+
                                             <hr />
                                             <h4>Segurança</h4>
                                             <p className="texto-seguranca">Protege a tua conta alterando a palavra-passe regularmente.</p>
@@ -395,7 +400,7 @@ export function Perfil() {
                                         </div>
                                     </div>
                                 </div>
-                            </section> 
+                            </section>
                         )}
 
                         {/* ========================================== */}
@@ -499,7 +504,7 @@ export function Perfil() {
                     </div>
                 )}
 
-                {/* MODAL DE CORTE DE FOTO */}
+
                 {modalCorteAberto && (
                     <div className="modal-corte-overlay">
                         <div className="modal-corte-container">
@@ -533,7 +538,7 @@ export function Perfil() {
                     </div>
                 )}
 
-                {/* MODAL DE MUDAR PASSWORD */}
+
                 {modalPasswordAberto && (
                     <div className="modal-corte-overlay">
                         <div className="modal-corte-container" style={{ maxWidth: '400px' }}>
@@ -545,9 +550,9 @@ export function Perfil() {
                             <div className="form-pessoal">
                                 <div className="campo">
                                     <label>Password Atual</label>
-                                    <input 
-                                        type="password" 
-                                        value={passAtual} 
+                                    <input
+                                        type="password"
+                                        value={passAtual}
                                         onChange={(e) => setPassAtual(e.target.value)}
                                         autoComplete="new-password"
                                     />
@@ -555,20 +560,20 @@ export function Perfil() {
 
                                 <div className="campo">
                                     <label>Nova Password</label>
-                                    <input 
-                                        type="password" 
-                                        value={passNova} 
-                                        onChange={(e) => setPassNova(e.target.value)} 
+                                    <input
+                                        type="password"
+                                        value={passNova}
+                                        onChange={(e) => setPassNova(e.target.value)}
                                         autoComplete="new-password"
                                     />
                                 </div>
 
                                 <div className="campo">
                                     <label>Confirmar Nova Password</label>
-                                    <input 
-                                        type="password" 
-                                        value={passConfirma} 
-                                        onChange={(e) => setPassConfirma(e.target.value)} 
+                                    <input
+                                        type="password"
+                                        value={passConfirma}
+                                        onChange={(e) => setPassConfirma(e.target.value)}
                                         autoComplete="new-password"
                                         className={passConfirma && passNova !== passConfirma ? 'input-erro' : ''}
                                     />
@@ -579,9 +584,9 @@ export function Perfil() {
 
                                 <div className="botoes-modal" style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
                                     <button className="btn-modal-cancelar" style={{ flex: 1 }} onClick={fecharModalPassword}>Cancelar</button>
-                                    <button 
-                                        className="btn-modal-confirmar" 
-                                        style={{ flex: 1 }} 
+                                    <button
+                                        className="btn-modal-confirmar"
+                                        style={{ flex: 1 }}
                                         onClick={lidarComMudarPassword}
                                         disabled={!passAtual || !passNova || passNova !== passConfirma}
                                     >

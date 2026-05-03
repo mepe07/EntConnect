@@ -44,5 +44,8 @@ import { MailModule } from '../mail/mail.module';
         JwtModule
     ],
 })
+/**
+ * Módulo de autenticação e autorização da aplicação.
+ */
 export class AuthModule {
 }

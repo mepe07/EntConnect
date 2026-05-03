@@ -7,13 +7,13 @@ export interface LinhaFaturacaoCoaching {
     nomeProfessor: string;
     nomeAluno: string;
 
-    // Valor total da aula por aluno.
+
     valorTotal: number;
 
-    // Valor que ainda falta pagar.
+
     valorEmFalta?: number;
 
-    // Estado do pagamento.
+
     estaPago: boolean;
 
     fotoProfessorUrl?: string;
