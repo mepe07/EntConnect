@@ -31,6 +31,7 @@ const MENU_CONFIG: MenuConfig = {
             submenu: [
                 { titulo: 'Gerir Horário Aulas', path: '/admin/horarios' },
                 { titulo: 'Gerir Coaching', path: '/admin/coaching' },
+                { titulo: 'Gerir pagamentos', path: '/admin/pagamentos-coaching' },
                 { titulo: 'Calendário Geral', path: '/admin/calendario' },
             ]
         },

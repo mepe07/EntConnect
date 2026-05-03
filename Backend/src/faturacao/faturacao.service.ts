@@ -1,10 +1,147 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class FaturacaoService {
     constructor(private readonly prisma: PrismaService) { }
+
+    async obterPagamentosCoachingAdmin(filtros: {
+        inicio?: Date;
+        fim?: Date;
+        professor?: string;
+        encarregado?: string;
+        estado?: string;
+    }) {
+        const filtroCoaching: Prisma.CoachingWhereInput = {};
+
+        if (filtros.inicio || filtros.fim) {
+            filtroCoaching.Inicio_Coaching = {
+                ...(filtros.inicio ? { gte: filtros.inicio } : {}),
+                ...(filtros.fim ? { lte: this.fimDoDia(filtros.fim) } : {}),
+            };
+        }
+
+        const professor = filtros.professor?.trim();
+        if (professor) {
+            filtroCoaching.Professor = {
+                Pessoa: {
+                    OR: [
+                        { Nome: { contains: professor } },
+                        { Email: { contains: professor } },
+                    ],
+                },
+            };
+        }
+
+        const where: Prisma.Coaching_AlunoWhereInput = {
+            Coaching: filtroCoaching,
+        };
+
+        const encarregado = filtros.encarregado?.trim();
+        if (encarregado) {
+            where.OR = [
+                {
+                    Enc_Educacao: {
+                        Pessoa: {
+                            OR: [
+                                { Nome: { contains: encarregado } },
+                                { Email: { contains: encarregado } },
+                            ],
+                        },
+                    },
+                },
+                {
+                    Aluno: {
+                        Enc_Educacao: {
+                            Pessoa: {
+                                OR: [
+                                    { Nome: { contains: encarregado } },
+                                    { Email: { contains: encarregado } },
+                                ],
+                            },
+                        },
+                    },
+                },
+            ];
+        }
+
+        const inscricoes = await this.prisma.coaching_Aluno.findMany({
+            where,
+            include: {
+                Enc_Educacao: {
+                    include: {
+                        Pessoa: true,
+                    },
+                },
+                Aluno: {
+                    include: {
+                        Enc_Educacao: {
+                            include: {
+                                Pessoa: true,
+                            },
+                        },
+                    },
+                },
+                Coaching: {
+                    include: {
+                        Professor: {
+                            include: {
+                                Pessoa: true,
+                            },
+                        },
+                        Sala: true,
+                        Estado_Coaching: true,
+                    },
+                },
+            },
+            orderBy: {
+                Coaching: {
+                    Inicio_Coaching: 'asc',
+                },
+            },
+        });
+
+        const agora = new Date();
+        const estadoFiltro = filtros.estado?.trim().toLowerCase();
+
+        return inscricoes
+            .map((item) => {
+                const valorTotal = this.obterValorTotalAluno(item);
+                const valorEmFalta = this.obterValorEmFalta(item, valorTotal);
+                const dataAula = item.Coaching?.Inicio_Coaching ?? null;
+                const estaPago = valorEmFalta <= 0;
+                const estadoPagamento = estaPago
+                    ? 'pago'
+                    : dataAula && dataAula < agora
+                        ? 'atrasado'
+                        : 'pendente';
+
+                const pessoaEE = item.Enc_Educacao?.Pessoa ?? item.Aluno?.Enc_Educacao?.Pessoa ?? null;
+
+                return {
+                    idCoaching: item.ID_Coaching,
+                    idAluno: item.ID_Aluno,
+                    dataAula,
+                    nomeProfessor: item.Coaching?.Professor?.Pessoa?.Nome || 'Professor nao atribuido',
+                    emailProfessor: item.Coaching?.Professor?.Pessoa?.Email || null,
+                    nomeAluno: item.Aluno?.Nome || 'Aluno desconhecido',
+                    nomeEncarregado: pessoaEE?.Nome || 'Sem encarregado',
+                    emailEncarregado: pessoaEE?.Email || null,
+                    contactoEncarregado: pessoaEE?.Contacto || null,
+                    valorTotal,
+                    valorPago: Math.max(valorTotal - valorEmFalta, 0),
+                    valorEmFalta,
+                    estaPago,
+                    isPago: estaPago,
+                    estadoPagamento,
+                    estadoCoaching: item.Coaching?.Estado_Coaching?.Tipo || 'Sem estado',
+                    duracaoMinutos: item.Coaching?.Duracao || 0,
+                    salaNome: item.Coaching?.Sala?.Nome || 'Sem sala',
+                };
+            })
+            .filter((item) => !estadoFiltro || item.estadoPagamento === estadoFiltro);
+    }
 
     /**
      * Converte valores Decimal/number/string/null para number.
@@ -562,10 +699,50 @@ export class FaturacaoService {
     /**
      * Regista o pagamento de um aluno numa sessão de coaching.
      *
-     * Como agora o estado financeiro está em ValorEmFalta,
-     * pagar significa colocar ValorEmFalta a 0.
+     * Como agora o estado financeiro esta em ValorEmFalta,
+     * pagar sem valor significa colocar ValorEmFalta a 0.
+     * Quando vem valorPago, descontamos apenas esse montante.
      */
-    async registarPagamento(idCoaching: number, idAluno: number) {
+    async registarPagamento(idCoaching: number, idAluno: number, valorPago?: number) {
+        const registoAtual = await this.prisma.coaching_Aluno.findUnique({
+            where: {
+                ID_Coaching_ID_Aluno: {
+                    ID_Coaching: idCoaching,
+                    ID_Aluno: idAluno,
+                },
+            },
+            include: {
+                Coaching: true,
+            },
+        });
+
+        if (!registoAtual) {
+            throw new NotFoundException('Inscricao de coaching nao encontrada.');
+        }
+
+        const valorTotal = this.obterValorTotalAluno(registoAtual);
+        const valorEmFaltaAtual = this.obterValorEmFalta(registoAtual, valorTotal);
+
+        if (valorEmFaltaAtual <= 0) {
+            return {
+                message: 'Esta inscricao ja esta paga.',
+                idCoaching,
+                idAluno,
+                valorEmFalta: 0,
+                valorPagoRegistado: 0,
+            };
+        }
+
+        const pagamentoTotal = valorPago === undefined || valorPago === null;
+        const valorARegistar = pagamentoTotal ? valorEmFaltaAtual : this.toNumber(valorPago);
+
+        if (!pagamentoTotal && valorARegistar <= 0) {
+            throw new BadRequestException('O valor do pagamento tem de ser superior a zero.');
+        }
+
+        const valorPagoRegistado = Math.min(valorARegistar, valorEmFaltaAtual);
+        const novoValorEmFalta = Math.max(valorEmFaltaAtual - valorPagoRegistado, 0);
+
         const registo = await this.prisma.coaching_Aluno.update({
             where: {
                 ID_Coaching_ID_Aluno: {
@@ -574,7 +751,7 @@ export class FaturacaoService {
                 },
             },
             data: {
-                ValorEmFalta: 0,
+                ValorEmFalta: novoValorEmFalta,
             },
         });
 
@@ -582,6 +759,8 @@ export class FaturacaoService {
             message: 'Pagamento registado com sucesso.',
             idCoaching: registo.ID_Coaching,
             idAluno: registo.ID_Aluno,
+            valorEmFalta: this.toNumber(registo.ValorEmFalta),
+            valorPagoRegistado,
         };
     }
 } 

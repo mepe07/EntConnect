@@ -78,14 +78,48 @@ export class FaturacaoController {
         return this.faturacaoService.obterFaturacaoPorEncarregado(+id);
     }
 
+    @Get('pagamentos-coaching')
+    @ApiOperation({ summary: 'Listar pagamentos de coaching para gestao administrativa' })
+    async obterPagamentosCoachingAdmin(
+        @Query('inicio') inicioStr?: string,
+        @Query('fim') fimStr?: string,
+        @Query('professor') professor?: string,
+        @Query('encarregado') encarregado?: string,
+        @Query('estado') estado?: string,
+    ) {
+        const inicio = inicioStr ? new Date(inicioStr) : undefined;
+        const fim = fimStr ? new Date(fimStr) : undefined;
+
+        if (inicio && isNaN(inicio.getTime())) {
+            throw new BadRequestException('O formato da data de inicio e invalido.');
+        }
+
+        if (fim && isNaN(fim.getTime())) {
+            throw new BadRequestException('O formato da data final e invalido.');
+        }
+
+        return this.faturacaoService.obterPagamentosCoachingAdmin({
+            inicio,
+            fim,
+            professor,
+            encarregado,
+            estado,
+        });
+    }
+
     @Patch('pagar/:idCoaching/:idAluno')
     @ApiOperation({ summary: 'Registar o pagamento de um aluno numa sessão de coaching' })
     async registarPagamento(
         @Param('idCoaching') idCoaching: string,
         @Param('idAluno') idAluno: string,
+        @Body('valorPago') valorPago?: number,
     ) {
         // Usamos o sinal '+' para converter as strings que vêm do URL para números (Int)
-        return this.faturacaoService.registarPagamento(+idCoaching, +idAluno);
+        return this.faturacaoService.registarPagamento(
+            +idCoaching,
+            +idAluno,
+            valorPago === undefined || valorPago === null ? undefined : Number(valorPago),
+        );
     }
 
 
