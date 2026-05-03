@@ -1,6 +1,7 @@
 
 
 import { authService } from './auth.service';
+import type { LinhaFaturacaoCoaching } from '../models/interfaces/faturacao.interface';
 
 import { API_BASE_URL } from "../../src/config/api.config";
 
@@ -41,6 +42,61 @@ class FaturacaoService {
         }
     }
 
+    // Metodos de faturacao de coaching usados nas vistas administrativas.
+    async getPagamentosCoaching(filtros: {
+        inicio?: string;
+        fim?: string;
+        professor?: string;
+        encarregado?: string;
+        estado?: string;
+    } = {}): Promise<LinhaFaturacaoCoaching[]> {
+        const params = new URLSearchParams();
+
+        Object.entries(filtros).forEach(([key, value]) => {
+            if (value) {
+                params.set(key, value);
+            }
+        });
+
+        const query = params.toString();
+        const urlCompleto = `${this.API_URL}/pagamentos-coaching${query ? `?${query}` : ''}`;
+        const token = authService.getToken();
+
+        const response = await fetch(urlCompleto, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            },
+        });
+
+        if (!response.ok) {
+            const erroDoServidor = await response.json().catch(() => null);
+            throw new Error(erroDoServidor?.message || `Erro HTTP: ${response.status}`);
+        }
+
+        return await response.json();
+    }
+
+    async registarPagamento(idCoaching: number, idAluno: number, valorPago?: number) {
+        const token = authService.getToken();
+
+        const response = await fetch(`${this.API_URL}/pagar/${idCoaching}/${idAluno}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify(valorPago === undefined ? {} : { valorPago }),
+        });
+
+        if (!response.ok) {
+            const erroDoServidor = await response.json().catch(() => null);
+            throw new Error(erroDoServidor?.message || `Erro HTTP: ${response.status}`);
+        }
+
+        return await response.json();
+    }
 
     async getHistorico(inicio: string, fim: string) {
         const urlCompleto = `${this.API_URL}/Historico?inicio=${inicio}&fim=${fim}`;

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
-
 @Injectable()
 /**
  * Serviço responsável pelas marcações e confirmações do encarregado de educação.
@@ -119,8 +118,6 @@ export class MarcacoesService {
             throw new Error('ID de estado de coaching inválido.');
         }
 
-        // 1. Atualizar a coluna "confirmado" para os alunos deste EE nesta sessão específica
-        // Usamos updateMany porque um EE pode ter mais do que um educando na mesma sessão
         await this.prisma.coaching_Aluno.updateMany({
             where: {
                 ID_Enc_Educacao: idEE,
@@ -131,7 +128,6 @@ export class MarcacoesService {
             },
         });
 
-        // 2. Verificar se ainda existem outros alunos na mesma sessão que NÃO confirmaram
         const pendentes = await this.prisma.coaching_Aluno.count({
             where: {
                 ID_Coaching: idCoaching,
@@ -139,48 +135,35 @@ export class MarcacoesService {
             },
         });
 
-        // 3. Se não houver mais pendentes (count === 0), finalizamos a sessão na tabela Coaching
+        let sessaoConcluida = false;
+
         if (pendentes === 0) {
+            const coaching = await this.prisma.coaching.findUnique({
+                where: { ID_Coaching: idCoaching },
+                select: {
+                    ID_Estado_Coaching: true,
+                    confirmacao_prof: true,
+                },
+            });
+
+            const deveConcluirSessao = idEstadoCoaching === 13 && coaching?.confirmacao_prof === true;
+            sessaoConcluida = deveConcluirSessao;
+
             await this.prisma.coaching.update({
                 where: { ID_Coaching: idCoaching },
                 data: {
-                    ID_Estado_Coaching: idEstadoCoaching,
-                    confirmacao_EE: true // Coloca a confirmação global do EE a 1
+                    ID_Estado_Coaching: deveConcluirSessao ? 13 : coaching?.ID_Estado_Coaching,
+                    confirmacao_EE: true,
                 },
             });
         }
 
         return {
-            message: pendentes === 0
-                ? 'Sessão finalizada com sucesso (todos os alunos confirmaram).'
-                : 'Confirmação registada. A aguardar confirmação dos restantes alunos.',
+            message: sessaoConcluida
+                ? 'Sessão finalizada com sucesso (professor e encarregado confirmaram).'
+                : pendentes === 0
+                    ? 'Confirmação do encarregado registada. A aguardar confirmação do professor.'
+                    : 'Confirmação registada. A aguardar confirmação dos restantes alunos.',
         };
     }
-
-    // // async confirmarSessaoByEE(idEE: number, idCoaching: number, idEstadoCoaching: number) {
-    // //     if (![13, 14].includes(idEstadoCoaching)) {
-    // //         throw new Error('ID de estado de coaching inválido.');
-    // //     }
-
-    // //     const registro = await this.prisma.coaching_Aluno.findFirst({
-    // //         where: {
-    // //             ID_Enc_Educacao: idEE,
-    // //             ID_Coaching: idCoaching,
-    // //         },
-    // //     });
-
-    // //     if (!registro) {
-    // //         throw new Error('Sessão de coaching não encontrada para este encarregado de educação.');
-    // //     }
-
-    // //     await this.prisma.coaching.update({
-    // //         where: { ID_Coaching: idCoaching },
-    // //         data: { ID_Estado_Coaching: idEstadoCoaching },
-    // //     });
-
-    // //     return {
-    // //         message: 'Estado de coaching atualizado com sucesso.',
-    // //     };
-    // // }
 }
-

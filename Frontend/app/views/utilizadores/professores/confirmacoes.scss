@@ -128,9 +128,8 @@
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
-
-
-        border: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
     outline: none !important;
     box-shadow: none !important;
 
@@ -140,12 +139,8 @@
 
     &.btn-sucesso {
         color: #10b981;
-        background-color: #ecfdf5;
-        border: 1px solid #ecfdf5 !important;
 
         &:hover {
-            background-color: #d1fae5;
-            border-color: #d1fae5 !important;
             color: #059669;
             transform: translateY(-2px);
         }
@@ -153,12 +148,8 @@
 
     &.btn-perigo {
         color: #ef4444;
-        background-color: #fef2f2;
-        border: 1px solid #fef2f2 !important;
 
         &:hover {
-            background-color: #fee2e2;
-            border-color: #fee2e2 !important;
             color: #dc2626;
             transform: translateY(-2px);
         }

@@ -310,6 +310,7 @@ export class CoachingService {
 
       return {
         idCoaching: aula.ID_Coaching,
+        idEstadoCoaching: aula.ID_Estado_Coaching,
         dataInicio: aula.Inicio_Coaching,
         duracaoMinutos: aula.Duracao,
         sala: aula.Sala?.Nome || 'Sem sala atribuída',
