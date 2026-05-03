@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { InputComponent } from '~/components/input/input.component';
 import { ButtonComponent } from '~/components/button/button.component';
+import { useSearchParams } from "react-router";
 import { ConfirmacaoRemocaoAssociacoesEncarregadoError, UtilizadorService } from '~/services/users.service';
 import { authService } from '~/services/auth.service';
 import { API_BASE_URL } from '~/config/api.config';
@@ -82,7 +83,11 @@ export function Utilizadores() {
     const [termoPesquisa, setTermoPesquisa] = useState('');
     const [loading, setLoading] = useState(true);
 
-
+    const [searchParams, setSearchParams] = useSearchParams();
+    
+    // ==========================================
+    // PAGINAÇÃO
+    // ==========================================
     const [paginaAtual, setPaginaAtual] = useState(1);
     const [itensPorPagina, setItensPorPagina] = useState(10);
 
@@ -244,6 +249,20 @@ export function Utilizadores() {
         setErroEducandos('');
     };
 
+    useEffect(() => {
+        // Só entra aqui se o loading tiver acabado!
+        if (!loading && searchParams.get('novo') === 'true') {
+            abrirModalCriar();
+            
+            // Remove o parâmetro do URL
+            searchParams.delete('novo');
+            setSearchParams(searchParams, { replace: true });
+        }
+    }, [loading, searchParams, setSearchParams]); // Adicionámos o 'loading' nas dependências
+
+    // ==========================================
+    // MODAL CRIAR UTILIZADOR
+    // ==========================================
 
     const abrirModalCriar = () => {
         setFormNovo(FORM_VAZIO);
@@ -263,9 +282,9 @@ export function Utilizadores() {
             setErrosCriar(prev => ({ ...prev, [campo]: '' }));
         }
     };
-
+    
     const validarFormNovo = (): boolean => {
-        const erros: Partial<NovoUtilizadorForm> = {};
+    const erros: Partial<NovoUtilizadorForm> = {};
 
         if (!formNovo.nome.trim()) erros.nome = 'O nome é obrigatório.';
         if (!formNovo.username.trim()) erros.username = 'O username é obrigatório.';
