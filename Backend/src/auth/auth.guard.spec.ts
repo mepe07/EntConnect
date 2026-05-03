@@ -1,100 +1,85 @@
-// Ficheiro: src/auth/auth.guard.spec.ts
-
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
 import { AuthGuard } from './auth.guard';
 
-// Descreve o conjunto de testes do AuthGuard.
-// O objetivo é validar a autenticação por token JWT de forma isolada.
 describe('AuthGuard', () => {
-    let guard: AuthGuard;
+  let guard: AuthGuard;
 
-    // Mock do JwtService.
-    // Evita validar tokens reais durante os testes unitários.
-    const jwtServiceMock = {
-        verifyAsync: jest.fn(),
+  const jwtServiceMock = {
+    verifyAsync: jest.fn(),
+  };
+
+  const configServiceMock = {
+    getOrThrow: jest.fn(),
+  };
+
+  beforeEach(() => {
+    guard = new AuthGuard(
+      jwtServiceMock as unknown as JwtService,
+      configServiceMock as unknown as ConfigService,
+    );
+
+    jest.clearAllMocks();
+    configServiceMock.getOrThrow.mockReturnValue('segredo-de-teste');
+  });
+
+  const criarContextoFake = (authorizationHeader?: string): ExecutionContext =>
+    ({
+      switchToHttp: jest.fn().mockReturnValue({
+        getRequest: jest.fn().mockReturnValue({
+          headers: {
+            authorization: authorizationHeader,
+          },
+        }),
+      }),
+    }) as unknown as ExecutionContext;
+
+  it('deve permitir acesso quando o token é válido e adicionar o payload ao request.user', async () => {
+    const contexto = criarContextoFake('Bearer token-valido');
+    const payloadFake = {
+      sub: 1,
+      username: 'simas',
+      role: 'Coordenador',
+      idPessoa: 10,
     };
 
-    beforeEach(() => {
-        // Cria uma nova instância do guard antes de cada teste.
-        guard = new AuthGuard(jwtServiceMock as unknown as JwtService);
+    jwtServiceMock.verifyAsync.mockResolvedValue(payloadFake);
 
-        // Limpa o histórico dos mocks para garantir isolamento entre testes.
-        jest.clearAllMocks();
+    const resultado = await guard.canActivate(contexto);
+    const request = contexto.switchToHttp().getRequest();
+
+    expect(jwtServiceMock.verifyAsync).toHaveBeenCalledWith('token-valido', {
+      secret: 'segredo-de-teste',
     });
+    expect(resultado).toBe(true);
+    expect(request.user).toEqual(payloadFake);
+  });
 
-    // Helper para criar um ExecutionContext fake.
-    // Só mockamos o que o AuthGuard realmente usa:
-    // - switchToHttp()
-    // - getRequest()
-    // - headers
-    const criarContextoFake = (authorizationHeader?: string): ExecutionContext =>
-        ({
-            switchToHttp: jest.fn().mockReturnValue({
-                getRequest: jest.fn().mockReturnValue({
-                    headers: {
-                        authorization: authorizationHeader,
-                    },
-                }),
-            }),
-        }) as unknown as ExecutionContext;
+  it('deve lançar UnauthorizedException quando o header Authorization não existe', async () => {
+    await expect(guard.canActivate(criarContextoFake(undefined))).rejects.toThrow(
+      new UnauthorizedException('Acesso negado. Precisas de fazer login.'),
+    );
+  });
 
-    it('deve permitir acesso quando o token é válido e adicionar o payload ao request.user', async () => {
-        const contexto = criarContextoFake('Bearer token-valido');
+  it('deve lançar UnauthorizedException quando o header Authorization não começa por Bearer', async () => {
+    await expect(guard.canActivate(criarContextoFake('Token abc123'))).rejects.toThrow(
+      new UnauthorizedException('Acesso negado. Precisas de fazer login.'),
+    );
+  });
 
-        const payloadFake = {
-            sub: 1,
-            username: 'simas',
-            role: 'Coordenador',
-            idPessoa: 10,
-        };
+  it('deve lançar UnauthorizedException quando o token está vazio', async () => {
+    await expect(guard.canActivate(criarContextoFake('Bearer '))).rejects.toThrow(
+      new UnauthorizedException('Acesso negado. Precisas de fazer login.'),
+    );
+  });
 
-        // Simula validação bem sucedida do token.
-        jwtServiceMock.verifyAsync.mockResolvedValue(payloadFake);
+  it('deve lançar UnauthorizedException quando o token é inválido', async () => {
+    jwtServiceMock.verifyAsync.mockRejectedValue(new Error('jwt malformed'));
 
-        const resultado = await guard.canActivate(contexto);
-
-        // Vai buscar o request fake usado pelo guard, para validar se o payload foi anexado.
-        const request = contexto.switchToHttp().getRequest();
-
-        expect(jwtServiceMock.verifyAsync).toHaveBeenCalled();
-        expect(resultado).toBe(true);
-        expect(request.user).toEqual(payloadFake);
-    });
-
-    it('deve lançar UnauthorizedException quando o header Authorization não existe', async () => {
-        const contexto = criarContextoFake(undefined);
-
-        await expect(guard.canActivate(contexto)).rejects.toThrow(
-            new UnauthorizedException('Acesso negado. Precisas de fazer login.'),
-        );
-    });
-
-    it('deve lançar UnauthorizedException quando o header Authorization não começa por Bearer', async () => {
-        const contexto = criarContextoFake('Token abc123');
-
-        await expect(guard.canActivate(contexto)).rejects.toThrow(
-            new UnauthorizedException('Acesso negado. Precisas de fazer login.'),
-        );
-    });
-
-    it('deve lançar UnauthorizedException quando o token está vazio', async () => {
-        const contexto = criarContextoFake('Bearer ');
-
-        await expect(guard.canActivate(contexto)).rejects.toThrow(
-            new UnauthorizedException('Acesso negado. Precisas de fazer login.'),
-        );
-    });
-
-    it('deve lançar UnauthorizedException quando o token é inválido', async () => {
-        const contexto = criarContextoFake('Bearer token-invalido');
-
-        // Simula falha na verificação do JWT.
-        jwtServiceMock.verifyAsync.mockRejectedValue(new Error('jwt malformed'));
-
-        await expect(guard.canActivate(contexto)).rejects.toThrow(
-            new UnauthorizedException('Token inválido ou expirado.'),
-        );
-    });
+    await expect(guard.canActivate(criarContextoFake('Bearer token-invalido'))).rejects.toThrow(
+      new UnauthorizedException('Token inválido ou expirado.'),
+    );
+  });
 });

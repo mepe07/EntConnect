@@ -28,6 +28,7 @@ const MENU_CONFIG: MenuConfig = {
             submenu: [
                 { titulo: 'Gerir Horário Aulas', path: '/admin/horarios' },
                 { titulo: 'Gerir Coaching', path: '/admin/coaching' },
+                { titulo: 'Gerir pagamentos', path: '/admin/pagamentos-coaching' },
                 { titulo: 'Calendário Geral', path: '/admin/calendario' },
             ]
         },
@@ -70,7 +71,7 @@ const MENU_CONFIG: MenuConfig = {
             submenu: [
                 { titulo: 'Disponibilidades', path: '/agenda/disponibilidades' },
                 { titulo: 'Agendamentos', path: '/agenda/agendamentos' },
-                { titulo: 'Propostas de Coaching', path: '/agenda/propostas' },
+                // // { titulo: 'Propostas de Coaching', path: '/agenda/propostas' },
                 { titulo: 'Confirmações', path: '/agenda/confirmacoes' },
             ]
         },
@@ -101,7 +102,7 @@ const MENU_CONFIG: MenuConfig = {
             icone: 'fa-solid fa-handshake-angle',
             submenu: [
                 { titulo: 'Ver Oferta', path: '/coaching/oferta' },
-                { titulo: 'Nova Proposta', path: '/coaching/nova-proposta' },
+                // // { titulo: 'Nova Proposta', path: '/coaching/nova-proposta' },
                 { titulo: 'Marcações', path: '/coaching/marcacoes' },
                 { titulo: 'Confirmações', path: '/coaching/confirmacoes' },
             ]
