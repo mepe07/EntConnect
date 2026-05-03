@@ -8,7 +8,7 @@ interface JwtPayloadBase {
 export class AuthService {
     private _userToken: string | null = null;
     private _userInfo: User | null = null;
-    private _apiUrl = 'http://localhost:3000';
+    private _apiUrl = 'http://localhost:3000'; // <- O URL do teu backend
     private readonly tokenStorageKey = 'entconnect_token';
 
     async login(username: string, password: string) {
@@ -142,6 +142,35 @@ export class AuthService {
         }
 
         return this._userInfo;
+    }
+
+    /**
+     * 🚀 NOVO MÉTODO: Envia as preferências de Ações Rápidas para o Backend
+     */
+    async updateQuickActionPreferences(userId: number, acoesIds: number[]) {
+        const token = this.getToken(); 
+        
+        if (!token) {
+            throw new Error('Utilizador não autenticado.');
+        }
+
+        // Usa o apiUrl que já está definido no topo da tua classe
+        const apiUrl = `${this._apiUrl}/utilizador/${userId}/preferencias-acoes`;
+
+        const response = await fetch(apiUrl, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify(acoesIds) 
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erro ao atualizar as preferências: ${response.statusText}`);
+        }
+
+        return await response.json();
     }
 }
 

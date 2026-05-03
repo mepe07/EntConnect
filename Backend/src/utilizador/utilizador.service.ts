@@ -196,100 +196,140 @@ export class UtilizadorService {
     };
   }
   
-  /*
-  async getMinhasAulas(id: number) {
+  
+  async getMeusCoachings(id: number) {
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: id },
       include: {
         Pessoa: {
           include: {
             Professor: true,
-            Enc_Educacao: {
-              include: { Aluno: true }
-            }
+            Enc_Educacao: true 
           }
         }
       }
     });
 
-  //   if (!utilizador || !utilizador.Pessoa) {
-  //     throw new NotFoundException(`Utilizador não encontrado.`);
-  //   }
+    if (!utilizador || !utilizador.Pessoa) {
+      throw new NotFoundException(`Utilizador não encontrado.`);
+    }
 
-  //   const idPessoa = utilizador.ID_Pessoa;
+    const idPessoa = utilizador.ID_Pessoa;
 
-  //   if (utilizador.Pessoa.Professor) {
-  //     const aulasProfessor = await this.prisma.aula.findMany({
-  //       where: { ID_Professor: utilizador.Pessoa.Professor.ID_Pessoa, }, // Procura as aulas do prof logado
-  //       include: {
-  //         Coaching: { include: { Sala: true } }, 
-  //         Aula_Aluno: { include: { Aluno: true } } 
-  //       },
-  //       orderBy: { Data_Aula: 'asc' }
-  //     });
+    // ========================================================
+    // 1. LÓGICA PARA PROFESSORES (COACHES)
+    // ========================================================
+    if (utilizador.Pessoa.Professor) {
+      const coachingsProfessor = await this.prisma.coaching.findMany({
+        where: { ID_Professor: utilizador.Pessoa.Professor.ID_Pessoa }, 
+        include: {
+          Sala: true,
+          // Vamos buscar a tabela intermédia que vimos no teu print!
+          Coaching_Aluno: { 
+            include: { Aluno: true } 
+          }
+        },
+        orderBy: { Inicio_Coaching: 'asc' }
+      });
 
-  //     return aulasProfessor.map(aula => {
-  //       const dataStr = aula.Data_Aula.toLocaleDateString('pt-PT');
-  //       const horaInicio = aula.Data_Aula.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+      return coachingsProfessor.map(coaching => {
+        let dataStr = 'Data a definir';
+        let horaInicio = '--:--';
+        let horaFim = '--:--';
         
-  //       const duracaoMinutos = aula.Coaching?.Duracao || 60;
-  //       const horaFimObj = new Date(aula.Data_Aula.getTime() + duracaoMinutos * 60000);
-  //       const horaFim = horaFimObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+        if (coaching.Inicio_Coaching) {
+          try {
+            dataStr = coaching.Inicio_Coaching.toLocaleDateString('pt-PT');
+            horaInicio = coaching.Inicio_Coaching.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            
+            const duracaoMinutos = coaching.Duracao || 60; 
+            const horaFimObj = new Date(coaching.Inicio_Coaching.getTime() + duracaoMinutos * 60000);
+            horaFim = horaFimObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+          } catch (e) {
+            console.error('Erro ao formatar data de coaching', e);
+          }
+        }
 
-  //       const nomesClientes = aula.Aula_Aluno.map(aa => aa.Aluno.Nome).join(', ');
+        // Ir buscar os nomes através da tabela intermédia Coaching_Aluno
+        let nomeBailarino = 'Sem bailarino associado';
+        if (coaching.Coaching_Aluno && coaching.Coaching_Aluno.length > 0) {
+          nomeBailarino = coaching.Coaching_Aluno.map((ca: any) => ca.Aluno?.Nome || 'Desconhecido').join(', ');
+        } 
 
-  //       return {
-  //         sessao: aula.Resumo_Aula || 'Aula Privada / Ensaio',
-  //         cliente: nomesClientes || 'Sem aluno associado',
-  //         data: dataStr,
-  //         horario: `${horaInicio} - ${horaFim}`,
-  //         formato: aula.Coaching?.Sala?.Nome || 'Estúdio a definir' 
-  //       };
-  //     });
-  //   } 
+        return {
+          // Como não tens Tema na BD, usamos o padrão fixo
+          tema: 'Sessão de Coaching', 
+          bailarino: nomeBailarino,
+          data: dataStr,
+          horario: `${horaInicio} - ${horaFim}`,
+          formato: coaching.Sala?.Nome || 'Estúdio a definir' 
+        };
+      });
+    } 
     
-  //   else if (utilizador.Pessoa.Enc_Educacao) {
-  //     const aulasCliente = await this.prisma.aula.findMany({
-  //       where: {
-  //         Aula_Aluno: {
-  //           some: {
-  //             Aluno: { ID_Enc_Educacao: idPessoa }
-  //           }
-  //         }
-  //       },
-  //       include: {
-  //         Professor: { include: { Pessoa: true } },
-  //         Coaching: { include: { Sala: true } },
-  //         Aula_Aluno: { include: { Aluno: true } }
-  //       },
-  //       orderBy: { Data_Aula: 'asc' }
-  //     });
+    // ========================================================
+    // 2. LÓGICA PARA ENCARREGADOS DE EDUCAÇÃO (ALUNOS)
+    // ========================================================
+    else if (utilizador.Pessoa.Enc_Educacao) {
+      
+      const coachingsEducando = await this.prisma.coaching.findMany({
+        where: {
+          // A magia acontece aqui: Filtramos pela coluna ID_Enc_Educacao que vimos no print!
+          Coaching_Aluno: {
+            some: {
+              ID_Enc_Educacao: idPessoa
+            }
+          }
+        },
+        include: {
+          Professor: { include: { Pessoa: true } },
+          Sala: true,
+          // Precisamos da tabela intermédia na mesma para saber o nome da criança
+          Coaching_Aluno: {
+            include: { Aluno: true }
+          }
+        },
+        orderBy: { Inicio_Coaching: 'asc' }
+      });
 
-  //     return aulasCliente.map(aula => {
-  //       const dataStr = aula.Data_Aula.toLocaleDateString('pt-PT');
-  //       const horaInicio = aula.Data_Aula.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+      return coachingsEducando.map(coaching => {
+        let dataStr = 'Data a definir';
+        let horaInicio = '--:--';
+        let horaFim = '--:--';
         
-  //       const duracaoMinutos = aula.Coaching?.Duracao || 60;
-  //       const horaFimObj = new Date(aula.Data_Aula.getTime() + duracaoMinutos * 60000);
-  //       const horaFim = horaFimObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+        if (coaching.Inicio_Coaching) {
+          try {
+            dataStr = coaching.Inicio_Coaching.toLocaleDateString('pt-PT');
+            horaInicio = coaching.Inicio_Coaching.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            
+            const duracaoMinutos = coaching.Duracao || 60;
+            const horaFimObj = new Date(coaching.Inicio_Coaching.getTime() + duracaoMinutos * 60000);
+            horaFim = horaFimObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+          } catch (e) {
+            console.error('Erro ao formatar data de coaching', e);
+          }
+        }
 
-  //       const meusAlunosNestaAula = aula.Aula_Aluno
-  //         .filter(aa => aa.Aluno.ID_Enc_Educacao === idPessoa)
-  //         .map(aa => aa.Aluno.Nome)
-  //         .join(', ');
+        let nomeBailarino = '';
+        if (coaching.Coaching_Aluno && coaching.Coaching_Aluno.length > 0) {
+          nomeBailarino = coaching.Coaching_Aluno.map((ca: any) => ca.Aluno?.Nome || '').filter(Boolean).join(', ');
+        }
 
-  //       return {
-  //         sessao: aula.Resumo_Aula ? aula.Resumo_Aula : `Aula de Dança - ${meusAlunosNestaAula}`,
-  //         coach: aula.Professor?.Pessoa?.Nome || 'Professor a definir',
-  //         data: dataStr,
-  //         horario: `${horaInicio} - ${horaFim}`,
-  //         formato: aula.Coaching?.Sala?.Nome || 'Estúdio a definir'
-  //       };
-  //     });
-  //   }
+        const nomeCoach = (coaching.Professor as any)?.Pessoa?.Nome || 'Coach a definir';
+        const temaFormatado = nomeBailarino ? `Coaching - ${nomeBailarino}` : 'Sessão de Coaching';
+
+        return {
+          tema: temaFormatado,
+          coach: nomeCoach,
+          data: dataStr,
+          horario: `${horaInicio} - ${horaFim}`,
+          formato: coaching.Sala?.Nome || 'Estúdio a definir'
+        };
+      });
+    }
 
     return [];
-  }*/
+  }
 
   async getAlunosByEE(idEncEducacao: number) {
     return this.prisma.aluno.findMany({
@@ -413,6 +453,31 @@ export class UtilizadorService {
 
     return { message: 'Password alterada com sucesso!' };
   }
+
+
+  async updatePreferenciasAcoes(id: number, acoesIds: number[]) {
+    // 1. Verificar se o utilizador existe
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: id },
+    });
+
+    if (!utilizador) {
+      throw new NotFoundException(`Utilizador com ID ${id} não encontrado.`);
+    }
+
+    // 2. Converter o array para String JSON
+    const preferenciasJson = JSON.stringify(acoesIds);
+
+    // 3. Atualizar a coluna na base de dados (Nome correto aqui!)
+    return this.prisma.utilizador.update({
+      where: { ID_Utilizador: id },
+      data: {
+        Acoes_Rapidas: preferenciasJson, 
+      },
+    });
+  }
+
+
   async deleteUser(idUtilizador: number) {
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: idUtilizador },
@@ -449,5 +514,55 @@ export class UtilizadorService {
 
     return { mensagem: 'Utilizador eliminado com sucesso.' };
   }
+
+  async getFaturasEncarregado(idUtilizador: number) {
+  const utilizador = await this.prisma.utilizador.findUnique({
+    where: { ID_Utilizador: idUtilizador },
+    select: { ID_Pessoa: true }
+  });
+
+  if (!utilizador) {
+    return [];
+  }
+
+  // 1. Dizer ao Prisma para ir buscar os dados cruzados até à Disponibilidade
+  const faturas = await this.prisma.coaching_Aluno.findMany({
+    where: { 
+      ID_Enc_Educacao: utilizador.ID_Pessoa 
+    },
+    include: { 
+      Aluno: true,
+      Coaching: {
+        include: {
+          Disponibilidade: true // <-- Traz a Modalidade!
+        }
+      }
+    }
+  });
+
+  return faturas.map(f => {
+    const valorEmFaltaNum = f.ValorEmFalta ? Number(f.ValorEmFalta) : 0;
+    const isEmDivida = valorEmFaltaNum > 0;
+    
+    // 2. Ir buscar a Modalidade à tabela Disponibilidade (com fallback de segurança)
+    // Se o TypeScript refilar com os tipos, usamos as any para garantir que compila
+    const modalidadeOficial = (f as any).Coaching?.Disponibilidade?.Modalidade;
+    const nomeBailarino = (f as any).Aluno?.Nome || 'Aluno';
+    
+    // Cria uma string final bonita: "Ballet - Ana Malhoa" ou apenas a Modalidade
+    const modalidadeDisplay = modalidadeOficial 
+      ? `${modalidadeOficial} - ${nomeBailarino}` 
+      : f.Observacoes || `Coaching - ${nomeBailarino}`;
+
+    return {
+      Data: f.Data_Inscricao,
+      Descricao: modalidadeDisplay, // O React usa isto para a coluna "Modalidade"
+      Valor: valorEmFaltaNum,
+      Pago: !isEmDivida,
+      estado: isEmDivida ? 'EM DÍVIDA' : 'PAGO'
+    };
+  });
+}
+
 
 }

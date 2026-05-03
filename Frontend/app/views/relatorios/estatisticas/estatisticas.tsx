@@ -62,7 +62,7 @@ export function Estatisticas() {
             setACarregar(false);
         }
     };
-
+    
     useEffect(() => {
         aplicarFiltroRapido('Mes');
         const carregarPrevisao = async () => {

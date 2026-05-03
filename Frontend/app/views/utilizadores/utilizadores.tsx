@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { InputComponent } from '~/components/input/input.component';
 import { ButtonComponent } from '~/components/button/button.component';
 import { UtilizadorService } from '~/services/users.service';
+import { useSearchParams } from "react-router";
 import './utilizadores.scss';
 
 const utilizadorService = new UtilizadorService();
@@ -61,6 +62,8 @@ export function Utilizadores() {
     const [termoPesquisa, setTermoPesquisa] = useState('');
     const [loading, setLoading] = useState(true);
 
+    const [searchParams, setSearchParams] = useSearchParams();
+    
     // ==========================================
     // PAGINAÇÃO
     // ==========================================
@@ -184,6 +187,17 @@ export function Utilizadores() {
         setFicheiroFoto(null);
     };
 
+    useEffect(() => {
+        // Só entra aqui se o loading tiver acabado!
+        if (!loading && searchParams.get('novo') === 'true') {
+            abrirModalCriar();
+            
+            // Remove o parâmetro do URL
+            searchParams.delete('novo');
+            setSearchParams(searchParams, { replace: true });
+        }
+    }, [loading, searchParams, setSearchParams]); // Adicionámos o 'loading' nas dependências
+
     // ==========================================
     // MODAL CRIAR UTILIZADOR
     // ==========================================
@@ -205,9 +219,9 @@ export function Utilizadores() {
             setErrosCriar(prev => ({ ...prev, [campo]: '' }));
         }
     };
-
+    
     const validarFormNovo = (): boolean => {
-        const erros: Partial<NovoUtilizadorForm> = {};
+    const erros: Partial<NovoUtilizadorForm> = {};
 
         if (!formNovo.nome.trim()) erros.nome = 'O nome é obrigatório.';
         if (!formNovo.username.trim()) erros.username = 'O username é obrigatório.';
