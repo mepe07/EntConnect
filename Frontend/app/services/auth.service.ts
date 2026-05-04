@@ -200,7 +200,7 @@ export class AuthService {
     }
 
     /**
-     * 🚀 NOVO MÉTODO: Envia as preferências de Ações Rápidas para o Backend
+     * Atualiza as ações rápidas escolhidas pelo utilizador.
      */
     async updateQuickActionPreferences(userId: number, acoesIds: number[]) {
         const token = this.getToken(); 
@@ -209,7 +209,6 @@ export class AuthService {
             throw new Error('Utilizador não autenticado.');
         }
 
-        // Usa o apiUrl que já está definido no topo da tua classe
         const apiUrl = `${this._apiUrl}/utilizador/${userId}/preferencias-acoes`;
 
         const response = await fetch(apiUrl, {

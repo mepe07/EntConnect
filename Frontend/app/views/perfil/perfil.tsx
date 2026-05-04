@@ -9,12 +9,7 @@ import { useLocation } from 'react-router';
 type AbaTipo = 'dados_pessoais' | 'meus_coachings' | 'minhas_faturas';
 
 export function Perfil() {
-    
-    // 1. O hook location TEM de estar aqui dentro
     const location = useLocation();
-    
-    // 2. Inicializamos o estado lendo o que vem do navigate da Dashboard!
-    // Se não vier nada (abriu o menu normal), vai para 'dados_pessoais'
     const [abaAtiva, setAbaAtiva] = useState<AbaTipo>(location.state?.abaAtiva || 'dados_pessoais');
     
     const [meusCoachings, setMeusCoachings] = useState<any[]>([]);
@@ -111,12 +106,11 @@ export function Perfil() {
             }
 
             if (abaAtiva === 'minhas_faturas') {
-                //Garante que o caminho é /utilizador/encarregado/ e não /faturacao/
+                // Endpoint especifico do encarregado; nao usa a listagem administrativa de faturacao.
                 const resFaturas = await fetch(`http://localhost:3000/utilizador/encarregado/${currentUserId}`, { headers });
                 
                 if (resFaturas.ok) {
                     const dadosFaturas = await resFaturas.json();
-                    console.log("Faturas recebidas no React:", dadosFaturas); // Adiciona este log para debug
                     setMinhasFaturas(Array.isArray(dadosFaturas) ? dadosFaturas : []);
                 } else {
                     console.error("Erro ao procurar faturas. Status:", resFaturas.status);
@@ -403,9 +397,6 @@ export function Perfil() {
                             </section>
                         )}
 
-                        {/* ========================================== */}
-                        {/* ABA: OS MEUS COACHINGS */}
-                        {/* ========================================== */}
                         {abaAtiva === 'meus_coachings' && (
                             <section className="seccao-aulas">
                                 <h3>As Minhas Sessões de Coaching</h3>
@@ -419,7 +410,6 @@ export function Perfil() {
                                         <table className="tabela-custom">
                                             <thead>
                                                 <tr>
-                                                    {/* Nomes atualizados conforme o print */}
                                                     <th>Coaching</th>
                                                     <th>Professor</th>
                                                     <th>Data</th>
@@ -435,7 +425,6 @@ export function Perfil() {
                                                         <td>{sessao.data || sessao.Data}</td>
                                                         <td>{sessao.horario || sessao.Horario}</td>
                                                         <td>
-                                                            {/* Texto em maiúsculas para o Estúdio */}
                                                             <span className={`etiqueta ${String(sessao.formato || '').toLowerCase().includes('online') ? 'verde' : 'amarela'}`}>
                                                                 {String(sessao.formato || 'Presencial').toUpperCase()}
                                                             </span>
@@ -449,9 +438,6 @@ export function Perfil() {
                             </section>
                         )}
 
-                        {/* ========================================== */}
-                        {/* ABA: AS MINHAS FATURAS */}
-                        {/* ========================================== */}
                         {abaAtiva === 'minhas_faturas' && (
                             <section className="seccao-aulas">
                                 <h3>Histórico de Faturação</h3>
@@ -465,7 +451,6 @@ export function Perfil() {
                                         <table className="tabela-custom">
                                             <thead>
                                                 <tr>
-                                                    {/* Nomes atualizados conforme o print e o teu pedido */}
                                                     <th>Data</th>
                                                     <th>Modalidade</th>
                                                     <th>Valor</th>
@@ -475,7 +460,7 @@ export function Perfil() {
                                             <tbody>
                                                 {minhasFaturas.map((fatura, index) => {
                                                     const valor = fatura.Valor || fatura.valor || fatura.ValorEmFalta || 0;
-                                                    // "Modalidade" agora mapeia para a descrição/observações
+                                                    // A coluna "Modalidade" usa a descricao enviada pela API de faturacao do encarregado.
                                                     const modalidade = fatura.Descricao || fatura.descricao || fatura.Observacoes || 'Coaching';
                                                     const dataStr = fatura.Data || fatura.data || fatura.Data_Inscricao || '--/--/----';
                                                     const isEmDivida = fatura.estado === 'Em Dívida' || fatura.ValorEmFalta > 0 || fatura.Pago === false;
@@ -486,7 +471,6 @@ export function Perfil() {
                                                             <td><strong>{modalidade}</strong></td>
                                                             <td>{formatarEuros(valor)}</td>
                                                             <td>
-                                                                {/* Texto em maiúsculas: EM DÍVIDA ou PAGO */}
                                                                 <span className={`etiqueta ${isEmDivida ? 'vermelha' : 'verde'}`}>
                                                                     {isEmDivida ? 'EM DÍVIDA' : 'PAGO'}
                                                                 </span>

@@ -20,6 +20,13 @@ import { useEffect, useState } from "react";
 import { authService } from "./services/auth.service";
 import { ThemeToggle } from "./components/theme-toggle/theme-toggle";
 import { useTheme } from "./utils/theme";
+import type { User } from "./models/interfaces/user.interface";
+
+const ADMIN_ROLES_PERMITIDAS = ['Coordenador'];
+
+function temRoleAdmin(userInfo: User | null) {
+    return Boolean(userInfo && ADMIN_ROLES_PERMITIDAS.includes(userInfo.role));
+}
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -71,6 +78,7 @@ export default function App() {
     const isRotaPublicaEventos =
         location.pathname === '/eventos' ||
         location.pathname.startsWith('/eventos/');
+    const isRotaAdmin = location.pathname.startsWith('/admin');
 
     useEffect(() => {
         setDomLoaded(true);
@@ -127,6 +135,10 @@ export default function App() {
 
     if (!sessaoValida) {
         return <Navigate to="/login" replace />;
+    }
+
+    if (isRotaAdmin && !temRoleAdmin(authService.getUserInfo())) {
+        return <Navigate to="/" replace />;
     }
 
     return page;
