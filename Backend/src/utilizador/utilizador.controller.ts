@@ -64,6 +64,7 @@ import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autentica
  */
 
 @ApiTags('Utilizadores')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('utilizador')
 export class UtilizadorController {
   constructor(

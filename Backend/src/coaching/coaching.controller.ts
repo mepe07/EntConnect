@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   UnauthorizedException,
   Headers,
+  UseGuards,
 } from '@nestjs/common';
 import { CoachingService } from './coaching.service';
 import { CreateCoachingDto } from './dto/create-coaching.dto';
@@ -21,11 +22,14 @@ import { ModalidadeService } from './modalidade/modalidade.service';
 import { CreateModalidadeDto } from './dto/create-modalidade.dto';
 import { UpdateModalidadeDto } from './dto/update-modalidade.dto';
 import { InscreverAlunoDto } from './dto/inscrever-aluno.dto';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { AuthGuard } from '../auth/auth.guard';
 /**
  * Controlador responsavel pelos pedidos de Coaching.
  */
 
 @ApiTags('Coaching')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('coaching')
 export class CoachingController {
   constructor(

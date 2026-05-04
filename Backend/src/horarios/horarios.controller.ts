@@ -7,17 +7,21 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { HorariosService } from './horarios.service';
 import { CreateAulaFixaDto } from './dto/create-aula-fixa.dto';
 import { CreateExcecaoAulaFixaDto } from './dto/create-excecao-aula-fixa.dto';
 import { UpdateAulaFixaDto } from './dto/update-aula-fixa.dto';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { AuthGuard } from '../auth/auth.guard';
 /**
  * Controlador responsavel pelos pedidos de Horarios.
  */
 
 @ApiTags('Horários')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('horarios')
 export class HorariosController {
   constructor(private readonly horariosService: HorariosService) {}

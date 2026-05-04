@@ -7,16 +7,20 @@ import {
   Patch,
   Post,
   Param,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateModalidadeDto } from './dto/create-modalidade.dto';
 import { UpdateModalidadeDto } from './dto/update-modalidade.dto';
 import { ModalidadeService } from './modalidade/modalidade.service';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { AuthGuard } from '../auth/auth.guard';
 /**
  * Controlador responsavel pelos pedidos de Modalidade.
  */
 
 @ApiTags('Modalidades')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('modalidade')
 export class ModalidadeController {
   constructor(private readonly modalidadeService: ModalidadeService) {}

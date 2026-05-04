@@ -6,14 +6,20 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { SalasService } from './salas.service';
 import { CreateSalaDto } from './dto/create-sala.dto';
 import { UpdateSalaDto } from './dto/update-sala.dto';
+import { ApiTags } from '@nestjs/swagger/dist/decorators/api-use-tags.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { AuthGuard } from '../auth/auth.guard';
 /**
  * Controlador responsavel pelos pedidos de Salas.
  */
 
+@ApiTags('Salas')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('salas')
 export class SalasController {
   constructor(private readonly salasService: SalasService) {}

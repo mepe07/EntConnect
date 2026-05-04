@@ -25,10 +25,12 @@ import { Role } from '../auth/enums/roles.enum';
 import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 import { FileInterceptor } from '@nestjs/platform-express';
 import 'multer';
+import { ApiTags } from '@nestjs/swagger/dist/decorators/api-use-tags.decorator';
 /**
  * Controlador responsavel pelos pedidos de Eventos.
  */
 
+@ApiTags('Eventos')
 @Controller('eventos')
 export class EventosController {
   constructor(private readonly eventosService: EventosService) {}

@@ -10,15 +10,20 @@ import {
   BadRequestException,
   Headers,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { FaturacaoService } from './faturacao.service';
 import { CreateFaturacaoDto } from './dto/create-faturacao.dto';
 import { UpdateFaturacaoDto } from './dto/update-faturacao.dto';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { AuthGuard } from '../auth/auth.guard';
 /**
  * Controlador responsavel pelos pedidos de Faturacao.
  */
 
+@ApiTags('Faturacao')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('faturacao')
 export class FaturacaoController {
   constructor(private readonly faturacaoService: FaturacaoService) {}

@@ -1,11 +1,14 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { EstatisticasService } from './estatisticas.service';
 import { ApiTags } from '@nestjs/swagger';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { AuthGuard } from '../auth/auth.guard';
 /**
  * Controlador responsavel pelos pedidos de Estatisticas.
  */
 
 @ApiTags('Estatisticas')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('estatisticas')
 export class EstatisticasController {
   constructor(private readonly estatisticasService: EstatisticasService) {}
