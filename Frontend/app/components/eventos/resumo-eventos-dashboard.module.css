@@ -432,3 +432,43 @@
         height: 56px;
     }
 }
+
+:global(body.entconnect-dark) .section,
+:global(body.entconnect-dark) .featuredCard,
+:global(body.entconnect-dark) .compactCard,
+:global(body.entconnect-dark) .infoRow span,
+:global(body.entconnect-dark) .sideEmpty,
+:global(body.entconnect-dark) .skeletonCard,
+:global(body.entconnect-dark) .emptyState {
+    background: #111827 !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+}
+
+:global(body.entconnect-dark) .titleBlock h2,
+:global(body.entconnect-dark) .featuredBody h3,
+:global(body.entconnect-dark) .compactBody h4,
+:global(body.entconnect-dark) .emptyState h3 {
+    color: #f8fafc !important;
+}
+
+:global(body.entconnect-dark) .titleBlock p,
+:global(body.entconnect-dark) .featuredBody p,
+:global(body.entconnect-dark) .compactInfo span,
+:global(body.entconnect-dark) .sideEmpty p,
+:global(body.entconnect-dark) .emptyState p {
+    color: #94a3b8 !important;
+}
+
+:global(body.entconnect-dark) .dateBox {
+    background: #1f2937 !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+:global(body.entconnect-dark) .badge,
+:global(body.entconnect-dark) .statusBadge,
+:global(body.entconnect-dark) .badgeSmall {
+    color: #0f172a !important;
+}

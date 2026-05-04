@@ -4,6 +4,8 @@ import { useNavigate, useSearchParams } from 'react-router';
 import { AuthService } from '../../services/auth.service';
 import { EventoLoginToast } from '~/components/eventos/evento-login-toast.component';
 import styles from './login.module.css';
+import { ThemeToggle } from '~/components/theme-toggle/theme-toggle';
+import { useTheme } from '~/utils/theme';
 
 const CITACOES = [
     "«O EntConnect reduziu a nossa burocracia em 60%.»",
@@ -34,7 +36,7 @@ export function Login() {
 
     const [mostrarPassword, setMostrarPassword] = useState(false);
     const [mostrarNovaPassword, setMostrarNovaPassword] = useState(false);
-    const [darkTheme, setDarkTheme] = useState(true);
+    const { isDarkTheme } = useTheme();
     const [lembrarMe, setLembrarMe] = useState(false);
     const [capsLockAtivo, setCapsLockAtivo] = useState(false);
 
@@ -364,14 +366,8 @@ export function Login() {
             : 'Escolha uma nova password para a sua conta.';
 
     return (
-        <div className={`${styles.loginContainer} ${darkTheme ? styles.dark : ''}`}>
-            <button
-                className={styles.themeToggle}
-                onClick={() => setDarkTheme(!darkTheme)}
-                title="Alternar Modo Escuro"
-            >
-                {darkTheme ? '☀️' : '🌙'}
-            </button>
+        <div className={`${styles.loginContainer} ${isDarkTheme ? styles.dark : ''}`}>
+            <ThemeToggle className={styles.themeToggle} />
 
             <div className={styles.brandPanel}>
                 <div className={styles.brandContent}>

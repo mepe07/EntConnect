@@ -16,7 +16,9 @@ describe('EstatisticasController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [EstatisticasController],
-      providers: [{ provide: EstatisticasService, useValue: estatisticasServiceMock }],
+      providers: [
+        { provide: EstatisticasService, useValue: estatisticasServiceMock },
+      ],
     }).compile();
 
     controller = module.get<EstatisticasController>(EstatisticasController);
@@ -41,15 +43,25 @@ describe('EstatisticasController', () => {
     const resposta = { totalEducandos: 2 };
     estatisticasServiceMock.getDashboardEncarregado.mockResolvedValue(resposta);
 
-    await expect(controller.getDashboardEncarregado('7')).resolves.toBe(resposta);
-    expect(estatisticasServiceMock.getDashboardEncarregado).toHaveBeenCalledWith(7);
+    await expect(controller.getDashboardEncarregado('7')).resolves.toBe(
+      resposta,
+    );
+    expect(
+      estatisticasServiceMock.getDashboardEncarregado,
+    ).toHaveBeenCalledWith(7);
   });
 
   it('deve converter id e delegar dashboard do professor com datas', async () => {
     const resposta = { sessoesConcluidas: 1 };
     estatisticasServiceMock.getDashboardProfessor.mockResolvedValue(resposta);
 
-    await expect(controller.getDashboardProfessor('9', '2026-05-01', '2026-05-31')).resolves.toBe(resposta);
-    expect(estatisticasServiceMock.getDashboardProfessor).toHaveBeenCalledWith(9, '2026-05-01', '2026-05-31');
+    await expect(
+      controller.getDashboardProfessor('9', '2026-05-01', '2026-05-31'),
+    ).resolves.toBe(resposta);
+    expect(estatisticasServiceMock.getDashboardProfessor).toHaveBeenCalledWith(
+      9,
+      '2026-05-01',
+      '2026-05-31',
+    );
   });
 });

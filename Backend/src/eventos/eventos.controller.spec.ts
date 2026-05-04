@@ -40,14 +40,20 @@ describe('EventosController', () => {
   it('deve delegar rotas públicas', async () => {
     eventosServiceMock.listarEventosPublicos.mockResolvedValue([]);
     eventosServiceMock.listarEventosLoginToast.mockResolvedValue([]);
-    eventosServiceMock.obterEventoPublicoPorSlug.mockResolvedValue({ slug: 'workshop' });
+    eventosServiceMock.obterEventoPublicoPorSlug.mockResolvedValue({
+      slug: 'workshop',
+    });
 
     await controller.listarEventosPublicos({ pesquisa: 'work' } as any);
     await controller.listarEventosLoginToast();
     await controller.obterEventoPublicoPorSlug('workshop');
 
-    expect(eventosServiceMock.listarEventosPublicos).toHaveBeenCalledWith({ pesquisa: 'work' });
-    expect(eventosServiceMock.obterEventoPublicoPorSlug).toHaveBeenCalledWith('workshop');
+    expect(eventosServiceMock.listarEventosPublicos).toHaveBeenCalledWith({
+      pesquisa: 'work',
+    });
+    expect(eventosServiceMock.obterEventoPublicoPorSlug).toHaveBeenCalledWith(
+      'workshop',
+    );
   });
 
   it('deve delegar rotas de gestão com utilizador autenticado', async () => {
@@ -61,12 +67,29 @@ describe('EventosController', () => {
     await controller.listarEventosGestao({ ativo: true } as any, req);
     await controller.obterEventoGestao(1, req);
     await controller.criarEvento({ titulo: 'Evento' } as any, req, undefined);
-    await controller.atualizarEvento(2, { titulo: 'Novo' } as any, req, undefined);
+    await controller.atualizarEvento(
+      2,
+      { titulo: 'Novo' } as any,
+      req,
+      undefined,
+    );
     await controller.removerEvento(3, req);
     await controller.reativarEvento(4, req);
 
-    expect(eventosServiceMock.listarEventosGestao).toHaveBeenCalledWith({ ativo: true }, req.user);
-    expect(eventosServiceMock.criarEvento).toHaveBeenCalledWith({ titulo: 'Evento' }, req.user, undefined);
-    expect(eventosServiceMock.atualizarEvento).toHaveBeenCalledWith(2, { titulo: 'Novo' }, req.user, undefined);
+    expect(eventosServiceMock.listarEventosGestao).toHaveBeenCalledWith(
+      { ativo: true },
+      req.user,
+    );
+    expect(eventosServiceMock.criarEvento).toHaveBeenCalledWith(
+      { titulo: 'Evento' },
+      req.user,
+      undefined,
+    );
+    expect(eventosServiceMock.atualizarEvento).toHaveBeenCalledWith(
+      2,
+      { titulo: 'Novo' },
+      req.user,
+      undefined,
+    );
   });
 });

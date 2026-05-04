@@ -5,17 +5,31 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/roles.enum';
 import { CalendarioService } from './calendario.service';
+/**
+ * Controlador responsavel pelos pedidos de Calendario.
+ */
 
 @ApiTags('Calendário')
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('calendario')
 export class CalendarioController {
   constructor(private readonly calendarioService: CalendarioService) {}
+  /**
+   * Executa a operacao get calendario.
+   * @param start Dados recebidos para a operacao.
+   * @param end Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   @Get()
   @Roles(Role.COORDENADOR)
-  @ApiOperation({ summary: 'Obter eventos e sessões de coaching por intervalo de datas' })
-  @ApiResponse({ status: 200, description: 'Retorna eventos e coaching para o calendário' })
+  @ApiOperation({
+    summary: 'Obter eventos e sessões de coaching por intervalo de datas',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Retorna eventos e coaching para o calendário',
+  })
   async getCalendario(
     @Query('start') start?: string,
     @Query('end') end?: string,

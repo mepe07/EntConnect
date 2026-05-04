@@ -1,16 +1,16 @@
 import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Param,
-    Patch,
-    Post,
-    Query,
-    Request,
-    UseGuards,
-    UseInterceptors,
-    UploadedFile,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -30,178 +30,258 @@ import { RegistarInteresseMarketplaceDto } from './dto/registar-interesse-market
 import { CriarItemInventarioDto } from './dto/criar-item-inventario.dto';
 import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 
-/**
- * Roles com acesso às funcionalidades normais do Marketplace.
- */
 const TODAS_AS_ROLES_MARKETPLACE = [
-    Role.COORDENADOR,
-    Role.PROFESSOR,
-    Role.ENC_EDUCACAO,
+  Role.COORDENADOR,
+  Role.PROFESSOR,
+  Role.ENC_EDUCACAO,
 ];
+/**
+ * Controlador responsavel pelos pedidos de Marketplace.
+ */
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('marketplace')
-/**
- * Controller dos endpoints do Marketplace, moderação e inventário escolar.
- */
 export class MarketplaceController {
-    constructor(private readonly marketplaceService: MarketplaceService) { }
+  constructor(private readonly marketplaceService: MarketplaceService) {}
+  /**
+   * Executa a operacao listar anuncios moderacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    @Roles(Role.COORDENADOR)
-    @Get('anuncios/moderacao')
-    listarAnunciosModeracao(@Request() req: { user: UtilizadorAutenticado }) {
-        return this.marketplaceService.listarAnunciosModeracao(req.user);
-    }
+  @Roles(Role.COORDENADOR)
+  @Get('anuncios/moderacao')
+  listarAnunciosModeracao(@Request() req: { user: UtilizadorAutenticado }) {
+    return this.marketplaceService.listarAnunciosModeracao(req.user);
+  }
+  /**
+   * Executa a operacao listar registo moderacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    @Roles(Role.COORDENADOR)
-    @Get('moderacao/registo')
-    listarRegistoModeracao(@Request() req: { user: UtilizadorAutenticado }) {
-        return this.marketplaceService.listarRegistoModeracao(req.user);
-    }
+  @Roles(Role.COORDENADOR)
+  @Get('moderacao/registo')
+  listarRegistoModeracao(@Request() req: { user: UtilizadorAutenticado }) {
+    return this.marketplaceService.listarRegistoModeracao(req.user);
+  }
+  /**
+   * Executa a operacao moderar anuncio.
+   * @param idArtigo Dados recebidos para a operacao.
+   * @param dto Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    @Roles(Role.COORDENADOR)
-    @Post('anuncios/:id/moderar')
-    moderarAnuncio(
-        @Param('id') idArtigo: string,
-        @Body() dto: ModerarAnuncioMarketplaceDto,
-        @Request() req: { user: UtilizadorAutenticado },
-    ) {
-        return this.marketplaceService.moderarAnuncio(+idArtigo, dto, req.user);
-    }
+  @Roles(Role.COORDENADOR)
+  @Post('anuncios/:id/moderar')
+  moderarAnuncio(
+    @Param('id') idArtigo: string,
+    @Body() dto: ModerarAnuncioMarketplaceDto,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.marketplaceService.moderarAnuncio(+idArtigo, dto, req.user);
+  }
+  /**
+   * Executa a operacao listar inventario da escola.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    // ========================================================================
-    // INVENTÁRIO DA ESCOLA
-    // ========================================================================
-    // Rotas exclusivas da Coordenadora.
-    // Permitem gerir o inventário interno e publicar itens como anúncios.
-    // ========================================================================
+  @Roles(Role.COORDENADOR)
+  @Get('inventario-escola')
+  listarInventarioDaEscola(@Request() req: { user: UtilizadorAutenticado }) {
+    return this.marketplaceService.listarInventarioDaEscola(req.user);
+  }
+  /**
+   * Executa a operacao listar inventario disponivel para publicacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    @Roles(Role.COORDENADOR)
-    @Get('inventario-escola')
-    listarInventarioDaEscola(@Request() req: { user: UtilizadorAutenticado }) {
-        return this.marketplaceService.listarInventarioDaEscola(req.user);
-    }
+  @Roles(Role.COORDENADOR)
+  @Get('inventario-escola/disponivel-para-publicacao')
+  listarInventarioDisponivelParaPublicacao(
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.marketplaceService.listarInventarioDisponivelParaPublicacao(
+      req.user,
+    );
+  }
+  /**
+   * Executa a operacao publicar inventario da escola.
+   * @param dto Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    @Roles(Role.COORDENADOR)
-    @Get('inventario-escola/disponivel-para-publicacao')
-    listarInventarioDisponivelParaPublicacao(
-        @Request() req: { user: UtilizadorAutenticado },
-    ) {
-        return this.marketplaceService.listarInventarioDisponivelParaPublicacao(req.user);
-    }
+  @Roles(Role.COORDENADOR)
+  @Post('inventario-escola/publicar')
+  publicarInventarioDaEscola(
+    @Body() dto: PublicarInventarioEscolaDto,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.marketplaceService.publicarInventarioDaEscola(dto, req.user);
+  }
+  /**
+   * Executa a operacao criar item inventario.
+   * @param dto Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @param file Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    @Roles(Role.COORDENADOR)
-    @Post('inventario-escola/publicar')
-    publicarInventarioDaEscola(
-        @Body() dto: PublicarInventarioEscolaDto,
-        @Request() req: { user: UtilizadorAutenticado },
-    ) {
-        return this.marketplaceService.publicarInventarioDaEscola(dto, req.user);
-    }
+  @Roles(Role.COORDENADOR)
+  @Post('inventario')
+  @UseInterceptors(FileInterceptor('foto'))
+  criarItemInventario(
+    @Body() dto: CriarItemInventarioDto,
+    @Request() req: { user: UtilizadorAutenticado },
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.marketplaceService.criarItemInventario(dto, req.user, file);
+  }
+  /**
+   * Executa a operacao listar anuncios.
+   * @param filtros Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    @Roles(Role.COORDENADOR)
-    @Post('inventario')
-    @UseInterceptors(FileInterceptor('foto')) // O nome 'foto' tem de bater certo com o FormData do frontend.
-    criarItemInventario(
-        @Body() dto: CriarItemInventarioDto,
-        @Request() req: { user: UtilizadorAutenticado },
-        @UploadedFile() file?: Express.Multer.File,
-    ) {
-        return this.marketplaceService.criarItemInventario(dto, req.user, file);
-    }
+  @Roles(...TODAS_AS_ROLES_MARKETPLACE)
+  @Get('anuncios')
+  listarAnuncios(@Query() filtros: ListarAnunciosMarketplaceDto) {
+    return this.marketplaceService.listarAnuncios(filtros);
+  }
+  /**
+   * Executa a operacao listar meus anuncios.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    // ========================================================================
-    // MARKETPLACE GERAL
-    // ========================================================================
-    // Rotas acessíveis a Coordenador, Professor e Encarregado de Educação.
-    // Incluem listagem, criação, edição e remoção de anúncios.
-    // ========================================================================
+  @Roles(...TODAS_AS_ROLES_MARKETPLACE)
+  @Get('meus-anuncios')
+  listarMeusAnuncios(@Request() req: { user: UtilizadorAutenticado }) {
+    return this.marketplaceService.listarMeusAnuncios(req.user);
+  }
+  /**
+   * Executa a operacao obter anuncio.
+   * @param idArtigo Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    @Roles(...TODAS_AS_ROLES_MARKETPLACE)
-    @Get('anuncios')
-    listarAnuncios(@Query() filtros: ListarAnunciosMarketplaceDto) {
-        return this.marketplaceService.listarAnuncios(filtros);
-    }
+  @Roles(...TODAS_AS_ROLES_MARKETPLACE)
+  @Get('anuncios/:id')
+  obterAnuncio(@Param('id') idArtigo: string) {
+    return this.marketplaceService.obterAnuncio(+idArtigo);
+  }
+  /**
+   * Executa a operacao criar anuncio.
+   * @param dto Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @param file Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    @Roles(...TODAS_AS_ROLES_MARKETPLACE)
-    @Get('meus-anuncios')
-    listarMeusAnuncios(@Request() req: { user: UtilizadorAutenticado }) {
-        return this.marketplaceService.listarMeusAnuncios(req.user);
-    }
+  @Roles(...TODAS_AS_ROLES_MARKETPLACE)
+  @Post('anuncios')
+  @UseInterceptors(FileInterceptor('foto'))
+  criarAnuncio(
+    @Body() dto: CriarAnuncioMarketplaceDto,
+    @Request() req: { user: UtilizadorAutenticado },
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.marketplaceService.criarAnuncio(dto, req.user, file);
+  }
+  /**
+   * Executa a operacao atualizar anuncio.
+   * @param idArtigo Dados recebidos para a operacao.
+   * @param dto Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @param file Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    @Roles(...TODAS_AS_ROLES_MARKETPLACE)
-    @Get('anuncios/:id')
-    obterAnuncio(@Param('id') idArtigo: string) {
-        return this.marketplaceService.obterAnuncio(+idArtigo);
-    }
+  @Roles(...TODAS_AS_ROLES_MARKETPLACE)
+  @Patch('anuncios/:id')
+  @UseInterceptors(FileInterceptor('foto'))
+  atualizarAnuncio(
+    @Param('id') idArtigo: string,
+    @Body() dto: AtualizarAnuncioMarketplaceDto,
+    @Request() req: { user: UtilizadorAutenticado },
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.marketplaceService.atualizarAnuncio(
+      +idArtigo,
+      dto,
+      req.user,
+      file,
+    );
+  }
+  /**
+   * Executa a operacao alterar estado.
+   * @param idArtigo Dados recebidos para a operacao.
+   * @param dto Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    @Roles(...TODAS_AS_ROLES_MARKETPLACE)
-    @Post('anuncios')
-    @UseInterceptors(FileInterceptor('foto')) // Interceta o campo 'foto' enviado no FormData.
-    criarAnuncio(
-        @Body() dto: CriarAnuncioMarketplaceDto,
-        @Request() req: { user: UtilizadorAutenticado },
-        @UploadedFile() file?: Express.Multer.File,
-    ) {
-        return this.marketplaceService.criarAnuncio(dto, req.user, file);
-    }
+  @Roles(...TODAS_AS_ROLES_MARKETPLACE)
+  @Patch('anuncios/:id/estado')
+  alterarEstado(
+    @Param('id') idArtigo: string,
+    @Body() dto: AlterarEstadoAnuncioDto,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.marketplaceService.alterarEstado(+idArtigo, dto, req.user);
+  }
+  /**
+   * Executa a operacao remover anuncio.
+   * @param idArtigo Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    @Roles(...TODAS_AS_ROLES_MARKETPLACE)
-    @Patch('anuncios/:id')
-    @UseInterceptors(FileInterceptor('foto'))
-    atualizarAnuncio(
-        @Param('id') idArtigo: string,
-        @Body() dto: AtualizarAnuncioMarketplaceDto,
-        @Request() req: { user: UtilizadorAutenticado },
-        @UploadedFile() file?: Express.Multer.File,
-    ) {
-        return this.marketplaceService.atualizarAnuncio(+idArtigo, dto, req.user, file);
-    }
+  @Roles(...TODAS_AS_ROLES_MARKETPLACE)
+  @Delete('anuncios/:id')
+  removerAnuncio(
+    @Param('id') idArtigo: string,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.marketplaceService.removerAnuncio(+idArtigo, req.user);
+  }
+  /**
+   * Executa a operacao registar interesse.
+   * @param idArtigo Dados recebidos para a operacao.
+   * @param dto Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    @Roles(...TODAS_AS_ROLES_MARKETPLACE)
-    @Patch('anuncios/:id/estado')
-    alterarEstado(
-        @Param('id') idArtigo: string,
-        @Body() dto: AlterarEstadoAnuncioDto,
-        @Request() req: { user: UtilizadorAutenticado },
-    ) {
-        return this.marketplaceService.alterarEstado(+idArtigo, dto, req.user);
-    }
+  @Roles(...TODAS_AS_ROLES_MARKETPLACE)
+  @Post('anuncios/:id/interesse')
+  registarInteresse(
+    @Param('id') idArtigo: string,
+    @Body() dto: RegistarInteresseMarketplaceDto,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.marketplaceService.registarInteresse(+idArtigo, dto, req.user);
+  }
+  /**
+   * Executa a operacao listar interesses do anuncio.
+   * @param idArtigo Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    @Roles(...TODAS_AS_ROLES_MARKETPLACE)
-    @Delete('anuncios/:id')
-    removerAnuncio(
-        @Param('id') idArtigo: string,
-        @Request() req: { user: UtilizadorAutenticado },
-    ) {
-        return this.marketplaceService.removerAnuncio(+idArtigo, req.user);
-    }
-
-    // ========================================================================
-    // INTERESSES EM ANÚNCIOS
-    // ========================================================================
-    // Rotas acessíveis a Coordenador, Professor e Encarregado de Educação.
-    //
-    // A role deixa o utilizador entrar na rota.
-    // A regra de "owner" continua no service, porque depende do anúncio concreto.
-    // ========================================================================
-
-    @Roles(...TODAS_AS_ROLES_MARKETPLACE)
-    @Post('anuncios/:id/interesse')
-    registarInteresse(
-        @Param('id') idArtigo: string,
-        @Body() dto: RegistarInteresseMarketplaceDto,
-        @Request() req: { user: UtilizadorAutenticado },
-    ) {
-        return this.marketplaceService.registarInteresse(+idArtigo, dto, req.user);
-    }
-
-    @Roles(...TODAS_AS_ROLES_MARKETPLACE)
-    @Get('anuncios/:id/interesses')
-    listarInteressesDoAnuncio(
-        @Param('id') idArtigo: string,
-        @Request() req: { user: UtilizadorAutenticado },
-    ) {
-        return this.marketplaceService.listarInteressesDoAnuncio(+idArtigo, req.user);
-    }
-} 
+  @Roles(...TODAS_AS_ROLES_MARKETPLACE)
+  @Get('anuncios/:id/interesses')
+  listarInteressesDoAnuncio(
+    @Param('id') idArtigo: string,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.marketplaceService.listarInteressesDoAnuncio(
+      +idArtigo,
+      req.user,
+    );
+  }
+}

@@ -346,3 +346,58 @@
 		opacity: 1;
 	}
 }
+
+body.entconnect-dark {
+	.crud-container {
+		color: #e2e8f0;
+
+		.crud-header .textos {
+			h1 { color: #f8fafc !important; }
+			p { color: #cbd5e1 !important; }
+		}
+
+		.crud-toolbar,
+		.tabela-wrapper,
+		.modal-overlay .modal-content,
+		.modal-overlay .modal-content .modal-footer {
+			background-color: #111827 !important;
+			border-color: #334155 !important;
+			color: #e2e8f0 !important;
+		}
+
+		.tabela-crud {
+			th {
+				background-color: #1f2937 !important;
+				border-color: #334155 !important;
+				color: #cbd5e1 !important;
+			}
+
+			td {
+				border-color: #334155 !important;
+				color: #e2e8f0 !important;
+			}
+
+			tr:hover {
+				background-color: rgba(148, 163, 184, 0.12) !important;
+			}
+		}
+
+		.modal-overlay .modal-content {
+			.modal-header {
+				border-color: #334155 !important;
+
+				h2 { color: #f8fafc !important; }
+			}
+
+			.modal-body .form-group label {
+				color: #cbd5e1 !important;
+			}
+
+			.modal-footer button.btn-secundario {
+				background: #1f2937 !important;
+				border-color: #475569 !important;
+				color: #e2e8f0 !important;
+			}
+		}
+	}
+}

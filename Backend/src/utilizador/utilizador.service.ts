@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { CreateUtilizadorDto } from './dto/create-utilizador.dto';
 import { UpdateUtilizadorDto } from './dto/update-utilizador.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -6,20 +11,19 @@ import { UpdatePessoalDto } from './dto/update-pessoal.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
 import { UpsertEducandoDto } from './dto/upsert-educando.dto';
+/**
+ * Servico responsavel pela logica de Utilizador.
+ */
 
 @Injectable()
-/**
- * Serviço responsável pela gestão de utilizadores, cargos, passwords e educandos.
- */
 export class UtilizadorService {
-
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Lista utilizadores com os respetivos dados base e cargo resolvido.
-   *
-   * @returns Utilizadores formatados para a camada de apresentação.
+   * Executa a operacao get all users.
+   * @returns Resultado da operacao.
    */
+
   async getAllUsers() {
     const utilizadoresRaw = await this.prisma.utilizador.findMany({
       include: {
@@ -28,14 +32,13 @@ export class UtilizadorService {
             Professor: true,
             Coordenador: true,
             Direcao: true,
-            Enc_Educacao: true
-          }
-        }
-      }
+            Enc_Educacao: true,
+          },
+        },
+      },
     });
 
     return utilizadoresRaw.map((user) => {
-      
       let cargoAtribuido = 'Sem Cargo';
 
       if (user.Pessoa?.Professor) {
@@ -63,35 +66,47 @@ export class UtilizadorService {
   }
 
   /**
-   * Cria um utilizador com pessoa e role inicial associadas.
-   *
-   * @param createUtilizadorDto - Dados do novo utilizador.
-   * @returns Resumo do utilizador criado.
+   * Executa a operacao create user.
+   * @param createUtilizadorDto Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
    */
+
   async createUser(createUtilizadorDto: CreateUtilizadorDto) {
-    const { nome, username, email, contacto, nif, dataNascimento, cargo, password } = createUtilizadorDto;
+    const {
+      nome,
+      username,
+      email,
+      contacto,
+      nif,
+      dataNascimento,
+      cargo,
+      password,
+    } = createUtilizadorDto;
 
     const existente = await this.prisma.utilizador.findFirst({
       where: {
-        OR: [
-          { Utilizador: username },
-          { Pessoa: { Email: email } },
-        ],
+        OR: [{ Utilizador: username }, { Pessoa: { Email: email } }],
       },
     });
 
     if (existente) {
-      throw new ConflictException('Já existe um utilizador com esse username ou email.');
+      throw new ConflictException(
+        'Já existe um utilizador com esse username ou email.',
+      );
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const dadosCargo =
-      cargo === 'Professor'                  ? { Professor: { create: {} } } :
-      cargo === 'Coordenador'                ? { Coordenador: { create: {} } } :
-      cargo === 'Direção'                    ? { Direcao: { create: {} } } :
-      cargo === 'Encarregado de Educação'    ? { Enc_Educacao: { create: {} } } :
-      {};
+      cargo === 'Professor'
+        ? { Professor: { create: {} } }
+        : cargo === 'Coordenador'
+          ? { Coordenador: { create: {} } }
+          : cargo === 'Direção'
+            ? { Direcao: { create: {} } }
+            : cargo === 'Encarregado de Educação'
+              ? { Enc_Educacao: { create: {} } }
+              : {};
 
     const novoUtilizador = await this.prisma.utilizador.create({
       data: {
@@ -120,11 +135,11 @@ export class UtilizadorService {
   }
 
   /**
-   * Obtém os identificadores específicos de cada role associada ao utilizador.
-   *
-   * @param idUtilizador - Identificador do utilizador.
-   * @returns IDs resolvidos para professor, encarregado de educação e coordenador.
+   * Executa a operacao get roles ids.
+   * @param idUtilizador Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
    */
+
   async getRolesIds(idUtilizador: number) {
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: idUtilizador },
@@ -140,90 +155,130 @@ export class UtilizadorService {
     });
 
     if (!utilizador) {
-      throw new NotFoundException(`Utilizador com ID ${idUtilizador} não encontrado.`);
+      throw new NotFoundException(
+        `Utilizador com ID ${idUtilizador} não encontrado.`,
+      );
     }
 
     return {
-      idProfessor: utilizador.Pessoa?.Professor ? utilizador.Pessoa.Professor.ID_Pessoa : null,
-      idEncEducacao: utilizador.Pessoa?.Enc_Educacao ? utilizador.Pessoa.Enc_Educacao.ID_Pessoa : null,
-      idCoordenador: utilizador.Pessoa?.Coordenador ? utilizador.Pessoa.Coordenador.ID_Pessoa : null,
-      idPessoaBase: utilizador.ID_Pessoa
+      idProfessor: utilizador.Pessoa?.Professor
+        ? utilizador.Pessoa.Professor.ID_Pessoa
+        : null,
+      idEncEducacao: utilizador.Pessoa?.Enc_Educacao
+        ? utilizador.Pessoa.Enc_Educacao.ID_Pessoa
+        : null,
+      idCoordenador: utilizador.Pessoa?.Coordenador
+        ? utilizador.Pessoa.Coordenador.ID_Pessoa
+        : null,
+      idPessoaBase: utilizador.ID_Pessoa,
     };
   }
 
+  /**
+   * Executa a operacao block user.
+   * @param id Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
   async blockUser(id: number) {
-    // Vai à tabela utilizador, procura pelo ID e atualiza o campo ativo para false
     return this.prisma.utilizador.update({
-      where: {ID_Utilizador: id},
-      data: {Ativo: false}
-    })
+      where: { ID_Utilizador: id },
+      data: { Ativo: false },
+    });
   }
+
+  /**
+   * Executa a operacao unlock user.
+   * @param id Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   async unlockUser(id: number) {
-    // Vai à tabela utilizador, procura pelo ID e atualiza o campo ativo para true
     return this.prisma.utilizador.update({
-      where: {ID_Utilizador: id},
-      data: {Ativo: true}
-    })
+      where: { ID_Utilizador: id },
+      data: { Ativo: true },
+    });
   }
 
+  /**
+   * Executa a operacao update password.
+   * @param id Dados recebidos para a operacao.
+   * @param plainPassword Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
   async updatePassword(id: number, plainPassword: string) {
-    // Verifica se o utilizador existe
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: id },
     });
- 
+
     if (!utilizador) {
       throw new NotFoundException(`Utilizador com ID ${id} não encontrado.`);
     }
- 
-    // Faz o hash da nova password antes de guardar
+
     const hashedPassword = await bcrypt.hash(plainPassword, 10);
- 
+
     return this.prisma.utilizador.update({
       where: { ID_Utilizador: id },
       data: { Password: hashedPassword },
     });
   }
 
+  /**
+   * Executa a operacao upload photo.
+   * @param url Dados recebidos para a operacao.
+   * @param id Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
   async UploadPhoto(url: string, id: number) {
     return this.prisma.utilizador.update({
       where: { ID_Utilizador: id },
       data: {
-        Pessoa: { 
+        Pessoa: {
           update: {
             Foto: url,
           },
         },
       },
       include: {
-        Pessoa: true, 
-      }
+        Pessoa: true,
+      },
     });
   }
 
+  /**
+   * Executa a operacao remove photo.
+   * @param id Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
   async RemovePhoto(id: number) {
-    // 1. Encontra o Utilizador para descobrir o seu ID_Pessoa
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: id },
       select: { ID_Pessoa: true },
     });
 
     if (!utilizador) {
-      throw new NotFoundException(`Utilizador com ID ${id} não encontrado.`); 
+      throw new NotFoundException(`Utilizador com ID ${id} não encontrado.`);
     }
-    
-    // 2. Vai à tabela Pessoa e coloca a foto a null (vazio)
+
     return this.prisma.pessoa.update({
       where: { ID_Pessoa: utilizador.ID_Pessoa },
       data: { Foto: null },
     });
   }
 
+  /**
+   * Executa a operacao get foto perfil.
+   * @param id Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
   async getFotoPerfil(id: number) {
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: id },
-      include: { Pessoa: true } 
+      include: { Pessoa: true },
     });
 
     if (!utilizador || !utilizador.Pessoa) {
@@ -233,11 +288,18 @@ export class UtilizadorService {
     return {
       id: id,
       url: utilizador.Pessoa.Foto || null,
-      mensagem: utilizador.Pessoa.Foto ? 'Foto encontrada.' : 'Este utilizador não tem foto de perfil.'
+      mensagem: utilizador.Pessoa.Foto
+        ? 'Foto encontrada.'
+        : 'Este utilizador não tem foto de perfil.',
     };
   }
-  
-  
+
+  /**
+   * Executa a operacao get meus coachings.
+   * @param id Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
   async getMeusCoachings(id: number) {
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: id },
@@ -245,10 +307,10 @@ export class UtilizadorService {
         Pessoa: {
           include: {
             Professor: true,
-            Enc_Educacao: true 
-          }
-        }
-      }
+            Enc_Educacao: true,
+          },
+        },
+      },
     });
 
     if (!utilizador || !utilizador.Pessoa) {
@@ -257,95 +319,101 @@ export class UtilizadorService {
 
     const idPessoa = utilizador.ID_Pessoa;
 
-    // ========================================================
-    // 1. LÓGICA PARA PROFESSORES (COACHES)
-    // ========================================================
     if (utilizador.Pessoa.Professor) {
       const coachingsProfessor = await this.prisma.coaching.findMany({
-        where: { ID_Professor: utilizador.Pessoa.Professor.ID_Pessoa }, 
+        where: { ID_Professor: utilizador.Pessoa.Professor.ID_Pessoa },
         include: {
           Sala: true,
-          // Vamos buscar a tabela intermédia que vimos no teu print!
-          Coaching_Aluno: { 
-            include: { Aluno: true } 
-          }
+
+          Coaching_Aluno: {
+            include: { Aluno: true },
+          },
         },
-        orderBy: { Inicio_Coaching: 'asc' }
+        orderBy: { Inicio_Coaching: 'asc' },
       });
 
-      return coachingsProfessor.map(coaching => {
+      return coachingsProfessor.map((coaching) => {
         let dataStr = 'Data a definir';
         let horaInicio = '--:--';
         let horaFim = '--:--';
-        
+
         if (coaching.Inicio_Coaching) {
           try {
             dataStr = coaching.Inicio_Coaching.toLocaleDateString('pt-PT');
-            horaInicio = coaching.Inicio_Coaching.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-            
-            const duracaoMinutos = coaching.Duracao || 60; 
-            const horaFimObj = new Date(coaching.Inicio_Coaching.getTime() + duracaoMinutos * 60000);
-            horaFim = horaFimObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            horaInicio = coaching.Inicio_Coaching.toLocaleTimeString('pt-PT', {
+              hour: '2-digit',
+              minute: '2-digit',
+            });
+
+            const duracaoMinutos = coaching.Duracao || 60;
+            const horaFimObj = new Date(
+              coaching.Inicio_Coaching.getTime() + duracaoMinutos * 60000,
+            );
+            horaFim = horaFimObj.toLocaleTimeString('pt-PT', {
+              hour: '2-digit',
+              minute: '2-digit',
+            });
           } catch (e) {
             console.error('Erro ao formatar data de coaching', e);
           }
         }
 
-        // Ir buscar os nomes através da tabela intermédia Coaching_Aluno
         let nomeBailarino = 'Sem bailarino associado';
         if (coaching.Coaching_Aluno && coaching.Coaching_Aluno.length > 0) {
-          nomeBailarino = coaching.Coaching_Aluno.map((ca: any) => ca.Aluno?.Nome || 'Desconhecido').join(', ');
-        } 
+          nomeBailarino = coaching.Coaching_Aluno.map(
+            (ca: any) => ca.Aluno?.Nome || 'Desconhecido',
+          ).join(', ');
+        }
 
         return {
-          // Como não tens Tema na BD, usamos o padrão fixo
-          tema: 'Sessão de Coaching', 
+          tema: 'Sessão de Coaching',
           bailarino: nomeBailarino,
           data: dataStr,
           horario: `${horaInicio} - ${horaFim}`,
-          formato: coaching.Sala?.Nome || 'Estúdio a definir' 
+          formato: coaching.Sala?.Nome || 'Estúdio a definir',
         };
       });
-    } 
-    
-    // ========================================================
-    // 2. LÓGICA PARA ENCARREGADOS DE EDUCAÇÃO (ALUNOS)
-    // ========================================================
-    else if (utilizador.Pessoa.Enc_Educacao) {
-      
+    } else if (utilizador.Pessoa.Enc_Educacao) {
       const coachingsEducando = await this.prisma.coaching.findMany({
         where: {
-          // A magia acontece aqui: Filtramos pela coluna ID_Enc_Educacao que vimos no print!
           Coaching_Aluno: {
             some: {
-              ID_Enc_Educacao: idPessoa
-            }
-          }
+              ID_Enc_Educacao: idPessoa,
+            },
+          },
         },
         include: {
           Professor: { include: { Pessoa: true } },
           Sala: true,
-          // Precisamos da tabela intermédia na mesma para saber o nome da criança
+
           Coaching_Aluno: {
-            include: { Aluno: true }
-          }
+            include: { Aluno: true },
+          },
         },
-        orderBy: { Inicio_Coaching: 'asc' }
+        orderBy: { Inicio_Coaching: 'asc' },
       });
 
-      return coachingsEducando.map(coaching => {
+      return coachingsEducando.map((coaching) => {
         let dataStr = 'Data a definir';
         let horaInicio = '--:--';
         let horaFim = '--:--';
-        
+
         if (coaching.Inicio_Coaching) {
           try {
             dataStr = coaching.Inicio_Coaching.toLocaleDateString('pt-PT');
-            horaInicio = coaching.Inicio_Coaching.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-            
+            horaInicio = coaching.Inicio_Coaching.toLocaleTimeString('pt-PT', {
+              hour: '2-digit',
+              minute: '2-digit',
+            });
+
             const duracaoMinutos = coaching.Duracao || 60;
-            const horaFimObj = new Date(coaching.Inicio_Coaching.getTime() + duracaoMinutos * 60000);
-            horaFim = horaFimObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            const horaFimObj = new Date(
+              coaching.Inicio_Coaching.getTime() + duracaoMinutos * 60000,
+            );
+            horaFim = horaFimObj.toLocaleTimeString('pt-PT', {
+              hour: '2-digit',
+              minute: '2-digit',
+            });
           } catch (e) {
             console.error('Erro ao formatar data de coaching', e);
           }
@@ -353,24 +421,37 @@ export class UtilizadorService {
 
         let nomeBailarino = '';
         if (coaching.Coaching_Aluno && coaching.Coaching_Aluno.length > 0) {
-          nomeBailarino = coaching.Coaching_Aluno.map((ca: any) => ca.Aluno?.Nome || '').filter(Boolean).join(', ');
+          nomeBailarino = coaching.Coaching_Aluno.map(
+            (ca: any) => ca.Aluno?.Nome || '',
+          )
+            .filter(Boolean)
+            .join(', ');
         }
 
-        const nomeCoach = (coaching.Professor as any)?.Pessoa?.Nome || 'Coach a definir';
-        const temaFormatado = nomeBailarino ? `Coaching - ${nomeBailarino}` : 'Sessão de Coaching';
+        const nomeCoach =
+          (coaching.Professor as any)?.Pessoa?.Nome || 'Coach a definir';
+        const temaFormatado = nomeBailarino
+          ? `Coaching - ${nomeBailarino}`
+          : 'Sessão de Coaching';
 
         return {
           tema: temaFormatado,
           coach: nomeCoach,
           data: dataStr,
           horario: `${horaInicio} - ${horaFim}`,
-          formato: coaching.Sala?.Nome || 'Estúdio a definir'
+          formato: coaching.Sala?.Nome || 'Estúdio a definir',
         };
       });
     }
 
     return [];
   }
+
+  /**
+   * Executa a operacao get alunos by ee.
+   * @param idEncEducacao Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   async getAlunosByEE(idEncEducacao: number) {
     return this.prisma.aluno.findMany({
@@ -379,12 +460,24 @@ export class UtilizadorService {
     });
   }
 
+  /**
+   * Executa a operacao get alunos sem encarregado.
+   * @returns Resultado da operacao.
+   */
+
   async getAlunosSemEncarregado() {
     return this.prisma.aluno.findMany({
       where: { ID_Enc_Educacao: null },
       orderBy: { Nome: 'asc' },
     });
   }
+
+  /**
+   * Executa a operacao criar educando.
+   * @param idEncEducacao Dados recebidos para a operacao.
+   * @param dto Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   async criarEducando(idEncEducacao: number, dto: UpsertEducandoDto) {
     await this.garantirEncarregadoEducacao(idEncEducacao);
@@ -409,7 +502,19 @@ export class UtilizadorService {
     }
   }
 
-  async atualizarEducando(idEncEducacao: number, idAluno: number, dto: UpsertEducandoDto) {
+  /**
+   * Executa a operacao atualizar educando.
+   * @param idEncEducacao Dados recebidos para a operacao.
+   * @param idAluno Dados recebidos para a operacao.
+   * @param dto Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  async atualizarEducando(
+    idEncEducacao: number,
+    idAluno: number,
+    dto: UpsertEducandoDto,
+  ) {
     await this.garantirAlunoDoEncarregado(idEncEducacao, idAluno);
 
     try {
@@ -432,6 +537,13 @@ export class UtilizadorService {
     }
   }
 
+  /**
+   * Executa a operacao remover educando.
+   * @param idEncEducacao Dados recebidos para a operacao.
+   * @param idAluno Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
   async removerEducando(idEncEducacao: number, idAluno: number) {
     await this.garantirAlunoDoEncarregado(idEncEducacao, idAluno);
 
@@ -448,8 +560,17 @@ export class UtilizadorService {
       data: { ID_Enc_Educacao: null },
     });
 
-    return { mensagem: 'Educando removido do encarregado de educacao com sucesso.' };
+    return {
+      mensagem: 'Educando removido do encarregado de educacao com sucesso.',
+    };
   }
+
+  /**
+   * Executa a operacao associar educando.
+   * @param idEncEducacao Dados recebidos para a operacao.
+   * @param idAluno Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   async associarEducando(idEncEducacao: number, idAluno: number) {
     await this.garantirEncarregadoEducacao(idEncEducacao);
@@ -463,7 +584,9 @@ export class UtilizadorService {
     }
 
     if (aluno.ID_Enc_Educacao) {
-      throw new ConflictException('Este aluno ja esta associado a um encarregado de educacao.');
+      throw new ConflictException(
+        'Este aluno ja esta associado a um encarregado de educacao.',
+      );
     }
 
     return this.prisma.aluno.update({
@@ -471,6 +594,12 @@ export class UtilizadorService {
       data: { ID_Enc_Educacao: idEncEducacao },
     });
   }
+
+  /**
+   * Executa a operacao garantir encarregado educacao.
+   * @param idEncEducacao Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   private async garantirEncarregadoEducacao(idEncEducacao: number) {
     const encarregado = await this.prisma.enc_Educacao.findUnique({
@@ -484,7 +613,17 @@ export class UtilizadorService {
     return encarregado;
   }
 
-  private async garantirAlunoDoEncarregado(idEncEducacao: number, idAluno: number) {
+  /**
+   * Executa a operacao garantir aluno do encarregado.
+   * @param idEncEducacao Dados recebidos para a operacao.
+   * @param idAluno Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  private async garantirAlunoDoEncarregado(
+    idEncEducacao: number,
+    idAluno: number,
+  ) {
     await this.garantirEncarregadoEducacao(idEncEducacao);
 
     const aluno = await this.prisma.aluno.findFirst({
@@ -495,11 +634,19 @@ export class UtilizadorService {
     });
 
     if (!aluno) {
-      throw new NotFoundException('Educando nao encontrado para este encarregado de educacao.');
+      throw new NotFoundException(
+        'Educando nao encontrado para este encarregado de educacao.',
+      );
     }
 
     return aluno;
   }
+
+  /**
+   * Executa a operacao calcular menor idade.
+   * @param dataNascimento Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   private calcularMenorIdade(dataNascimento: string) {
     const nascimento = new Date(dataNascimento);
@@ -514,9 +661,14 @@ export class UtilizadorService {
     return idade < 18;
   }
 
-  // Ficheiro: utilizador.service.ts
+  /**
+   * Executa a operacao update dados pessoais.
+   * @param idUtilizador Dados recebidos para a operacao.
+   * @param updateDto Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
   async updateDadosPessoais(idUtilizador: number, updateDto: UpdatePessoalDto) {
-    // Procura o utilizador para descobrir qual é o ID da Pessoa associada
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: idUtilizador },
     });
@@ -525,7 +677,6 @@ export class UtilizadorService {
       throw new NotFoundException('Utilizador não encontrado.');
     }
 
-    // Atualiza a tabela Pessoa com o novo NIF e Telemóvel que vêm do DTO
     return this.prisma.pessoa.update({
       where: { ID_Pessoa: utilizador.ID_Pessoa },
       data: {
@@ -536,10 +687,12 @@ export class UtilizadorService {
     });
   }
 
+  /**
+   * Obtem um registo pelo identificador.
+   * @param id Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-  // ====================================================================
-  // OBTER 1 UTILIZADOR (COM OS DADOS PESSOAIS E CARGOS PARA O PERFIL)
-  // ====================================================================
   async findOne(id: number) {
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: id },
@@ -558,8 +711,25 @@ export class UtilizadorService {
     return utilizador;
   }
 
-  async updateCargo(idUtilizador: number, novoCargo: string, confirmarRemocaoAssociacoes = false) {
-    const cargosValidos = ['Professor', 'Coordenador', 'Direção', 'Encarregado de Educação'];
+  /**
+   * Executa a operacao update cargo.
+   * @param idUtilizador Dados recebidos para a operacao.
+   * @param novoCargo Dados recebidos para a operacao.
+   * @param confirmarRemocaoAssociacoes Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  async updateCargo(
+    idUtilizador: number,
+    novoCargo: string,
+    confirmarRemocaoAssociacoes = false,
+  ) {
+    const cargosValidos = [
+      'Professor',
+      'Coordenador',
+      'Direção',
+      'Encarregado de Educação',
+    ];
     const cargoEncarregadoEducacao = cargosValidos[3];
     if (!cargosValidos.includes(novoCargo)) {
       throw new NotFoundException(`Cargo "${novoCargo}" não é válido.`);
@@ -587,37 +757,54 @@ export class UtilizadorService {
     const pessoa = utilizador.Pessoa;
 
     if (pessoa.Enc_Educacao && novoCargo !== cargoEncarregadoEducacao) {
-      const impacto = await this.obterImpactoRemocaoEncarregadoEducacao(idPessoa);
+      const impacto =
+        await this.obterImpactoRemocaoEncarregadoEducacao(idPessoa);
 
-      if ((impacto.alunosAssociados > 0 || impacto.inscricoesCoachingAssociadas > 0) && !confirmarRemocaoAssociacoes) {
+      if (
+        (impacto.alunosAssociados > 0 ||
+          impacto.inscricoesCoachingAssociadas > 0) &&
+        !confirmarRemocaoAssociacoes
+      ) {
         throw new ConflictException({
           code: 'CONFIRMACAO_REMOCAO_ASSOCIACOES_ENCARREGADO',
-          message: 'Este utilizador tem alunos ou inscricoes de coaching associadas enquanto encarregado de educacao.',
+          message:
+            'Este utilizador tem alunos ou inscricoes de coaching associadas enquanto encarregado de educacao.',
           impacto,
         });
       }
     }
 
-    // Apagar o cargo atual (apenas o que existir)
-    if (pessoa.Professor)    await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
-    if (pessoa.Coordenador)  await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
-    if (pessoa.Direcao)      await this.prisma.direcao.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Professor)
+      await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Coordenador)
+      await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Direcao)
+      await this.prisma.direcao.delete({ where: { ID_Pessoa: idPessoa } });
     if (pessoa.Enc_Educacao) {
       await this.removerAssociacoesEncarregadoEducacao(idPessoa);
       await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
     }
 
-    // Criar o novo cargo
-    if (novoCargo === 'Professor')                 await this.prisma.professor.create({ data: { ID_Pessoa: idPessoa } });
-    else if (novoCargo === 'Coordenador')          await this.prisma.coordenador.create({ data: { ID_Pessoa: idPessoa } });
-    else if (novoCargo === 'Direção')              await this.prisma.direcao.create({ data: { ID_Pessoa: idPessoa } });
-    else if (novoCargo === cargoEncarregadoEducacao) await this.prisma.enc_Educacao.create({ data: { ID_Pessoa: idPessoa } });
+    if (novoCargo === 'Professor')
+      await this.prisma.professor.create({ data: { ID_Pessoa: idPessoa } });
+    else if (novoCargo === 'Coordenador')
+      await this.prisma.coordenador.create({ data: { ID_Pessoa: idPessoa } });
+    else if (novoCargo === 'Direção')
+      await this.prisma.direcao.create({ data: { ID_Pessoa: idPessoa } });
+    else if (novoCargo === cargoEncarregadoEducacao)
+      await this.prisma.enc_Educacao.create({ data: { ID_Pessoa: idPessoa } });
 
     return { mensagem: `Cargo atualizado para "${novoCargo}" com sucesso.` };
   }
 
+  /**
+   * Executa a operacao mudar password.
+   * @param id Dados recebidos para a operacao.
+   * @param dto Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
   async mudarPassword(id: number, dto: ChangePasswordDto) {
-    // 1. Procurar o utilizador
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: id },
     });
@@ -626,19 +813,15 @@ export class UtilizadorService {
       throw new NotFoundException('Utilizador não encontrado');
     }
 
-    // 2. O Detetor de Mentiras: Verificar se a password atual enviada 
-    // bate com a hash que está na base de dados
     const passValida = await bcrypt.compare(dto.passAtual, utilizador.Password);
 
     if (!passValida) {
       throw new UnauthorizedException('A password atual está incorreta.');
     }
 
-    // 3. Gerar a nova Hash (nunca guardamos texto limpo!)
     const saltRounds = 10;
     const novaHash = await bcrypt.hash(dto.passNova, saltRounds);
 
-    // 4. Atualizar na Base de Dados
     await this.prisma.utilizador.update({
       where: { ID_Utilizador: id },
       data: { Password: novaHash },
@@ -647,9 +830,14 @@ export class UtilizadorService {
     return { message: 'Password alterada com sucesso!' };
   }
 
+  /**
+   * Executa a operacao update preferencias acoes.
+   * @param id Dados recebidos para a operacao.
+   * @param acoesIds Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   async updatePreferenciasAcoes(id: number, acoesIds: number[]) {
-    // 1. Verificar se o utilizador existe
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: id },
     });
@@ -658,18 +846,21 @@ export class UtilizadorService {
       throw new NotFoundException(`Utilizador com ID ${id} não encontrado.`);
     }
 
-    // 2. Converter o array para String JSON
     const preferenciasJson = JSON.stringify(acoesIds);
 
-    // 3. Atualizar a coluna na base de dados (Nome correto aqui!)
     return this.prisma.utilizador.update({
       where: { ID_Utilizador: id },
       data: {
-        Acoes_Rapidas: preferenciasJson, 
+        Acoes_Rapidas: preferenciasJson,
       },
     });
   }
 
+  /**
+   * Executa a operacao delete user.
+   * @param idUtilizador Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   async deleteUser(idUtilizador: number) {
     const utilizador = await this.prisma.utilizador.findUnique({
@@ -693,88 +884,106 @@ export class UtilizadorService {
     const idPessoa = utilizador.ID_Pessoa;
     const pessoa = utilizador.Pessoa;
 
-    // Apagar registos de cargo (FK para Pessoa)
-    if (pessoa.Professor)    await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
-    if (pessoa.Coordenador)  await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
-    if (pessoa.Direcao)      await this.prisma.direcao.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Professor)
+      await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Coordenador)
+      await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Direcao)
+      await this.prisma.direcao.delete({ where: { ID_Pessoa: idPessoa } });
     if (pessoa.Enc_Educacao) {
       await this.removerAssociacoesEncarregadoEducacao(idPessoa);
       await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
     }
 
-    // Apagar Utilizador (FK para Pessoa)
-    await this.prisma.utilizador.delete({ where: { ID_Utilizador: idUtilizador } });
+    await this.prisma.utilizador.delete({
+      where: { ID_Utilizador: idUtilizador },
+    });
 
-    // Apagar Pessoa
     await this.prisma.pessoa.delete({ where: { ID_Pessoa: idPessoa } });
 
     return { mensagem: 'Utilizador eliminado com sucesso.' };
   }
 
-  async getFaturasEncarregado(idUtilizador: number) {
-  const utilizador = await this.prisma.utilizador.findUnique({
-    where: { ID_Utilizador: idUtilizador },
-    select: { ID_Pessoa: true }
-  });
+  /**
+   * Executa a operacao get faturas encarregado.
+   * @param idUtilizador Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-  if (!utilizador) {
-    return [];
+  async getFaturasEncarregado(idUtilizador: number) {
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: idUtilizador },
+      select: { ID_Pessoa: true },
+    });
+
+    if (!utilizador) {
+      return [];
+    }
+
+    const faturas = await this.prisma.coaching_Aluno.findMany({
+      where: {
+        ID_Enc_Educacao: utilizador.ID_Pessoa,
+      },
+      include: {
+        Aluno: true,
+        Coaching: {
+          include: {
+            Disponibilidade: true,
+          },
+        },
+      },
+    });
+
+    return faturas.map((f) => {
+      const valorEmFaltaNum = f.ValorEmFalta ? Number(f.ValorEmFalta) : 0;
+      const isEmDivida = valorEmFaltaNum > 0;
+
+      const modalidadeOficial = (f as any).Coaching?.Disponibilidade
+        ?.Modalidade;
+      const nomeBailarino = (f as any).Aluno?.Nome || 'Aluno';
+
+      const modalidadeDisplay = modalidadeOficial
+        ? `${modalidadeOficial} - ${nomeBailarino}`
+        : f.Observacoes || `Coaching - ${nomeBailarino}`;
+
+      return {
+        Data: f.Data_Inscricao,
+        Descricao: modalidadeDisplay,
+        Valor: valorEmFaltaNum,
+        Pago: !isEmDivida,
+        estado: isEmDivida ? 'EM DÍVIDA' : 'PAGO',
+      };
+    });
   }
 
-  // 1. Dizer ao Prisma para ir buscar os dados cruzados até à Disponibilidade
-  const faturas = await this.prisma.coaching_Aluno.findMany({
-    where: { 
-      ID_Enc_Educacao: utilizador.ID_Pessoa 
-    },
-    include: { 
-      Aluno: true,
-      Coaching: {
-        include: {
-          Disponibilidade: true // <-- Traz a Modalidade!
-        }
-      }
-    }
-  });
-
-  return faturas.map(f => {
-    const valorEmFaltaNum = f.ValorEmFalta ? Number(f.ValorEmFalta) : 0;
-    const isEmDivida = valorEmFaltaNum > 0;
-    
-    // 2. Ir buscar a Modalidade à tabela Disponibilidade (com fallback de segurança)
-    // Se o TypeScript refilar com os tipos, usamos as any para garantir que compila
-    const modalidadeOficial = (f as any).Coaching?.Disponibilidade?.Modalidade;
-    const nomeBailarino = (f as any).Aluno?.Nome || 'Aluno';
-    
-    // Cria uma string final bonita: "Ballet - Ana Malhoa" ou apenas a Modalidade
-    const modalidadeDisplay = modalidadeOficial 
-      ? `${modalidadeOficial} - ${nomeBailarino}` 
-      : f.Observacoes || `Coaching - ${nomeBailarino}`;
-
-    return {
-      Data: f.Data_Inscricao,
-      Descricao: modalidadeDisplay, // O React usa isto para a coluna "Modalidade"
-      Valor: valorEmFaltaNum,
-      Pago: !isEmDivida,
-      estado: isEmDivida ? 'EM DÍVIDA' : 'PAGO'
-    };
-  });
-}
+  /**
+   * Executa a operacao obter impacto remocao encarregado educacao.
+   * @param idPessoa Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   private async obterImpactoRemocaoEncarregadoEducacao(idPessoa: number) {
-    const [alunosAssociados, inscricoesCoachingAssociadas] = await this.prisma.$transaction([
-      this.prisma.aluno.count({
-        where: { ID_Enc_Educacao: idPessoa },
-      }),
-      this.prisma.coaching_Aluno.count({
-        where: { ID_Enc_Educacao: idPessoa },
-      }),
-    ]);
+    const [alunosAssociados, inscricoesCoachingAssociadas] =
+      await this.prisma.$transaction([
+        this.prisma.aluno.count({
+          where: { ID_Enc_Educacao: idPessoa },
+        }),
+        this.prisma.coaching_Aluno.count({
+          where: { ID_Enc_Educacao: idPessoa },
+        }),
+      ]);
 
     return {
       alunosAssociados,
       inscricoesCoachingAssociadas,
     };
   }
+
+  /**
+   * Executa a operacao remover associacoes encarregado educacao.
+   * @param idPessoa Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   private async removerAssociacoesEncarregadoEducacao(idPessoa: number) {
     await this.prisma.coaching_Aluno.updateMany({
@@ -787,5 +996,4 @@ export class UtilizadorService {
       data: { ID_Enc_Educacao: null },
     });
   }
-
 }

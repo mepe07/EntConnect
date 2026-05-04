@@ -72,14 +72,16 @@ describe('MarcacoesService', () => {
     const resultado = await service.getConfirmacoesByEE(10);
 
     expect(resultado).toHaveLength(1);
-    expect(resultado[0]).toEqual(expect.objectContaining({
-      idCoaching: 5,
-      modalidade: 'Salsa',
-      alunos: [
-        { idAluno: 1, nome: 'Aluno Um' },
-        { idAluno: 2, nome: 'Aluno Dois' },
-      ],
-    }));
+    expect(resultado[0]).toEqual(
+      expect.objectContaining({
+        idCoaching: 5,
+        modalidade: 'Salsa',
+        alunos: [
+          { idAluno: 1, nome: 'Aluno Um' },
+          { idAluno: 2, nome: 'Aluno Dois' },
+        ],
+      }),
+    );
   });
 
   it('deve confirmar o EE quando não há pendentes sem concluir se o professor ainda não confirmou', async () => {
@@ -90,7 +92,8 @@ describe('MarcacoesService', () => {
     });
 
     await expect(service.confirmarSessaoByEE(10, 5, 13)).resolves.toEqual({
-      message: 'Confirmação do encarregado registada. A aguardar confirmação do professor.',
+      message:
+        'Confirmação do encarregado registada. A aguardar confirmação do professor.',
     });
     expect(prismaMock.coaching_Aluno.updateMany).toHaveBeenCalledWith({
       where: { ID_Enc_Educacao: 10, ID_Coaching: 5 },
@@ -117,7 +120,8 @@ describe('MarcacoesService', () => {
     });
 
     await expect(service.confirmarSessaoByEE(10, 5, 13)).resolves.toEqual({
-      message: 'Sessão finalizada com sucesso (professor e encarregado confirmaram).',
+      message:
+        'Sessão finalizada com sucesso (professor e encarregado confirmaram).',
     });
 
     expect(prismaMock.coaching.update).toHaveBeenCalledWith({
@@ -130,7 +134,8 @@ describe('MarcacoesService', () => {
     prismaMock.coaching_Aluno.count.mockResolvedValue(1);
 
     await expect(service.confirmarSessaoByEE(10, 5, 13)).resolves.toEqual({
-      message: 'Confirmação registada. A aguardar confirmação dos restantes alunos.',
+      message:
+        'Confirmação registada. A aguardar confirmação dos restantes alunos.',
     });
 
     expect(prismaMock.coaching.findUnique).not.toHaveBeenCalled();
@@ -138,7 +143,9 @@ describe('MarcacoesService', () => {
   });
 
   it('deve rejeitar estado inválido e não atualizar', async () => {
-    await expect(service.confirmarSessaoByEE(10, 5, 99)).rejects.toThrow('ID de estado de coaching inválido.');
+    await expect(service.confirmarSessaoByEE(10, 5, 99)).rejects.toThrow(
+      'ID de estado de coaching inválido.',
+    );
     expect(prismaMock.coaching_Aluno.updateMany).not.toHaveBeenCalled();
   });
 });

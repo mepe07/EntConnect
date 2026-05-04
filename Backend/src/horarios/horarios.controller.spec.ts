@@ -40,13 +40,21 @@ describe('HorariosController', () => {
     await expect(controller.getDiasSemana()).resolves.toEqual(['dias']);
     await expect(controller.findAll()).resolves.toEqual(['horarios']);
     await expect(controller.findOne(1)).resolves.toEqual({ id: 1 });
-    await expect(controller.create({ diaSemana: 1 } as any)).resolves.toEqual({ id: 2 });
-    await expect(controller.update(1, { ativa: false })).resolves.toEqual({ id: 3 });
+    await expect(controller.create({ diaSemana: 1 } as any)).resolves.toEqual({
+      id: 2,
+    });
+    await expect(controller.update(1, { ativa: false })).resolves.toEqual({
+      id: 3,
+    });
     await expect(controller.remove(1)).resolves.toEqual({ id: 4 });
-    await expect(controller.createExcecao(1, { dataCancelada: '2026-05-10' })).resolves.toEqual({ id: 5 });
+    await expect(
+      controller.createExcecao(1, { dataCancelada: '2026-05-10' }),
+    ).resolves.toEqual({ id: 5 });
     await expect(controller.removeExcecao(5)).resolves.toEqual({ id: 6 });
 
     expect(horariosServiceMock.getHorarioById).toHaveBeenCalledWith(1);
-    expect(horariosServiceMock.createExcecao).toHaveBeenCalledWith(1, { dataCancelada: '2026-05-10' });
+    expect(horariosServiceMock.createExcecao).toHaveBeenCalledWith(1, {
+      dataCancelada: '2026-05-10',
+    });
   });
 });

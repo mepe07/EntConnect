@@ -2,6 +2,9 @@
 
 body {
     height: 100vh;
+    background-color: #f8fafc;
+    color: colors.$gray-8;
+    transition: background-color 0.25s ease, color 0.25s ease;
 
     h1, h2, h3, h4, h5, h6 {
         font-family: 'Poppins';
@@ -24,5 +27,221 @@ body {
         padding: 46px;
         background-color: colors.$gray-1;
         overflow-y: auto;
+    }
+
+    .public-theme-toggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.2);
+    }
+}
+
+body.entconnect-dark {
+    color-scheme: dark;
+    background-color: #0f172a;
+    color: #e2e8f0;
+
+    .app-layout,
+    .layout-com-header,
+    .body-wrapper {
+        background-color: #0f172a !important;
+        color: #e2e8f0;
+    }
+
+    .body-wrapper,
+    .body-wrapper *,
+    .public-theme-toggle ~ * {
+        color: #e2e8f0 !important;
+    }
+
+    a {
+        color: #86efac !important;
+    }
+
+    input,
+    select,
+    textarea,
+    .input-campo,
+    .input-readonly {
+        background-color: #111827 !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: #94a3b8 !important;
+    }
+
+    table,
+    .table-container,
+    .crud-toolbar,
+    .tabela-wrapper,
+    .tabela-crud,
+    .tabela-registos {
+        background-color: #111827 !important;
+        color: #e2e8f0 !important;
+    }
+
+    thead,
+    table th {
+        background-color: #1f2937 !important;
+        color: #f8fafc !important;
+        border-color: #334155 !important;
+    }
+
+    table td,
+    table tr {
+        border-color: #334155 !important;
+    }
+
+    tbody tr:hover,
+    table tr:hover {
+        background-color: rgba(148, 163, 184, 0.12) !important;
+    }
+
+    .card,
+    div[class*="section"],
+    section[class*="section"],
+    div[class*="Section"],
+    section[class*="Section"],
+    div[class*="hero"],
+    section[class*="hero"],
+    div[class*="Hero"],
+    section[class*="Hero"],
+    div[class*="toolbar"],
+    section[class*="toolbar"],
+    div[class*="Toolbar"],
+    section[class*="Toolbar"],
+    div[class*="wrapper"],
+    section[class*="wrapper"],
+    div[class*="Wrapper"],
+    section[class*="Wrapper"],
+    div[class*="card"],
+    section[class*="card"],
+    article[class*="card"],
+    div[class*="Card"],
+    section[class*="Card"],
+    article[class*="Card"],
+    div[class*="panel"],
+    section[class*="panel"],
+    article[class*="panel"],
+    div[class*="Panel"],
+    section[class*="Panel"],
+    article[class*="Panel"],
+    div[class*="box"],
+    section[class*="box"],
+    article[class*="box"],
+    div[class*="Box"],
+    section[class*="Box"],
+    article[class*="Box"],
+    div[class*="featured"],
+    section[class*="featured"],
+    article[class*="featured"],
+    div[class*="Featured"],
+    section[class*="Featured"],
+    article[class*="Featured"],
+    div[class*="compact"],
+    section[class*="compact"],
+    article[class*="compact"],
+    div[class*="Compact"],
+    section[class*="Compact"],
+    article[class*="Compact"],
+    div[class*="filters"],
+    section[class*="filters"],
+    article[class*="filters"],
+    div[class*="Filters"],
+    section[class*="Filters"],
+    article[class*="Filters"],
+    div[class*="stats"] article,
+    div[class*="Stats"] article,
+    div[class*="empty"],
+    section[class*="empty"],
+    article[class*="empty"],
+    div[class*="Empty"],
+    section[class*="Empty"],
+    article[class*="Empty"],
+    div[class*="modal"],
+    section[class*="modal"],
+    article[class*="modal"],
+    div[class*="Modal"],
+    section[class*="Modal"],
+    article[class*="Modal"],
+    [style*="background: white"],
+    [style*="background: 'white'"],
+    [style*="background-color: white"],
+    [style*="backgroundColor: white"],
+    .modal-content,
+    .modal-card,
+    .modal-conteudo,
+    .modal-registo,
+    .pagamento-modal,
+    .dropdown-menu {
+        background-color: #111827 !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+    }
+
+    .dashboard-wrapper,
+    .crud-container,
+    .page,
+    [class*="page"],
+    [class*="Page"] {
+        background-color: transparent !important;
+        color: #e2e8f0 !important;
+    }
+
+    .infoRow span,
+    [class*="infoRow"] span,
+    [class*="InfoRow"] span,
+    [class*="sideEmpty"],
+    [class*="SideEmpty"],
+    [class*="uploadArea"],
+    [class*="UploadArea"],
+    [class*="switchGrid"] label,
+    [class*="SwitchGrid"] label {
+        background-color: #111827 !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+    }
+
+    .badge,
+    [class*="badge"],
+    [class*="Badge"],
+    [class*="tag-estado"],
+    [class*="status"] {
+        color: #0f172a !important;
+    }
+
+    .btn-principal,
+    .btn-primario,
+    .primaryButton,
+    [class*="primaryButton"],
+    [class*="PrimaryButton"],
+    button[class*="primary"],
+    button[class*="Primary"] {
+        color: #ffffff !important;
+    }
+
+    .modal-header,
+    .modal-footer,
+    .modal-topo,
+    .modal-body {
+        border-color: #334155 !important;
+    }
+
+    .text-muted,
+    [class*="subtitle"],
+    [class*="Subtitle"],
+    [class*="descricao"],
+    [class*="Descricao"] {
+        color: #94a3b8 !important;
+    }
+
+    .public-theme-toggle {
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
     }
 }

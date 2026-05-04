@@ -20,7 +20,9 @@ describe('MailService', () => {
   });
 
   it('deve enviar email de recuperação de password', async () => {
-    const sendMail = jest.fn().mockResolvedValue({ accepted: ['user@email.test'] });
+    const sendMail = jest
+      .fn()
+      .mockResolvedValue({ accepted: ['user@email.test'] });
     (createTransport as jest.Mock).mockReturnValue({ sendMail });
     process.env.SMTP_HOST = 'smtp.test';
     process.env.SMTP_PORT = '2525';
@@ -29,7 +31,10 @@ describe('MailService', () => {
     process.env.SMTP_FROM = 'no-reply@email.test';
 
     const service = new MailService();
-    await service.sendPasswordResetEmail('user@email.test', 'https://reset.test/token');
+    await service.sendPasswordResetEmail(
+      'user@email.test',
+      'https://reset.test/token',
+    );
 
     expect(createTransport).toHaveBeenCalledWith({
       host: 'smtp.test',
@@ -55,7 +60,9 @@ describe('MailService', () => {
 
     const service = new MailService();
 
-    await expect(service.sendPasswordResetEmail('user@email.test', 'link')).rejects.toThrow(InternalServerErrorException);
+    await expect(
+      service.sendPasswordResetEmail('user@email.test', 'link'),
+    ).rejects.toThrow(InternalServerErrorException);
     expect(createTransport).not.toHaveBeenCalled();
   });
 });

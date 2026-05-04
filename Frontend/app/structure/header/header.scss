@@ -28,7 +28,18 @@ header {
 
         .menu {
             position: relative;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+
+            .header-theme-toggle {
+                width: 44px;
+                height: 44px;
+                min-width: 44px;
+                background: rgba(255, 255, 255, 0.12);
+                border-color: rgba(255, 255, 255, 0.24);
+                color: #ffffff;
+            }
 
             .profile-picture {
                 display: flex;
@@ -131,48 +142,45 @@ header {
 }
 
 
-@media (prefers-color-scheme: dark) {
-    header {
-        .menu {
-            .profile-picture {
-                background-color: #1e293b;
-                border-color: #334155;
+body.entconnect-dark header {
+    .menu {
+        .profile-picture {
+            background-color: #1e293b;
+            border-color: #334155;
 
+            .letra-dinamica {
+                color: #f8fafc;
+            }
+        }
 
-                .letra-dinamica {
-                    color: #f8fafc;
+        .sub-menu {
+            background-color: #1e293b;
+            border-color: #334155;
+
+            .user-info {
+                p:first-child { color: #f8fafc; }
+                p:nth-child(2) {
+                    color: #94a3b8;
+                    border-bottom-color: #334155;
                 }
             }
 
-            .sub-menu {
-                background-color: #1e293b;
-                border-color: #334155;
+            .account-link,
+            .logout-link {
+                color: #cbd5e1;
+            }
 
-                .user-info {
-                    p:first-child { color: #f8fafc; }
-                    p:nth-child(2) {
-                        color: #94a3b8;
-                        border-bottom-color: #334155;
-                    }
+            .account-link {
+                &:hover {
+                    color: #f8fafc;
+                    & i { color: #f8fafc; }
                 }
+            }
 
-                .account-link,
-                .logout-link {
-                    color: #cbd5e1;
-                }
-
-                .account-link {
-                    &:hover {
-                        color: #f8fafc;
-                        & i { color: #f8fafc; }
-                    }
-                }
-
-                .logout-link {
-                    &:hover {
-                        color: #ef4444;
-                        & i { color: #ef4444; }
-                    }
+            .logout-link {
+                &:hover {
+                    color: #ef4444;
+                    & i { color: #ef4444; }
                 }
             }
         }

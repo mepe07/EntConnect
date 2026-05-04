@@ -32,7 +32,9 @@ describe('MarketplaceController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MarketplaceController],
-      providers: [{ provide: MarketplaceService, useValue: marketplaceServiceMock }],
+      providers: [
+        { provide: MarketplaceService, useValue: marketplaceServiceMock },
+      ],
     })
       .overrideGuard(AuthGuard)
       .useValue({ canActivate: jest.fn(() => true) })
@@ -43,7 +45,9 @@ describe('MarketplaceController', () => {
     controller = module.get<MarketplaceController>(MarketplaceController);
     jest.resetAllMocks();
 
-    Object.values(marketplaceServiceMock).forEach((mock) => mock.mockResolvedValue({ ok: true }));
+    Object.values(marketplaceServiceMock).forEach((mock) =>
+      mock.mockResolvedValue({ ok: true }),
+    );
   });
 
   it('deve delegar rotas de moderação e inventário', async () => {
@@ -53,10 +57,22 @@ describe('MarketplaceController', () => {
     await controller.listarInventarioDaEscola(req);
     await controller.listarInventarioDisponivelParaPublicacao(req);
     await controller.publicarInventarioDaEscola({ idArtigo: 1 } as any, req);
-    await controller.criarItemInventario({ titulo: 'Item' } as any, req, undefined);
+    await controller.criarItemInventario(
+      { titulo: 'Item' } as any,
+      req,
+      undefined,
+    );
 
-    expect(marketplaceServiceMock.moderarAnuncio).toHaveBeenCalledWith(10, { acao: 'REMOVER' }, req.user);
-    expect(marketplaceServiceMock.criarItemInventario).toHaveBeenCalledWith({ titulo: 'Item' }, req.user, undefined);
+    expect(marketplaceServiceMock.moderarAnuncio).toHaveBeenCalledWith(
+      10,
+      { acao: 'REMOVER' },
+      req.user,
+    );
+    expect(marketplaceServiceMock.criarItemInventario).toHaveBeenCalledWith(
+      { titulo: 'Item' },
+      req.user,
+      undefined,
+    );
   });
 
   it('deve delegar rotas gerais do marketplace convertendo IDs', async () => {
@@ -64,16 +80,40 @@ describe('MarketplaceController', () => {
     await controller.listarMeusAnuncios(req);
     await controller.obterAnuncio('20');
     await controller.criarAnuncio({ titulo: 'Anúncio' } as any, req, undefined);
-    await controller.atualizarAnuncio('21', { titulo: 'Novo' } as any, req, undefined);
+    await controller.atualizarAnuncio(
+      '21',
+      { titulo: 'Novo' } as any,
+      req,
+      undefined,
+    );
     await controller.alterarEstado('22', { estado: 'Pausado' } as any, req);
     await controller.removerAnuncio('23', req);
-    await controller.registarInteresse('24', { mensagem: 'Interesse' } as any, req);
+    await controller.registarInteresse(
+      '24',
+      { mensagem: 'Interesse' } as any,
+      req,
+    );
     await controller.listarInteressesDoAnuncio('25', req);
 
     expect(marketplaceServiceMock.obterAnuncio).toHaveBeenCalledWith(20);
-    expect(marketplaceServiceMock.atualizarAnuncio).toHaveBeenCalledWith(21, { titulo: 'Novo' }, req.user, undefined);
-    expect(marketplaceServiceMock.alterarEstado).toHaveBeenCalledWith(22, { estado: 'Pausado' }, req.user);
-    expect(marketplaceServiceMock.registarInteresse).toHaveBeenCalledWith(24, { mensagem: 'Interesse' }, req.user);
-    expect(marketplaceServiceMock.listarInteressesDoAnuncio).toHaveBeenCalledWith(25, req.user);
+    expect(marketplaceServiceMock.atualizarAnuncio).toHaveBeenCalledWith(
+      21,
+      { titulo: 'Novo' },
+      req.user,
+      undefined,
+    );
+    expect(marketplaceServiceMock.alterarEstado).toHaveBeenCalledWith(
+      22,
+      { estado: 'Pausado' },
+      req.user,
+    );
+    expect(marketplaceServiceMock.registarInteresse).toHaveBeenCalledWith(
+      24,
+      { mensagem: 'Interesse' },
+      req.user,
+    );
+    expect(
+      marketplaceServiceMock.listarInteressesDoAnuncio,
+    ).toHaveBeenCalledWith(25, req.user);
   });
 });

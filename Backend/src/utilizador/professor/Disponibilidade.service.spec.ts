@@ -57,19 +57,21 @@ describe('DispobilidadeService', () => {
     const resultado = await service.getAvailabilities();
 
     expect(resultado).toHaveLength(1);
-    expect(resultado[0]).toEqual(expect.objectContaining({
-      idDisponibilidade: 1,
-      nomeProfessor: 'Professora Ana',
-      modalidade: 'Salsa',
-      alunosInscritosIds: [10, 11],
-      valorPorAluno: 25,
-    }));
+    expect(resultado[0]).toEqual(
+      expect.objectContaining({
+        idDisponibilidade: 1,
+        nomeProfessor: 'Professora Ana',
+        modalidade: 'Salsa',
+        alunosInscritosIds: [10, 11],
+        valorPorAluno: 25,
+      }),
+    );
   });
 
   it('deve criar disponibilidade pendente sem estúdio nem valor', async () => {
     const dto = {
       ID_Professor: 7,
-      Hora_Inicio: '2026-05-01T10:00:00.000Z',
+      Hora_Inicio: '2026-05-10T10:00:00.000Z',
       AlteradoPorUtilizadorID: 9,
       Duracao: 60,
       Modalidade: 'Salsa',
@@ -91,16 +93,44 @@ describe('DispobilidadeService', () => {
     });
   });
 
+  it('deve rejeitar criacao de disponibilidade com data anterior a atual', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-05-03T12:00:00.000Z'));
+
+    try {
+      const dto = {
+        ID_Professor: 7,
+        Hora_Inicio: '2026-05-02T10:00:00.000Z',
+        AlteradoPorUtilizadorID: 9,
+        Duracao: 60,
+        Modalidade: 'Salsa',
+        MaxAlunos: 4,
+      };
+
+      await expect(service.criarDisponibilidade(dto)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(prismaMock.disponibilidade.create).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('deve atualizar disponibilidade existente e rejeitar inexistente', async () => {
     prismaMock.disponibilidade.count.mockResolvedValueOnce(1);
-    prismaMock.disponibilidade.update.mockResolvedValue({ ID_Disponibilidade: 1 });
+    prismaMock.disponibilidade.update.mockResolvedValue({
+      ID_Disponibilidade: 1,
+    });
 
-    await expect(service.updateAvailability(1, { EstadoDisponibilidadeID: 1 } as any)).resolves.toEqual({
+    await expect(
+      service.updateAvailability(1, { EstadoDisponibilidadeID: 1 } as any),
+    ).resolves.toEqual({
       message: 'Disponibiliade atualizada com sucesso.',
       disponibilidade: { ID_Disponibilidade: 1 },
     });
 
     prismaMock.disponibilidade.count.mockResolvedValueOnce(0);
-    await expect(service.updateAvailability(2, {} as any)).rejects.toThrow(BadRequestException);
+    await expect(service.updateAvailability(2, {} as any)).rejects.toThrow(
+      BadRequestException,
+    );
   });
 });

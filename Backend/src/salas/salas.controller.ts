@@ -1,41 +1,67 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { SalasService } from './salas.service';
 import { CreateSalaDto } from './dto/create-sala.dto';
 import { UpdateSalaDto } from './dto/update-sala.dto';
+/**
+ * Controlador responsavel pelos pedidos de Salas.
+ */
 
 @Controller('salas')
 export class SalasController {
-
-    // Injetamos o serviço de Salas no construtor do controlador.
   constructor(private readonly salasService: SalasService) {}
+  /**
+   * Cria um novo registo.
+   * @param createSalaDto Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    // ==========================================
-    // RECEBER UM POST (Criar nova sala)
-    // ==========================================
-    @Post()
-    create(@Body() createSalaDto: CreateSalaDto) {
-        // O @Body() extrai os dados que vêm colados no pedido do React 
-        // e atira-os para o Service processar.
-        return this.salasService.create(createSalaDto);
-    }
+  @Post()
+  create(@Body() createSalaDto: CreateSalaDto) {
+    return this.salasService.create(createSalaDto);
+  }
+  /**
+   * Lista todos os registos disponiveis.
+   * @returns Resultado da operacao.
+   */
 
-    // ==========================================
-    // RECEBER UM GET (Devolver todas as salas)
-    // ==========================================
-    @Get()
-    findAll() {
-        return this.salasService.findAll();
-    }
+  @Get()
+  findAll() {
+    return this.salasService.findAll();
+  }
+  /**
+   * Obtem um registo pelo identificador.
+   * @param id Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.salasService.findOne(+id);
   }
+  /**
+   * Atualiza um registo existente.
+   * @param id Dados recebidos para a operacao.
+   * @param updateSalaDto Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateSalaDto: UpdateSalaDto) {
     return this.salasService.update(+id, updateSalaDto);
   }
+  /**
+   * Remove um registo existente.
+   * @param id Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   @Delete(':id')
   remove(@Param('id') id: string) {

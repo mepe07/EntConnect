@@ -16,7 +16,9 @@ describe('ModalidadeController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ModalidadeController],
-      providers: [{ provide: ModalidadeService, useValue: modalidadeServiceMock }],
+      providers: [
+        { provide: ModalidadeService, useValue: modalidadeServiceMock },
+      ],
     }).compile();
 
     controller = module.get<ModalidadeController>(ModalidadeController);
@@ -30,11 +32,17 @@ describe('ModalidadeController', () => {
     modalidadeServiceMock.remove.mockResolvedValue({ ID_Modalidade: 3 });
 
     await expect(controller.findAll()).resolves.toEqual([]);
-    await expect(controller.create({ Descricao: 'Salsa' })).resolves.toEqual({ ID_Modalidade: 1 });
-    await expect(controller.update(2, { Descricao: 'Kizomba' })).resolves.toEqual({ ID_Modalidade: 2 });
+    await expect(controller.create({ Descricao: 'Salsa' })).resolves.toEqual({
+      ID_Modalidade: 1,
+    });
+    await expect(
+      controller.update(2, { Descricao: 'Kizomba' }),
+    ).resolves.toEqual({ ID_Modalidade: 2 });
     await expect(controller.remove(3)).resolves.toEqual({ ID_Modalidade: 3 });
 
-    expect(modalidadeServiceMock.update).toHaveBeenCalledWith(2, { Descricao: 'Kizomba' });
+    expect(modalidadeServiceMock.update).toHaveBeenCalledWith(2, {
+      Descricao: 'Kizomba',
+    });
     expect(modalidadeServiceMock.remove).toHaveBeenCalledWith(3);
   });
 });

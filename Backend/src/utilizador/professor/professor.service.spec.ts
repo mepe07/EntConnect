@@ -80,18 +80,29 @@ describe('ProfessorService', () => {
   it('deve atualizar professor e tratar conflito', async () => {
     prismaMock.professor.update.mockResolvedValueOnce({ ID_Pessoa: 1 });
 
-    await expect(service.update(1, { Nome: 'Ana 2', Data_Nascimento: '1990-01-01' } as any)).resolves.toEqual({ ID_Pessoa: 1 });
+    await expect(
+      service.update(1, {
+        Nome: 'Ana 2',
+        Data_Nascimento: '1990-01-01',
+      } as any),
+    ).resolves.toEqual({ ID_Pessoa: 1 });
 
     prismaMock.professor.update.mockRejectedValueOnce({ code: 'P2002' });
-    await expect(service.update(1, {} as any)).rejects.toThrow(ConflictException);
+    await expect(service.update(1, {} as any)).rejects.toThrow(
+      ConflictException,
+    );
   });
 
   it('deve remover professor e pessoa associada', async () => {
     prismaMock.professor.delete.mockResolvedValue({ ID_Pessoa: 1 });
 
     await expect(service.remove(1)).resolves.toEqual({ ID_Pessoa: 1 });
-    expect(prismaMock.professor.delete).toHaveBeenCalledWith({ where: { ID_Pessoa: 1 } });
-    expect(prismaMock.pessoa.delete).toHaveBeenCalledWith({ where: { ID_Pessoa: 1 } });
+    expect(prismaMock.professor.delete).toHaveBeenCalledWith({
+      where: { ID_Pessoa: 1 },
+    });
+    expect(prismaMock.pessoa.delete).toHaveBeenCalledWith({
+      where: { ID_Pessoa: 1 },
+    });
   });
 
   it('deve converter erros Prisma conhecidos ao remover', async () => {

@@ -129,7 +129,10 @@ describe('CoachingService', () => {
     it('deve usar a sessão existente quando a disponibilidade já tem coaching', async () => {
       prismaMock.disponibilidade.findUnique.mockResolvedValue({ MaxAlunos: 1 });
       prismaMock.coaching.findFirst.mockResolvedValue({ ID_Coaching: 200 });
-      prismaMock.coaching_Aluno.create.mockResolvedValue({ ID_Coaching: 200, ID_Aluno: 77 });
+      prismaMock.coaching_Aluno.create.mockResolvedValue({
+        ID_Coaching: 200,
+        ID_Aluno: 77,
+      });
 
       await service.inscreverAluno(50, payloadInscricao);
 
@@ -145,9 +148,9 @@ describe('CoachingService', () => {
     it('deve rejeitar inscrição quando não existem vagas', async () => {
       prismaMock.disponibilidade.findUnique.mockResolvedValue({ MaxAlunos: 0 });
 
-      await expect(service.inscreverAluno(50, payloadInscricao)).rejects.toThrow(
-        'Não existem vagas disponíveis para esta sessão.',
-      );
+      await expect(
+        service.inscreverAluno(50, payloadInscricao),
+      ).rejects.toThrow('Não existem vagas disponíveis para esta sessão.');
       expect(prismaMock.coaching.findFirst).not.toHaveBeenCalled();
       expect(prismaMock.coaching_Aluno.create).not.toHaveBeenCalled();
     });
@@ -155,18 +158,26 @@ describe('CoachingService', () => {
     it('deve rejeitar inscrição quando a disponibilidade não existe', async () => {
       prismaMock.disponibilidade.findUnique.mockResolvedValue(null);
 
-      await expect(service.inscreverAluno(50, payloadInscricao)).rejects.toThrow(
-        'Não existem vagas disponíveis para esta sessão.',
-      );
+      await expect(
+        service.inscreverAluno(50, payloadInscricao),
+      ).rejects.toThrow('Não existem vagas disponíveis para esta sessão.');
     });
   });
 
   describe('removerAluno', () => {
     it('deve remover o aluno, devolver uma vaga e apagar a sessão quando era o último inscrito', async () => {
-      prismaMock.coaching_Aluno.findFirst.mockResolvedValue({ ID_Coaching: 10, ID_Aluno: 5 });
-      prismaMock.coaching.findUnique.mockResolvedValue({ ID_Disponibilidade: 40 });
+      prismaMock.coaching_Aluno.findFirst.mockResolvedValue({
+        ID_Coaching: 10,
+        ID_Aluno: 5,
+      });
+      prismaMock.coaching.findUnique.mockResolvedValue({
+        ID_Disponibilidade: 40,
+      });
       prismaMock.coaching_Aluno.count.mockResolvedValue(1);
-      prismaMock.coaching_Aluno.delete.mockResolvedValue({ ID_Coaching: 10, ID_Aluno: 5 });
+      prismaMock.coaching_Aluno.delete.mockResolvedValue({
+        ID_Coaching: 10,
+        ID_Aluno: 5,
+      });
       prismaMock.disponibilidade.update.mockResolvedValue({ MaxAlunos: 1 });
       prismaMock.coaching.delete.mockResolvedValue({ ID_Coaching: 10 });
 
@@ -192,8 +203,13 @@ describe('CoachingService', () => {
     });
 
     it('deve manter a sessão quando existem outros alunos inscritos', async () => {
-      prismaMock.coaching_Aluno.findFirst.mockResolvedValue({ ID_Coaching: 10, ID_Aluno: 5 });
-      prismaMock.coaching.findUnique.mockResolvedValue({ ID_Disponibilidade: 40 });
+      prismaMock.coaching_Aluno.findFirst.mockResolvedValue({
+        ID_Coaching: 10,
+        ID_Aluno: 5,
+      });
+      prismaMock.coaching.findUnique.mockResolvedValue({
+        ID_Disponibilidade: 40,
+      });
       prismaMock.coaching_Aluno.count.mockResolvedValue(2);
 
       await service.removerAluno(5, 10);
@@ -204,7 +220,9 @@ describe('CoachingService', () => {
     it('deve lançar erro quando a inscrição não existe', async () => {
       prismaMock.coaching_Aluno.findFirst.mockResolvedValue(null);
 
-      await expect(service.removerAluno(5, 10)).rejects.toThrow('Inscrição não encontrada!');
+      await expect(service.removerAluno(5, 10)).rejects.toThrow(
+        'Inscrição não encontrada!',
+      );
       expect(prismaMock.coaching_Aluno.delete).not.toHaveBeenCalled();
     });
   });
@@ -323,7 +341,9 @@ describe('CoachingService', () => {
     it('deve lançar erro quando o aluno não existe', async () => {
       prismaMock.aluno.findUnique.mockResolvedValue(null);
 
-      await expect(service.getAlunoDetalhes(7)).rejects.toThrow('Aluno não encontrado.');
+      await expect(service.getAlunoDetalhes(7)).rejects.toThrow(
+        'Aluno não encontrado.',
+      );
     });
   });
 
@@ -339,10 +359,7 @@ describe('CoachingService', () => {
           Sala: { Nome: 'Estúdio A' },
           Estado_Coaching: { Tipo: 'Confirmada' },
           Disponibilidade: { Modalidade: 'Kizomba' },
-          Coaching_Aluno: [
-            { Aluno: { Nome: 'Aluno Um' } },
-            { Aluno: null },
-          ],
+          Coaching_Aluno: [{ Aluno: { Nome: 'Aluno Um' } }, { Aluno: null }],
           confirmacao_prof: false,
         },
       ]);
@@ -413,7 +430,9 @@ describe('CoachingService', () => {
     it('deve lançar NotFoundException quando a sessão não existe', async () => {
       prismaMock.coaching.findUnique.mockResolvedValue(null);
 
-      await expect(service.confirmarSessaoProfessor(12)).rejects.toThrow(NotFoundException);
+      await expect(service.confirmarSessaoProfessor(12)).rejects.toThrow(
+        NotFoundException,
+      );
       expect(prismaMock.coaching.update).not.toHaveBeenCalled();
     });
 
@@ -426,7 +445,9 @@ describe('CoachingService', () => {
         confirmacao_EE: false,
       });
 
-      await expect(service.confirmarSessaoProfessor(12)).rejects.toThrow(BadRequestException);
+      await expect(service.confirmarSessaoProfessor(12)).rejects.toThrow(
+        BadRequestException,
+      );
       expect(prismaMock.coaching.update).not.toHaveBeenCalled();
     });
 
@@ -439,7 +460,9 @@ describe('CoachingService', () => {
         confirmacao_EE: true,
       });
 
-      await expect(service.confirmarSessaoProfessor(12)).rejects.toThrow(BadRequestException);
+      await expect(service.confirmarSessaoProfessor(12)).rejects.toThrow(
+        BadRequestException,
+      );
       expect(prismaMock.coaching.update).not.toHaveBeenCalled();
     });
 
@@ -459,7 +482,9 @@ describe('CoachingService', () => {
       });
       prismaMock.coaching.update.mockResolvedValue(sessaoAtualizada);
 
-      await expect(service.confirmarSessaoProfessor(12)).resolves.toBe(sessaoAtualizada);
+      await expect(service.confirmarSessaoProfessor(12)).resolves.toBe(
+        sessaoAtualizada,
+      );
       expect(prismaMock.coaching.update).toHaveBeenCalledWith({
         where: { ID_Coaching: 12 },
         data: {

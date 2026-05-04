@@ -19,8 +19,12 @@ describe('UtilizadorImportService', () => {
   };
 
   beforeEach(async () => {
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    consoleLogSpy = jest
+      .spyOn(console, 'log')
+      .mockImplementation(() => undefined);
+    consoleErrorSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -40,12 +44,17 @@ describe('UtilizadorImportService', () => {
   });
 
   it('deve importar utilizadores a partir de CSV no blob', async () => {
-    blobsServiceMock.lerFicheiroTexto.mockResolvedValue([
-      'Nome;Email;NIF;Contacto;Data_Nascimento',
-      'Ana;ana@email.test;123456789;910000000;1990-01-01',
-    ].join('\n'));
+    blobsServiceMock.lerFicheiroTexto.mockResolvedValue(
+      [
+        'Nome;Email;NIF;Contacto;Data_Nascimento',
+        'Ana;ana@email.test;123456789;910000000;1990-01-01',
+      ].join('\n'),
+    );
     prismaMock.pessoa.create.mockResolvedValue({ ID_Pessoa: 1, Nome: 'Ana' });
-    prismaMock.utilizador.create.mockResolvedValue({ ID_Utilizador: 2, Utilizador: 'ana@email.test' });
+    prismaMock.utilizador.create.mockResolvedValue({
+      ID_Utilizador: 2,
+      Utilizador: 'ana@email.test',
+    });
 
     await expect(service.importarDeBlob('alunos.csv')).resolves.toEqual({
       mensagem: 'Importação do Azure concluída. 1 registos criados.',
@@ -56,7 +65,10 @@ describe('UtilizadorImportService', () => {
         },
       ],
     });
-    expect(blobsServiceMock.lerFicheiroTexto).toHaveBeenCalledWith('importar-csv', 'alunos.csv');
+    expect(blobsServiceMock.lerFicheiroTexto).toHaveBeenCalledWith(
+      'importar-csv',
+      'alunos.csv',
+    );
     expect(prismaMock.utilizador.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         ID_Pessoa: 1,
@@ -67,11 +79,13 @@ describe('UtilizadorImportService', () => {
   });
 
   it('deve continuar a importação quando uma linha falha', async () => {
-    blobsServiceMock.lerFicheiroTexto.mockResolvedValue([
-      'Nome,Email,NIF,Contacto,Data_Nascimento',
-      'Falha,falha@email.test,111,910,1990-01-01',
-      'Boa,boa@email.test,222,920,1991-01-01',
-    ].join('\n'));
+    blobsServiceMock.lerFicheiroTexto.mockResolvedValue(
+      [
+        'Nome,Email,NIF,Contacto,Data_Nascimento',
+        'Falha,falha@email.test,111,910,1990-01-01',
+        'Boa,boa@email.test,222,920,1991-01-01',
+      ].join('\n'),
+    );
     prismaMock.pessoa.create
       .mockRejectedValueOnce(new Error('duplicado'))
       .mockResolvedValueOnce({ ID_Pessoa: 2, Nome: 'Boa' });
@@ -79,7 +93,9 @@ describe('UtilizadorImportService', () => {
 
     const resultado = await service.importarDeBlob('users.csv');
 
-    expect(resultado.mensagem).toBe('Importação do Azure concluída. 1 registos criados.');
+    expect(resultado.mensagem).toBe(
+      'Importação do Azure concluída. 1 registos criados.',
+    );
     expect(resultado.dados).toHaveLength(1);
   });
 });

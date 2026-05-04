@@ -1,14 +1,12 @@
-// Ficheiro: Backend/src/mail/mail.module.ts
-
 import { Module } from '@nestjs/common';
 import { MailService } from './mail.service';
+/**
+ * Modulo responsavel por agrupar os recursos de Mail.
+ */
 
 @Module({
-    // Regista o MailService dentro do MailModule.
-    providers: [MailService],
+  providers: [MailService],
 
-    // Exporta o MailService para outros módulos conseguirem usá-lo.
-    // O AuthModule precisa disto porque o AuthService injeta MailService.
-    exports: [MailService],
+  exports: [MailService],
 })
 export class MailModule {}

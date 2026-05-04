@@ -1,8 +1,18 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAulaFixaDto } from './dto/create-aula-fixa.dto';
 import { CreateExcecaoAulaFixaDto } from './dto/create-excecao-aula-fixa.dto';
 import { UpdateAulaFixaDto } from './dto/update-aula-fixa.dto';
+
+/**
+ * Executa a operacao parse time to date.
+ * @param time Dados recebidos para a operacao.
+ * @returns Resultado da operacao.
+ */
 
 function parseTimeToDate(time: string) {
   const [hoursRaw, minutesRaw] = time.split(':');
@@ -23,29 +33,47 @@ function parseTimeToDate(time: string) {
   return new Date(1970, 0, 1, hours, minutes, 0, 0);
 }
 
+/**
+ * Executa a operacao normalize date.
+ * @param dateString Dados recebidos para a operacao.
+ * @returns Resultado da operacao.
+ */
+
 function normalizeDate(dateString: string) {
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) {
-    throw new BadRequestException('Data inválida. Utilize o formato YYYY-MM-DD.');
+    throw new BadRequestException(
+      'Data inválida. Utilize o formato YYYY-MM-DD.',
+    );
   }
   date.setHours(0, 0, 0, 0);
   return date;
 }
+/**
+ * Servico responsavel pela logica de Horarios.
+ */
 
 @Injectable()
 export class HorariosService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Executa a operacao get dias semana.
+   * @returns Resultado da operacao.
+   */
+
   async getDiasSemana() {
     return this.prisma.dias_Semana.findMany({ orderBy: { ID_Dia: 'asc' } });
   }
 
+  /**
+   * Executa a operacao get all horarios.
+   * @returns Resultado da operacao.
+   */
+
   async getAllHorarios() {
     return this.prisma.aula_Fixa.findMany({
-      orderBy: [
-        { Dia_Semana: 'asc' },
-        { Hora_Inicio: 'asc' },
-      ],
+      orderBy: [{ Dia_Semana: 'asc' }, { Hora_Inicio: 'asc' }],
       include: {
         Dias_Semana: true,
         Sala: true,
@@ -59,6 +87,12 @@ export class HorariosService {
       },
     });
   }
+
+  /**
+   * Executa a operacao get horario by id.
+   * @param id Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   async getHorarioById(id: number) {
     const horario = await this.prisma.aula_Fixa.findUnique({
@@ -78,6 +112,12 @@ export class HorariosService {
 
     return horario;
   }
+
+  /**
+   * Executa a operacao resolve professor utilizador id.
+   * @param idProfessor Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   private async resolveProfessorUtilizadorId(idProfessor?: number) {
     if (!idProfessor) {
@@ -101,9 +141,17 @@ export class HorariosService {
     throw new NotFoundException('Professor não encontrado.');
   }
 
+  /**
+   * Executa a operacao create horario.
+   * @param createAulaFixaDto Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
   async createHorario(createAulaFixaDto: CreateAulaFixaDto) {
     const horaInicio = parseTimeToDate(createAulaFixaDto.horaInicio);
-    const professorUtilizadorId = await this.resolveProfessorUtilizadorId(createAulaFixaDto.idProfessor);
+    const professorUtilizadorId = await this.resolveProfessorUtilizadorId(
+      createAulaFixaDto.idProfessor,
+    );
 
     return this.prisma.aula_Fixa.create({
       data: {
@@ -118,6 +166,13 @@ export class HorariosService {
       },
     });
   }
+
+  /**
+   * Executa a operacao update horario.
+   * @param id Dados recebidos para a operacao.
+   * @param updateAulaFixaDto Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   async updateHorario(id: number, updateAulaFixaDto: UpdateAulaFixaDto) {
     const data: Record<string, any> = {};
@@ -135,9 +190,16 @@ export class HorariosService {
     });
   }
 
+  /**
+   * Executa a operacao delete horario.
+   * @param id Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
   async deleteHorario(id: number) {
-    // 1. Verifica se existe
-    const horario = await this.prisma.aula_Fixa.findUnique({ where: { ID_AulaFixa: id } });
+    const horario = await this.prisma.aula_Fixa.findUnique({
+      where: { ID_AulaFixa: id },
+    });
     if (!horario) {
       throw new NotFoundException('Horário fixo não encontrado.');
     }
@@ -147,9 +209,17 @@ export class HorariosService {
     });
   }
 
+  /**
+   * Executa a operacao delete excecao.
+   * @param idExcecao Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
   async deleteExcecao(idExcecao: number) {
-    const excecao = await this.prisma.excecao_Aula_Fixa.findUnique({ where: { ID_Excecao: idExcecao } });
-    
+    const excecao = await this.prisma.excecao_Aula_Fixa.findUnique({
+      where: { ID_Excecao: idExcecao },
+    });
+
     if (!excecao) {
       throw new NotFoundException('Exceção não encontrada.');
     }
@@ -159,8 +229,17 @@ export class HorariosService {
     });
   }
 
+  /**
+   * Executa a operacao create excecao.
+   * @param id Dados recebidos para a operacao.
+   * @param createExcecaoDto Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
   async createExcecao(id: number, createExcecaoDto: CreateExcecaoAulaFixaDto) {
-    const horario = await this.prisma.aula_Fixa.findUnique({ where: { ID_AulaFixa: id } });
+    const horario = await this.prisma.aula_Fixa.findUnique({
+      where: { ID_AulaFixa: id },
+    });
 
     if (!horario) {
       throw new NotFoundException('Horário fixo não encontrado.');

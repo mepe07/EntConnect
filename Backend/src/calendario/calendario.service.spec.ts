@@ -52,7 +52,10 @@ describe('CalendarioService', () => {
       },
     ]);
 
-    const resultado = await service.getCalendarItems('2026-05-01', '2026-05-31');
+    const resultado = await service.getCalendarItems(
+      '2026-05-01',
+      '2026-05-31',
+    );
 
     expect(prismaMock.evento.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -66,7 +69,9 @@ describe('CalendarioService', () => {
     );
     expect(prismaMock.coaching.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { Inicio_Coaching: { gte: expect.any(Date), lte: expect.any(Date) } },
+        where: {
+          Inicio_Coaching: { gte: expect.any(Date), lte: expect.any(Date) },
+        },
         include: expect.objectContaining({ Sala: true }),
       }),
     );

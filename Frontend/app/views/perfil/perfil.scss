@@ -560,3 +560,86 @@ $cor-fundo-app: #f1f5f9;
         }
     }
 }
+
+body.entconnect-dark {
+    .perfil-container {
+        background-color: transparent !important;
+        color: #e2e8f0 !important;
+
+        .perfil-sidebar,
+        .perfil-conteudo .cartao-branco,
+        .perfil-grid-layout .cartao-edicao,
+        .perfil-grid-layout .cartao-info-extra,
+        .modal-corte-container {
+            background: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+        }
+
+        .perfil-sidebar h2,
+        .perfil-conteudo .cartao-branco h3,
+        .perfil-grid-layout .cartao-edicao h4,
+        .perfil-grid-layout .cartao-info-extra h4,
+        .info-texto .nome-principal,
+        .perfil-grid-layout .coluna-detalhes .cartao-info-extra .item-info .valor-cargo,
+        .perfil-grid-layout .coluna-detalhes .cartao-info-extra .item-info.cargo-info .cargo-badge,
+        .modal-corte-container .modal-header h3,
+        .tabela-custom td {
+            color: #f8fafc !important;
+            -webkit-text-fill-color: #f8fafc !important;
+        }
+
+        .perfil-sidebar nav button,
+        .info-texto .nome-meta,
+        .info-texto .email-utilizador,
+        .info-texto .aviso-tamanho,
+        .perfil-grid-layout .coluna-detalhes .cartao-info-extra .item-info .label,
+        .perfil-grid-layout .coluna-detalhes .cartao-info-extra .texto-seguranca,
+        .form-pessoal .campo label,
+        .tabela-custom th,
+        .modal-corte-container .modal-header p {
+            color: #94a3b8 !important;
+        }
+
+        .perfil-sidebar nav button:hover,
+        .perfil-sidebar nav button.ativo {
+            background: #1f2937 !important;
+            color: #86efac !important;
+        }
+
+        .form-pessoal .campo input {
+            background-color: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+            -webkit-text-fill-color: #e2e8f0 !important;
+            color-scheme: dark;
+
+            &:disabled {
+                background-color: #1f2937 !important;
+                border-color: #334155 !important;
+                color: #94a3b8 !important;
+                -webkit-text-fill-color: #94a3b8 !important;
+            }
+        }
+
+        .btn-secundario,
+        .info-texto .botoes-foto-wrapper .btn-link-foto,
+        .modal-corte-container .botoes-modal .btn-modal-cancelar {
+            background: #1f2937 !important;
+            border-color: #475569 !important;
+            color: #e2e8f0 !important;
+        }
+
+        .divisor-perfil,
+        .perfil-grid-layout .coluna-detalhes .cartao-info-extra hr,
+        .tabela-custom th,
+        .tabela-custom td {
+            border-color: #334155 !important;
+        }
+
+        .etiqueta {
+            color: #0f172a !important;
+        }
+    }
+}
