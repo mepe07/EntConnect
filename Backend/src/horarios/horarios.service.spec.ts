@@ -42,7 +42,9 @@ describe('HorariosService', () => {
     prismaMock.dias_Semana.findMany.mockResolvedValue(dias);
 
     await expect(service.getDiasSemana()).resolves.toBe(dias);
-    expect(prismaMock.dias_Semana.findMany).toHaveBeenCalledWith({ orderBy: { ID_Dia: 'asc' } });
+    expect(prismaMock.dias_Semana.findMany).toHaveBeenCalledWith({
+      orderBy: { ID_Dia: 'asc' },
+    });
   });
 
   it('deve listar horários fixos com relações', async () => {
@@ -60,14 +62,18 @@ describe('HorariosService', () => {
 
   it('deve obter horário por ID ou lançar NotFound', async () => {
     prismaMock.aula_Fixa.findUnique.mockResolvedValueOnce({ ID_AulaFixa: 1 });
-    await expect(service.getHorarioById(1)).resolves.toEqual({ ID_AulaFixa: 1 });
+    await expect(service.getHorarioById(1)).resolves.toEqual({
+      ID_AulaFixa: 1,
+    });
 
     prismaMock.aula_Fixa.findUnique.mockResolvedValueOnce(null);
     await expect(service.getHorarioById(99)).rejects.toThrow(NotFoundException);
   });
 
   it('deve criar horário resolvendo professor por ID de utilizador', async () => {
-    prismaMock.utilizador.findUnique.mockResolvedValueOnce({ ID_Utilizador: 10 });
+    prismaMock.utilizador.findUnique.mockResolvedValueOnce({
+      ID_Utilizador: 10,
+    });
     prismaMock.aula_Fixa.create.mockResolvedValue({ ID_AulaFixa: 1 });
 
     await service.createHorario({
@@ -91,35 +97,47 @@ describe('HorariosService', () => {
   });
 
   it('deve rejeitar criação com hora inválida ou professor inexistente', async () => {
-    await expect(service.createHorario({
-      diaSemana: 1,
-      horaInicio: '25:00',
-      duracao: 60,
-      idEstudio: 2,
-      idModalidade: 3,
-    })).rejects.toThrow(BadRequestException);
+    await expect(
+      service.createHorario({
+        diaSemana: 1,
+        horaInicio: '25:00',
+        duracao: 60,
+        idEstudio: 2,
+        idModalidade: 3,
+      }),
+    ).rejects.toThrow(BadRequestException);
 
     prismaMock.utilizador.findUnique.mockResolvedValue(null);
-    await expect(service.createHorario({
-      diaSemana: 1,
-      horaInicio: '09:00',
-      duracao: 60,
-      idEstudio: 2,
-      idModalidade: 3,
-      idProfessor: 999,
-    })).rejects.toThrow(NotFoundException);
+    await expect(
+      service.createHorario({
+        diaSemana: 1,
+        horaInicio: '09:00',
+        duracao: 60,
+        idEstudio: 2,
+        idModalidade: 3,
+        idProfessor: 999,
+      }),
+    ).rejects.toThrow(NotFoundException);
   });
 
   it('deve atualizar apenas campos permitidos e rejeitar payload vazio', async () => {
-    prismaMock.aula_Fixa.update.mockResolvedValue({ ID_AulaFixa: 1, Ativa: false });
+    prismaMock.aula_Fixa.update.mockResolvedValue({
+      ID_AulaFixa: 1,
+      Ativa: false,
+    });
 
-    await expect(service.updateHorario(1, { ativa: false })).resolves.toEqual({ ID_AulaFixa: 1, Ativa: false });
+    await expect(service.updateHorario(1, { ativa: false })).resolves.toEqual({
+      ID_AulaFixa: 1,
+      Ativa: false,
+    });
     expect(prismaMock.aula_Fixa.update).toHaveBeenCalledWith({
       where: { ID_AulaFixa: 1 },
       data: { Ativa: false },
     });
 
-    await expect(service.updateHorario(1, {})).rejects.toThrow(BadRequestException);
+    await expect(service.updateHorario(1, {})).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   it('deve apagar horário existente e rejeitar inexistente', async () => {
@@ -137,7 +155,9 @@ describe('HorariosService', () => {
     prismaMock.excecao_Aula_Fixa.findFirst.mockResolvedValue(null);
     prismaMock.excecao_Aula_Fixa.create.mockResolvedValue({ ID_Excecao: 3 });
 
-    await expect(service.createExcecao(1, { dataCancelada: '2026-05-10' })).resolves.toEqual({ ID_Excecao: 3 });
+    await expect(
+      service.createExcecao(1, { dataCancelada: '2026-05-10' }),
+    ).resolves.toEqual({ ID_Excecao: 3 });
     expect(prismaMock.excecao_Aula_Fixa.create).toHaveBeenCalledWith({
       data: { ID_AulaFixa: 1, Data_Cancelada: expect.any(Date) },
     });
@@ -145,10 +165,14 @@ describe('HorariosService', () => {
 
   it('deve rejeitar exceção duplicada, data inválida e apagar exceção inexistente', async () => {
     prismaMock.aula_Fixa.findUnique.mockResolvedValue({ ID_AulaFixa: 1 });
-    await expect(service.createExcecao(1, { dataCancelada: 'data-invalida' })).rejects.toThrow(BadRequestException);
+    await expect(
+      service.createExcecao(1, { dataCancelada: 'data-invalida' }),
+    ).rejects.toThrow(BadRequestException);
 
     prismaMock.excecao_Aula_Fixa.findFirst.mockResolvedValue({ ID_Excecao: 3 });
-    await expect(service.createExcecao(1, { dataCancelada: '2026-05-10' })).rejects.toThrow(BadRequestException);
+    await expect(
+      service.createExcecao(1, { dataCancelada: '2026-05-10' }),
+    ).rejects.toThrow(BadRequestException);
 
     prismaMock.excecao_Aula_Fixa.findUnique.mockResolvedValue(null);
     await expect(service.deleteExcecao(3)).rejects.toThrow(NotFoundException);

@@ -12,6 +12,9 @@ import { EstatisticasModule } from './estatistica/estatisticas.module';
 import { CalendarioModule } from './calendario/calendario.module';
 import { ConfigModule } from '@nestjs/config';
 import { HorariosModule } from './horarios/horarios.module';
+/**
+ * Modulo responsavel por agrupar os recursos de App.
+ */
 
 @Module({
   imports: [
@@ -33,7 +36,4 @@ import { HorariosModule } from './horarios/horarios.module';
     HorariosModule,
   ],
 })
-/**
- * Módulo raiz da aplicação EntConnect.
- */
 export class AppModule {}

@@ -58,19 +58,25 @@ describe('AuthGuard', () => {
   });
 
   it('deve lançar UnauthorizedException quando o header Authorization não existe', async () => {
-    await expect(guard.canActivate(criarContextoFake(undefined))).rejects.toThrow(
+    await expect(
+      guard.canActivate(criarContextoFake(undefined)),
+    ).rejects.toThrow(
       new UnauthorizedException('Acesso negado. Precisas de fazer login.'),
     );
   });
 
   it('deve lançar UnauthorizedException quando o header Authorization não começa por Bearer', async () => {
-    await expect(guard.canActivate(criarContextoFake('Token abc123'))).rejects.toThrow(
+    await expect(
+      guard.canActivate(criarContextoFake('Token abc123')),
+    ).rejects.toThrow(
       new UnauthorizedException('Acesso negado. Precisas de fazer login.'),
     );
   });
 
   it('deve lançar UnauthorizedException quando o token está vazio', async () => {
-    await expect(guard.canActivate(criarContextoFake('Bearer '))).rejects.toThrow(
+    await expect(
+      guard.canActivate(criarContextoFake('Bearer ')),
+    ).rejects.toThrow(
       new UnauthorizedException('Acesso negado. Precisas de fazer login.'),
     );
   });
@@ -78,8 +84,8 @@ describe('AuthGuard', () => {
   it('deve lançar UnauthorizedException quando o token é inválido', async () => {
     jwtServiceMock.verifyAsync.mockRejectedValue(new Error('jwt malformed'));
 
-    await expect(guard.canActivate(criarContextoFake('Bearer token-invalido'))).rejects.toThrow(
-      new UnauthorizedException('Token inválido ou expirado.'),
-    );
+    await expect(
+      guard.canActivate(criarContextoFake('Bearer token-invalido')),
+    ).rejects.toThrow(new UnauthorizedException('Token inválido ou expirado.'));
   });
 });

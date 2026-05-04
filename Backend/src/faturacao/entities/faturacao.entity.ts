@@ -1,4 +1,5 @@
 /**
- * Entidade placeholder de faturação para integração com Nest/Swagger.
+ * Representa Faturacao no backend.
  */
+
 export class Faturacao {}

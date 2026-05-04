@@ -1,8 +1,5 @@
-/**
- * Tipos de anúncio suportados pelo Marketplace.
- */
 export enum TipoAnuncio {
-    VENDA = 'venda',
-    ALUGUER = 'aluguer',
-    AMBOS = 'ambos',
+  VENDA = 'venda',
+  ALUGUER = 'aluguer',
+  AMBOS = 'ambos',
 }

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -8,134 +12,180 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Role } from './enums/roles.enum';
 import { MailService } from '../mail/mail.service';
+/**
+ * Servico responsavel pela logica de Auth.
+ */
 
 @Injectable()
-/**
- * Serviço responsável por autenticar utilizadores e gerir o reset de password.
- */
 export class AuthService {
-    constructor(
-        private readonly prisma: PrismaService,
-        private readonly jwtService: JwtService,
-        private readonly mailService: MailService,
-    ) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
+  ) {}
 
-    /**
-     * Valida credenciais e devolve um JWT com os dados mínimos do utilizador.
-     *
-     * @param loginDto - Credenciais introduzidas no login.
-     * @returns Token JWT e role resolvida para a sessão.
-     */
-    async login(loginDto: LoginDto) {
-        const user = await this.obterUtilizadorPorUsername(loginDto.username);
+  /**
+   * Autentica um utilizador e devolve os dados da sessao.
+   * @param loginDto Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-        if (!user) throw new UnauthorizedException('Os dados introduzidos estão inválidos.');
+  async login(loginDto: LoginDto) {
+    const user = await this.obterUtilizadorPorUsername(loginDto.username);
 
-        const passwordValida = await bcrypt.compare(loginDto.password, user.Password);
+    if (!user)
+      throw new UnauthorizedException('Os dados introduzidos estão inválidos.');
 
-        if (!passwordValida) throw new UnauthorizedException('Os dados introduzidos estão inválidos.');
+    const passwordValida = await bcrypt.compare(
+      loginDto.password,
+      user.Password,
+    );
 
-        if (!user.Ativo) throw new UnauthorizedException('A sua conta está inativa. Contacte a coordenação.');
+    if (!passwordValida)
+      throw new UnauthorizedException('Os dados introduzidos estão inválidos.');
 
-        const userRole = this.determinarRole(user);
+    if (!user.Ativo)
+      throw new UnauthorizedException(
+        'A sua conta está inativa. Contacte a coordenação.',
+      );
 
-        const payload = {
-            sub: user.ID_Utilizador,
-            username: user.Utilizador,            
-            nome: user.Pessoa?.Nome,
-            role: userRole,
-            idPessoa: user.ID_Pessoa,
-            Acoes_Rapidas: user.Acoes_Rapidas,
-        }; // 🚨 FALTAVA FECHAR ESTA CHAVETA AQUI!
+    const userRole = this.determinarRole(user);
 
-        return {
-            access_token: await this.jwtService.signAsync(payload),
-            role: userRole,
-        };
-    }
+    const payload = {
+      sub: user.ID_Utilizador,
+      username: user.Utilizador,
+      nome: user.Pessoa?.Nome,
+      role: userRole,
+      idPessoa: user.ID_Pessoa,
+      Acoes_Rapidas: user.Acoes_Rapidas,
+    };
 
-    /**
-     * Inicia o fluxo de recuperação de password através de email.
-     *
-     * @param forgotPasswordDto - Email associado à conta.
-     * @returns Resposta genérica para não expor se a conta existe.
-     */
-    async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
-        const email = forgotPasswordDto.email.trim().toLowerCase();
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+      role: userRole,
+    };
+  }
 
-        const user = await this.prisma.utilizador.findFirst({
-            where: { Pessoa: { Email: { equals: email } } },
-            include: { Pessoa: true },
-        });
+  /**
+   * Inicia o fluxo de recuperacao de password.
+   * @param forgotPasswordDto Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-        const respostaGenerica = { message: 'Se existir uma conta associada a esse email, receberá instruções para repor a password.' };
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    const email = forgotPasswordDto.email.trim().toLowerCase();
 
-        if (!user || !user.Ativo) return respostaGenerica;
+    const user = await this.prisma.utilizador.findFirst({
+      where: { Pessoa: { Email: { equals: email } } },
+      include: { Pessoa: true },
+    });
 
-        const token = randomBytes(32).toString('hex');
-        const tokenHash = this.hashResetToken(token);
-        const expiresAt = new Date(Date.now() + 1000 * 60 * 30); // 30 minutos
+    const respostaGenerica = {
+      message:
+        'Se existir uma conta associada a esse email, receberá instruções para repor a password.',
+    };
 
-        await this.prisma.utilizador.update({
-            where: { ID_Utilizador: user.ID_Utilizador },
-            data: { ResetPasswordToken: tokenHash, ResetPasswordTokenExpiresAt: expiresAt },
-        });
+    if (!user || !user.Ativo) return respostaGenerica;
 
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-        const resetLink = `${frontendUrl}/login?resetToken=${token}`;
+    const token = randomBytes(32).toString('hex');
+    const tokenHash = this.hashResetToken(token);
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 30);
 
-        await this.mailService.sendPasswordResetEmail(user.Pessoa.Email, resetLink);
+    await this.prisma.utilizador.update({
+      where: { ID_Utilizador: user.ID_Utilizador },
+      data: {
+        ResetPasswordToken: tokenHash,
+        ResetPasswordTokenExpiresAt: expiresAt,
+      },
+    });
 
-        return respostaGenerica;
-    }
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetLink = `${frontendUrl}/login?resetToken=${token}`;
 
-    /**
-     * Conclui o reset de password a partir de um token válido.
-     *
-     * @param resetPasswordDto - Token de recuperação e nova password.
-     * @returns Mensagem de confirmação da operação.
-     */
-    async resetPassword(resetPasswordDto: ResetPasswordDto) {
-        const tokenHash = this.hashResetToken(resetPasswordDto.token);
+    await this.mailService.sendPasswordResetEmail(user.Pessoa.Email, resetLink);
 
-        const user = await this.prisma.utilizador.findFirst({
-            where: {
-                ResetPasswordToken: tokenHash,
-                ResetPasswordTokenExpiresAt: { gt: new Date() },
-            },
-        });
+    return respostaGenerica;
+  }
 
-        if (!user) throw new BadRequestException('O link de recuperação é inválido ou já expirou.');
+  /**
+   * Conclui o fluxo de redefinicao de password.
+   * @param resetPasswordDto Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-        const passwordHash = await bcrypt.hash(resetPasswordDto.password, 10);
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const tokenHash = this.hashResetToken(resetPasswordDto.token);
 
-        await this.prisma.utilizador.update({
-            where: { ID_Utilizador: user.ID_Utilizador },
-            data: { Password: passwordHash, ResetPasswordToken: null, ResetPasswordTokenExpiresAt: null },
-        });
+    const user = await this.prisma.utilizador.findFirst({
+      where: {
+        ResetPasswordToken: tokenHash,
+        ResetPasswordTokenExpiresAt: { gt: new Date() },
+      },
+    });
 
-        return { message: 'Password alterada com sucesso. Já pode iniciar sessão.' };
-    }
+    if (!user)
+      throw new BadRequestException(
+        'O link de recuperação é inválido ou já expirou.',
+      );
 
-    private hashResetToken(token: string) {
-        return createHash('sha256').update(token).digest('hex');
-    }
+    const passwordHash = await bcrypt.hash(resetPasswordDto.password, 10);
 
-    private async obterUtilizadorPorUsername(username: string) {
-        return this.prisma.utilizador.findUnique({
-            where: { Utilizador: username },
-            include: {
-                Pessoa: {
-                    include: { Professor: true, Coordenador: true, Direcao: true, Enc_Educacao: true },
-                },
-            },
-        });
-    }
+    await this.prisma.utilizador.update({
+      where: { ID_Utilizador: user.ID_Utilizador },
+      data: {
+        Password: passwordHash,
+        ResetPasswordToken: null,
+        ResetPasswordTokenExpiresAt: null,
+      },
+    });
 
-    private determinarRole(user: any): Role {
-        if (user.Pessoa?.Professor) return Role.PROFESSOR;
-        if (user.Pessoa?.Coordenador) return Role.COORDENADOR;
-        if (user.Pessoa?.Enc_Educacao) return Role.ENC_EDUCACAO;
-        throw new UnauthorizedException('Utilizador sem perfil válido.');
-    }
+    return {
+      message: 'Password alterada com sucesso. Já pode iniciar sessão.',
+    };
+  }
+
+  /**
+   * Executa a operacao hash reset token.
+   * @param token Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  private hashResetToken(token: string) {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  /**
+   * Executa a operacao obter utilizador por username.
+   * @param username Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  private async obterUtilizadorPorUsername(username: string) {
+    return this.prisma.utilizador.findUnique({
+      where: { Utilizador: username },
+      include: {
+        Pessoa: {
+          include: {
+            Professor: true,
+            Coordenador: true,
+            Direcao: true,
+            Enc_Educacao: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Executa a operacao determinar role.
+   * @param user Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  private determinarRole(user: any): Role {
+    if (user.Pessoa?.Professor) return Role.PROFESSOR;
+    if (user.Pessoa?.Coordenador) return Role.COORDENADOR;
+    if (user.Pessoa?.Enc_Educacao) return Role.ENC_EDUCACAO;
+    throw new UnauthorizedException('Utilizador sem perfil válido.');
+  }
 }

@@ -8,7 +8,10 @@ import { MarcacoesService } from './EE/marcacoes.service';
 import { UtilizadorImportService } from './ImportUsers/utilizador-import.service';
 import { AgendamentosService } from './professor/Agendamentos.service';
 import { DispobilidadeService } from './professor/Disponibilidade.service';
-import { ProfessorController, UtilizadorController } from './utilizador.controller';
+import {
+  ProfessorController,
+  UtilizadorController,
+} from './utilizador.controller';
 import { UtilizadorService } from './utilizador.service';
 import { ProfessorService } from './professor/professor.service';
 
@@ -42,10 +45,26 @@ describe('UtilizadorController', () => {
   };
 
   const importServiceMock = { importarDeBlob: jest.fn() };
-  const disponibilidadeServiceMock = { getAvailabilities: jest.fn(), criarDisponibilidade: jest.fn(), updateAvailability: jest.fn() };
-  const marcacoesServiceMock = { getMarcacoesbyEE: jest.fn(), getConfirmacoesByEE: jest.fn(), confirmarSessaoByEE: jest.fn() };
-  const blobsServiceMock = { lerFicheiroTexto: jest.fn(), uploadFicheiro: jest.fn(), apagarFicheiro: jest.fn() };
-  const agendamentosServiceMock = { getAgendamentosProfessor: jest.fn(), getConfirmacoesProfessor: jest.fn(), atualizarConfirmacaoProfessor: jest.fn() };
+  const disponibilidadeServiceMock = {
+    getAvailabilities: jest.fn(),
+    criarDisponibilidade: jest.fn(),
+    updateAvailability: jest.fn(),
+  };
+  const marcacoesServiceMock = {
+    getMarcacoesbyEE: jest.fn(),
+    getConfirmacoesByEE: jest.fn(),
+    confirmarSessaoByEE: jest.fn(),
+  };
+  const blobsServiceMock = {
+    lerFicheiroTexto: jest.fn(),
+    uploadFicheiro: jest.fn(),
+    apagarFicheiro: jest.fn(),
+  };
+  const agendamentosServiceMock = {
+    getAgendamentosProfessor: jest.fn(),
+    getConfirmacoesProfessor: jest.fn(),
+    atualizarConfirmacaoProfessor: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -91,13 +110,23 @@ describe('UtilizadorController', () => {
 
     expect(utilizadorServiceMock.blockUser).toHaveBeenCalledWith(2);
     expect(utilizadorServiceMock.unlockUser).toHaveBeenCalledWith(3);
-    expect(utilizadorServiceMock.updateCargo).toHaveBeenCalledWith(6, 'Professor', true);
+    expect(utilizadorServiceMock.updateCargo).toHaveBeenCalledWith(
+      6,
+      'Professor',
+      true,
+    );
   });
 
   it('deve bloquear gestão de educandos pelo próprio encarregado', async () => {
-    await expect(controller.criarMeuEducando()).rejects.toThrow(ForbiddenException);
-    await expect(controller.atualizarMeuEducando()).rejects.toThrow(ForbiddenException);
-    await expect(controller.removerMeuEducando()).rejects.toThrow(ForbiddenException);
+    await expect(controller.criarMeuEducando()).rejects.toThrow(
+      ForbiddenException,
+    );
+    await expect(controller.atualizarMeuEducando()).rejects.toThrow(
+      ForbiddenException,
+    );
+    await expect(controller.removerMeuEducando()).rejects.toThrow(
+      ForbiddenException,
+    );
   });
 
   it('deve delegar marcações, confirmações, agendamentos e disponibilidades', async () => {
@@ -109,23 +138,47 @@ describe('UtilizadorController', () => {
     await controller.confirmarSessaoProfessor('30', 40, 14);
     await controller.getDisponibilidades();
     await controller.adicionarDisponibilidade({ ID_Professor: 1 } as any);
-    await controller.updateDisponibility('50', { EstadoDisponibilidadeID: 1 } as any);
+    await controller.updateDisponibility('50', {
+      EstadoDisponibilidadeID: 1,
+    } as any);
 
-    expect(marcacoesServiceMock.confirmarSessaoByEE).toHaveBeenCalledWith(10, 20, 13);
-    expect(agendamentosServiceMock.atualizarConfirmacaoProfessor).toHaveBeenCalledWith(30, 40, 14);
-    expect(disponibilidadeServiceMock.updateAvailability).toHaveBeenCalledWith(50, { EstadoDisponibilidadeID: 1 });
+    expect(marcacoesServiceMock.confirmarSessaoByEE).toHaveBeenCalledWith(
+      10,
+      20,
+      13,
+    );
+    expect(
+      agendamentosServiceMock.atualizarConfirmacaoProfessor,
+    ).toHaveBeenCalledWith(30, 40, 14);
+    expect(disponibilidadeServiceMock.updateAvailability).toHaveBeenCalledWith(
+      50,
+      { EstadoDisponibilidadeID: 1 },
+    );
   });
 
   it('deve importar CSV via blob e limpar ficheiro temporário', async () => {
-    const file = { originalname: 'users.csv', mimetype: 'text/csv', size: 10 } as Express.Multer.File;
+    const file = {
+      originalname: 'users.csv',
+      mimetype: 'text/csv',
+      size: 10,
+    } as Express.Multer.File;
 
     await controller.importarDoBlob(file);
 
-    expect(blobsServiceMock.uploadFicheiro).toHaveBeenCalledWith('importar-csv', file, 'users');
+    expect(blobsServiceMock.uploadFicheiro).toHaveBeenCalledWith(
+      'importar-csv',
+      file,
+      'users',
+    );
     expect(importServiceMock.importarDeBlob).toHaveBeenCalledWith('users.csv');
-    expect(blobsServiceMock.apagarFicheiro).toHaveBeenCalledWith('importar-csv', 'users.csv');
+    expect(blobsServiceMock.apagarFicheiro).toHaveBeenCalledWith(
+      'importar-csv',
+      'users.csv',
+    );
 
-    await expect(controller.importarDoBlob(undefined as any)).rejects.toThrow(BadRequestException);
+    await expect(controller.importarDoBlob(undefined as any)).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   it('deve validar upload de foto e atualizar URL', async () => {
@@ -139,10 +192,19 @@ describe('UtilizadorController', () => {
 
     await controller.UploadPhoto('9', file);
 
-    expect(blobsServiceMock.uploadFicheiro).toHaveBeenCalledWith('fotos-pessoas', file, 'user9');
-    expect(utilizadorServiceMock.UploadPhoto).toHaveBeenCalledWith('https://foto', 9);
+    expect(blobsServiceMock.uploadFicheiro).toHaveBeenCalledWith(
+      'fotos-pessoas',
+      file,
+      'user9',
+    );
+    expect(utilizadorServiceMock.UploadPhoto).toHaveBeenCalledWith(
+      'https://foto',
+      9,
+    );
 
-    await expect(controller.UploadPhoto('9', undefined as any)).rejects.toThrow(BadRequestException);
+    await expect(controller.UploadPhoto('9', undefined as any)).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   it('deve validar preferências como array e delegar educandos', async () => {
@@ -153,9 +215,18 @@ describe('UtilizadorController', () => {
     await controller.associarEducando(10, 20);
     await controller.removerEducando(10, 20);
 
-    expect(utilizadorServiceMock.updatePreferenciasAcoes).toHaveBeenCalledWith(1, [1, 2]);
-    expect(utilizadorServiceMock.atualizarEducando).toHaveBeenCalledWith(10, 20, { nome: 'Aluno' });
-    await expect(controller.updatePreferenciasAcoes(1, {} as any)).rejects.toThrow(BadRequestException);
+    expect(utilizadorServiceMock.updatePreferenciasAcoes).toHaveBeenCalledWith(
+      1,
+      [1, 2],
+    );
+    expect(utilizadorServiceMock.atualizarEducando).toHaveBeenCalledWith(
+      10,
+      20,
+      { nome: 'Aluno' },
+    );
+    await expect(
+      controller.updatePreferenciasAcoes(1, {} as any),
+    ).rejects.toThrow(BadRequestException);
   });
 });
 
@@ -172,7 +243,9 @@ describe('ProfessorController', () => {
   beforeEach(async () => {
     const module = await Test.createTestingModule({
       controllers: [ProfessorController],
-      providers: [{ provide: ProfessorService, useValue: professorServiceMock }],
+      providers: [
+        { provide: ProfessorService, useValue: professorServiceMock },
+      ],
     }).compile();
 
     controller = module.get<ProfessorController>(ProfessorController);
@@ -191,6 +264,8 @@ describe('ProfessorController', () => {
     await controller.remove(3);
 
     expect(professorServiceMock.findAll).toHaveBeenCalledWith(2);
-    expect(professorServiceMock.update).toHaveBeenCalledWith(2, { Nome: 'Ana 2' });
+    expect(professorServiceMock.update).toHaveBeenCalledWith(2, {
+      Nome: 'Ana 2',
+    });
   });
 });

@@ -1,9 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+/**
+ * Servico responsavel pela logica de Calendario.
+ */
 
 @Injectable()
 export class CalendarioService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Executa a operacao to start of day.
+   * @param date Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   private toStartOfDay(date: Date): Date {
     const copy = new Date(date);
@@ -11,11 +20,24 @@ export class CalendarioService {
     return copy;
   }
 
+  /**
+   * Executa a operacao to end of day.
+   * @param date Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
   private toEndOfDay(date: Date): Date {
     const copy = new Date(date);
     copy.setHours(23, 59, 59, 999);
     return copy;
   }
+
+  /**
+   * Executa a operacao parse date.
+   * @param dateString Dados recebidos para a operacao.
+   * @param fallback Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   private parseDate(dateString: string | undefined, fallback: Date): Date {
     if (!dateString) {
@@ -35,6 +57,13 @@ export class CalendarioService {
 
     return parsed;
   }
+
+  /**
+   * Executa a operacao get calendar items.
+   * @param start Dados recebidos para a operacao.
+   * @param end Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   async getCalendarItems(start?: string, end?: string) {
     const today = new Date();

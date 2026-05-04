@@ -52,71 +52,94 @@ class PrismaCoachingProcessFake {
   coachingAlunos: CoachingAlunoRecord[] = [];
 
   disponibilidade = {
-    create: jest.fn(async ({ data }: { data: Partial<DisponibilidadeRecord> }) => {
-      const disponibilidade: DisponibilidadeRecord = {
-        ID_Disponibilidade: this.disponibilidadeId++,
-        ID_Professor: data.ID_Professor,
-        Hora_Inicio: data.Hora_Inicio ?? null,
-        EstadoDisponibilidadeID: data.EstadoDisponibilidadeID!,
-        DataAtualizacao: data.DataAtualizacao!,
-        AlteradoPorUtilizadorID: data.AlteradoPorUtilizadorID!,
-        Duracao: data.Duracao!,
-        Modalidade: data.Modalidade!,
-        IdEstudio: data.IdEstudio ?? null,
-        MaxAlunos: data.MaxAlunos ?? null,
-        ValorPorAluno: data.ValorPorAluno ?? null,
-      };
+    create: jest.fn(
+      async ({ data }: { data: Partial<DisponibilidadeRecord> }) => {
+        const disponibilidade: DisponibilidadeRecord = {
+          ID_Disponibilidade: this.disponibilidadeId++,
+          ID_Professor: data.ID_Professor,
+          Hora_Inicio: data.Hora_Inicio ?? null,
+          EstadoDisponibilidadeID: data.EstadoDisponibilidadeID!,
+          DataAtualizacao: data.DataAtualizacao!,
+          AlteradoPorUtilizadorID: data.AlteradoPorUtilizadorID!,
+          Duracao: data.Duracao!,
+          Modalidade: data.Modalidade!,
+          IdEstudio: data.IdEstudio ?? null,
+          MaxAlunos: data.MaxAlunos ?? null,
+          ValorPorAluno: data.ValorPorAluno ?? null,
+        };
 
-      this.disponibilidades.push(disponibilidade);
-      return disponibilidade;
-    }),
-
-    count: jest.fn(async ({ where }: { where: { ID_Disponibilidade: number } }) =>
-      this.disponibilidades.filter((item) => item.ID_Disponibilidade === where.ID_Disponibilidade).length,
+        this.disponibilidades.push(disponibilidade);
+        return disponibilidade;
+      },
     ),
 
-    findUnique: jest.fn(async ({ where, select }: { where: { ID_Disponibilidade: number }; select?: object }) => {
-      const disponibilidade = this.disponibilidades.find(
-        (item) => item.ID_Disponibilidade === where.ID_Disponibilidade,
-      );
+    count: jest.fn(
+      async ({ where }: { where: { ID_Disponibilidade: number } }) =>
+        this.disponibilidades.filter(
+          (item) => item.ID_Disponibilidade === where.ID_Disponibilidade,
+        ).length,
+    ),
 
-      if (!disponibilidade) {
-        return null;
-      }
+    findUnique: jest.fn(
+      async ({
+        where,
+        select,
+      }: {
+        where: { ID_Disponibilidade: number };
+        select?: object;
+      }) => {
+        const disponibilidade = this.disponibilidades.find(
+          (item) => item.ID_Disponibilidade === where.ID_Disponibilidade,
+        );
 
-      if (select && 'MaxAlunos' in select) {
-        return { MaxAlunos: disponibilidade.MaxAlunos };
-      }
+        if (!disponibilidade) {
+          return null;
+        }
 
-      return disponibilidade;
-    }),
+        if (select && 'MaxAlunos' in select) {
+          return { MaxAlunos: disponibilidade.MaxAlunos };
+        }
 
-    update: jest.fn(async ({ where, data }: { where: { ID_Disponibilidade: number }; data: any }) => {
-      const disponibilidade = this.disponibilidades.find(
-        (item) => item.ID_Disponibilidade === where.ID_Disponibilidade,
-      );
+        return disponibilidade;
+      },
+    ),
 
-      if (!disponibilidade) {
-        throw new Error('Disponibilidade nao encontrada.');
-      }
+    update: jest.fn(
+      async ({
+        where,
+        data,
+      }: {
+        where: { ID_Disponibilidade: number };
+        data: any;
+      }) => {
+        const disponibilidade = this.disponibilidades.find(
+          (item) => item.ID_Disponibilidade === where.ID_Disponibilidade,
+        );
 
-      const { MaxAlunos, ...camposDiretos } = data;
-      Object.assign(disponibilidade, camposDiretos);
+        if (!disponibilidade) {
+          throw new Error('Disponibilidade nao encontrada.');
+        }
 
-      if (MaxAlunos?.decrement) {
-        disponibilidade.MaxAlunos = (disponibilidade.MaxAlunos ?? 0) - MaxAlunos.decrement;
-      }
+        const { MaxAlunos, ...camposDiretos } = data;
+        Object.assign(disponibilidade, camposDiretos);
 
-      if (MaxAlunos?.increment) {
-        disponibilidade.MaxAlunos = (disponibilidade.MaxAlunos ?? 0) + MaxAlunos.increment;
-      }
+        if (MaxAlunos?.decrement) {
+          disponibilidade.MaxAlunos =
+            (disponibilidade.MaxAlunos ?? 0) - MaxAlunos.decrement;
+        }
 
-      if (MaxAlunos !== undefined && typeof MaxAlunos === 'number') {
-        disponibilidade.MaxAlunos = MaxAlunos;
-      }
+        if (MaxAlunos?.increment) {
+          disponibilidade.MaxAlunos =
+            (disponibilidade.MaxAlunos ?? 0) + MaxAlunos.increment;
+        }
 
-      return disponibilidade;
-    }),
+        if (MaxAlunos !== undefined && typeof MaxAlunos === 'number') {
+          disponibilidade.MaxAlunos = MaxAlunos;
+        }
+
+        return disponibilidade;
+      },
+    ),
 
     findMany: jest.fn(async () =>
       this.disponibilidades.map((disp) => ({
@@ -132,23 +155,34 @@ class PrismaCoachingProcessFake {
         },
         Utilizador: { Pessoa: { Nome: 'Coordenacao Teste' } },
         Coaching: this.coachings
-          .filter((coaching) => coaching.ID_Disponibilidade === disp.ID_Disponibilidade)
+          .filter(
+            (coaching) =>
+              coaching.ID_Disponibilidade === disp.ID_Disponibilidade,
+          )
           .map((coaching) => ({
-            Coaching_Aluno: this.coachingAlunos.filter((aluno) => aluno.ID_Coaching === coaching.ID_Coaching),
+            Coaching_Aluno: this.coachingAlunos.filter(
+              (aluno) => aluno.ID_Coaching === coaching.ID_Coaching,
+            ),
           })),
       })),
     ),
   };
 
   coaching = {
-    findFirst: jest.fn(async ({ where }: { where: Partial<CoachingRecord> }) =>
-      this.coachings.find((coaching) =>
-        Object.entries(where).every(([key, value]) => coaching[key as keyof CoachingRecord] === value),
-      ) ?? null,
+    findFirst: jest.fn(
+      async ({ where }: { where: Partial<CoachingRecord> }) =>
+        this.coachings.find((coaching) =>
+          Object.entries(where).every(
+            ([key, value]) => coaching[key as keyof CoachingRecord] === value,
+          ),
+        ) ?? null,
     ),
 
-    findUnique: jest.fn(async ({ where }: { where: { ID_Coaching: number } }) =>
-      this.coachings.find((coaching) => coaching.ID_Coaching === where.ID_Coaching) ?? null,
+    findUnique: jest.fn(
+      async ({ where }: { where: { ID_Coaching: number } }) =>
+        this.coachings.find(
+          (coaching) => coaching.ID_Coaching === where.ID_Coaching,
+        ) ?? null,
     ),
 
     create: jest.fn(async ({ data }: { data: Partial<CoachingRecord> }) => {
@@ -170,47 +204,74 @@ class PrismaCoachingProcessFake {
       return coaching;
     }),
 
-    update: jest.fn(async ({ where, data }: { where: { ID_Coaching: number }; data: Partial<CoachingRecord> }) => {
-      const coaching = this.coachings.find((item) => item.ID_Coaching === where.ID_Coaching);
+    update: jest.fn(
+      async ({
+        where,
+        data,
+      }: {
+        where: { ID_Coaching: number };
+        data: Partial<CoachingRecord>;
+      }) => {
+        const coaching = this.coachings.find(
+          (item) => item.ID_Coaching === where.ID_Coaching,
+        );
 
-      if (!coaching) {
-        throw new Error('Coaching nao encontrado.');
-      }
+        if (!coaching) {
+          throw new Error('Coaching nao encontrado.');
+        }
 
-      Object.assign(coaching, data);
-      return coaching;
-    }),
+        Object.assign(coaching, data);
+        return coaching;
+      },
+    ),
   };
 
   coaching_Aluno = {
-    create: jest.fn(async ({ data }: { data: Partial<CoachingAlunoRecord> }) => {
-      const inscricao: CoachingAlunoRecord = {
-        ID_Coaching: data.ID_Coaching!,
-        ID_Aluno: data.ID_Aluno!,
-        Observacoes: data.Observacoes ?? null,
-        Data_Inscricao: data.Data_Inscricao ?? new Date(),
-        ValorEmFalta: data.ValorEmFalta,
-        ID_Enc_Educacao: data.ID_Enc_Educacao,
-        confirmado: false,
-      };
+    create: jest.fn(
+      async ({ data }: { data: Partial<CoachingAlunoRecord> }) => {
+        const inscricao: CoachingAlunoRecord = {
+          ID_Coaching: data.ID_Coaching!,
+          ID_Aluno: data.ID_Aluno!,
+          Observacoes: data.Observacoes ?? null,
+          Data_Inscricao: data.Data_Inscricao ?? new Date(),
+          ValorEmFalta: data.ValorEmFalta,
+          ID_Enc_Educacao: data.ID_Enc_Educacao,
+          confirmado: false,
+        };
 
-      this.coachingAlunos.push(inscricao);
-      return inscricao;
-    }),
+        this.coachingAlunos.push(inscricao);
+        return inscricao;
+      },
+    ),
 
-    updateMany: jest.fn(async ({ where, data }: { where: Partial<CoachingAlunoRecord>; data: Partial<CoachingAlunoRecord> }) => {
-      const matches = this.coachingAlunos.filter((inscricao) =>
-        Object.entries(where).every(([key, value]) => inscricao[key as keyof CoachingAlunoRecord] === value),
-      );
+    updateMany: jest.fn(
+      async ({
+        where,
+        data,
+      }: {
+        where: Partial<CoachingAlunoRecord>;
+        data: Partial<CoachingAlunoRecord>;
+      }) => {
+        const matches = this.coachingAlunos.filter((inscricao) =>
+          Object.entries(where).every(
+            ([key, value]) =>
+              inscricao[key as keyof CoachingAlunoRecord] === value,
+          ),
+        );
 
-      matches.forEach((inscricao) => Object.assign(inscricao, data));
-      return { count: matches.length };
-    }),
+        matches.forEach((inscricao) => Object.assign(inscricao, data));
+        return { count: matches.length };
+      },
+    ),
 
-    count: jest.fn(async ({ where }: { where: Partial<CoachingAlunoRecord> }) =>
-      this.coachingAlunos.filter((inscricao) =>
-        Object.entries(where).every(([key, value]) => inscricao[key as keyof CoachingAlunoRecord] === value),
-      ).length,
+    count: jest.fn(
+      async ({ where }: { where: Partial<CoachingAlunoRecord> }) =>
+        this.coachingAlunos.filter((inscricao) =>
+          Object.entries(where).every(
+            ([key, value]) =>
+              inscricao[key as keyof CoachingAlunoRecord] === value,
+          ),
+        ).length,
     ),
   };
 }
@@ -239,14 +300,15 @@ describe('Processo de coaching (integração)', () => {
   });
 
   it('cobre o fluxo: disponibilidade, aprovação, inscrição do educando e confirmações da sessão', async () => {
-    const disponibilidadeCriada = await disponibilidadeService.criarDisponibilidade({
-      ID_Professor: 101,
-      AlteradoPorUtilizadorID: 301,
-      Hora_Inicio: '2026-05-10T09:00:00.000Z',
-      Duracao: 60,
-      MaxAlunos: 2,
-      Modalidade: 'Ballet',
-    });
+    const disponibilidadeCriada =
+      await disponibilidadeService.criarDisponibilidade({
+        ID_Professor: 101,
+        AlteradoPorUtilizadorID: 301,
+        Hora_Inicio: '2026-05-10T09:00:00.000Z',
+        Duracao: 60,
+        MaxAlunos: 2,
+        Modalidade: 'Ballet',
+      });
 
     expect(disponibilidadeCriada.disponibilidade).toEqual(
       expect.objectContaining({
@@ -257,14 +319,15 @@ describe('Processo de coaching (integração)', () => {
       }),
     );
 
-    const disponibilidadeAprovada = await disponibilidadeService.updateAvailability(
-      disponibilidadeCriada.disponibilidade.ID_Disponibilidade,
-      {
-        EstadoDisponibilidadeID: 1,
-        IdEstudio: 501,
-        ValorPorAluno: 25,
-      },
-    );
+    const disponibilidadeAprovada =
+      await disponibilidadeService.updateAvailability(
+        disponibilidadeCriada.disponibilidade.ID_Disponibilidade,
+        {
+          EstadoDisponibilidadeID: 1,
+          IdEstudio: 501,
+          ValorPorAluno: 25,
+        },
+      );
 
     expect(disponibilidadeAprovada.disponibilidade).toEqual(
       expect.objectContaining({
@@ -277,7 +340,8 @@ describe('Processo de coaching (integração)', () => {
     const oferta = await disponibilidadeService.getAvailabilities();
     expect(oferta).toContainEqual(
       expect.objectContaining({
-        idDisponibilidade: disponibilidadeCriada.disponibilidade.ID_Disponibilidade,
+        idDisponibilidade:
+          disponibilidadeCriada.disponibilidade.ID_Disponibilidade,
         estado: 'Aprovado',
         modalidade: 'Ballet',
         idEstudio: 501,
@@ -286,19 +350,22 @@ describe('Processo de coaching (integração)', () => {
       }),
     );
 
-    const inscricao = await coachingService.inscreverAluno(disponibilidadeCriada.disponibilidade.ID_Disponibilidade, {
-      idAluno: 401,
-      idEncEducacao: 201,
-      idProfessor: 101,
-      idEstadoCoaching: 7,
-      idSala: 501,
-      idCoordenador: 301,
-      valorPorAluno: 25,
-      inicio_Coaching: '2026-05-01T09:00:00.000Z',
-      duracao: 60,
-      obs: 'Primeira sessão',
-      valorEmFalta: 25,
-    });
+    const inscricao = await coachingService.inscreverAluno(
+      disponibilidadeCriada.disponibilidade.ID_Disponibilidade,
+      {
+        idAluno: 401,
+        idEncEducacao: 201,
+        idProfessor: 101,
+        idEstadoCoaching: 7,
+        idSala: 501,
+        idCoordenador: 301,
+        valorPorAluno: 25,
+        inicio_Coaching: '2026-05-01T09:00:00.000Z',
+        duracao: 60,
+        obs: 'Primeira sessão',
+        valorEmFalta: 25,
+      },
+    );
 
     expect(inscricao).toEqual({
       message: 'Aluno inscrito com sucesso!',
@@ -316,18 +383,24 @@ describe('Processo de coaching (integração)', () => {
         ID_Estado_Coaching: 7,
         ID_Sala: 501,
         ID_Coordenador: 301,
-        ID_Disponibilidade: disponibilidadeCriada.disponibilidade.ID_Disponibilidade,
+        ID_Disponibilidade:
+          disponibilidadeCriada.disponibilidade.ID_Disponibilidade,
         confirmacao_prof: false,
         confirmacao_EE: false,
       }),
     );
     expect(prisma.disponibilidades[0].MaxAlunos).toBe(1);
 
-    await expect(marcacoesService.confirmarSessaoByEE(201, sessao.ID_Coaching, 13)).resolves.toEqual({
-      message: 'Confirmação do encarregado registada. A aguardar confirmação do professor.',
+    await expect(
+      marcacoesService.confirmarSessaoByEE(201, sessao.ID_Coaching, 13),
+    ).resolves.toEqual({
+      message:
+        'Confirmação do encarregado registada. A aguardar confirmação do professor.',
     });
 
-    expect(prisma.coachingAlunos[0]).toEqual(expect.objectContaining({ confirmado: true }));
+    expect(prisma.coachingAlunos[0]).toEqual(
+      expect.objectContaining({ confirmado: true }),
+    );
     expect(prisma.coachings[0]).toEqual(
       expect.objectContaining({
         ID_Estado_Coaching: 7,
@@ -348,33 +421,40 @@ describe('Processo de coaching (integração)', () => {
   });
 
   it('só conclui a sessão quando professor e EE confirmam realização', async () => {
-    const disponibilidadeCriada = await disponibilidadeService.criarDisponibilidade({
-      ID_Professor: 101,
-      AlteradoPorUtilizadorID: 301,
-      Hora_Inicio: '2026-05-10T09:00:00.000Z',
-      Duracao: 60,
-      MaxAlunos: 1,
-      Modalidade: 'Ballet',
-    });
+    const disponibilidadeCriada =
+      await disponibilidadeService.criarDisponibilidade({
+        ID_Professor: 101,
+        AlteradoPorUtilizadorID: 301,
+        Hora_Inicio: '2026-05-10T09:00:00.000Z',
+        Duracao: 60,
+        MaxAlunos: 1,
+        Modalidade: 'Ballet',
+      });
 
-    await disponibilidadeService.updateAvailability(disponibilidadeCriada.disponibilidade.ID_Disponibilidade, {
-      EstadoDisponibilidadeID: 1,
-      IdEstudio: 501,
-      ValorPorAluno: 25,
-    });
+    await disponibilidadeService.updateAvailability(
+      disponibilidadeCriada.disponibilidade.ID_Disponibilidade,
+      {
+        EstadoDisponibilidadeID: 1,
+        IdEstudio: 501,
+        ValorPorAluno: 25,
+      },
+    );
 
-    await coachingService.inscreverAluno(disponibilidadeCriada.disponibilidade.ID_Disponibilidade, {
-      idAluno: 401,
-      idEncEducacao: 201,
-      idProfessor: 101,
-      idEstadoCoaching: 7,
-      idSala: 501,
-      idCoordenador: 301,
-      valorPorAluno: 25,
-      inicio_Coaching: '2026-05-01T09:00:00.000Z',
-      duracao: 60,
-      valorEmFalta: 25,
-    });
+    await coachingService.inscreverAluno(
+      disponibilidadeCriada.disponibilidade.ID_Disponibilidade,
+      {
+        idAluno: 401,
+        idEncEducacao: 201,
+        idProfessor: 101,
+        idEstadoCoaching: 7,
+        idSala: 501,
+        idCoordenador: 301,
+        valorPorAluno: 25,
+        inicio_Coaching: '2026-05-01T09:00:00.000Z',
+        duracao: 60,
+        valorEmFalta: 25,
+      },
+    );
 
     const sessao = prisma.coachings[0];
 

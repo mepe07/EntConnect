@@ -68,7 +68,10 @@ describe('ModalidadeService', () => {
   describe('update', () => {
     it('deve atualizar uma modalidade pelo ID', async () => {
       const dto = { Descricao: 'Salsa Cubana' };
-      const modalidadeAtualizada = { ID_Modalidade: 1, Descricao: 'Salsa Cubana' };
+      const modalidadeAtualizada = {
+        ID_Modalidade: 1,
+        Descricao: 'Salsa Cubana',
+      };
 
       prismaMock.modalidade.update.mockResolvedValue(modalidadeAtualizada);
 
@@ -96,7 +99,9 @@ describe('ModalidadeService', () => {
       prismaMock.modalidade.delete.mockRejectedValue({ code: 'P2003' });
 
       await expect(service.remove(4)).rejects.toThrow(
-        new ConflictException('Impossível remover a modalidade pois a mesma está atribuída a um estúdio.'),
+        new ConflictException(
+          'Impossível remover a modalidade pois a mesma está atribuída a um estúdio.',
+        ),
       );
     });
 

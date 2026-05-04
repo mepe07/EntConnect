@@ -15,7 +15,9 @@ describe('CalendarioController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CalendarioController],
-      providers: [{ provide: CalendarioService, useValue: calendarioServiceMock }],
+      providers: [
+        { provide: CalendarioService, useValue: calendarioServiceMock },
+      ],
     })
       .overrideGuard(AuthGuard)
       .useValue({ canActivate: jest.fn(() => true) })
@@ -31,7 +33,12 @@ describe('CalendarioController', () => {
     const resposta = { eventos: [], coachings: [] };
     calendarioServiceMock.getCalendarItems.mockResolvedValue(resposta);
 
-    await expect(controller.getCalendario('2026-05-01', '2026-05-31')).resolves.toBe(resposta);
-    expect(calendarioServiceMock.getCalendarItems).toHaveBeenCalledWith('2026-05-01', '2026-05-31');
+    await expect(
+      controller.getCalendario('2026-05-01', '2026-05-31'),
+    ).resolves.toBe(resposta);
+    expect(calendarioServiceMock.getCalendarItems).toHaveBeenCalledWith(
+      '2026-05-01',
+      '2026-05-31',
+    );
   });
 });

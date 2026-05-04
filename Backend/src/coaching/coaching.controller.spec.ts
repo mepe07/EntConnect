@@ -52,7 +52,9 @@ describe('CoachingController', () => {
   });
 
   const criarBearerTokenFake = (payload: Record<string, unknown>) => {
-    const header = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url');
+    const header = Buffer.from(
+      JSON.stringify({ alg: 'none', typ: 'JWT' }),
+    ).toString('base64url');
     const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
 
     return `Bearer ${header}.${body}.signature`;
@@ -142,17 +144,26 @@ describe('CoachingController', () => {
     coachingServiceMock.getMarcacoesProfessor.mockResolvedValue(resposta);
 
     await expect(controller.getMarcacoes(token)).resolves.toBe(resposta);
-    expect(coachingServiceMock.getMarcacoesProfessor).toHaveBeenCalledWith('Professor', 99);
+    expect(coachingServiceMock.getMarcacoesProfessor).toHaveBeenCalledWith(
+      'Professor',
+      99,
+    );
   });
 
   it('deve rejeitar obtenção de marcações sem bearer token', async () => {
-    await expect(controller.getMarcacoes('')).rejects.toThrow(UnauthorizedException);
-    await expect(controller.getMarcacoes('Token abc')).rejects.toThrow(UnauthorizedException);
+    await expect(controller.getMarcacoes('')).rejects.toThrow(
+      UnauthorizedException,
+    );
+    await expect(controller.getMarcacoes('Token abc')).rejects.toThrow(
+      UnauthorizedException,
+    );
     expect(coachingServiceMock.getMarcacoesProfessor).not.toHaveBeenCalled();
   });
 
   it('deve rejeitar obtenção de marcações com token corrompido', async () => {
-    await expect(controller.getMarcacoes('Bearer token-invalido')).rejects.toThrow(UnauthorizedException);
+    await expect(
+      controller.getMarcacoes('Bearer token-invalido'),
+    ).rejects.toThrow(UnauthorizedException);
     expect(coachingServiceMock.getMarcacoesProfessor).not.toHaveBeenCalled();
   });
 
@@ -161,6 +172,8 @@ describe('CoachingController', () => {
     coachingServiceMock.confirmarSessaoProfessor.mockResolvedValue(resposta);
 
     await expect(controller.confirmarProfessor(4)).resolves.toBe(resposta);
-    expect(coachingServiceMock.confirmarSessaoProfessor).toHaveBeenCalledWith(4);
+    expect(coachingServiceMock.confirmarSessaoProfessor).toHaveBeenCalledWith(
+      4,
+    );
   });
 });

@@ -1,4 +1,5 @@
 /**
- * Entidade placeholder de sala para integração com Nest/Swagger.
+ * Representa Sala no backend.
  */
+
 export class Sala {}
