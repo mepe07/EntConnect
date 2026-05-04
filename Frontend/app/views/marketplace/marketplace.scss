@@ -529,3 +529,113 @@
         }
     }
 }
+
+body.entconnect-dark {
+    .marketplace-page {
+        background: transparent !important;
+        color: #e2e8f0 !important;
+
+        .marketplace-topo,
+        .card-base,
+        .resumo-box,
+        .cartao-anuncio,
+        .detalhe-principal,
+        .bloco-lateral,
+        .linha-simples,
+        .modal-card {
+            background: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+        }
+
+        .marketplace-topo h1,
+        .marketplace-barra h2,
+        .resumo-box strong,
+        .cartao-info h3,
+        .detalhe-anuncio h2,
+        .detalhe-resumo strong,
+        .linhas-info strong,
+        .linha-simples strong,
+        .modal-card h3 {
+            color: #f8fafc !important;
+        }
+
+        .marketplace-topo p,
+        .perfil-indicador,
+        .resumo-box span,
+        .marketplace-barra p,
+        .cartao-info p,
+        .cartao-info small,
+        .cartao-rodape,
+        .detalhe-anuncio p,
+        .detalhe-resumo span,
+        .linhas-info span,
+        .linha-simples p,
+        .caixa-lateral,
+        .texto-ajuda,
+        .mensagem-erro,
+        .estado-vazio {
+            color: #94a3b8 !important;
+        }
+
+        .marketplace-pill,
+        .badge-outline,
+        .caixa-lateral,
+        .detalhe-resumo div,
+        .mensagem-erro,
+        .estado-vazio {
+            background: #1f2937 !important;
+            border-color: #334155 !important;
+        }
+
+        .marketplace-filtros input,
+        .marketplace-filtros select,
+        .marketplace-filtros textarea,
+        .modal-card input,
+        .modal-card select,
+        .modal-card textarea {
+            background: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+            color-scheme: dark;
+        }
+
+        .tabs button,
+        .btn-secundario,
+        .detalhe-anuncio .btn-link {
+            background: #1f2937 !important;
+            border-color: #475569 !important;
+            color: #e2e8f0 !important;
+
+            &:hover {
+                background: #334155 !important;
+            }
+        }
+
+        .tabs .ativo,
+        .btn-principal {
+            background: #2563eb !important;
+            border-color: #2563eb !important;
+            color: #ffffff !important;
+        }
+
+        .badge-estado,
+        .estado-ativo,
+        .estado-reservado,
+        .estado-concluido,
+        .estado-arquivado,
+        .estado-removido {
+            color: #0f172a !important;
+        }
+
+        .cartao-rodape {
+            border-color: #334155 !important;
+        }
+
+        .detalhe-imagem {
+            background-color: #1f2937 !important;
+            border-color: #334155 !important;
+        }
+    }
+}

@@ -426,3 +426,150 @@ select.input-campo {
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
 }
+
+body.entconnect-dark {
+    .horarios-admin {
+        color: #e2e8f0;
+    }
+
+    .page-header {
+        h1 {
+            color: #f8fafc !important;
+        }
+
+        p {
+            color: #cbd5e1 !important;
+        }
+    }
+
+    .calendario-card,
+    .modal-content {
+        background: #111827 !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+    }
+
+    .calendario-canto-vazio,
+    .calendario-header-dias,
+    .calendario-eixo-horas {
+        background: #1f2937 !important;
+        border-color: #334155 !important;
+        color: #cbd5e1 !important;
+    }
+
+    .calendario-header-dias .dia-header-item {
+        color: #cbd5e1 !important;
+        border-color: #334155 !important;
+    }
+
+    .calendario-eixo-horas .hora-slot span {
+        color: #94a3b8 !important;
+    }
+
+    .calendario-grelha {
+        background: #111827 !important;
+
+        .grelha-linhas-fundo .linha-hora {
+            border-color: #1f2937 !important;
+        }
+
+        .colunas-wrapper .coluna-dia {
+            border-color: #334155 !important;
+
+            .aula-card {
+                background: rgba(16, 185, 129, 0.16) !important;
+                border-left-color: #34d399 !important;
+                color: #e2e8f0 !important;
+
+                &:hover {
+                    background: #1f2937 !important;
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+                }
+
+                .aula-titulo,
+                .aula-info,
+                .aula-prof {
+                    color: #f8fafc !important;
+                }
+
+                &.inativa {
+                    background: rgba(100, 116, 139, 0.18) !important;
+                    border-left-color: #94a3b8 !important;
+
+                    &:hover {
+                        background: #1f2937 !important;
+                    }
+
+                    .aula-titulo,
+                    .aula-info,
+                    .aula-prof {
+                        color: #94a3b8 !important;
+                    }
+                }
+            }
+        }
+    }
+
+    .input-campo {
+        background-color: #111827 !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+        color-scheme: dark;
+    }
+
+    .form-grid label,
+    .checkbox-row,
+    .checkbox-row span {
+        color: #cbd5e1 !important;
+    }
+
+    .btn-secundario {
+        background: #1f2937 !important;
+        border-color: #475569 !important;
+        color: #e2e8f0 !important;
+
+        &:hover:not(:disabled) {
+            background: #334155 !important;
+        }
+
+        &.btn-perigo {
+            color: #fca5a5 !important;
+            border-color: rgba(248, 113, 113, 0.45) !important;
+        }
+
+        &.btn-sucesso {
+            color: #86efac !important;
+            border-color: rgba(134, 239, 172, 0.45) !important;
+        }
+    }
+
+    .modal-header,
+    .modal-footer {
+        background: #111827 !important;
+        border-color: #334155 !important;
+    }
+
+    .modal-header h3,
+    .modal-row strong,
+    .exception-list li {
+        color: #f8fafc !important;
+    }
+
+    .modal-row span,
+    .modal-header span {
+        color: #94a3b8 !important;
+    }
+
+    .modal-divider {
+        border-color: #334155 !important;
+    }
+
+    .exception-list li,
+    .excecao-form-inline,
+    .empty-state {
+        background: #1f2937 !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+    }
+}

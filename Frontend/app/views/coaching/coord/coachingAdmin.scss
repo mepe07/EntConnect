@@ -270,3 +270,56 @@ table button {
 
 
 }
+
+body.entconnect-dark {
+    .dashboard-wrapper {
+        background-color: transparent !important;
+        color: #e2e8f0 !important;
+
+        .dashboard-boas-vindas {
+            h1 {
+                color: #f8fafc !important;
+            }
+
+            p {
+                color: #cbd5e1 !important;
+            }
+        }
+    }
+
+    .kpi-grid .kpi-card,
+    .modal-overlay .modal-conteudo,
+    .modal-overlay .modal-conteudo .detalhes-grid {
+        background-color: #111827 !important;
+        border: 1px solid #334155 !important;
+        color: #e2e8f0 !important;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+    }
+
+    .kpi-grid .kpi-card .info span,
+    .modal-overlay .modal-conteudo .detalhes-grid .detalhe-item span,
+    .modal-overlay .modal-conteudo .lista-alunos-modal > div span {
+        color: #94a3b8 !important;
+    }
+
+    .kpi-grid .kpi-card .info h3,
+    .modal-overlay .modal-conteudo .modal-cabecalho h2,
+    .modal-overlay .modal-conteudo .detalhes-grid .detalhe-item strong,
+    .modal-overlay .modal-conteudo h3 {
+        color: #f8fafc !important;
+    }
+
+    .modal-overlay .modal-conteudo .modal-cabecalho,
+    .modal-overlay .modal-conteudo .modal-acoes {
+        border-color: #334155 !important;
+    }
+
+    .modal-overlay .modal-conteudo .lista-alunos-modal > div:hover {
+        background-color: #1f2937 !important;
+    }
+
+    .modal-overlay .modal-conteudo .modal-acoes .btn-fechar {
+        background-color: #1f2937 !important;
+        color: #e2e8f0 !important;
+    }
+}

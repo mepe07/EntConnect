@@ -5,6 +5,7 @@ import { API_BASE_URL } from "~/config/api.config";
 import logoHeader from "../../assets/media/logo_header.png";
 import './header.scss';
 import type { User } from "~/models/interfaces/user.interface";
+import { ThemeToggle } from "~/components/theme-toggle/theme-toggle";
 
 const roleDisplayNames: Record<string, string> = {
     Coordenador: 'Coordenador',
@@ -138,6 +139,8 @@ export function Header() {
                 />
 
                 <div className="menu">
+                    <ThemeToggle className="header-theme-toggle" />
+
                     <div
                         className="profile-picture"
                         ref={profilePictureRef}

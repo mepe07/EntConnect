@@ -525,3 +525,70 @@
         grid-template-columns: 1fr;
     }
 }
+
+:global(body.entconnect-dark) .page {
+    color: #e2e8f0 !important;
+}
+
+:global(body.entconnect-dark) .hero,
+:global(body.entconnect-dark) .statsGrid article,
+:global(body.entconnect-dark) .filtersCard,
+:global(body.entconnect-dark) .eventCard,
+:global(body.entconnect-dark) .emptyCard,
+:global(body.entconnect-dark) .modal,
+:global(body.entconnect-dark) .modalHeader,
+:global(body.entconnect-dark) .uploadArea,
+:global(body.entconnect-dark) .switchGrid label {
+    background: #111827 !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+}
+
+:global(body.entconnect-dark) .hero h1,
+:global(body.entconnect-dark) .statsGrid strong,
+:global(body.entconnect-dark) .cardBody h2,
+:global(body.entconnect-dark) .modalHeader h2 {
+    color: #f8fafc !important;
+}
+
+:global(body.entconnect-dark) .hero p,
+:global(body.entconnect-dark) .statsGrid span,
+:global(body.entconnect-dark) .cardBody p,
+:global(body.entconnect-dark) .cardInfo span,
+:global(body.entconnect-dark) .emptyCard,
+:global(body.entconnect-dark) .form label,
+:global(body.entconnect-dark) .fileLabel small {
+    color: #94a3b8 !important;
+}
+
+:global(body.entconnect-dark) .searchBox input,
+:global(body.entconnect-dark) .filtersCard select,
+:global(body.entconnect-dark) .form input,
+:global(body.entconnect-dark) .form select,
+:global(body.entconnect-dark) .form textarea {
+    background: #111827 !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+:global(body.entconnect-dark) .modalFooter {
+    border-color: #334155 !important;
+}
+
+:global(body.entconnect-dark) .modalFooter button:first-child,
+:global(body.entconnect-dark) .modalHeader button {
+    background: #1f2937 !important;
+    color: #e2e8f0 !important;
+}
+
+:global(body.entconnect-dark) .badge,
+:global(body.entconnect-dark) .badgeSuccess,
+:global(body.entconnect-dark) .badgeMuted,
+:global(body.entconnect-dark) .badgeDanger,
+:global(body.entconnect-dark) .badgeLogin,
+:global(body.entconnect-dark) .secondaryAction,
+:global(body.entconnect-dark) .dangerAction,
+:global(body.entconnect-dark) .successAction {
+    color: #0f172a !important;
+}
