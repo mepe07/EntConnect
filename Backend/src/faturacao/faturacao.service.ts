@@ -304,7 +304,20 @@ export class FaturacaoService {
         const inscricoes = await this.prisma.coaching_Aluno.findMany({
             where: condicoesFiltro,
             include: {
-                Aluno: true,
+                Enc_Educacao: {
+                    include: {
+                        Pessoa: true,
+                    },
+                },
+                Aluno: {
+                    include: {
+                        Enc_Educacao: {
+                            include: {
+                                Pessoa: true,
+                            },
+                        },
+                    },
+                },
                 Coaching: {
                     include: {
                         Professor: {
@@ -327,23 +340,39 @@ export class FaturacaoService {
             const valorTotal = this.obterValorTotalAluno(item);
             const valorEmFalta = this.obterValorEmFalta(item, valorTotal);
             const estaPago = valorEmFalta <= 0;
+            const pessoaEE = item.Enc_Educacao?.Pessoa ?? item.Aluno?.Enc_Educacao?.Pessoa ?? null;
+            const dataAula = item.Coaching?.Inicio_Coaching ?? null;
+            const agora = new Date();
+            const estadoPagamento = estaPago
+                ? 'pago'
+                : dataAula && dataAula < agora
+                    ? 'atrasado'
+                    : 'pendente';
 
             return {
                 idCoaching: item.ID_Coaching,
                 idAluno: item.ID_Aluno,
-                dataAula: item.Coaching?.Inicio_Coaching,
+                dataAula,
                 nomeProfessor: item.Coaching?.Professor?.Pessoa?.Nome || 'Professor não atribuído',
+                emailProfessor: item.Coaching?.Professor?.Pessoa?.Email || null,
                 fotoProfessorUrl: item.Coaching?.Professor?.Pessoa?.Foto || null,
                 nomeAluno: item.Aluno?.Nome || 'Aluno desconhecido',
+                nomeEncarregado: pessoaEE?.Nome || 'Sem encarregado',
+                emailEncarregado: pessoaEE?.Email || null,
+                contactoEncarregado: pessoaEE?.Contacto || null,
 
                 // Valor total correto da aula por aluno.
                 valorTotal,
+
+                // Valor ja pago pelo aluno.
+                valorPago: Math.max(valorTotal - valorEmFalta, 0),
 
                 // Valor ainda por pagar.
                 valorEmFalta,
 
                 // O frontend usa "estaPago".
                 estaPago,
+                estadoPagamento,
 
                 // Mantemos também "isPago" para compatibilidade com código antigo.
                 isPago: estaPago,

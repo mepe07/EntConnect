@@ -5,16 +5,25 @@
     background-color: #f1f5f9;
     min-height: 100vh;
 
-    h1 {
+    .cabecalho-pagina {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
         margin-bottom: 32px;
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: #0f172a;
-        letter-spacing: -1px;
+
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -1px;
+        }
     }
 
     .filtros-iniciais {
         display: flex;
+        flex-wrap: wrap;
         gap: 24px;
         align-items: flex-end;
         background-color: #ffffff;
@@ -23,6 +32,13 @@
         border: 1px solid #e2e8f0;
         margin-bottom: 32px;
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+        .pesquisa-periodo {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            align-items: flex-end;
+        }
 
         .grupo-data {
             position: relative;
@@ -76,6 +92,15 @@
                 pointer-events: none;
                 z-index: 1;
             }
+        }
+
+        .filtros-rapidos {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-left: auto;
+            align-items: flex-end;
+            justify-content: flex-end;
         }
     }
 
@@ -289,9 +314,28 @@
     @media (max-width: 640px) {
         padding: 20px;
 
+        .cabecalho-pagina {
+            align-items: flex-start;
+            flex-direction: column;
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
         .filtros-iniciais {
             flex-direction: column;
             align-items: stretch;
+
+            .pesquisa-periodo {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filtros-rapidos {
+                margin-left: 0;
+                justify-content: flex-start;
+            }
         }
 
         .layout-master-detail .painel-direito .detalhe-conteudo {
