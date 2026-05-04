@@ -35,7 +35,9 @@ describe('SalasService', () => {
       Modalidade: { Descricao: 'Salsa' },
     });
 
-    await expect(service.create({ nome: 'Estúdio A', disponivel: true, modalidade: '2' })).resolves.toEqual({
+    await expect(
+      service.create({ nome: 'Estúdio A', disponivel: true, modalidade: '2' }),
+    ).resolves.toEqual({
       ID_Sala: 1,
       Nome: 'Estúdio A',
       Disponivel: true,
@@ -49,7 +51,12 @@ describe('SalasService', () => {
     ]);
 
     await expect(service.findAll()).resolves.toEqual([
-      { ID_Sala: 1, Nome: 'Estúdio A', Disponivel: true, Modalidade: 'Sem Modalidade' },
+      {
+        ID_Sala: 1,
+        Nome: 'Estúdio A',
+        Disponivel: true,
+        Modalidade: 'Sem Modalidade',
+      },
     ]);
   });
 
@@ -62,7 +69,13 @@ describe('SalasService', () => {
     });
     prismaMock.sala.delete.mockResolvedValue({ ID_Sala: 1 });
 
-    await expect(service.update(1, { nome: 'Estúdio B', disponivel: 'false', modalidade: '3' })).resolves.toEqual({
+    await expect(
+      service.update(1, {
+        nome: 'Estúdio B',
+        disponivel: 'false',
+        modalidade: '3',
+      }),
+    ).resolves.toEqual({
       ID_Sala: 1,
       Nome: 'Estúdio B',
       Disponivel: false,

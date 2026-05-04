@@ -1,4 +1,5 @@
 /**
- * Entidade placeholder de coaching para integração com Nest/Swagger.
+ * Representa Coaching no backend.
  */
+
 export class Coaching {}

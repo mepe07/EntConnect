@@ -1,26 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BlobsService } from '../../Infraestrutura/Blobs/blobs.service';
+/**
+ * Servico responsavel pela logica de Utilizador Import.
+ */
 
 @Injectable()
 export class UtilizadorImportService {
-  
-  // Injetamos o Prisma E o nosso novo serviço de Blobs!
   constructor(
     private readonly prisma: PrismaService,
-    private readonly blobsService: BlobsService 
+    private readonly blobsService: BlobsService,
   ) {}
 
-  async importarDeBlob(nomeFicheiro: string) {
-    
-    // 1. Pedimos ao BlobsService para ir buscar o texto à nuvem, AGORA COM O CONTENTOR!
-    const conteudo = await this.blobsService.lerFicheiroTexto('importar-csv', nomeFicheiro);
+  /**
+   * Executa a operacao importar de blob.
+   * @param nomeFicheiro Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
-    // 2. Daqui para a frente, é a lógica de CSV que já tinhas feita!
+  async importarDeBlob(nomeFicheiro: string) {
+    const conteudo = await this.blobsService.lerFicheiroTexto(
+      'importar-csv',
+      nomeFicheiro,
+    );
+
     const linhas = conteudo.split(/\r?\n/);
     const cabecalho = linhas[0].trim();
     const delimitador = cabecalho.includes(';') ? ';' : ',';
-    const dados = linhas.slice(1).filter(linha => linha.trim().length > 0);
+    const dados = linhas.slice(1).filter((linha) => linha.trim().length > 0);
 
     const resultados: { pessoa: any; utilizador: any }[] = [];
 
@@ -40,30 +47,29 @@ export class UtilizadorImportService {
             Email: email,
             NIF: nif,
             Contacto: contacto,
-            Data_Nascimento: new Date(dataNascimentoStr + 'T00:00:00Z'), 
-          }
+            Data_Nascimento: new Date(dataNascimentoStr + 'T00:00:00Z'),
+          },
         });
 
         const novoUtilizador = await this.prisma.utilizador.create({
           data: {
             ID_Pessoa: novaPessoa.ID_Pessoa,
             Utilizador: email,
-            Password: 'password_GeradaBackEnd', 
-            Ativo: true
-          }
+            Password: 'password_GeradaBackEnd',
+            Ativo: true,
+          },
         });
 
         resultados.push({ pessoa: novaPessoa, utilizador: novoUtilizador });
         console.log(`Sucesso: ${nome} importado do Azure Blob!`);
-
       } catch (erro: any) {
-         console.error(`Erro ao importar ${nome}:`, erro.message || erro);
+        console.error(`Erro ao importar ${nome}:`, erro.message || erro);
       }
     }
 
     return {
       mensagem: `Importação do Azure concluída. ${resultados.length} registos criados.`,
-      dados: resultados
+      dados: resultados,
     };
   }
 }

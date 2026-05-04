@@ -1,4 +1,15 @@
-import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
+
+/**
+ * DTO usado para transportar os dados de Create Aula Fixa.
+ */
 
 export class CreateAulaFixaDto {
   @IsInt()

@@ -207,7 +207,6 @@
             color: colors.$theme-100;
         }
 
-        /* Tag de estado */
        .tag-estado {
             padding: 5px 12px;
             border-radius: 20px;
@@ -221,7 +220,7 @@
             }
             
             &.aviso {
-                background-color: #fef3c7 !important; /* Mudei para amarelo/laranja para parecer mais "Aviso" */
+                background-color: #fef3c7 !important;
                 color: #d97706 !important; 
             }
 
@@ -978,22 +977,18 @@
 }
 
 .modal-overlay {
-    position: fixed !important; /* Obriga a sair da caixa do conteúdo */
+    position: fixed !important;
     top: 0;
     left: 0;
-    width: 100vw; /* 100% da largura do ecrã */
-    height: 100vh; /* 100% da altura do ecrã */
-    background: rgba(15, 23, 42, 0.7); /* Cor escura transparente */
-    z-index: 99999; /* Fica por cima de absolutamente tudo (incluindo menu) */
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.7);
+    z-index: 99999;
     display: flex;
     justify-content: center;
     align-items: center;
-    backdrop-filter: blur(4px); /* Efeito premium de desfoque no fundo */
+    backdrop-filter: blur(4px);
 }
-
-/* =======================================================
-   ANIMAÇÕES
-   ======================================================= */
 
 @keyframes fadeEntrada {
     from { opacity: 0; transform: translateY(10px); }

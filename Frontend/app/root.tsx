@@ -11,12 +11,22 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import "./assets/styles/styles.scss";
 import { Header } from "./structure/header/header";
 import { NavigationMenu } from "./structure/navigation-menu/navigation-menu";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { Login } from "./views/login/login";
 import { useEffect, useState } from "react";
 import { authService } from "./services/auth.service";
+import { ThemeToggle } from "./components/theme-toggle/theme-toggle";
+import { useTheme } from "./utils/theme";
+import type { User } from "./models/interfaces/user.interface";
+
+const ADMIN_ROLES_PERMITIDAS = ['Coordenador'];
+
+function temRoleAdmin(userInfo: User | null) {
+    return Boolean(userInfo && ADMIN_ROLES_PERMITIDAS.includes(userInfo.role));
+}
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -36,10 +46,6 @@ export const links: Route.LinksFunction = () => [
   {
     rel: "stylesheet",
     href: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
-  },
-  {
-    rel: "stylesheet",
-    href: "/app/assets/styles/styles.scss",
   }
 ];
 
@@ -65,12 +71,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+    useTheme();
     const [domLoaded, setDomLoaded] = useState(false);
     const [sessaoValida, setSessaoValida] = useState(false);
     const location = useLocation();
     const isRotaPublicaEventos =
         location.pathname === '/eventos' ||
         location.pathname.startsWith('/eventos/');
+    const isRotaAdmin = location.pathname.startsWith('/admin');
 
     useEffect(() => {
         setDomLoaded(true);
@@ -117,11 +125,20 @@ export default function App() {
 
 
     if (isRotaPublicaEventos) {
-        return <Outlet />;
+        return (
+            <>
+                <ThemeToggle className="public-theme-toggle" />
+                <Outlet />
+            </>
+        );
     }
 
     if (!sessaoValida) {
         return <Navigate to="/login" replace />;
+    }
+
+    if (isRotaAdmin && !temRoleAdmin(authService.getUserInfo())) {
+        return <Navigate to="/" replace />;
     }
 
     return page;

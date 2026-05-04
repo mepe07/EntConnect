@@ -1,4 +1,5 @@
 /**
- * Entidade placeholder de utilizador para integração com Nest/Swagger.
+ * Representa Utilizador no backend.
  */
+
 export class Utilizador {}

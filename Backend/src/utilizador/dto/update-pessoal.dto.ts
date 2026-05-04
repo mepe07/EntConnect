@@ -1,9 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, Length, MinLength, IsNumberString } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  Length,
+  MinLength,
+  IsNumberString,
+} from 'class-validator';
 
 /**
- * DTO usado para atualizar os dados pessoais editáveis de um utilizador.
+ * DTO usado para transportar os dados de Update Pessoal.
  */
+
 export class UpdatePessoalDto {
   @ApiProperty({
     description: 'O nome completo do utilizador',
@@ -33,7 +40,7 @@ export class UpdatePessoalDto {
   })
   @IsOptional()
   @IsString()
-  @IsNumberString({}, { message: 'O contacto deve conter apenas números' }) 
-  @Length(9, 9, { message: 'O contacto deve ter exatamente 9 dígitos' })  
+  @IsNumberString({}, { message: 'O contacto deve conter apenas números' })
+  @Length(9, 9, { message: 'O contacto deve ter exatamente 9 dígitos' })
   contacto?: string;
 }

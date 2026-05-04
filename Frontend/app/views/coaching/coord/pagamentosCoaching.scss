@@ -428,3 +428,109 @@
         }
     }
 }
+
+body.entconnect-dark {
+    .pagamentos-coaching {
+        background: transparent !important;
+        color: #e2e8f0 !important;
+
+        .pagamentos-header {
+            h1 {
+                color: #f8fafc !important;
+            }
+
+            p {
+                color: #cbd5e1 !important;
+            }
+        }
+
+        .pagamentos-filtros,
+        .pagamentos-resumo div,
+        .pagamentos-lista {
+            background: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+
+        .pagamentos-filtros label,
+        .pagamentos-resumo span,
+        .estado-vazio,
+        table td span,
+        .sem-acao {
+            color: #94a3b8 !important;
+        }
+
+        .pagamentos-resumo strong,
+        table td,
+        table td strong {
+            color: #f8fafc !important;
+        }
+
+        .pagamentos-filtros input,
+        .pagamento-modal input {
+            background: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+            color-scheme: dark;
+        }
+
+        button.secundario,
+        .pagamentos-tabs button {
+            background: #1f2937 !important;
+            border-color: #475569 !important;
+            color: #e2e8f0 !important;
+
+            &:hover:not(:disabled) {
+                background: #334155 !important;
+            }
+
+            &.ativo {
+                background: #2563eb !important;
+                border-color: #2563eb !important;
+                color: #ffffff !important;
+            }
+        }
+
+        table {
+            th {
+                background: #1f2937 !important;
+                border-color: #334155 !important;
+                color: #cbd5e1 !important;
+            }
+
+            td {
+                border-color: #334155 !important;
+            }
+        }
+    }
+
+    .pagamento-modal {
+        background: #111827 !important;
+        border: 1px solid #334155 !important;
+        color: #e2e8f0 !important;
+
+        .modal-topo h2,
+        .modal-detalhes strong {
+            color: #f8fafc !important;
+        }
+
+        .modal-topo button,
+        .modal-detalhes div {
+            background: #1f2937 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+
+        .modal-detalhes span,
+        .modal-form label {
+            color: #94a3b8 !important;
+        }
+
+        .modal-form input {
+            background: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+            color-scheme: dark;
+        }
+    }
+}

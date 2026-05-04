@@ -1,8 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
+/**
+ * DTO usado para transportar os dados de Inscrever Aluno.
+ */
+
 export class InscreverAlunoDto {
-  
   @ApiProperty({ description: 'ID do Aluno a inscrever na sessão', example: 1 })
   @IsNotEmpty()
   @IsInt()
@@ -38,7 +41,10 @@ export class InscreverAlunoDto {
   @IsNumber()
   valorPorAluno!: number;
 
-  @ApiProperty({ example: '2026-05-10T14:30:00Z', description: 'Data e hora de início' })
+  @ApiProperty({
+    example: '2026-05-10T14:30:00Z',
+    description: 'Data e hora de início',
+  })
   @IsNotEmpty()
   inicio_Coaching!: Date | string;
 
@@ -47,7 +53,10 @@ export class InscreverAlunoDto {
   @IsInt()
   duracao!: number;
 
-  @ApiProperty({ description: 'Observações sobre a inscrição', example: 'Aluno com presença regular' })
+  @ApiProperty({
+    description: 'Observações sobre a inscrição',
+    example: 'Aluno com presença regular',
+  })
   @IsString()
   obs?: string;
 
@@ -55,6 +64,4 @@ export class InscreverAlunoDto {
   @IsNotEmpty()
   @IsNumber()
   valorEmFalta!: number;
-
-
 }

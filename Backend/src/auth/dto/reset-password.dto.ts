@@ -1,15 +1,16 @@
 import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 
 /**
- * DTO usado para concluir a reposição de password.
+ * DTO usado para transportar os dados de Reset Password.
  */
-export class ResetPasswordDto {
-    @IsString()
-    @IsNotEmpty()
-    token: string;
 
-    @IsString()
-    @IsNotEmpty()
-    @MinLength(6)
-    password: string;
+export class ResetPasswordDto {
+  @IsString()
+  @IsNotEmpty()
+  token: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(6)
+  password: string;
 }

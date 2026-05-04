@@ -10,42 +10,29 @@ import { AuthGuard } from './auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 
 import { MailModule } from '../mail/mail.module';
-
+/**
+ * Modulo responsavel por agrupar os recursos de Auth.
+ */
 
 @Module({
-    imports: [
-        MailModule,
-        JwtModule.registerAsync({
-            inject: [ConfigService],
-            useFactory: (configService: ConfigService): JwtModuleOptions => {
-                const expiresIn = configService.get<string>('JWT_EXPIRES_IN') ?? '1d';
+  imports: [
+    MailModule,
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService): JwtModuleOptions => {
+        const expiresIn = configService.get<string>('JWT_EXPIRES_IN') ?? '1d';
 
-                return {
-                    secret: configService.getOrThrow<string>('JWT_SECRET'),
-                    signOptions: {
-                        expiresIn,
-                    } as JwtModuleOptions['signOptions'],
-                };
-            },
-        }),
-    ],
-    controllers: [
-        AuthController
-    ],
-    providers: [
-        AuthService, 
-        AuthGuard, 
-        RolesGuard
-    ],
-    exports: [
-        AuthService,
-        AuthGuard,
-        RolesGuard,
-        JwtModule
-    ],
+        return {
+          secret: configService.getOrThrow<string>('JWT_SECRET'),
+          signOptions: {
+            expiresIn,
+          } as JwtModuleOptions['signOptions'],
+        };
+      },
+    }),
+  ],
+  controllers: [AuthController],
+  providers: [AuthService, AuthGuard, RolesGuard],
+  exports: [AuthService, AuthGuard, RolesGuard, JwtModule],
 })
-/**
- * Módulo de autenticação e autorização da aplicação.
- */
-export class AuthModule {
-}
+export class AuthModule {}

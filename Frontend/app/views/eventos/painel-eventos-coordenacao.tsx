@@ -178,7 +178,7 @@ export function PainelEventosCoordenacao() {
         if (!loading && searchParams.get('novo') === 'true') {
             abrirCriacao();
             
-            // Limpa o URL
+            // O parametro e consumido para evitar reabrir o modal ao navegar para tras.
             searchParams.delete('novo');
             setSearchParams(searchParams, { replace: true });
         }

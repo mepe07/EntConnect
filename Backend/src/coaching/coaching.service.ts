@@ -1,33 +1,46 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCoachingDto } from './dto/create-coaching.dto';
 import { UpdateCoachingDto } from './dto/update-coaching.dto';
-import { PrismaService } from '../prisma/prisma.service'; // Importa o PrismaService para interagir com a DB
+import { PrismaService } from '../prisma/prisma.service';
+/**
+ * Servico responsavel pela logica de Coaching.
+ */
 
 @Injectable()
 export class CoachingService {
+  constructor(private readonly prisma: PrismaService) {}
 
-  constructor(private readonly prisma: PrismaService) { } // Injeta o PrismaService no construtor
-
+  /**
+   * Cria um novo registo.
+   * @param createCoachingDto Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   async create(createCoachingDto: CreateCoachingDto) {
-    // Usa o Prisma para criar um novo registo de coaching na DB
     return this.prisma.coaching.create({
-      data: createCoachingDto, // Os dados para criar o coaching vêm do DTO
+      data: createCoachingDto,
     });
   }
 
+  /**
+   * Executa a operacao inscrever aluno.
+   * @param idDisponibilidade Dados recebidos para a operacao.
+   * @param body Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   async inscreverAluno(idDisponibilidade: number, body: any) {
-
     const disponibilidadeInfo = await this.prisma.disponibilidade.findUnique({
       where: { ID_Disponibilidade: idDisponibilidade },
-      select: { MaxAlunos: true }
+      select: { MaxAlunos: true },
     });
 
     if (!disponibilidadeInfo || (disponibilidadeInfo.MaxAlunos ?? 0) <= 0) {
       throw new Error('Não existem vagas disponíveis para esta sessão.');
-
-
     }
 
     let coaching = await this.prisma.coaching.findFirst({
@@ -46,7 +59,7 @@ export class CoachingService {
           Duracao: body.duracao,
           ID_Disponibilidade: idDisponibilidade,
         },
-      })
+      });
     }
 
     const novaInscricao = await this.prisma.coaching_Aluno.create({
@@ -62,42 +75,43 @@ export class CoachingService {
 
     await this.prisma.disponibilidade.update({
       where: {
-        ID_Disponibilidade: idDisponibilidade
+        ID_Disponibilidade: idDisponibilidade,
       },
       data: {
         MaxAlunos: {
-          decrement: 1 // Diminiu 1 vaga
-        }
-      }
+          decrement: 1,
+        },
+      },
     });
 
     return {
       message: 'Aluno inscrito com sucesso!',
-      inscricao: novaInscricao
+      inscricao: novaInscricao,
     };
-
   }
 
   /**
-   * Anular inscricao de aluno
+   * Executa a operacao remover aluno.
+   * @param idAluno Dados recebidos para a operacao.
+   * @param idCoaching Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
    */
-  async removerAluno(idAluno: number, idCoaching: number) {
 
+  async removerAluno(idAluno: number, idCoaching: number) {
     let coachingAluno = await this.prisma.coaching_Aluno.findFirst({
       where: {
         ID_Aluno: idAluno,
         ID_Coaching: idCoaching,
       },
-    })
+    });
 
     if (!coachingAluno) {
       throw new Error('Inscrição não encontrada!');
     }
 
-    // Descobrir o ID da disponibilidade para poder atualizar as vagas
     const coaching = await this.prisma.coaching.findUnique({
       where: { ID_Coaching: idCoaching },
-      select: { ID_Disponibilidade: true }
+      select: { ID_Disponibilidade: true },
     });
 
     const totalInscritos = await this.prisma.coaching_Aluno.count({
@@ -111,20 +125,20 @@ export class CoachingService {
         ID_Coaching_ID_Aluno: {
           ID_Aluno: idAluno,
           ID_Coaching: idCoaching,
-        }
+        },
       },
     });
 
     if (coaching && coaching.ID_Disponibilidade) {
       await this.prisma.disponibilidade.update({
         where: {
-          ID_Disponibilidade: coaching.ID_Disponibilidade
+          ID_Disponibilidade: coaching.ID_Disponibilidade,
         },
         data: {
           MaxAlunos: {
-            increment: 1 // Aumentar as vagas da disponibilidade
-          }
-        }
+            increment: 1,
+          },
+        },
       });
     }
 
@@ -138,6 +152,11 @@ export class CoachingService {
 
     return { message: 'Aluno removido com sucesso!' };
   }
+
+  /**
+   * Executa a operacao get sessoes futuras admin.
+   * @returns Resultado da operacao.
+   */
 
   async getSessoesFuturasAdmin() {
     const now = new Date();
@@ -166,21 +185,29 @@ export class CoachingService {
       },
     });
 
-    return futureSessions.map(session => ({
+    return futureSessions.map((session) => ({
       idCoaching: session.ID_Coaching,
       nomeProfessor: session.Professor?.Pessoa?.Nome || 'N/A',
-      data: session.Inicio_Coaching ? session.Inicio_Coaching.toLocaleDateString('pt-PT') : 'N/A',
-      horario: session.Inicio_Coaching && session.Duracao
-        ? `${session.Inicio_Coaching.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} - ${(new Date(session.Inicio_Coaching.getTime() + session.Duracao * 60000)).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
+      data: session.Inicio_Coaching
+        ? session.Inicio_Coaching.toLocaleDateString('pt-PT')
         : 'N/A',
+      horario:
+        session.Inicio_Coaching && session.Duracao
+          ? `${session.Inicio_Coaching.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} - ${new Date(session.Inicio_Coaching.getTime() + session.Duracao * 60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
+          : 'N/A',
       modalidade: session.Disponibilidade?.Modalidade || 'N/A',
       estado: session.Estado_Coaching?.Tipo || 'N/A',
-      alunos: session.Coaching_Aluno.map(ca => ({
+      alunos: session.Coaching_Aluno.map((ca) => ({
         idAluno: ca.ID_Aluno,
         nome: ca.Aluno.Nome,
       })),
     }));
   }
+
+  /**
+   * Executa a operacao get kpis admin.
+   * @returns Resultado da operacao.
+   */
 
   async getKpisAdmin() {
     const now = new Date();
@@ -190,9 +217,15 @@ export class CoachingService {
     next24h.setHours(next24h.getHours() + 24);
 
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    const monthEnd = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+    );
 
-    // Próximas 24h
     const proximas24h = await this.prisma.coaching.count({
       where: {
         Inicio_Coaching: {
@@ -202,7 +235,6 @@ export class CoachingService {
       },
     });
 
-    // Sessões marcadas (futuras)
     const marcadas = await this.prisma.coaching.count({
       where: {
         Inicio_Coaching: {
@@ -222,7 +254,6 @@ export class CoachingService {
       },
     });
 
-    // Realizadas no mês
     const realizadasMes = await this.prisma.coaching.count({
       where: {
         Inicio_Coaching: {
@@ -230,7 +261,7 @@ export class CoachingService {
           lte: monthEnd,
         },
         Estado_Coaching: {
-          Tipo: 'Realizada', // Assumindo que existe este estado
+          Tipo: 'Realizada',
         },
       },
     });
@@ -242,6 +273,12 @@ export class CoachingService {
       realizadasMes,
     };
   }
+
+  /**
+   * Executa a operacao get aluno detalhes.
+   * @param idAluno Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
 
   async getAlunoDetalhes(idAluno: number) {
     const aluno = await this.prisma.aluno.findUnique({
@@ -262,23 +299,29 @@ export class CoachingService {
     return {
       idAluno: aluno.ID_aluno,
       nome: aluno.Nome,
-      dataNascimento: aluno.Data_Nascimento?.toISOString().split('T')[0] ?? null,
+      dataNascimento:
+        aluno.Data_Nascimento?.toISOString().split('T')[0] ?? null,
       nif: aluno.NIF,
       email: aluno.Mail ?? null,
       contacto: aluno.Contato ?? null,
       menorIdade: aluno.Menor_Idade,
       encarregado: aluno.Enc_Educacao
         ? {
-          nome: aluno.Enc_Educacao.Pessoa?.Nome || 'Sem encarregado',
-          email: aluno.Enc_Educacao.Pessoa?.Email || null,
-          contacto: aluno.Enc_Educacao.Pessoa?.Contacto || null,
-        }
+            nome: aluno.Enc_Educacao.Pessoa?.Nome || 'Sem encarregado',
+            email: aluno.Enc_Educacao.Pessoa?.Email || null,
+            contacto: aluno.Enc_Educacao.Pessoa?.Contacto || null,
+          }
         : null,
     };
   }
+
   /**
-     * Obtém as marcações de Coaching (Agenda pura, sem faturação)
-     */
+   * Executa a operacao get marcacoes professor.
+   * @param role Dados recebidos para a operacao.
+   * @param userId Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
   async getMarcacoesProfessor(role: string, userId: number) {
     let filtroCoaching: any = {};
 
@@ -295,7 +338,7 @@ export class CoachingService {
       include: {
         Sala: true,
         Estado_Coaching: true,
-        Disponibilidade: true, 
+        Disponibilidade: true,
         Coaching_Aluno: {
           include: { Aluno: true },
         },
@@ -304,9 +347,9 @@ export class CoachingService {
     });
 
     return marcacoes.map((aula) => {
-      const nomesAlunos = aula.Coaching_Aluno
-        .map(ligacao => ligacao.Aluno?.Nome)
-        .filter(nome => nome !== undefined);
+      const nomesAlunos = aula.Coaching_Aluno.map(
+        (ligacao) => ligacao.Aluno?.Nome,
+      ).filter((nome) => nome !== undefined);
 
       return {
         idCoaching: aula.ID_Coaching,
@@ -318,56 +361,53 @@ export class CoachingService {
         alunos: nomesAlunos,
         totalAlunos: nomesAlunos.length,
         estado: aula.Estado_Coaching?.Tipo || 'Pendente',
-        confirmacao_prof: aula.confirmacao_prof
+        confirmacao_prof: aula.confirmacao_prof,
       };
     });
-}
+  }
 
   /**
-   * Lógica para confirmação da sessão pelo Professor
+   * Executa a operacao confirmar sessao professor.
+   * @param idCoaching Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
    */
+
   async confirmarSessaoProfessor(idCoaching: number) {
-    // 1. Verificar se a sessão existe
     const sessao = await this.prisma.coaching.findUnique({
       where: { ID_Coaching: idCoaching },
     });
 
     if (!sessao) {
-      throw new NotFoundException(`Sessão de coaching com ID ${idCoaching} não encontrada.`);
+      throw new NotFoundException(
+        `Sessão de coaching com ID ${idCoaching} não encontrada.`,
+      );
     }
 
-    // 2. Validar se a sessão já começou (não se pode confirmar o futuro)
     const agora = new Date();
     const dataInicio = new Date(sessao.Inicio_Coaching!);
 
     if (agora < dataInicio) {
       throw new BadRequestException(
-        'Não pode confirmar uma sessão que ainda não se iniciou.'
+        'Não pode confirmar uma sessão que ainda não se iniciou.',
       );
     }
 
-    // 3. Verificar se já está concluída (Estado 13) para evitar updates desnecessários
     if (sessao.ID_Estado_Coaching === 13) {
       throw new BadRequestException('Esta sessão já se encontra concluída.');
     }
 
-    // 4. Determinar o novo estado
     let novoEstado = sessao.ID_Estado_Coaching;
 
-    // Como confirmacao_EE é booleano no Prisma:
     if (sessao.confirmacao_EE === true) {
       novoEstado = 13;
     }
 
-    // 5. Atualizar a Base de Dados
     return this.prisma.coaching.update({
       where: { ID_Coaching: idCoaching },
       data: {
-        confirmacao_prof: true, // Usa true (booleano) em vez de 1
+        confirmacao_prof: true,
         ID_Estado_Coaching: novoEstado,
       },
     });
   }
-
 }
-

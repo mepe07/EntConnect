@@ -50,12 +50,14 @@ describe('AgendamentosService', () => {
         orderBy: { Inicio_Coaching: 'asc' },
       }),
     );
-    expect(resultado[0]).toEqual(expect.objectContaining({
-      idCoaching: 1,
-      nomeProfessor: 'Professora Ana',
-      modalidade: 'Salsa',
-      alunos: [{ idAluno: 7, nome: 'Aluno Um' }],
-    }));
+    expect(resultado[0]).toEqual(
+      expect.objectContaining({
+        idCoaching: 1,
+        nomeProfessor: 'Professora Ana',
+        modalidade: 'Salsa',
+        alunos: [{ idAluno: 7, nome: 'Aluno Um' }],
+      }),
+    );
   });
 
   it('deve listar confirmações passadas do professor', async () => {
@@ -78,7 +80,9 @@ describe('AgendamentosService', () => {
   it('deve atualizar confirmação do professor', async () => {
     prismaMock.coaching.findFirst.mockResolvedValue({ ID_Coaching: 1 });
 
-    await expect(service.atualizarConfirmacaoProfessor(10, 1, 13)).resolves.toEqual({
+    await expect(
+      service.atualizarConfirmacaoProfessor(10, 1, 13),
+    ).resolves.toEqual({
       message: 'Estado de coaching atualizado com sucesso.',
     });
     expect(prismaMock.coaching.update).toHaveBeenCalledWith({
@@ -88,11 +92,13 @@ describe('AgendamentosService', () => {
   });
 
   it('deve rejeitar estado inválido ou sessão de outro professor', async () => {
-    await expect(service.atualizarConfirmacaoProfessor(10, 1, 99)).rejects.toThrow('ID de estado de coaching inválido.');
+    await expect(
+      service.atualizarConfirmacaoProfessor(10, 1, 99),
+    ).rejects.toThrow('ID de estado de coaching inválido.');
 
     prismaMock.coaching.findFirst.mockResolvedValue(null);
-    await expect(service.atualizarConfirmacaoProfessor(10, 1, 13)).rejects.toThrow(
-      'Sessão de coaching não encontrada para este professor.',
-    );
+    await expect(
+      service.atualizarConfirmacaoProfessor(10, 1, 13),
+    ).rejects.toThrow('Sessão de coaching não encontrada para este professor.');
   });
 });

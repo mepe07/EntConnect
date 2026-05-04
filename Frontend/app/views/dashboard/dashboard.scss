@@ -316,48 +316,49 @@
 }
 
 
-@media (prefers-color-scheme: dark) {
+body.entconnect-dark {
     .dashboard-wrapper {
         .dashboard-boas-vindas {
             h1 {
-                color: #0f172a;
+                color: #e2e8f0;
             }
 
             p {
-                color: #64748b;
+                color: #94a3b8;
             }
         }
 
         .botoes-acoes-topo,
         .menu-edicao-acoes,
         .kpi-card {
-            background: #ffffff !important;
-            border-color: #e2e8f0 !important;
+            background: #111827 !important;
+            border-color: #334155 !important;
         }
 
         .btn-acao-mini {
-            background: #f8fafc;
+            background: #1f2937;
+            color: #e2e8f0;
 
             &:hover {
-                background: colors.$theme-20;
+                background: #334155;
             }
         }
 
         .kpi-card {
             .info {
                 h3 {
-                    color: #0f172a;
+                    color: #f8fafc;
                 }
 
                 span {
-                    color: #64748b;
+                    color: #94a3b8;
                 }
             }
         }
 
         .item-edicao-mini {
             span {
-                color: #0f172a;
+                color: #e2e8f0;
             }
         }
     }

@@ -85,9 +85,6 @@ export function Utilizadores() {
 
     const [searchParams, setSearchParams] = useSearchParams();
     
-    // ==========================================
-    // PAGINAÇÃO
-    // ==========================================
     const [paginaAtual, setPaginaAtual] = useState(1);
     const [itensPorPagina, setItensPorPagina] = useState(10);
 
@@ -250,19 +247,14 @@ export function Utilizadores() {
     };
 
     useEffect(() => {
-        // Só entra aqui se o loading tiver acabado!
         if (!loading && searchParams.get('novo') === 'true') {
             abrirModalCriar();
             
-            // Remove o parâmetro do URL
+            // O parametro e consumido para evitar reabrir o modal ao navegar para tras.
             searchParams.delete('novo');
             setSearchParams(searchParams, { replace: true });
         }
-    }, [loading, searchParams, setSearchParams]); // Adicionámos o 'loading' nas dependências
-
-    // ==========================================
-    // MODAL CRIAR UTILIZADOR
-    // ==========================================
+    }, [loading, searchParams, setSearchParams]);
 
     const abrirModalCriar = () => {
         setFormNovo(FORM_VAZIO);

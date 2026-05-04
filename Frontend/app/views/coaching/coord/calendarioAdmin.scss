@@ -375,3 +375,122 @@
     justify-content: flex-start;
   }
 }
+
+body.entconnect-dark {
+  .calendario-admin {
+    color: #e2e8f0;
+  }
+
+  .calendario-header h1,
+  .day-summary strong,
+  .calendar-item strong,
+  .modal-header h2 {
+    color: #f8fafc !important;
+  }
+
+  .calendario-range,
+  .day-summary-label,
+  .item-detail,
+  .calendar-more,
+  .modal-label {
+    color: #94a3b8 !important;
+  }
+
+  .tool-button,
+  .view-button {
+    background: #111827 !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+
+    &:hover {
+      background: #1f2937 !important;
+      border-color: #475569 !important;
+    }
+  }
+
+  .view-button.active {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+  }
+
+  .calendario-list,
+  .calendar-weekday,
+  .calendar-day,
+  .modal-content {
+    background: #111827 !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+  }
+
+  .calendar-weekday {
+    background: #1f2937 !important;
+    color: #cbd5e1 !important;
+  }
+
+  .calendar-day--muted {
+    background: #1f2937 !important;
+    opacity: 0.72;
+  }
+
+  .calendar-day--weekend {
+    background: #172033 !important;
+  }
+
+  .calendar-day--today {
+    background: #172554 !important;
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.22);
+  }
+
+  .calendar-day--holiday,
+  .calendar-day--weekend.calendar-day--holiday {
+    background: #3b2f12 !important;
+    border-color: #f59e0b !important;
+  }
+
+  .calendar-day-header,
+  .calendar-day-header span {
+    color: #e2e8f0 !important;
+  }
+
+  .calendar-day-holiday,
+  .day-holiday {
+    background: rgba(245, 158, 11, 0.18) !important;
+    color: #fde68a !important;
+  }
+
+  .event-item {
+    background: rgba(37, 99, 235, 0.18) !important;
+    border-color: rgba(96, 165, 250, 0.55) !important;
+  }
+
+  .coaching-item {
+    background: rgba(245, 158, 11, 0.16) !important;
+    border-color: rgba(245, 158, 11, 0.65) !important;
+  }
+
+  .item-badge {
+    background: rgba(226, 232, 240, 0.14) !important;
+    color: #f8fafc !important;
+  }
+
+  .empty-state,
+  .modal-row {
+    background: #1f2937 !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+  }
+
+  .modal-row span:not(.modal-label) {
+    color: #e2e8f0 !important;
+  }
+
+  .modal-header {
+    border-bottom-color: #334155 !important;
+  }
+
+  .modal-close {
+    color: #cbd5e1 !important;
+  }
+}

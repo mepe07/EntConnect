@@ -14,10 +14,7 @@ export interface LinhaFaturacaoCoaching {
 
     valorTotal: number;
 
-    // Valor ja pago.
     valorPago?: number;
-
-    // Valor que ainda falta pagar.
 
     valorEmFalta?: number;
 

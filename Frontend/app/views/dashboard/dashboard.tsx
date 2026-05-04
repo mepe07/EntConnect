@@ -40,30 +40,25 @@ export function Dashboard() {
     const [editandoAcoes, setEditandoAcoes] = useState(false);
     
     const [dadosKpis, setDadosKpis] = useState({
-        // KPIs Admin/Prof Partilhados
         alunosAtivos: 0,
         aulasHoje: 0,
         tendenciaAlunos: 0,
         tendenciaAulas: 0,
         
-        // KPIs Admin Financeiro
         receitaMes: 0,
         emAtraso: 0,
         tendenciaReceita: 0, 
         tendenciaAtraso: 0,  
         
-        // KPIs Professor Exclusivos
         profSessoesConcluidas: 0,
         profAulasHojeTotal: 0,
         profAulasHojeDuracao: '',
         
-        // KPIs EE
         eeEmAtraso: 0,
         eeSessoesConfirmar: 0,
         eeSessoesMarcadas: 0,
         eeTotalEducandos: 0,
         
-        // Loading geral
         isLoading: true 
     });
 
@@ -81,7 +76,7 @@ export function Dashboard() {
     const acoesPermitidasPorRole = useMemo(() => ACOES_RAPIDAS_INICIAIS.filter(acao => acao.roles.includes(roleDoUser)), [roleDoUser]);
     const acoesVisiveis = useMemo(() => acoesPermitidasPorRole.filter(acao => acoesAtivasIds.includes(acao.id)), [acoesPermitidasPorRole, acoesAtivasIds]);
 
-    // === SISTEMA DE PERMISSÕES PARA OS QUADROS (KPIs) ===
+    // Permissoes de visualizacao dos KPIs por perfil autenticado.
     const temPermissao = (rolesPermitidas: string[]) => rolesPermitidas.includes(roleDoUser);
     const verBailarinos = temPermissao(['Coordenador', 'Professor']);
     const verFinanceiro = temPermissao(['Coordenador']);
@@ -124,24 +119,20 @@ export function Dashboard() {
                 const dProf = resProf?.ok ? await resProf.json() : {};
 
                 setDadosKpis({
-                    // Admin/Prof Partilhados
                     alunosAtivos: dAlu?.total ?? dAlu?.totalAtual ?? 0, 
                     tendenciaAlunos: dAlu?.tendencia ?? 0,
                     aulasHoje: dAul?.total ?? dAul?.totalHoje ?? 0,
                     tendenciaAulas: dAul?.tendencia ?? 0,
                     
-                    // Financeiro
                     receitaMes: dFin?.resumoGeral?.totalPago ?? 0, 
                     emAtraso: dFin?.resumoGeral?.totalEmDivida ?? 0,   
                     tendenciaReceita: 0,
                     tendenciaAtraso: 0,
                     
-                    // Professor Exclusivos
                     profSessoesConcluidas: dProf?.sessoesConcluidas ?? 0,
                     profAulasHojeTotal: dProf?.aulasHojeTotal ?? 0,
                     profAulasHojeDuracao: dProf?.aulasHojeDuracao ?? '0h00min',
 
-                    // EE
                     eeEmAtraso: dEE?.pagamentosAtraso ?? 0,
                     eeSessoesConfirmar: dEE?.sessoesConfirmar ?? 0,
                     eeSessoesMarcadas: dEE?.sessoesMarcadas ?? 0,
@@ -231,10 +222,6 @@ export function Dashboard() {
             {(verBailarinos || verFinanceiro || verAulas || verKpisEE || verKpisProf) && (
                 <section className="kpi-grid">
                     
-                    {/* ========================================================= */}
-                    {/* QUADROS DO ADMIN / PROFESSOR PARTILHADOS                  */}
-                    {/* ========================================================= */}
-                    
                     {verBailarinos && (
                         <article className="kpi-card">
                             <div className="icone azul"><i className="fa-solid fa-users"></i></div>
@@ -267,10 +254,6 @@ export function Dashboard() {
                         </article>
                     )}
 
-                    {/* ========================================================= */}
-                    {/* QUADROS FINANCEIROS (APENAS ADMIN/COORDENADOR)            */}
-                    {/* ========================================================= */}
-                    
                     {verFinanceiro && (
                         <>
                             <article className="kpi-card">
@@ -302,13 +285,8 @@ export function Dashboard() {
                         </>
                     )}
 
-                    {/* ========================================================= */}
-                    {/* NOVOS QUADROS EXCLUSIVOS DO PROFESSOR                     */}
-                    {/* ========================================================= */}
-                    
                     {verKpisProf && (
                         <>
-                            {/* 1. Sessões Realizadas no Mês */}
                             <article className="kpi-card">
                                 <div className="icone azul" style={{ backgroundColor: '#e0f2fe', color: '#0284c7' }}>
                                     <i className="fa-solid fa-calendar-check"></i>
@@ -324,7 +302,6 @@ export function Dashboard() {
                                 </div>
                             </article>
 
-                            {/* 2. Aulas para Hoje com Duração */}
                             <article className="kpi-card">
                                 <div className="icone verde" style={{ backgroundColor: '#dcfce7', color: '#16a34a' }}>
                                     <i className="fa-solid fa-chalkboard-user"></i>
@@ -348,13 +325,8 @@ export function Dashboard() {
                         </>
                     )}
 
-                    {/* ========================================================= */}
-                    {/* QUADROS DO ENCARREGADO DE EDUCAÇÃO                        */}
-                    {/* ========================================================= */}
-                    
                     {verKpisEE && (
                         <>
-                            {/* 1. Pagamentos em Atraso do próprio */}
                             <article 
                                 className="kpi-card" 
                                 onClick={() => navigate('/conta', { state: { abaAtiva: 'minhas_faturas' } })} 
@@ -374,7 +346,6 @@ export function Dashboard() {
                                 </div>
                             </article>
 
-                            {/* 2. Sessões por Confirmar */}
                             <article className="kpi-card">
                                 <div className="icone amarelo" style={{ backgroundColor: '#fef3c7', color: '#d97706' }}>
                                     <i className="fa-solid fa-clock"></i>
@@ -390,7 +361,6 @@ export function Dashboard() {
                                 </div>
                             </article>
 
-                            {/* 3. Sessões Marcadas */}
                             <article className="kpi-card">
                                 <div className="icone azul"><i className="fa-regular fa-calendar-check"></i></div>
                                 <div className="info">
@@ -404,7 +374,6 @@ export function Dashboard() {
                                 </div>
                             </article>
 
-                            {/* 4. Educandos */}
                             <article className="kpi-card">
                                 <div className="icone verde"><i className="fa-solid fa-children"></i></div>
                                 <div className="info">
