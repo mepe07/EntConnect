@@ -1,7 +1,7 @@
 @use "variables/colors";
 
 body {
-    height: 100vh;
+    min-height: 100vh;
     background-color: #f8fafc;
     color: colors.$gray-8;
     transition: background-color 0.25s ease, color 0.25s ease;
@@ -24,9 +24,14 @@ body {
 
     .body-wrapper {
         flex: 1;
+        margin-left: 280px;
+        margin-top: 76px;
         padding: 46px;
+        width: calc(100% - 280px);
+        min-height: calc(100vh - 76px);
         background-color: colors.$gray-1;
         overflow-y: auto;
+        overflow-x: hidden;
     }
 
     .public-theme-toggle {
@@ -35,6 +40,174 @@ body {
         right: 20px;
         z-index: 1000;
         box-shadow: 0 12px 28px rgba(15, 23, 42, 0.2);
+    }
+
+    .mobile-menu-overlay {
+        display: none;
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+        max-width: 100%;
+    }
+
+    img,
+    video,
+    canvas,
+    svg {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        h1 {
+            font-size: 28px;
+            line-height: 1.15;
+        }
+
+        h2 {
+            font-size: 22px;
+            line-height: 1.2;
+        }
+
+        .main-wrapper {
+            display: block;
+            min-height: calc(100vh - 64px);
+        }
+
+        .body-wrapper {
+            width: 100%;
+            min-height: calc(100vh - 64px);
+            margin-left: 0;
+            margin-top: 64px;
+            padding: 18px 14px 28px;
+        }
+
+        .mobile-menu-overlay {
+            position: fixed;
+            inset: 64px 0 0;
+            z-index: 105;
+            display: block;
+            padding: 0;
+            background: rgba(15, 23, 42, 0.42);
+            border: 0;
+        }
+
+        .crud-container,
+        .dashboard-wrapper,
+        .page,
+        [class*="Page"] {
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 0 !important;
+        }
+
+        .crud-header,
+        .page-header,
+        .header-acoes,
+        .modal-header,
+        [class*="Header"],
+        [class*="header"] {
+            max-width: 100%;
+        }
+
+        .crud-header,
+        .page-header {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 14px !important;
+        }
+
+        .header-acoes,
+        .modal-footer,
+        .modal-actions,
+        .form-actions,
+        [class*="acoes"],
+        [class*="Acoes"],
+        [class*="actions"],
+        [class*="Actions"] {
+            flex-wrap: wrap;
+        }
+
+        .modal-overlay {
+            align-items: flex-start !important;
+            padding: 12px !important;
+            overflow-y: auto !important;
+        }
+
+        .modal-content,
+        .modal-card,
+        .modal-conteudo,
+        .modal-registo,
+        .pagamento-modal {
+            width: 100% !important;
+            max-width: 100% !important;
+            max-height: calc(100vh - 24px) !important;
+            overflow-y: auto !important;
+        }
+
+        .modal-body {
+            max-height: none !important;
+        }
+
+        .form-row,
+        .form-grid,
+        .filter-grid,
+        [class*="formRow"],
+        [class*="FormRow"],
+        [class*="form-row"],
+        [class*="grid"],
+        [class*="Grid"] {
+            grid-template-columns: minmax(0, 1fr) !important;
+        }
+
+        .form-row,
+        [class*="formRow"],
+        [class*="FormRow"],
+        [class*="form-row"] {
+            flex-direction: column !important;
+        }
+
+        .tabela-wrapper,
+        .table-wrapper,
+        .table-container {
+            width: 100%;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        form,
+        fieldset,
+        .form,
+        .form-grid,
+        .filters,
+        .filter-grid,
+        .crud-toolbar,
+        .modal-footer,
+        .modal-actions,
+        [class*="form"],
+        [class*="Form"],
+        [class*="filters"],
+        [class*="Filters"],
+        [class*="toolbar"],
+        [class*="Toolbar"] {
+            max-width: 100%;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            min-width: 0;
+            font-size: 16px;
+        }
+
+        table {
+            min-width: 640px;
+        }
     }
 }
 

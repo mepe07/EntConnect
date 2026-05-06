@@ -85,7 +85,6 @@ export function Perfil() {
                 let cargoDetectado = 'Utilizador Registado';
                 if (p) {
                     const funcoes = [];
-                    if (p.Direcao) funcoes.push('Direção');
                     if (p.Professor) funcoes.push('Professor');
                     if (p.Enc_Educacao) funcoes.push('Enc. Educação');
                     if (funcoes.length > 0) cargoDetectado = funcoes.join(' / ');
