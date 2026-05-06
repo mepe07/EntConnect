@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   UnauthorizedException,
   Headers,
+  UseGuards,
 } from '@nestjs/common';
 import { CoachingService } from './coaching.service';
 import { CreateCoachingDto } from './dto/create-coaching.dto';
@@ -21,10 +22,23 @@ import { ModalidadeService } from './modalidade/modalidade.service';
 import { CreateModalidadeDto } from './dto/create-modalidade.dto';
 import { UpdateModalidadeDto } from './dto/update-modalidade.dto';
 import { InscreverAlunoDto } from './dto/inscrever-aluno.dto';
+
+import { AuthGuard } from '../auth/auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../auth/enums/roles.enum';
+
+const TODAS_AS_ROLES = [
+    Role.COORDENADOR,
+    Role.PROFESSOR,
+    Role.ENC_EDUCACAO,
+];
+
 /**
  * Controlador responsavel pelos pedidos de Coaching.
  */
 
+@UseGuards(AuthGuard, RolesGuard)
 @ApiTags('Coaching')
 @Controller('coaching')
 export class CoachingController {
@@ -39,6 +53,7 @@ export class CoachingController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.ENC_EDUCACAO)
   @Post()
   @ApiOperation({
     summary: 'Criar nova sessão de coaching',
@@ -71,6 +86,7 @@ export class CoachingController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(...TODAS_AS_ROLES)
   @Delete('remover-aluno/:idAluno/coaching/:idCoaching')
   @ApiOperation({ summary: 'Remover aluno de sessão de coaching' })
   async removerAluno(
@@ -85,7 +101,7 @@ export class CoachingController {
    * @param body Dados recebidos para a operacao.
    * @returns Resultado da operacao.
    */
-
+  @Roles(Role.ENC_EDUCACAO)
   @Post('disponibilidade/:id/inscrever-aluno')
   @ApiOperation({ summary: 'Inscrever aluno em sessão de coaching' })
   async inscreverAluno(
@@ -98,7 +114,7 @@ export class CoachingController {
    * Executa a operacao get all studios.
    * @returns Resultado da operacao.
    */
-
+  @Roles(...TODAS_AS_ROLES)
   @Get('estudios')
   @ApiOperation({
     summary: 'Listar todos os estúdios',
@@ -118,6 +134,7 @@ export class CoachingController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Patch('estudios/:id/bloquear')
   @ApiOperation({
     summary: 'Bloquear/trancar estúdio',
@@ -153,6 +170,7 @@ export class CoachingController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Patch('estudios/:id/desbloquear')
   @ApiOperation({
     summary: 'Desbloquear/destrancar estúdio',
@@ -187,6 +205,7 @@ export class CoachingController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Get('admin/sessoes-futuras')
   @ApiOperation({ summary: 'Obter sessões futuras para gestão do admin' })
   async getSessoesFuturasAdmin() {
@@ -197,6 +216,7 @@ export class CoachingController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Get('admin/kpis')
   @ApiOperation({ summary: 'Obter KPIs para o dashboard do admin' })
   async getKpisAdmin() {
@@ -208,6 +228,7 @@ export class CoachingController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR, Role.PROFESSOR)
   @Get('aluno/:id/detalhes')
   @ApiOperation({ summary: 'Obter detalhes do aluno e do seu encarregado' })
   async getAlunoDetalhes(@Param('id', ParseIntPipe) id: number) {
@@ -219,6 +240,7 @@ export class CoachingController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(...TODAS_AS_ROLES)
   @Get('marcacoes')
   @ApiOperation({
     summary: 'Obtém a agenda pura de marcações de coaching do utilizador',
@@ -258,6 +280,7 @@ export class CoachingController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.PROFESSOR)
   @Patch(':id/confirmar-professor')
   @ApiOperation({
     summary: 'Professor: Confirmar realização da sessão',

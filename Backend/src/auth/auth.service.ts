@@ -256,7 +256,6 @@ export class AuthService {
 
     if (user.Pessoa?.Professor) roles.push(Role.PROFESSOR);
     if (user.Pessoa?.Coordenador) roles.push(Role.COORDENADOR);
-    if (user.Pessoa?.Direcao) roles.push(Role.DIRECAO);
     if (user.Pessoa?.Enc_Educacao) roles.push(Role.ENC_EDUCACAO);
 
     if (roles.length === 0) {

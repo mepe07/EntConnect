@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../../src/config/api.config";
+import { authService } from './auth.service';
 
 /**
  * Dados necessários para criar um utilizador.
@@ -69,6 +70,28 @@ export class UtilizadorService {
 
     private _apiUrl = API_BASE_URL;
 
+    /**
+     * Headers JSON autenticados para endpoints privados de utilizadores.
+     */
+    private getJsonHeaders() {
+        const token = authService.getToken();
+
+        return {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+    }
+
+    /**
+     * Headers autenticados para upload de ficheiros.
+     * Não define Content-Type porque o browser trata do boundary do FormData.
+     */
+    private getMultipartHeaders() {
+        const token = authService.getToken();
+
+        return token ? { Authorization: `Bearer ${token}` } : {};
+    }
+
 
     /**
      * Obtém todos os utilizadores registados.
@@ -78,7 +101,7 @@ export class UtilizadorService {
     async getUsers() {
         const response = await fetch(`${this._apiUrl}/utilizador`, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
+            headers: this.getJsonHeaders()
         });
         return await response.json();
     }
@@ -91,13 +114,9 @@ export class UtilizadorService {
      * @returns Utilizador criado pela API.
      */
     async createUser(payload: CreateUtilizadorPayload) {
-        const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-            },
+            headers: this.getJsonHeaders(),
             body: JSON.stringify(payload),
         });
 
@@ -119,7 +138,7 @@ export class UtilizadorService {
     async blockUser(userId: number) {
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/block`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: this.getJsonHeaders(),
         });
         return await response.json();
     }
@@ -134,7 +153,7 @@ export class UtilizadorService {
     async unlockUser(userId: number) {
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/unlock`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: this.getJsonHeaders(),
         });
         return await response.json();
     }
@@ -149,7 +168,7 @@ export class UtilizadorService {
     async getFoto(userId: number) {
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/foto`, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
+            headers: this.getJsonHeaders(),
         });
         return await response.json();
     }
@@ -168,8 +187,8 @@ export class UtilizadorService {
 
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/uploadphoto`, {
             method: 'PUT',
+            headers: this.getMultipartHeaders(),
             body: formData,
-
         });
 
         if (!response.ok) {
@@ -190,7 +209,7 @@ export class UtilizadorService {
     async removerFoto(userId: number) {
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/removephoto`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: this.getJsonHeaders(),
         });
 
         if (!response.ok) {
@@ -208,13 +227,9 @@ export class UtilizadorService {
      * @returns Resposta da API.
      */
     async deleteUser(userId: number) {
-        const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}`, {
             method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-            },
+            headers: this.getJsonHeaders(),
         });
 
         if (!response.ok) {
@@ -234,16 +249,12 @@ export class UtilizadorService {
      * @returns Utilizador atualizado.
      */
     async updateCargo(userId: number, cargo: string | string[], confirmarRemocaoAssociacoes = false) {
-        const token = localStorage.getItem('entconnect_token');
         const body = Array.isArray(cargo)
             ? { cargos: cargo, confirmarRemocaoAssociacoes }
             : { cargo, confirmarRemocaoAssociacoes };
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/update-cargo`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-            },
+            headers: this.getJsonHeaders(),
             body: JSON.stringify(body),
         });
 
@@ -269,13 +280,9 @@ export class UtilizadorService {
      * @returns Utilizador atualizado.
      */
     async updatePessoal(userId: number, dados: { nome?: string; contacto?: string; nif?: string }) {
-        const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/update-pessoal`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-            },
+            headers: this.getJsonHeaders(),
             body: JSON.stringify(dados),
         });
 
@@ -297,7 +304,7 @@ export class UtilizadorService {
     async updatePassword(userId: number, newPassword: string) {
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/password`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: this.getJsonHeaders(),
             body: JSON.stringify({ password: newPassword }),
         });
 
@@ -318,7 +325,7 @@ export class UtilizadorService {
     async getEducandos(idEncEducacao: number): Promise<Educando[]> {
         const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/${idEncEducacao}/alunos`, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
+            headers: this.getJsonHeaders(),
         });
 
         if (!response.ok) {
@@ -337,7 +344,7 @@ export class UtilizadorService {
     async getAlunosSemEncarregado(): Promise<Educando[]> {
         const response = await fetch(`${this._apiUrl}/utilizador/alunos/sem-encarregado`, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
+            headers: this.getJsonHeaders(),
         });
 
         if (!response.ok) {
@@ -356,13 +363,9 @@ export class UtilizadorService {
      * @returns Educando criado.
      */
     async createEducando(idEncEducacao: number, payload: UpsertEducandoPayload): Promise<Educando> {
-        const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/${idEncEducacao}/alunos`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-            },
+            headers: this.getJsonHeaders(),
             body: JSON.stringify(payload),
         });
 
@@ -383,13 +386,9 @@ export class UtilizadorService {
      * @returns Educando atualizado.
      */
     async updateEducando(idEncEducacao: number, idAluno: number, payload: UpsertEducandoPayload): Promise<Educando> {
-        const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/${idEncEducacao}/alunos/${idAluno}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-            },
+            headers: this.getJsonHeaders(),
             body: JSON.stringify(payload),
         });
 
@@ -409,13 +408,9 @@ export class UtilizadorService {
      * @returns Resposta da API.
      */
     async removeEducando(idEncEducacao: number, idAluno: number) {
-        const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/${idEncEducacao}/alunos/${idAluno}`, {
             method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-            },
+            headers: this.getJsonHeaders(),
         });
 
         if (!response.ok) {
@@ -434,13 +429,9 @@ export class UtilizadorService {
      * @returns Educando associado.
      */
     async associateEducando(idEncEducacao: number, idAluno: number): Promise<Educando> {
-        const token = localStorage.getItem('entconnect_token');
         const response = await fetch(`${this._apiUrl}/utilizador/enc-educacao/${idEncEducacao}/alunos/${idAluno}/associar`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-            },
+            headers: this.getJsonHeaders(),
         });
 
         if (!response.ok) {
