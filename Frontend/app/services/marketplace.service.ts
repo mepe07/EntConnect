@@ -13,15 +13,20 @@ import type {
 } from '../types/marketplace.types';
 
 import { API_BASE_URL } from "../../src/config/api.config";
+import { authService } from './auth.service';
 
 
 const API_URL = `${API_BASE_URL}/marketplace`;
 
-const getToken = () => localStorage.getItem('entconnect_token');
+const getAuthHeader = () => {
+    const token = authService.getToken();
+
+    return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 const getHeaders = () => ({
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${getToken()}`,
+    ...getAuthHeader(),
 });
 
 async function parseError(response: Response, fallback: string): Promise<never> {
@@ -155,9 +160,7 @@ export const marketplaceService = {
 
         const response = await fetch(`${API_URL}/anuncios`, {
             method: 'POST',
-            headers: {
-                Authorization: `Bearer ${getToken()}`,
-            },
+            headers: getAuthHeader(),
             body: formData,
         });
 
@@ -182,7 +185,7 @@ export const marketplaceService = {
         const response = await fetch(`${API_URL}/anuncios/${idArtigo}`, {
             method: 'PATCH',
             headers: usarMultipart
-                ? { Authorization: `Bearer ${getToken()}` }
+                ? getAuthHeader()
                 : getHeaders(),
             body: usarMultipart
                 ? (() => {
@@ -285,9 +288,7 @@ export const marketplaceService = {
             method: 'POST',
 
 
-            headers: {
-                Authorization: `Bearer ${getToken()}`,
-            },
+            headers: getAuthHeader(),
             body: formData,
         });
 

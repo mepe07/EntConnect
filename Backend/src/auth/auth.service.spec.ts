@@ -102,6 +102,7 @@ describe('AuthService', () => {
       loginDto.password,
       utilizador.Password,
     );
+
     expect(jwtServiceMock.signAsync).toHaveBeenCalledWith({
       sub: utilizador.ID_Utilizador,
       username: utilizador.Utilizador,
