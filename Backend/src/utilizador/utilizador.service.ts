@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { CreateUtilizadorDto } from './dto/create-utilizador.dto';
 import { UpdateUtilizadorDto } from './dto/update-utilizador.dto';
@@ -17,6 +18,16 @@ import { UpsertEducandoDto } from './dto/upsert-educando.dto';
 
 @Injectable()
 export class UtilizadorService {
+  private readonly CARGOS_VALIDOS = [
+    'Professor',
+    'Coordenador',
+    'Dire\u00e7\u00e3o',
+    'Encarregado de Educa\u00e7\u00e3o',
+  ];
+
+  private readonly CARGO_ENCARREGADO_EDUCACAO =
+    this.CARGOS_VALIDOS[3];
+
   constructor(private prisma: PrismaService) {}
 
   /**
@@ -51,6 +62,8 @@ export class UtilizadorService {
         cargoAtribuido = 'Encarregado de Educação';
       }
 
+      const cargos = this.obterCargosDaPessoa(user.Pessoa);
+
       return {
         idUtilizador: user.ID_Utilizador,
         idPessoa: user.ID_Pessoa,
@@ -61,6 +74,7 @@ export class UtilizadorService {
         contacto: user.Pessoa?.Contacto,
         nif: user.Pessoa?.NIF,
         cargo: cargoAtribuido,
+        cargos,
       };
     });
   }
@@ -80,6 +94,7 @@ export class UtilizadorService {
       nif,
       dataNascimento,
       cargo,
+      cargos,
       password,
     } = createUtilizadorDto;
 
@@ -120,7 +135,7 @@ export class UtilizadorService {
             Contacto: contacto ?? '',
             NIF: nif ?? '',
             Data_Nascimento: new Date(dataNascimento),
-            ...dadosCargo,
+            ...this.criarDadosCargos(this.normalizarCargos(cargos ?? cargo)),
           },
         },
       },
@@ -711,6 +726,83 @@ export class UtilizadorService {
     return utilizador;
   }
 
+  async updateCargos(
+    idUtilizador: number,
+    novosCargosPayload: string | string[],
+    confirmarRemocaoAssociacoes = false,
+  ) {
+    const novosCargos = this.normalizarCargos(novosCargosPayload);
+    const cargoEncarregadoEducacao = this.CARGO_ENCARREGADO_EDUCACAO;
+
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: idUtilizador },
+      include: {
+        Pessoa: {
+          include: {
+            Professor: true,
+            Coordenador: true,
+            Direcao: true,
+            Enc_Educacao: true,
+          },
+        },
+      },
+    });
+
+    if (!utilizador || !utilizador.Pessoa) {
+      throw new NotFoundException('Utilizador nÃ£o encontrado.');
+    }
+
+    const idPessoa = utilizador.ID_Pessoa;
+    const pessoa = utilizador.Pessoa;
+    const cargosAtuais = this.obterCargosDaPessoa(pessoa);
+    const removeEncarregadoEducacao =
+      cargosAtuais.includes(cargoEncarregadoEducacao) &&
+      !novosCargos.includes(cargoEncarregadoEducacao);
+
+    if (removeEncarregadoEducacao) {
+      const impacto =
+        await this.obterImpactoRemocaoEncarregadoEducacao(idPessoa);
+
+      if (
+        (impacto.alunosAssociados > 0 ||
+          impacto.inscricoesCoachingAssociadas > 0) &&
+        !confirmarRemocaoAssociacoes
+      ) {
+        throw new ConflictException({
+          code: 'CONFIRMACAO_REMOCAO_ASSOCIACOES_ENCARREGADO',
+          message:
+            'Este utilizador tem alunos ou inscricoes de coaching associadas enquanto encarregado de educacao.',
+          impacto,
+        });
+      }
+    }
+
+    if (pessoa.Professor && !novosCargos.includes('Professor'))
+      await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Coordenador && !novosCargos.includes('Coordenador'))
+      await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Direcao && !novosCargos.includes('Dire\u00e7\u00e3o'))
+      await this.prisma.direcao.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Enc_Educacao && removeEncarregadoEducacao) {
+      await this.removerAssociacoesEncarregadoEducacao(idPessoa);
+      await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
+    }
+
+    if (!pessoa.Professor && novosCargos.includes('Professor'))
+      await this.prisma.professor.create({ data: { ID_Pessoa: idPessoa } });
+    if (!pessoa.Coordenador && novosCargos.includes('Coordenador'))
+      await this.prisma.coordenador.create({ data: { ID_Pessoa: idPessoa } });
+    if (!pessoa.Direcao && novosCargos.includes('Dire\u00e7\u00e3o'))
+      await this.prisma.direcao.create({ data: { ID_Pessoa: idPessoa } });
+    if (!pessoa.Enc_Educacao && novosCargos.includes(cargoEncarregadoEducacao))
+      await this.prisma.enc_Educacao.create({ data: { ID_Pessoa: idPessoa } });
+
+    return {
+      mensagem: `Cargos atualizados para "${novosCargos.join(', ')}" com sucesso.`,
+      cargos: novosCargos,
+    };
+  }
+
   /**
    * Executa a operacao update cargo.
    * @param idUtilizador Dados recebidos para a operacao.
@@ -954,6 +1046,65 @@ export class UtilizadorService {
         estado: isEmDivida ? 'EM DÍVIDA' : 'PAGO',
       };
     });
+  }
+
+  private obterCargosDaPessoa(pessoa: any): string[] {
+    const cargos: string[] = [];
+
+    if (pessoa?.Professor) cargos.push('Professor');
+    if (pessoa?.Coordenador) cargos.push('Coordenador');
+    if (pessoa?.Direcao) cargos.push('Dire\u00e7\u00e3o');
+    if (pessoa?.Enc_Educacao) cargos.push(this.CARGO_ENCARREGADO_EDUCACAO);
+
+    return cargos;
+  }
+
+  private canonicalizarCargo(cargo: string): string {
+    const cargoLimpo = cargo.trim();
+    const aliases: Record<string, string> = {
+      'Dire\u00e7\u00e3o': 'Dire\u00e7\u00e3o',
+      'DireÃ§Ã£o': 'Dire\u00e7\u00e3o',
+      'DireÃƒÂ§ÃƒÂ£o': 'Dire\u00e7\u00e3o',
+      'Encarregado de Educa\u00e7\u00e3o': this.CARGO_ENCARREGADO_EDUCACAO,
+      'Encarregado de EducaÃ§Ã£o': this.CARGO_ENCARREGADO_EDUCACAO,
+      'Encarregado de EducaÃƒÂ§ÃƒÂ£o': this.CARGO_ENCARREGADO_EDUCACAO,
+    };
+
+    return aliases[cargoLimpo] ?? cargoLimpo;
+  }
+
+  private normalizarCargos(cargos: string | string[] | undefined): string[] {
+    const lista = Array.isArray(cargos) ? cargos : cargos ? [cargos] : [];
+    const cargosNormalizados = [
+      ...new Set(lista.map((cargo) => this.canonicalizarCargo(cargo))),
+    ];
+
+    if (cargosNormalizados.length === 0) {
+      throw new BadRequestException('Seleciona pelo menos um cargo.');
+    }
+
+    const cargoInvalido = cargosNormalizados.find(
+      (cargo) => !this.CARGOS_VALIDOS.includes(cargo),
+    );
+
+    if (cargoInvalido) {
+      throw new NotFoundException(`Cargo "${cargoInvalido}" nao e valido.`);
+    }
+
+    return cargosNormalizados;
+  }
+
+  private criarDadosCargos(cargos: string[]) {
+    return {
+      ...(cargos.includes('Professor') ? { Professor: { create: {} } } : {}),
+      ...(cargos.includes('Coordenador')
+        ? { Coordenador: { create: {} } }
+        : {}),
+      ...(cargos.includes('Dire\u00e7\u00e3o') ? { Direcao: { create: {} } } : {}),
+      ...(cargos.includes(this.CARGO_ENCARREGADO_EDUCACAO)
+        ? { Enc_Educacao: { create: {} } }
+        : {}),
+    };
   }
 
   /**

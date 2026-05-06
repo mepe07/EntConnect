@@ -52,6 +52,35 @@
         cursor: pointer;
     }
 
+    .checkbox-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 8px;
+        padding: 10px;
+        border: 1px solid colors.$gray-3;
+        border-radius: 6px;
+        background-color: #fff;
+
+        &.input-erro {
+            border-color: colors.$error-100;
+        }
+    }
+
+    .checkbox-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: colors.$gray-8;
+        cursor: pointer;
+
+        input {
+            width: 16px;
+            height: 16px;
+            accent-color: colors.$theme-100;
+        }
+    }
+
 
     .campo-erro {
         font-size: 12px;

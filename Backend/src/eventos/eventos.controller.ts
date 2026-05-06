@@ -21,6 +21,7 @@ import { AtualizarEventoDto } from './dto/atualizar-evento.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { Role } from '../auth/enums/roles.enum';
 import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -38,6 +39,7 @@ export class EventosController {
    * @returns Resultado da operacao.
    */
 
+  @Public()
   @Get('publicos')
   listarEventosPublicos(@Query() filtros: ListarEventosPublicosDto) {
     return this.eventosService.listarEventosPublicos(filtros);
@@ -47,6 +49,7 @@ export class EventosController {
    * @returns Resultado da operacao.
    */
 
+  @Public()
   @Get('publicos/login-toast')
   listarEventosLoginToast() {
     return this.eventosService.listarEventosLoginToast();
@@ -57,6 +60,7 @@ export class EventosController {
    * @returns Resultado da operacao.
    */
 
+  @Public()
   @Get('publicos/:slug')
   obterEventoPublicoPorSlug(@Param('slug') slug: string) {
     return this.eventosService.obterEventoPublicoPorSlug(slug);

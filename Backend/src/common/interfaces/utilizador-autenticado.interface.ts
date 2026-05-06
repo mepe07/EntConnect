@@ -5,5 +5,7 @@ export interface UtilizadorAutenticado {
   username: string;
   nome?: string;
   role: Role;
+  roles?: Role[];
   idPessoa: number;
+  Acoes_Rapidas?: unknown;
 }
