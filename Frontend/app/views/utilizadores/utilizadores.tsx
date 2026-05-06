@@ -23,6 +23,7 @@ interface Utilizador {
     contacto: string;
     nif: string;
     cargo: string;
+    cargos?: string[];
 }
 
 
@@ -37,6 +38,18 @@ const CARGOS_DISPONIVEIS = [
     'Encarregado de Educação',
 ];
 
+const obterCargosUtilizador = (utilizador?: Pick<Utilizador, 'cargo' | 'cargos'> | null) => {
+    if (utilizador?.cargos?.length) return utilizador.cargos;
+    return utilizador?.cargo ? [utilizador.cargo] : [];
+};
+
+const formatarCargos = (cargos: string[]) => cargos
+    .map(cargo => cargoLabel[cargo] ?? cargo)
+    .join(', ');
+
+const cargosIguais = (a: string[], b: string[]) =>
+    a.length === b.length && a.every(cargo => b.includes(cargo));
+
 interface NovoUtilizadorForm {
     nome: string;
     username: string;
@@ -44,10 +57,12 @@ interface NovoUtilizadorForm {
     contacto: string;
     nif: string;
     dataNascimento: string;
-    cargo: string;
+    cargos: string[];
     password: string;
     confirmarPassword: string;
 }
+
+type NovoUtilizadorErros = Partial<Record<keyof NovoUtilizadorForm, string>>;
 
 interface EducandoForm {
     idAluno?: number;
@@ -65,7 +80,7 @@ const FORM_VAZIO: NovoUtilizadorForm = {
     contacto: '',
     nif: '',
     dataNascimento: '',
-    cargo: '',
+    cargos: [],
     password: '',
     confirmarPassword: '',
 };
@@ -104,7 +119,7 @@ export function Utilizadores() {
     const [editNome, setEditNome] = useState('');
     const [editContacto, setEditContacto] = useState('');
     const [editNif, setEditNif] = useState('');
-    const [editCargo, setEditCargo] = useState('');
+    const [editCargos, setEditCargos] = useState<string[]>([]);
     const [erroDados, setErroDados] = useState('');
     const [loadingSaveDados, setLoadingSaveDados] = useState(false);
 
@@ -131,7 +146,7 @@ export function Utilizadores() {
     const [modalCriarAberto, setModalCriarAberto] = useState(false);
     const [formNovo, setFormNovo] = useState<NovoUtilizadorForm>(FORM_VAZIO);
     const [mostrarPasswordNovo, setMostrarPasswordNovo] = useState(false);
-    const [errosCriar, setErrosCriar] = useState<Partial<NovoUtilizadorForm>>({});
+    const [errosCriar, setErrosCriar] = useState<NovoUtilizadorErros>({});
     const [loadingCriar, setLoadingCriar] = useState(false);
 
 
@@ -168,7 +183,8 @@ export function Utilizadores() {
         useState<Record<number, string | null>>({});
 
     const isEncarregadoEducacao = (utilizador?: Utilizador | null) =>
-        utilizador?.cargo?.toLowerCase().includes('encarregado') ?? false;
+        obterCargosUtilizador(utilizador)
+            .some(cargo => cargo.toLowerCase().includes('encarregado'));
 
     const formatarDataInput = (data?: string | Date | null) => {
         if (!data) return '';
@@ -200,7 +216,7 @@ export function Utilizadores() {
         setEditNome(utilizador.nome || '');
         setEditContacto(utilizador.contacto || '');
         setEditNif(utilizador.nif || '');
-        setEditCargo(utilizador.cargo || '');
+        setEditCargos(obterCargosUtilizador(utilizador));
         setErroDados('');
         setNovaPassword('');
         setConfirmarPassword('');
@@ -234,7 +250,7 @@ export function Utilizadores() {
         setEditNome('');
         setEditContacto('');
         setEditNif('');
-        setEditCargo('');
+        setEditCargos([]);
         setErroDados('');
         setFotoAtual(null);
         setFotoPreview(null);
@@ -267,16 +283,32 @@ export function Utilizadores() {
         setModalCriarAberto(false);
     };
 
-    const handleFormNovo = (campo: keyof NovoUtilizadorForm, valor: string) => {
+    const handleFormNovo = (campo: keyof NovoUtilizadorForm, valor: string | string[]) => {
         setFormNovo(prev => ({ ...prev, [campo]: valor }));
 
         if (errosCriar[campo]) {
             setErrosCriar(prev => ({ ...prev, [campo]: '' }));
         }
     };
+
+    const toggleCargoNovo = (cargo: string) => {
+        const cargos = formNovo.cargos.includes(cargo)
+            ? formNovo.cargos.filter(cargoAtual => cargoAtual !== cargo)
+            : [...formNovo.cargos, cargo];
+
+        handleFormNovo('cargos', cargos);
+    };
+
+    const toggleEditCargo = (cargo: string) => {
+        setEditCargos(prev => prev.includes(cargo)
+            ? prev.filter(cargoAtual => cargoAtual !== cargo)
+            : [...prev, cargo]
+        );
+        setErroDados('');
+    };
     
     const validarFormNovo = (): boolean => {
-    const erros: Partial<NovoUtilizadorForm> = {};
+    const erros: NovoUtilizadorErros = {};
 
         if (!formNovo.nome.trim()) erros.nome = 'O nome é obrigatório.';
         if (!formNovo.username.trim()) erros.username = 'O username é obrigatório.';
@@ -285,7 +317,7 @@ export function Utilizadores() {
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formNovo.email)) {
             erros.email = 'Introduz um email válido.';
         }
-        if (!formNovo.cargo) erros.cargo = 'Seleciona um cargo.';
+        if (formNovo.cargos.length === 0) erros.cargos = 'Seleciona pelo menos um cargo.';
         if (!formNovo.dataNascimento) erros.dataNascimento = 'A data de nascimento é obrigatória.';
         if (!formNovo.password) {
             erros.password = 'A password é obrigatória.';
@@ -314,7 +346,7 @@ export function Utilizadores() {
                 contacto: formNovo.contacto.trim() || undefined,
                 nif: formNovo.nif.trim() || undefined,
                 dataNascimento: formNovo.dataNascimento,
-                cargo: formNovo.cargo,
+                cargos: formNovo.cargos,
                 password: formNovo.password,
             });
             alert('Utilizador criado com sucesso!');
@@ -434,6 +466,11 @@ export function Utilizadores() {
         }
 
 
+        if (editCargos.length === 0) {
+            setErroDados('Seleciona pelo menos um cargo.');
+            return;
+        }
+
         const passwordPreenchida = novaPassword || confirmarPassword;
         if (passwordPreenchida) {
             if (novaPassword.length < 6) {
@@ -449,9 +486,11 @@ export function Utilizadores() {
         setLoadingSaveDados(true);
         try {
 
-            if (editCargo !== utilizadorSelecionado!.cargo) {
+            const cargosAtuais = obterCargosUtilizador(utilizadorSelecionado);
+
+            if (!cargosIguais(editCargos, cargosAtuais)) {
                 try {
-                    await utilizadorService.updateCargo(utilizadorSelecionado!.idUtilizador, editCargo);
+                    await utilizadorService.updateCargo(utilizadorSelecionado!.idUtilizador, editCargos);
                 } catch (error: any) {
                     if (error instanceof ConfirmacaoRemocaoAssociacoesEncarregadoError) {
                         const { alunosAssociados, inscricoesCoachingAssociadas } = error.impacto;
@@ -467,7 +506,7 @@ export function Utilizadores() {
                             return;
                         }
 
-                        await utilizadorService.updateCargo(utilizadorSelecionado!.idUtilizador, editCargo, true);
+                        await utilizadorService.updateCargo(utilizadorSelecionado!.idUtilizador, editCargos, true);
                     } else {
                         throw error;
                     }
@@ -486,7 +525,8 @@ export function Utilizadores() {
                 nome: editNome.trim(),
                 contacto: editContacto.trim(),
                 nif: editNif.trim(),
-                cargo: editCargo,
+                cargo: editCargos[0] ?? 'Sem Cargo',
+                cargos: editCargos,
             };
             setUtilizadorSelecionado(updated);
             setUtilizadores(prev =>
@@ -710,7 +750,9 @@ export function Utilizadores() {
         u.nome?.toLowerCase().includes(termoPesquisa.toLowerCase()) ||
         u.username?.toLowerCase().includes(termoPesquisa.toLowerCase()) ||
         u.email?.toLowerCase().includes(termoPesquisa.toLowerCase()) ||
-        u.cargo?.toLowerCase().includes(termoPesquisa.toLowerCase())
+        obterCargosUtilizador(u).some(cargo =>
+            cargo.toLowerCase().includes(termoPesquisa.toLowerCase())
+        )
     );
 
     const totalPaginas = Math.ceil(utilizadoresFiltrados.length / itensPorPagina);
@@ -852,7 +894,7 @@ export function Utilizadores() {
                                     <td className="text-secondary">{u.email}</td>
                                     <td>
                                         <span className="tag-role">
-                                            {cargoLabel[u.cargo] ?? u.cargo}
+                                            {formatarCargos(obterCargosUtilizador(u))}
                                         </span>
                                     </td>
                                     <td>
@@ -1106,17 +1148,20 @@ export function Utilizadores() {
                                         placeholder="Ex: 123456789"
                                     />
                                 </div>
-                                <div className="form-group readonly">
-                                    <label>Cargo</label>
-                                    <select
-                                        className="input-campo"
-                                        value={editCargo}
-                                        onChange={(e) => { setEditCargo(e.target.value); setErroDados(''); }}
-                                    >
+                                <div className="form-group">
+                                    <label>Cargos</label>
+                                    <div className="checkbox-list">
                                         {CARGOS_DISPONIVEIS.map(c => (
-                                            <option key={c} value={c}>{c}</option>
+                                            <label key={c} className="checkbox-option">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={editCargos.includes(c)}
+                                                    onChange={() => toggleEditCargo(c)}
+                                                />
+                                                <span>{c}</span>
+                                            </label>
                                         ))}
-                                    </select>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1479,19 +1524,21 @@ export function Utilizadores() {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label>Cargo *</label>
-                                    <select
-                                        className={`input-campo ${errosCriar.cargo ? 'input-erro' : ''}`}
-                                        value={formNovo.cargo}
-                                        onChange={(e) => handleFormNovo('cargo', e.target.value)}
-                                    >
-                                        <option value="">Seleciona um cargo...</option>
+                                    <label>Cargos *</label>
+                                    <div className={`checkbox-list ${errosCriar.cargos ? 'input-erro' : ''}`}>
                                         {CARGOS_DISPONIVEIS.map(c => (
-                                            <option key={c} value={c}>{c}</option>
+                                            <label key={c} className="checkbox-option">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formNovo.cargos.includes(c)}
+                                                    onChange={() => toggleCargoNovo(c)}
+                                                />
+                                                <span>{c}</span>
+                                            </label>
                                         ))}
-                                    </select>
-                                    {errosCriar.cargo && (
-                                        <span className="campo-erro">{errosCriar.cargo}</span>
+                                    </div>
+                                    {errosCriar.cargos && (
+                                        <span className="campo-erro">{errosCriar.cargos}</span>
                                     )}
                                 </div>
                             </div>

@@ -8,6 +8,7 @@ export interface User {
   nome: string;
   email: string;
   role: string;
+  roles?: string[];
   contacto: string;
   nif: string;
   ativo: boolean;

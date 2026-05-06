@@ -12,6 +12,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Role } from './enums/roles.enum';
 import { MailService } from '../mail/mail.service';
+import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 /**
  * Servico responsavel pela logica de Auth.
  */
@@ -49,20 +50,71 @@ export class AuthService {
         'A sua conta está inativa. Contacte a coordenação.',
       );
 
-    const userRole = this.determinarRole(user);
-
-    const payload = {
-      sub: user.ID_Utilizador,
-      username: user.Utilizador,
-      nome: user.Pessoa?.Nome,
-      role: userRole,
-      idPessoa: user.ID_Pessoa,
-      Acoes_Rapidas: user.Acoes_Rapidas,
-    };
+    const userRoles = this.determinarRoles(user);
+    const userRole = this.determinarRolePadrao(userRoles);
+    const payload = this.criarPayloadSessao(user, userRole, userRoles);
 
     return {
       access_token: await this.jwtService.signAsync(payload),
       role: userRole,
+      roles: userRoles,
+    };
+  }
+
+  /**
+   * Troca a role ativa mantendo a sessao autenticada.
+   * @param utilizador Dados do utilizador autenticado.
+   * @param role Role a ativar.
+   * @returns Novo token com a role selecionada.
+   */
+
+  async trocarRole(utilizador: UtilizadorAutenticado, role: Role) {
+    const user = await this.obterUtilizadorPorId(utilizador.sub);
+
+    if (!user || !user.Ativo) {
+      throw new UnauthorizedException('SessÃ£o invÃ¡lida.');
+    }
+
+    const userRoles = this.determinarRoles(user);
+
+    if (!userRoles.includes(role)) {
+      throw new UnauthorizedException(
+        'A role selecionada nÃ£o estÃ¡ associada ao utilizador.',
+      );
+    }
+
+    const payload = this.criarPayloadSessao(user, role, userRoles);
+
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+      role,
+      roles: userRoles,
+    };
+  }
+
+  /**
+   * Atualiza o token com os perfis atuais do utilizador.
+   * @param utilizador Dados do utilizador autenticado.
+   * @returns Novo token da sessao.
+   */
+
+  async atualizarSessao(utilizador: UtilizadorAutenticado) {
+    const user = await this.obterUtilizadorPorId(utilizador.sub);
+
+    if (!user || !user.Ativo) {
+      throw new UnauthorizedException('SessÃ£o invÃ¡lida.');
+    }
+
+    const userRoles = this.determinarRoles(user);
+    const roleAtiva = userRoles.includes(utilizador.role)
+      ? utilizador.role
+      : this.determinarRolePadrao(userRoles);
+    const payload = this.criarPayloadSessao(user, roleAtiva, userRoles);
+
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+      role: roleAtiva,
+      roles: userRoles,
     };
   }
 
@@ -163,17 +215,59 @@ export class AuthService {
   private async obterUtilizadorPorUsername(username: string) {
     return this.prisma.utilizador.findUnique({
       where: { Utilizador: username },
-      include: {
-        Pessoa: {
-          include: {
-            Professor: true,
-            Coordenador: true,
-            Direcao: true,
-            Enc_Educacao: true,
-          },
+      include: this.includePerfisUtilizador(),
+    });
+  }
+
+  private async obterUtilizadorPorId(idUtilizador: number) {
+    return this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: idUtilizador },
+      include: this.includePerfisUtilizador(),
+    });
+  }
+
+  private includePerfisUtilizador() {
+    return {
+      Pessoa: {
+        include: {
+          Professor: true,
+          Coordenador: true,
+          Direcao: true,
+          Enc_Educacao: true,
         },
       },
-    });
+    };
+  }
+
+  private criarPayloadSessao(user: any, role: Role, roles: Role[]) {
+    return {
+      sub: user.ID_Utilizador,
+      username: user.Utilizador,
+      nome: user.Pessoa?.Nome,
+      role,
+      roles,
+      idPessoa: user.ID_Pessoa,
+      Acoes_Rapidas: user.Acoes_Rapidas,
+    };
+  }
+
+  private determinarRoles(user: any): Role[] {
+    const roles: Role[] = [];
+
+    if (user.Pessoa?.Professor) roles.push(Role.PROFESSOR);
+    if (user.Pessoa?.Coordenador) roles.push(Role.COORDENADOR);
+    if (user.Pessoa?.Direcao) roles.push(Role.DIRECAO);
+    if (user.Pessoa?.Enc_Educacao) roles.push(Role.ENC_EDUCACAO);
+
+    if (roles.length === 0) {
+      throw new UnauthorizedException('Utilizador sem perfil vÃ¡lido.');
+    }
+
+    return roles;
+  }
+
+  private determinarRolePadrao(roles: Role[]): Role {
+    return roles[0];
   }
 
   /**

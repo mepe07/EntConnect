@@ -59,6 +59,90 @@ export class AuthService {
     }
 
     /**
+     * Troca a role ativa e substitui o token local pelo token renovado.
+     *
+     * @param role - Role a ativar para a sessao atual.
+     * @returns Dados atualizados do utilizador autenticado.
+     */
+    async trocarRole(role: string) {
+        const token = this.getToken();
+
+        if (!token) {
+            throw new Error('Utilizador nÃ£o autenticado.');
+        }
+
+        const response = await fetch(`${this._apiUrl}/auth/trocar-role`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ role }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'NÃ£o foi possÃ­vel trocar de role.');
+        }
+
+        const accessToken = data?.access_token;
+
+        if (!accessToken) {
+            throw new Error('Token de autenticaÃ§Ã£o nÃ£o recebido.');
+        }
+
+        const user = jwtDecode<User>(accessToken);
+
+        this._userToken = accessToken;
+        this._userInfo = user;
+
+        localStorage.setItem(this.tokenStorageKey, accessToken);
+        window.dispatchEvent(new CustomEvent('entconnect-role-alterada', { detail: user }));
+
+        return user;
+    }
+
+    /**
+     * Renova os dados da sessao com os cargos atuais do backend.
+     */
+    async atualizarSessao() {
+        const token = this.getToken();
+
+        if (!token) {
+            return null;
+        }
+
+        const response = await fetch(`${this._apiUrl}/auth/sessao`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            return this.getUserInfo();
+        }
+
+        const data = await response.json();
+        const accessToken = data?.access_token;
+
+        if (!accessToken) {
+            return this.getUserInfo();
+        }
+
+        const user = jwtDecode<User>(accessToken);
+
+        this._userToken = accessToken;
+        this._userInfo = user;
+
+        localStorage.setItem(this.tokenStorageKey, accessToken);
+
+        return user;
+    }
+
+    /**
      * Pede ao backend o início do fluxo de recuperação de password.
      *
      * @param email - Email associado à conta.

@@ -32,6 +32,7 @@ describe('UtilizadorController', () => {
     createUser: jest.fn(),
     getMeusCoachings: jest.fn(),
     updateCargo: jest.fn(),
+    updateCargos: jest.fn(),
     deleteUser: jest.fn(),
     updateDadosPessoais: jest.fn(),
     mudarPassword: jest.fn(),
@@ -105,12 +106,12 @@ describe('UtilizadorController', () => {
     await controller.getRolesIds(4);
     await controller.createUser({ nome: 'Ana' } as any);
     await controller.getMeusCoachings('5');
-    await controller.updateCargo(6, 'Professor', true);
+    await controller.updateCargo(6, 'Professor', undefined, true);
     await controller.deleteUser(7);
 
     expect(utilizadorServiceMock.blockUser).toHaveBeenCalledWith(2);
     expect(utilizadorServiceMock.unlockUser).toHaveBeenCalledWith(3);
-    expect(utilizadorServiceMock.updateCargo).toHaveBeenCalledWith(
+    expect(utilizadorServiceMock.updateCargos).toHaveBeenCalledWith(
       6,
       'Professor',
       true,
