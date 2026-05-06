@@ -52,7 +52,6 @@ export class CreateUtilizadorDto {
     enum: [
       'Professor',
       'Coordenador',
-      'Dire\u00e7\u00e3o',
       'Encarregado de Educa\u00e7\u00e3o',
     ],
   })
@@ -65,7 +64,6 @@ export class CreateUtilizadorDto {
     enum: [
       'Professor',
       'Coordenador',
-      'Dire\u00e7\u00e3o',
       'Encarregado de Educa\u00e7\u00e3o',
     ],
     isArray: true,

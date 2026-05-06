@@ -124,7 +124,7 @@ export class UtilizadorController {
   })
   async criarMeuEducando() {
     throw new ForbiddenException(
-      'A gestão de educandos deve ser feita pela coordenação ou direção.',
+      'A gestão de educandos deve ser feita pela coordenação.',
     );
   }
   /**
@@ -140,7 +140,7 @@ export class UtilizadorController {
   })
   async atualizarMeuEducando() {
     throw new ForbiddenException(
-      'A gestão de educandos deve ser feita pela coordenação ou direção.',
+      'A gestão de educandos deve ser feita pela coordenação.',
     );
   }
   /**
@@ -157,7 +157,7 @@ export class UtilizadorController {
   })
   async removerMeuEducando() {
     throw new ForbiddenException(
-      'A gestão de educandos deve ser feita pela coordenação ou direção.',
+      'A gestão de educandos deve ser feita pela coordenação.',
     );
   }
   /**

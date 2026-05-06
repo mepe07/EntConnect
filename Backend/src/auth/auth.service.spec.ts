@@ -70,7 +70,6 @@ describe('AuthService', () => {
       Nome: 'Simao Silva',
       Professor: null,
       Coordenador: { ID_Pessoa: 10 },
-      Direcao: null,
       Enc_Educacao: null,
     },
     ...override,
@@ -93,7 +92,6 @@ describe('AuthService', () => {
           include: {
             Professor: true,
             Coordenador: true,
-            Direcao: true,
             Enc_Educacao: true,
           },
         },
@@ -128,7 +126,6 @@ describe('AuthService', () => {
         Nome: 'Simao Silva',
         Professor: { ID_Pessoa: 10 },
         Coordenador: { ID_Pessoa: 10 },
-        Direcao: null,
         Enc_Educacao: { ID_Pessoa: 10 },
       },
     });
@@ -194,7 +191,6 @@ describe('AuthService', () => {
       Pessoa: {
         Professor: { ID_Pessoa: 10 },
         Coordenador: null,
-        Direcao: null,
         Enc_Educacao: null,
       },
     });
@@ -214,7 +210,6 @@ describe('AuthService', () => {
       Pessoa: {
         Professor: null,
         Coordenador: null,
-        Direcao: null,
         Enc_Educacao: { ID_Pessoa: 10 },
       },
     });
@@ -234,7 +229,6 @@ describe('AuthService', () => {
         Nome: 'Simao Silva',
         Professor: { ID_Pessoa: 10 },
         Coordenador: { ID_Pessoa: 10 },
-        Direcao: null,
         Enc_Educacao: null,
       },
     });
@@ -261,7 +255,6 @@ describe('AuthService', () => {
           include: {
             Professor: true,
             Coordenador: true,
-            Direcao: true,
             Enc_Educacao: true,
           },
         },

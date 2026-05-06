@@ -30,8 +30,9 @@
     background-color: colors.$gray-1;
     border: 1px solid colors.$gray-3;
     border-radius: 8px;
-    overflow: hidden;
+    overflow: auto;
     box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    -webkit-overflow-scrolling: touch;
 
     table {
         width: 100%;
@@ -111,6 +112,50 @@
                             gap: 8px;
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 14px;
+        gap: 12px;
+
+        & > .input-container {
+            width: 100%;
+        }
+
+        .filters-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+
+            & > * {
+                width: 100%;
+            }
+        }
+    }
+
+    .table-container {
+        border-radius: 6px;
+
+        table {
+            min-width: 680px;
+
+            thead th,
+            tbody tr td {
+                padding: 12px;
+                font-size: 13px;
+            }
+
+            tbody tr td.row-actions {
+                .row-actions-content {
+                    justify-content: flex-start;
+                    flex-wrap: wrap;
                 }
             }
         }

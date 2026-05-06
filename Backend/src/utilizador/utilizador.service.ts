@@ -21,12 +21,11 @@ export class UtilizadorService {
   private readonly CARGOS_VALIDOS = [
     'Professor',
     'Coordenador',
-    'Dire\u00e7\u00e3o',
     'Encarregado de Educa\u00e7\u00e3o',
   ];
 
   private readonly CARGO_ENCARREGADO_EDUCACAO =
-    this.CARGOS_VALIDOS[3];
+    this.CARGOS_VALIDOS[2];
 
   constructor(private prisma: PrismaService) {}
 
@@ -42,7 +41,6 @@ export class UtilizadorService {
           include: {
             Professor: true,
             Coordenador: true,
-            Direcao: true,
             Enc_Educacao: true,
           },
         },
@@ -56,8 +54,6 @@ export class UtilizadorService {
         cargoAtribuido = 'Professor';
       } else if (user.Pessoa?.Coordenador) {
         cargoAtribuido = 'Coordenador';
-      } else if (user.Pessoa?.Direcao) {
-        cargoAtribuido = 'Direção';
       } else if (user.Pessoa?.Enc_Educacao) {
         cargoAtribuido = 'Encarregado de Educação';
       }
@@ -111,17 +107,6 @@ export class UtilizadorService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    const dadosCargo =
-      cargo === 'Professor'
-        ? { Professor: { create: {} } }
-        : cargo === 'Coordenador'
-          ? { Coordenador: { create: {} } }
-          : cargo === 'Direção'
-            ? { Direcao: { create: {} } }
-            : cargo === 'Encarregado de Educação'
-              ? { Enc_Educacao: { create: {} } }
-              : {};
 
     const novoUtilizador = await this.prisma.utilizador.create({
       data: {
@@ -714,7 +699,6 @@ export class UtilizadorService {
       include: {
         Pessoa: {
           include: {
-            Direcao: true,
             Professor: true,
             Enc_Educacao: true,
           },
@@ -741,7 +725,6 @@ export class UtilizadorService {
           include: {
             Professor: true,
             Coordenador: true,
-            Direcao: true,
             Enc_Educacao: true,
           },
         },
@@ -781,8 +764,6 @@ export class UtilizadorService {
       await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
     if (pessoa.Coordenador && !novosCargos.includes('Coordenador'))
       await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
-    if (pessoa.Direcao && !novosCargos.includes('Dire\u00e7\u00e3o'))
-      await this.prisma.direcao.delete({ where: { ID_Pessoa: idPessoa } });
     if (pessoa.Enc_Educacao && removeEncarregadoEducacao) {
       await this.removerAssociacoesEncarregadoEducacao(idPessoa);
       await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
@@ -792,8 +773,6 @@ export class UtilizadorService {
       await this.prisma.professor.create({ data: { ID_Pessoa: idPessoa } });
     if (!pessoa.Coordenador && novosCargos.includes('Coordenador'))
       await this.prisma.coordenador.create({ data: { ID_Pessoa: idPessoa } });
-    if (!pessoa.Direcao && novosCargos.includes('Dire\u00e7\u00e3o'))
-      await this.prisma.direcao.create({ data: { ID_Pessoa: idPessoa } });
     if (!pessoa.Enc_Educacao && novosCargos.includes(cargoEncarregadoEducacao))
       await this.prisma.enc_Educacao.create({ data: { ID_Pessoa: idPessoa } });
 
@@ -819,10 +798,9 @@ export class UtilizadorService {
     const cargosValidos = [
       'Professor',
       'Coordenador',
-      'Direção',
       'Encarregado de Educação',
     ];
-    const cargoEncarregadoEducacao = cargosValidos[3];
+    const cargoEncarregadoEducacao = cargosValidos[2];
     if (!cargosValidos.includes(novoCargo)) {
       throw new NotFoundException(`Cargo "${novoCargo}" não é válido.`);
     }
@@ -834,7 +812,6 @@ export class UtilizadorService {
           include: {
             Professor: true,
             Coordenador: true,
-            Direcao: true,
             Enc_Educacao: true,
           },
         },
@@ -870,8 +847,6 @@ export class UtilizadorService {
       await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
     if (pessoa.Coordenador)
       await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
-    if (pessoa.Direcao)
-      await this.prisma.direcao.delete({ where: { ID_Pessoa: idPessoa } });
     if (pessoa.Enc_Educacao) {
       await this.removerAssociacoesEncarregadoEducacao(idPessoa);
       await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
@@ -881,8 +856,6 @@ export class UtilizadorService {
       await this.prisma.professor.create({ data: { ID_Pessoa: idPessoa } });
     else if (novoCargo === 'Coordenador')
       await this.prisma.coordenador.create({ data: { ID_Pessoa: idPessoa } });
-    else if (novoCargo === 'Direção')
-      await this.prisma.direcao.create({ data: { ID_Pessoa: idPessoa } });
     else if (novoCargo === cargoEncarregadoEducacao)
       await this.prisma.enc_Educacao.create({ data: { ID_Pessoa: idPessoa } });
 
@@ -962,7 +935,6 @@ export class UtilizadorService {
           include: {
             Professor: true,
             Coordenador: true,
-            Direcao: true,
             Enc_Educacao: true,
           },
         },
@@ -980,8 +952,6 @@ export class UtilizadorService {
       await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
     if (pessoa.Coordenador)
       await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
-    if (pessoa.Direcao)
-      await this.prisma.direcao.delete({ where: { ID_Pessoa: idPessoa } });
     if (pessoa.Enc_Educacao) {
       await this.removerAssociacoesEncarregadoEducacao(idPessoa);
       await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
@@ -1053,7 +1023,6 @@ export class UtilizadorService {
 
     if (pessoa?.Professor) cargos.push('Professor');
     if (pessoa?.Coordenador) cargos.push('Coordenador');
-    if (pessoa?.Direcao) cargos.push('Dire\u00e7\u00e3o');
     if (pessoa?.Enc_Educacao) cargos.push(this.CARGO_ENCARREGADO_EDUCACAO);
 
     return cargos;
@@ -1062,9 +1031,6 @@ export class UtilizadorService {
   private canonicalizarCargo(cargo: string): string {
     const cargoLimpo = cargo.trim();
     const aliases: Record<string, string> = {
-      'Dire\u00e7\u00e3o': 'Dire\u00e7\u00e3o',
-      'DireÃ§Ã£o': 'Dire\u00e7\u00e3o',
-      'DireÃƒÂ§ÃƒÂ£o': 'Dire\u00e7\u00e3o',
       'Encarregado de Educa\u00e7\u00e3o': this.CARGO_ENCARREGADO_EDUCACAO,
       'Encarregado de EducaÃ§Ã£o': this.CARGO_ENCARREGADO_EDUCACAO,
       'Encarregado de EducaÃƒÂ§ÃƒÂ£o': this.CARGO_ENCARREGADO_EDUCACAO,
@@ -1100,7 +1066,6 @@ export class UtilizadorService {
       ...(cargos.includes('Coordenador')
         ? { Coordenador: { create: {} } }
         : {}),
-      ...(cargos.includes('Dire\u00e7\u00e3o') ? { Direcao: { create: {} } } : {}),
       ...(cargos.includes(this.CARGO_ENCARREGADO_EDUCACAO)
         ? { Enc_Educacao: { create: {} } }
         : {}),

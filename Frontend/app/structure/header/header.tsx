@@ -13,8 +13,6 @@ const roleDisplayNames: Record<string, string> = {
     Enc_Educacao: 'Enc. Educação',
     EncEducacao: 'Enc. Educação',
     'Encarregado de Educação': 'Enc. Educação',
-    Direcao: 'Direção',
-    Direção: 'Direção',
 };
 
 /**
@@ -36,7 +34,12 @@ function formatRoleName(role?: string) {
  * Mostra a identidade do utilizador, sincroniza a fotografia de perfil e
  * disponibiliza o acesso à conta e ao logout.
  */
-export function Header() {
+interface HeaderProps {
+    menuMobileAberto?: boolean;
+    onToggleMenuMobile?: () => void;
+}
+
+export function Header({ menuMobileAberto = false, onToggleMenuMobile }: HeaderProps) {
 
     const navigate = useNavigate();
 
@@ -48,6 +51,27 @@ export function Header() {
 
     const profilePictureRef = useRef<HTMLDivElement>(null);
     const subMenuRef = useRef<HTMLDivElement>(null);
+    const subMenuCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const cancelSubMenuClose = () => {
+        if (subMenuCloseTimeoutRef.current) {
+            clearTimeout(subMenuCloseTimeoutRef.current);
+            subMenuCloseTimeoutRef.current = null;
+        }
+    };
+
+    const openSubMenu = () => {
+        cancelSubMenuClose();
+        setSubMenuVisible(true);
+    };
+
+    const scheduleSubMenuClose = () => {
+        cancelSubMenuClose();
+        subMenuCloseTimeoutRef.current = setTimeout(() => {
+            setSubMenuVisible(false);
+            subMenuCloseTimeoutRef.current = null;
+        }, 180);
+    };
 
 
     useEffect(() => {
@@ -168,6 +192,12 @@ export function Header() {
         };
     }, [subMenuVisible]);
 
+    useEffect(() => {
+        return () => {
+            cancelSubMenuClose();
+        };
+    }, []);
+
     return (
         <header>
             <div className="header-container">
@@ -179,10 +209,22 @@ export function Header() {
                     onClick={() => navigate('/')}
                 />
 
+                <button
+                    type="button"
+                    className={`hamburger-button ${menuMobileAberto ? 'active' : ''}`}
+                    aria-label={menuMobileAberto ? 'Fechar menu' : 'Abrir menu'}
+                    aria-expanded={menuMobileAberto}
+                    onClick={onToggleMenuMobile}
+                >
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+
                 <div
                     className="menu"
-                    onMouseEnter={() => setSubMenuVisible(true)}
-                    onMouseLeave={() => setSubMenuVisible(false)}
+                    onMouseEnter={openSubMenu}
+                    onMouseLeave={scheduleSubMenuClose}
                 >
                     <ThemeToggle className="header-theme-toggle" />
 
@@ -212,6 +254,8 @@ export function Header() {
                     <div
                         className={`sub-menu ${subMenuVisible ? "active" : ""}`}
                         ref={subMenuRef}
+                        onMouseEnter={openSubMenu}
+                        onMouseLeave={scheduleSubMenuClose}
                     >
                         <div className='user-info'>
                             <p>{userDisplayName}</p>

@@ -8,9 +8,6 @@ import {
  */
 
 export class CreateCoachingDto {
-  @ApiPropertyOptional({ example: 3, description: 'ID da direção' })
-  ID_Direcao: number;
-
   @ApiPropertyOptional({
     example: 1,
     description: 'ID do encarregado de educação',

@@ -75,6 +75,7 @@ export default function App() {
     const [domLoaded, setDomLoaded] = useState(false);
     const [sessaoValida, setSessaoValida] = useState(false);
     const [versaoSessao, setVersaoSessao] = useState(0);
+    const [menuMobileAberto, setMenuMobileAberto] = useState(false);
     const location = useLocation();
     const isRotaPublicaEventos =
         location.pathname === '/eventos' ||
@@ -90,6 +91,7 @@ export default function App() {
 
 
         setSessaoValida(authService.isAuthenticated());
+        setMenuMobileAberto(false);
     }, [location.pathname, versaoSessao]);
 
     useEffect(() => {
@@ -117,10 +119,26 @@ export default function App() {
 
     const page = (
         <div className="app-layout min-h-screen bg-[#f8fafc]">
-            <Header key={`header-${versaoSessao}`} />
+            <Header
+                key={`header-${versaoSessao}`}
+                menuMobileAberto={menuMobileAberto}
+                onToggleMenuMobile={() => setMenuMobileAberto((aberto) => !aberto)}
+            />
             <div className="main-wrapper">
-                <NavigationMenu key={`menu-${versaoSessao}`} />
-                <div className="body-wrapper ml-[280px] mt-[76px] w-full min-h-[calc(100vh-76px)] p-6">
+                <NavigationMenu
+                    key={`menu-${versaoSessao}`}
+                    menuMobileAberto={menuMobileAberto}
+                    onCloseMenuMobile={() => setMenuMobileAberto(false)}
+                />
+                {menuMobileAberto && (
+                    <button
+                        type="button"
+                        className="mobile-menu-overlay"
+                        aria-label="Fechar menu"
+                        onClick={() => setMenuMobileAberto(false)}
+                    />
+                )}
+                <div className="body-wrapper">
                     <Outlet />
                 </div>
             </div>

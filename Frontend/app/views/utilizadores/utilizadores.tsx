@@ -34,7 +34,6 @@ const cargoLabel: Record<string, string> = {
 const CARGOS_DISPONIVEIS = [
     'Professor',
     'Coordenador',
-    'Direção',
     'Encarregado de Educação',
 ];
 

@@ -43,7 +43,6 @@ describe('UtilizadorService', () => {
     },
     professor: { create: jest.fn(), delete: jest.fn() },
     coordenador: { create: jest.fn(), delete: jest.fn() },
-    direcao: { create: jest.fn(), delete: jest.fn() },
     coaching: { findMany: jest.fn() },
     coaching_Aluno: {
       findMany: jest.fn(),
@@ -82,7 +81,6 @@ describe('UtilizadorService', () => {
           NIF: '123',
           Professor: {},
           Coordenador: null,
-          Direcao: null,
           Enc_Educacao: null,
         },
       },
@@ -263,7 +261,6 @@ describe('UtilizadorService', () => {
         Pessoa: {
           Professor: {},
           Coordenador: null,
-          Direcao: null,
           Enc_Educacao: null,
         },
       })
@@ -272,7 +269,6 @@ describe('UtilizadorService', () => {
         Pessoa: {
           Professor: {},
           Coordenador: null,
-          Direcao: null,
           Enc_Educacao: null,
         },
       });
