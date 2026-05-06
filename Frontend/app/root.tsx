@@ -83,6 +83,7 @@ export default function App() {
 
     useEffect(() => {
         setDomLoaded(true);
+        authService.configurarValidacaoGlobal();
     }, []);
 
     useEffect(() => {
@@ -97,9 +98,11 @@ export default function App() {
         }
 
         window.addEventListener('entconnect-role-alterada', handleRoleAlterada);
+        window.addEventListener('entconnect-sessao-invalida', handleRoleAlterada);
 
         return () => {
             window.removeEventListener('entconnect-role-alterada', handleRoleAlterada);
+            window.removeEventListener('entconnect-sessao-invalida', handleRoleAlterada);
         };
     }, []);
 

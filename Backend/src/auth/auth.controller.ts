@@ -15,6 +15,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { TrocarRoleDto } from './dto/trocar-role.dto';
 import { AuthGuard } from './auth.guard';
 import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
+import { Public } from './decorators/public.decorator';
 /**
  * Controlador responsavel pelos pedidos de Auth.
  */
@@ -29,6 +30,7 @@ export class AuthController {
    */
 
   @HttpCode(HttpStatus.OK)
+  @Public()
   @Post('login')
   login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
@@ -71,6 +73,7 @@ export class AuthController {
    */
 
   @HttpCode(HttpStatus.OK)
+  @Public()
   @Post('forgot-password')
   forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPasswordDto);
@@ -82,6 +85,7 @@ export class AuthController {
    */
 
   @HttpCode(HttpStatus.OK)
+  @Public()
   @Post('reset-password')
   resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto);
