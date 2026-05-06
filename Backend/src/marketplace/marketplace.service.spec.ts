@@ -253,6 +253,46 @@ describe('MarketplaceService', () => {
     });
   });
 
+  it('deve atirar NotFoundException ao tentar interagir com um artigo inexistente', async () => {
+    const utilizador = criarUtilizadorFake();
+
+    // Simula que a base de dados não encontrou o artigo
+    prismaMock.artigo.findUnique.mockResolvedValue(null);
+    
+    // Testa a moderação
+    await expect(
+      service.moderarAnuncio(
+        999, // ID inventado
+        { acao: AcaoModeracao.REMOVER, motivo: 'Teste' },
+        utilizador,
+      ),
+    ).rejects.toThrowError('Artigo não encontrado');
+  });
+
+  it('deve rejeitar o registo de interesse se o artigo não tiver stock associado', async () => {
+    const utilizadorInteressado = criarUtilizadorFake({ sub: 2 });
+
+    // Criamos um artigo sem stock
+    const artigoSemStock = criarArtigoFake({
+      ID_Utilizador_Criador: 1,
+      Publicado_No_Marketplace: true,
+      Estado_Anuncio: EstadoAnuncio.ATIVO,
+      Stock_Armazem: [], // Array Vazio
+    });
+
+    prismaMock.artigo.findUnique.mockResolvedValue(artigoSemStock);
+
+    await expect(
+      service.registarInteresse(
+        100,
+        { mensagem: 'Olá', tipo: TipoInteresse.CONTACTO },
+        utilizadorInteressado,
+      ),
+    ).rejects.toThrow(); // Espera que o serviço atire algum erro (ex: BadRequest ou NotFound)
+
+    expect(prismaMock.interesse_Artigo.create).not.toHaveBeenCalled();
+  });
+
   it('deve impedir que o dono registe interesse no próprio anúncio', async () => {
     const dono = criarUtilizadorFake({
       sub: 1,

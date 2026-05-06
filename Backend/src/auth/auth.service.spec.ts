@@ -292,8 +292,31 @@ describe('AuthService', () => {
       ),
     ).rejects.toThrow(
       new UnauthorizedException(
-        'A role selecionada nÃ£o estÃ¡ associada ao utilizador.',
+        'A role selecionada não estão associada ao utilizador.',
       ),
     );
   });
+
+  it('deve enviar um email de recuperação de password se o utilizador existir', async () => {
+    //Prepara os dados falsos
+    const emailTest = 'simao@entartes.pt';
+    const utilizador = criarUtilizadorFake({ Pessoa: { Email: emailTest } });
+
+    //Simula que a BD encontrou o utilizador
+    prismaMock.utilizador.findFirst.mockResolvedValue(utilizador);
+    
+    //Simula a criação de um token de reset
+    jwtServiceMock.signAsync.mockResolvedValue('reset-token-123');
+
+    //Corre a tua função
+    await service.pedirResetPassword({ email: emailTest });
+
+    //Verifica se o envio de email foi disparado com os dados certos!
+    expect(mailServiceMock.sendPasswordResetEmail).toHaveBeenCalledWith(
+      emailTest,
+      'reset-token-123',
+      utilizador.Pessoa.Nome
+    );
+  });
+
 });
