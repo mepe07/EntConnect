@@ -1,5 +1,6 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 
 import { AuthGuard } from './auth.guard';
@@ -15,18 +16,26 @@ describe('AuthGuard', () => {
     getOrThrow: jest.fn(),
   };
 
+  const reflectorMock = {
+    getAllAndOverride: jest.fn(),
+  };
+
   beforeEach(() => {
     guard = new AuthGuard(
       jwtServiceMock as unknown as JwtService,
       configServiceMock as unknown as ConfigService,
+      reflectorMock as unknown as Reflector,
     );
 
     jest.clearAllMocks();
     configServiceMock.getOrThrow.mockReturnValue('segredo-de-teste');
+    reflectorMock.getAllAndOverride.mockReturnValue(false);
   });
 
   const criarContextoFake = (authorizationHeader?: string): ExecutionContext =>
     ({
+      getHandler: jest.fn(),
+      getClass: jest.fn(),
       switchToHttp: jest.fn().mockReturnValue({
         getRequest: jest.fn().mockReturnValue({
           headers: {
@@ -55,6 +64,13 @@ describe('AuthGuard', () => {
     });
     expect(resultado).toBe(true);
     expect(request.user).toEqual(payloadFake);
+  });
+
+  it('deve permitir acesso sem token quando a rota esta marcada como publica', async () => {
+    reflectorMock.getAllAndOverride.mockReturnValue(true);
+
+    await expect(guard.canActivate(criarContextoFake())).resolves.toBe(true);
+    expect(jwtServiceMock.verifyAsync).not.toHaveBeenCalled();
   });
 
   it('deve lançar UnauthorizedException quando o header Authorization não existe', async () => {

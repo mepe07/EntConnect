@@ -12,6 +12,8 @@ interface JwtPayloadBase {
 export class AuthService {
     private _userToken: string | null = null;
     private _userInfo: User | null = null;
+    private static fetchInterceptorConfigured = false;
+    private static originalFetch: typeof window.fetch | null = null;
 
 
     private _apiUrl = API_BASE_URL;
@@ -206,6 +208,83 @@ export class AuthService {
         this._userToken = null;
         this._userInfo = null;
         localStorage.removeItem(this.tokenStorageKey);
+        window.dispatchEvent(new CustomEvent('entconnect-sessao-invalida'));
+    }
+
+    /**
+     * Ativa validaÃ§Ã£o global para pedidos Ã  API: adiciona o Bearer token
+     * quando existe e redireciona para login se a sessÃ£o for rejeitada.
+     */
+    configurarValidacaoGlobal() {
+        if (AuthService.fetchInterceptorConfigured || typeof window === 'undefined') {
+            return;
+        }
+
+        AuthService.fetchInterceptorConfigured = true;
+        AuthService.originalFetch = window.fetch.bind(window);
+
+        window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+            const requestUrl = this.obterUrlPedido(input);
+            const isPedidoApi = this.ePedidoApi(requestUrl);
+            const requestInit = isPedidoApi ? this.anexarTokenAoPedido(init) : init;
+            const response = await AuthService.originalFetch!(input, requestInit);
+
+            if (isPedidoApi && response.status === 401) {
+                this.redirecionarParaLoginPorSessaoInvalida();
+            }
+
+            return response;
+        };
+    }
+
+    private anexarTokenAoPedido(init?: RequestInit): RequestInit | undefined {
+        const token = this.getToken();
+
+        if (!token) {
+            return init;
+        }
+
+        const headers = new Headers(init?.headers);
+
+        if (!headers.has('Authorization')) {
+            headers.set('Authorization', `Bearer ${token}`);
+        }
+
+        return {
+            ...init,
+            headers,
+        };
+    }
+
+    private obterUrlPedido(input: RequestInfo | URL): string {
+        if (typeof input === 'string') {
+            return input;
+        }
+
+        if (input instanceof URL) {
+            return input.toString();
+        }
+
+        return input.url;
+    }
+
+    private ePedidoApi(url: string): boolean {
+        try {
+            const requestUrl = new URL(url, window.location.origin);
+            const apiUrl = new URL(this._apiUrl, window.location.origin);
+
+            return requestUrl.origin === apiUrl.origin;
+        } catch {
+            return url.startsWith(this._apiUrl);
+        }
+    }
+
+    private redirecionarParaLoginPorSessaoInvalida() {
+        this.limparSessao();
+
+        if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+        }
     }
 
     /**

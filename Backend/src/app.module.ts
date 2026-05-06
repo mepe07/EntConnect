@@ -12,6 +12,8 @@ import { EstatisticasModule } from './estatistica/estatisticas.module';
 import { CalendarioModule } from './calendario/calendario.module';
 import { ConfigModule } from '@nestjs/config';
 import { HorariosModule } from './horarios/horarios.module';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard } from './auth/auth.guard';
 /**
  * Modulo responsavel por agrupar os recursos de App.
  */
@@ -34,6 +36,12 @@ import { HorariosModule } from './horarios/horarios.module';
     EstatisticasModule,
     CalendarioModule,
     HorariosModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
   ],
 })
 export class AppModule {}
