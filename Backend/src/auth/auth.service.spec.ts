@@ -65,6 +65,7 @@ describe('AuthService', () => {
     Password: 'hash-da-password',
     Ativo: true,
     ID_Pessoa: 10,
+    Acoes_Rapidas: null,
     Pessoa: {
       Nome: 'Simao Silva',
       Professor: null,
@@ -108,12 +109,46 @@ describe('AuthService', () => {
       username: utilizador.Utilizador,
       nome: utilizador.Pessoa.Nome,
       role: Role.COORDENADOR,
+      roles: [Role.COORDENADOR],
       idPessoa: utilizador.ID_Pessoa,
+      Acoes_Rapidas: null,
     });
 
     expect(resultado).toEqual({
       access_token: 'fake-jwt-token',
       role: Role.COORDENADOR,
+      roles: [Role.COORDENADOR],
+    });
+  });
+
+  it('deve incluir todas as roles do utilizador e escolher a role padrao', async () => {
+    const loginDto = criarLoginDto();
+    const utilizador = criarUtilizadorFake({
+      Pessoa: {
+        Nome: 'Simao Silva',
+        Professor: { ID_Pessoa: 10 },
+        Coordenador: { ID_Pessoa: 10 },
+        Direcao: null,
+        Enc_Educacao: { ID_Pessoa: 10 },
+      },
+    });
+
+    prismaMock.utilizador.findUnique.mockResolvedValue(utilizador);
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+    jwtServiceMock.signAsync.mockResolvedValue('fake-jwt-token');
+
+    const resultado = await service.login(loginDto);
+
+    expect(jwtServiceMock.signAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        role: Role.PROFESSOR,
+        roles: [Role.PROFESSOR, Role.COORDENADOR, Role.ENC_EDUCACAO],
+      }),
+    );
+    expect(resultado).toEqual({
+      access_token: 'fake-jwt-token',
+      role: Role.PROFESSOR,
+      roles: [Role.PROFESSOR, Role.COORDENADOR, Role.ENC_EDUCACAO],
     });
   });
 
@@ -191,5 +226,81 @@ describe('AuthService', () => {
     const resultado = await service.login(loginDto);
 
     expect(resultado.role).toBe(Role.ENC_EDUCACAO);
+  });
+
+  it('deve trocar a role ativa quando a role pertence ao utilizador', async () => {
+    const utilizador = criarUtilizadorFake({
+      Pessoa: {
+        Nome: 'Simao Silva',
+        Professor: { ID_Pessoa: 10 },
+        Coordenador: { ID_Pessoa: 10 },
+        Direcao: null,
+        Enc_Educacao: null,
+      },
+    });
+
+    prismaMock.utilizador.findUnique.mockResolvedValue(utilizador);
+    jwtServiceMock.signAsync.mockResolvedValue('novo-token');
+
+    const resultado = await service.trocarRole(
+      {
+        sub: utilizador.ID_Utilizador,
+        username: utilizador.Utilizador,
+        nome: utilizador.Pessoa.Nome,
+        role: Role.PROFESSOR,
+        roles: [Role.PROFESSOR, Role.COORDENADOR],
+        idPessoa: utilizador.ID_Pessoa,
+      },
+      Role.COORDENADOR,
+    );
+
+    expect(prismaMock.utilizador.findUnique).toHaveBeenCalledWith({
+      where: { ID_Utilizador: utilizador.ID_Utilizador },
+      include: {
+        Pessoa: {
+          include: {
+            Professor: true,
+            Coordenador: true,
+            Direcao: true,
+            Enc_Educacao: true,
+          },
+        },
+      },
+    });
+    expect(jwtServiceMock.signAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        role: Role.COORDENADOR,
+        roles: [Role.PROFESSOR, Role.COORDENADOR],
+      }),
+    );
+    expect(resultado).toEqual({
+      access_token: 'novo-token',
+      role: Role.COORDENADOR,
+      roles: [Role.PROFESSOR, Role.COORDENADOR],
+    });
+  });
+
+  it('deve rejeitar troca para role nao associada ao utilizador', async () => {
+    const utilizador = criarUtilizadorFake();
+
+    prismaMock.utilizador.findUnique.mockResolvedValue(utilizador);
+
+    await expect(
+      service.trocarRole(
+        {
+          sub: utilizador.ID_Utilizador,
+          username: utilizador.Utilizador,
+          nome: utilizador.Pessoa.Nome,
+          role: Role.COORDENADOR,
+          roles: [Role.COORDENADOR],
+          idPessoa: utilizador.ID_Pessoa,
+        },
+        Role.PROFESSOR,
+      ),
+    ).rejects.toThrow(
+      new UnauthorizedException(
+        'A role selecionada nÃ£o estÃ¡ associada ao utilizador.',
+      ),
+    );
   });
 });

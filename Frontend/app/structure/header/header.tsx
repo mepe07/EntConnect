@@ -12,6 +12,7 @@ const roleDisplayNames: Record<string, string> = {
     Professor: 'Professor',
     Enc_Educacao: 'Enc. Educação',
     EncEducacao: 'Enc. Educação',
+    'Encarregado de Educação': 'Enc. Educação',
     Direcao: 'Direção',
     Direção: 'Direção',
 };
@@ -43,6 +44,7 @@ export function Header() {
     const [userInfo, setUserInfo] = useState<User | null>(null);
     const [subMenuVisible, setSubMenuVisible] = useState(false);
     const [fotoPerfilUrl, setFotoPerfilUrl] = useState<string | null>(null);
+    const [roleEmAtualizacao, setRoleEmAtualizacao] = useState(false);
 
     const profilePictureRef = useRef<HTMLDivElement>(null);
     const subMenuRef = useRef<HTMLDivElement>(null);
@@ -54,11 +56,50 @@ export function Header() {
         if (info) {
             setUserInfo(info as User);
         }
+
+        authService.atualizarSessao()
+            .then((userAtualizado) => {
+                if (userAtualizado) setUserInfo(userAtualizado);
+            })
+            .catch((error) => {
+                console.error('Erro ao atualizar sessao:', error);
+            });
+    }, []);
+
+    useEffect(() => {
+        function handleRoleAlterada(event: Event) {
+            const detail = (event as CustomEvent<User>).detail;
+            setUserInfo(detail || authService.getUserInfo());
+        }
+
+        window.addEventListener('entconnect-role-alterada', handleRoleAlterada);
+
+        return () => {
+            window.removeEventListener('entconnect-role-alterada', handleRoleAlterada);
+        };
     }, []);
 
     const userDisplayName = userInfo?.nome || userInfo?.username;
     const userRoleDisplayName = formatRoleName(userInfo?.role);
     const userLetter = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : 'U';
+    const rolesDisponiveis = userInfo?.roles?.length ? userInfo.roles : userInfo?.role ? [userInfo.role] : [];
+
+    const handleTrocarRole = async (role: string) => {
+        if (!role || role === userInfo?.role || roleEmAtualizacao) return;
+
+        setRoleEmAtualizacao(true);
+
+        try {
+            const userAtualizado = await authService.trocarRole(role);
+            setUserInfo(userAtualizado);
+            setSubMenuVisible(false);
+            navigate('/');
+        } catch (error) {
+            console.error('Erro ao trocar role:', error);
+        } finally {
+            setRoleEmAtualizacao(false);
+        }
+    };
 
 
     useEffect(() => {
@@ -138,7 +179,11 @@ export function Header() {
                     onClick={() => navigate('/')}
                 />
 
-                <div className="menu">
+                <div
+                    className="menu"
+                    onMouseEnter={() => setSubMenuVisible(true)}
+                    onMouseLeave={() => setSubMenuVisible(false)}
+                >
                     <ThemeToggle className="header-theme-toggle" />
 
                     <div
@@ -172,6 +217,23 @@ export function Header() {
                             <p>{userDisplayName}</p>
                             <p>{userRoleDisplayName}</p>
                         </div>
+                        {rolesDisponiveis.length > 1 && (
+                            <div className="role-switcher">
+                                <label htmlFor="role-switcher">Role ativa</label>
+                                <select
+                                    id="role-switcher"
+                                    value={userInfo?.role || ''}
+                                    disabled={roleEmAtualizacao}
+                                    onChange={(event) => handleTrocarRole(event.target.value)}
+                                >
+                                    {rolesDisponiveis.map((role) => (
+                                        <option key={role} value={role}>
+                                            {formatRoleName(role)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                         <button
                             type="button"
                             onClick={() => {

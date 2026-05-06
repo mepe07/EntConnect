@@ -10,7 +10,8 @@ export interface CreateUtilizadorPayload {
     contacto?: string;
     nif?: string;
     dataNascimento: string;
-    cargo: string;
+    cargo?: string;
+    cargos?: string[];
     password: string;
 }
 
@@ -232,15 +233,18 @@ export class UtilizadorService {
      * @param confirmarRemocaoAssociacoes - Confirma a remoção de associações dependentes.
      * @returns Utilizador atualizado.
      */
-    async updateCargo(userId: number, cargo: string, confirmarRemocaoAssociacoes = false) {
+    async updateCargo(userId: number, cargo: string | string[], confirmarRemocaoAssociacoes = false) {
         const token = localStorage.getItem('entconnect_token');
+        const body = Array.isArray(cargo)
+            ? { cargos: cargo, confirmarRemocaoAssociacoes }
+            : { cargo, confirmarRemocaoAssociacoes };
         const response = await fetch(`${this._apiUrl}/utilizador/${userId}/update-cargo`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
             },
-            body: JSON.stringify({ cargo, confirmarRemocaoAssociacoes }),
+            body: JSON.stringify(body),
         });
 
         if (!response.ok) {

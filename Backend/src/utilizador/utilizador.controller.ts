@@ -525,11 +525,12 @@ export class UtilizadorController {
   async updateCargo(
     @Param('id', ParseIntPipe) id: number,
     @Body('cargo') cargo: string,
+    @Body('cargos') cargos: string[] | undefined,
     @Body('confirmarRemocaoAssociacoes') confirmarRemocaoAssociacoes?: boolean,
   ) {
-    return this.utilizadorService.updateCargo(
+    return this.utilizadorService.updateCargos(
       id,
-      cargo,
+      cargos ?? cargo,
       confirmarRemocaoAssociacoes === true,
     );
   }

@@ -74,6 +74,7 @@ export default function App() {
     useTheme();
     const [domLoaded, setDomLoaded] = useState(false);
     const [sessaoValida, setSessaoValida] = useState(false);
+    const [versaoSessao, setVersaoSessao] = useState(0);
     const location = useLocation();
     const isRotaPublicaEventos =
         location.pathname === '/eventos' ||
@@ -88,7 +89,19 @@ export default function App() {
 
 
         setSessaoValida(authService.isAuthenticated());
-    }, [location.pathname]);
+    }, [location.pathname, versaoSessao]);
+
+    useEffect(() => {
+        function handleRoleAlterada() {
+            setVersaoSessao((versaoAtual) => versaoAtual + 1);
+        }
+
+        window.addEventListener('entconnect-role-alterada', handleRoleAlterada);
+
+        return () => {
+            window.removeEventListener('entconnect-role-alterada', handleRoleAlterada);
+        };
+    }, []);
 
     useEffect(() => {
 
@@ -101,9 +114,9 @@ export default function App() {
 
     const page = (
         <div className="app-layout min-h-screen bg-[#f8fafc]">
-            <Header />
+            <Header key={`header-${versaoSessao}`} />
             <div className="main-wrapper">
-                <NavigationMenu />
+                <NavigationMenu key={`menu-${versaoSessao}`} />
                 <div className="body-wrapper ml-[280px] mt-[76px] w-full min-h-[calc(100vh-76px)] p-6">
                     <Outlet />
                 </div>
