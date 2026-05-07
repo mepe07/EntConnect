@@ -106,7 +106,7 @@ export function Perfil() {
 
             if (abaAtiva === 'minhas_faturas') {
                 // Endpoint especifico do encarregado; nao usa a listagem administrativa de faturacao.
-                const resFaturas = await fetch(`http://localhost:3000/utilizador/encarregado/${currentUserId}`, { headers });
+                const resFaturas = await fetch(`${API_BASE_URL}/utilizador/encarregado/${currentUserId}`, { headers });
                 
                 if (resFaturas.ok) {
                     const dadosFaturas = await resFaturas.json();

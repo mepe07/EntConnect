@@ -9,10 +9,10 @@ import type {
 } from '../types/eventos.types';
 
 import { API_BASE_URL } from "../../src/config/api.config";
+import { authService } from './auth.service';
 
 
 const API_URL = `${API_BASE_URL}/eventos`;
-const TOKEN_STORAGE_KEY = 'entconnect_token';
 
 /**
  * Filtros aceites na listagem pública de eventos.
@@ -25,14 +25,10 @@ export type ListarEventosPublicosParams = {
     limite?: number;
 };
 
-function getToken(): string | null {
-    return localStorage.getItem(TOKEN_STORAGE_KEY);
-}
-
 function getAuthHeaders() {
-    return {
-        Authorization: `Bearer ${getToken()}`,
-    };
+    const token = authService.getToken();
+
+    return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 async function parseError(response: Response, fallback: string): Promise<never> {

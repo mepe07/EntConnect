@@ -1,27 +1,54 @@
+import { API_BASE_URL } from '../../src/config/api.config';
+import { authService } from './auth.service';
+
 export class AgendamentosService {
-    private _apiUrl = 'http://localhost:3000';
+    private _apiUrl = API_BASE_URL;
+
+    /**
+     * Headers JSON autenticados para os endpoints privados de agendamentos.
+     */
+    private getHeaders() {
+        const token = authService.getToken();
+
+        return {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+    }
 
     async getAgendamentosProfessor(idProfessor: number) {
         const response = await fetch(`${this._apiUrl}/utilizador/professor/${idProfessor}/agendamentos`, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
+            headers: this.getHeaders(),
         });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Erro ao obter agendamentos: ${response.statusText}`);
+        }
+
         return await response.json();
     }
 
     async getConfirmacoesProfessor(idProfessor: number) {
         const response = await fetch(`${this._apiUrl}/utilizador/professor/${idProfessor}/confirmacoes`, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
+            headers: this.getHeaders(),
         });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Erro ao obter confirmações: ${response.statusText}`);
+        }
+
         return await response.json();
     }
 
     async confirmarSessao(idProfessor: number, idCoaching: number, idEstadoCoaching: number) {
         const response = await fetch(`${this._apiUrl}/utilizador/professor/${idProfessor}/confirmacoes/${idCoaching}`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idEstadoCoaching })
+            headers: this.getHeaders(),
+            body: JSON.stringify({ idEstadoCoaching }),
         });
 
         if (!response.ok) {
@@ -31,5 +58,4 @@ export class AgendamentosService {
 
         return await response.json();
     }
-
 }
