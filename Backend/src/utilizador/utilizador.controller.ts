@@ -331,7 +331,7 @@ export class UtilizadorController {
    * @param file Dados recebidos para a operacao.
    * @returns Resultado da operacao.
    */
-  
+
   @Roles(Role.COORDENADOR)
   @Post('importusersblob')
   @UseInterceptors(FileInterceptor('file'))
