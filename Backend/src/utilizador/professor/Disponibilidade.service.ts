@@ -19,7 +19,6 @@ export class DispobilidadeService {
    */
 
   async getAvailabilities() {
-    this.logger.log('A carregar todas as disponibilidades da Base de Dados...');
     const disponibilidadesRaw = await this.prisma.disponibilidade.findMany({
       include: {
         Professor: { include: { Pessoa: true } },
@@ -97,19 +96,16 @@ export class DispobilidadeService {
 
   async criarDisponibilidade(dto: CreateDisponibilidadeDto) {
     this.logger.log('A criar disponibilidade...');
+
+    const now = new Date();
     const horaInicio = new Date(dto.Hora_Inicio);
-    const inicioDoDiaAtual = new Date();
-    inicioDoDiaAtual.setHours(0, 0, 0, 0);
 
-    const diaDisponibilidade = new Date(horaInicio);
-    diaDisponibilidade.setHours(0, 0, 0, 0);
-
-    if (diaDisponibilidade < inicioDoDiaAtual) {
+    if (horaInicio < now) {
       this.logger.warn(
         `Criacao de disponibilidade rejeitada: data no passado idProfessor=${dto.ID_Professor} horaInicio=${dto.Hora_Inicio}`,
       );
       throw new BadRequestException(
-        'Nao e possivel criar disponibilidades com data anterior a data atual.',
+        'Nao é possivel criar disponibilidades com data/hora anterior á atual.',
       );
     }
 
@@ -118,7 +114,7 @@ export class DispobilidadeService {
         ID_Professor: dto.ID_Professor,
         Hora_Inicio: horaInicio,
         EstadoDisponibilidadeID: 2,
-        DataAtualizacao: new Date(),
+        DataAtualizacao: now,
         AlteradoPorUtilizadorID: dto.AlteradoPorUtilizadorID,
         Duracao: dto.Duracao,
         Modalidade: dto.Modalidade,
@@ -158,6 +154,15 @@ export class DispobilidadeService {
       );
       throw new BadRequestException(
         `A disponibilidade com ID ${idDisponibilidade} não existe.`,
+      );
+    }
+
+    if (
+      updateDisponibilidadeDto.ValorPorAluno !== undefined &&
+      updateDisponibilidadeDto.ValorPorAluno < 0
+    ) {
+      throw new BadRequestException(
+        'O valor por aluno não pode ser negativo.',
       );
     }
 

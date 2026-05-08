@@ -325,6 +325,8 @@ export class UtilizadorController {
       idEstadoCoaching,
     );
   }
+
+  
   /**
    * Executa a operacao importar do blob.
    * @param file Dados recebidos para a operacao.
