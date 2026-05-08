@@ -13,6 +13,7 @@ import {
 import { ModalCriarAnuncio } from './partials/modalCriarAnuncio';
 import './marketplace.scss';
 
+import { showToast } from '~/components/toast/toast';
 type Vista = 'montra' | 'detalhe' | 'meus' | 'moderacao';
 type VistaLista = Exclude<Vista, 'detalhe'>;
 type AcaoModeracao = 'remover' | 'reativar' | 'arquivar';
@@ -224,7 +225,7 @@ export function Marketplace() {
 
             setMensagemFluxo(`O teu anúncio '${payload.titulo}' foi publicado!`);
         } catch (err: any) {
-            alert(err.message || 'Não foi possível criar o anúncio.');
+            showToast(err.message || 'Não foi possível criar o anúncio.');
             throw err;
         }
     };
@@ -240,9 +241,9 @@ export function Marketplace() {
                 mensagem,
             });
             setMensagemFluxo(`Registaste interesse em '${anuncioSelecionado.Nome}'.`);
-            window.alert('Interesse registado com sucesso.');
+            showToast('Interesse registado com sucesso.');
         } catch (error: any) {
-            window.alert(error.message || 'Não foi possível registar o interesse.');
+            showToast(error.message || 'Não foi possível registar o interesse.');
         }
     };
 
@@ -254,7 +255,7 @@ export function Marketplace() {
             setMensagemFluxo(`Mudaste o estado de '${atualizado.Nome}' para '${ESTADO_LABEL[estado]}'.`);
             await recarregarVistaAtual();
         } catch (error: any) {
-            window.alert(error.message || 'Não foi possível alterar o estado.');
+            showToast(error.message || 'Não foi possível alterar o estado.');
         }
     };
 
@@ -291,7 +292,7 @@ export function Marketplace() {
             setMotivoModeracao('');
             await recarregarVistaAtual();
         } catch (error: any) {
-            window.alert(error.message || 'Não foi possível aplicar a moderação.');
+            showToast(error.message || 'Não foi possível aplicar a moderação.');
         }
     };
 

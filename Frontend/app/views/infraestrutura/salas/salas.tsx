@@ -1,3 +1,4 @@
+import { showToast } from '~/components/toast/toast';
 
 
 
@@ -31,7 +32,7 @@ export function Salas() {
             const dadosReais = await salasService.getSalas();
             setSalas(dadosReais);
         } catch (erro) {
-            alert("Atenção: Não foi possível ligar ao servidor!");
+            showToast("Atenção: Não foi possível ligar ao servidor!");
         }
     };
 
@@ -80,7 +81,7 @@ export function Salas() {
 
         } catch (erro) {
             console.error("Erro ao atualizar:", erro);
-            alert("Erro ao tentar atualizar o estúdio na Base de Dados!");
+            showToast("Erro ao tentar atualizar o estúdio na Base de Dados!");
             return;
         }
     } else {
@@ -99,7 +100,7 @@ export function Salas() {
             } catch (erro) {
 
                 console.error("O estafeta tropeçou! Eis o relatório do acidente:", erro);
-                alert("Erro ao tentar guardar o estúdio na Base de Dados!");
+                showToast("Erro ao tentar guardar o estúdio na Base de Dados!");
 
 
                 return;
@@ -119,10 +120,10 @@ export function Salas() {
             try {
                 await salasService.deleteSala(id);
                 setSalas(salas.filter(sala => sala.ID_Sala !== id));
-                alert("Sala apagada com sucesso da Base de Dados!");
+                showToast("Sala apagada com sucesso da Base de Dados!");
             } catch (erro: any) {
 
-                alert(erro.message);
+                showToast(erro.message);
             }
         }
     };

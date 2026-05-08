@@ -4,6 +4,7 @@ import { EstadoAnuncio } from '../../types/marketplace.types';
 import type { RegistoModeracaoMarketplace } from '../../types/marketplace.types';
 import './atividades.scss';
 
+import { showToast } from '~/components/toast/toast';
 type FiltroAcao = 'todas' | 'remover' | 'reativar' | 'arquivar';
 
 export function Atividades() {
@@ -160,7 +161,7 @@ export function Atividades() {
                     ? error.message
                     : 'Não foi possível reativar o anúncio.';
 
-            alert(mensagem);
+            showToast(mensagem);
         } finally {
             setAReativar(null);
         }

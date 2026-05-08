@@ -13,6 +13,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Role } from './enums/roles.enum';
 import { MailService } from '../mail/mail.service';
+import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 /**
  * Servico responsavel pela logica de Auth.
  */
@@ -34,18 +35,14 @@ export class AuthService {
    */
 
   async login(loginDto: LoginDto) {
-    this.logger.log(`Tentativa de login para utilizador=${loginDto.username}`);
-
     const user = await this.obterUtilizadorPorUsername(loginDto.username);
 
     if (!user) {
       this.logger.warn(
-        `Login falhou: utilizador inexistente username=${loginDto.username}`,
+        `Login falhou: utilizador inexistente usernameHash=${this.hashAuditValue(loginDto.username)}`,
       );
-    }
-
-    if (!user)
       throw new UnauthorizedException('Os dados introduzidos estão inválidos.');
+    }
 
     const passwordValida = await bcrypt.compare(
       loginDto.password,
@@ -54,41 +51,102 @@ export class AuthService {
 
     if (!passwordValida) {
       this.logger.warn(
-        `Login falhou: password invalida userId=${user.ID_Utilizador} username=${user.Utilizador}`,
+        `Login falhou: password invalida userId=${user.ID_Utilizador}`,
       );
-    }
-
-    if (!passwordValida)
       throw new UnauthorizedException('Os dados introduzidos estão inválidos.');
+    }
 
     if (!user.Ativo) {
       this.logger.warn(
-        `Login bloqueado: conta inativa userId=${user.ID_Utilizador} username=${user.Utilizador}`,
+        `Login bloqueado: conta inativa userId=${user.ID_Utilizador}`,
       );
-    }
-
-    if (!user.Ativo)
       throw new UnauthorizedException(
         'A sua conta está inativa. Contacte a coordenação.',
       );
+    }
 
-    const userRole = this.determinarRole(user);
+    const userRoles = this.determinarRoles(user);
+    const userRole = this.determinarRolePadrao(userRoles);
+    const payload = this.criarPayloadSessao(user, userRole, userRoles);
+
     this.logger.log(
-      `Login efetuado com sucesso userId=${user.ID_Utilizador} username=${user.Utilizador} role=${userRole}`,
+      `Login efetuado com sucesso userId=${user.ID_Utilizador} role=${userRole} roles=${userRoles.join(',')}`,
     );
-
-    const payload = {
-      sub: user.ID_Utilizador,
-      username: user.Utilizador,
-      nome: user.Pessoa?.Nome,
-      role: userRole,
-      idPessoa: user.ID_Pessoa,
-      Acoes_Rapidas: user.Acoes_Rapidas,
-    };
 
     return {
       access_token: await this.jwtService.signAsync(payload),
       role: userRole,
+      roles: userRoles,
+    };
+  }
+
+  /**
+   * Troca a role ativa mantendo a sessao autenticada.
+   * @param utilizador Dados do utilizador autenticado.
+   * @param role Role a ativar.
+   * @returns Novo token com a role selecionada.
+   */
+
+  async trocarRole(utilizador: UtilizadorAutenticado, role: Role) {
+    const user = await this.obterUtilizadorPorId(utilizador.sub);
+
+    if (!user || !user.Ativo) {
+      this.logger.warn(
+        `Troca de role rejeitada: sessao invalida userId=${utilizador.sub}`,
+      );
+      throw new UnauthorizedException('SessÃ£o invÃ¡lida.');
+    }
+
+    const userRoles = this.determinarRoles(user);
+
+    if (!userRoles.includes(role)) {
+      this.logger.warn(
+        `Troca de role rejeitada: role sem permissao userId=${user.ID_Utilizador} role=${role}`,
+      );
+      throw new UnauthorizedException(
+        'A role selecionada nÃ£o estÃ¡ associada ao utilizador.',
+      );
+    }
+
+    const payload = this.criarPayloadSessao(user, role, userRoles);
+
+    this.logger.log(
+      `Role ativa alterada userId=${user.ID_Utilizador} role=${role}`,
+    );
+
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+      role,
+      roles: userRoles,
+    };
+  }
+
+  /**
+   * Atualiza o token com os perfis atuais do utilizador.
+   * @param utilizador Dados do utilizador autenticado.
+   * @returns Novo token da sessao.
+   */
+
+  async atualizarSessao(utilizador: UtilizadorAutenticado) {
+    const user = await this.obterUtilizadorPorId(utilizador.sub);
+
+    if (!user || !user.Ativo) {
+      this.logger.warn(
+        `Atualizacao de sessao rejeitada userId=${utilizador.sub}`,
+      );
+      throw new UnauthorizedException('SessÃ£o invÃ¡lida.');
+    }
+
+    const userRoles = this.determinarRoles(user);
+    const roleAtiva = userRoles.includes(utilizador.role)
+      ? utilizador.role
+      : this.determinarRolePadrao(userRoles);
+    const payload = this.criarPayloadSessao(user, roleAtiva, userRoles);
+
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+      role: roleAtiva,
+      roles: userRoles,
     };
   }
 
@@ -100,9 +158,7 @@ export class AuthService {
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     const email = forgotPasswordDto.email.trim().toLowerCase();
-    this.logger.log(
-      `Pedido de recuperacao de password emailHash=${this.hashAuditValue(email)}`,
-    );
+    const emailHash = this.hashAuditValue(email);
 
     const user = await this.prisma.utilizador.findFirst({
       where: { Pessoa: { Email: { equals: email } } },
@@ -116,7 +172,7 @@ export class AuthService {
 
     if (!user || !user.Ativo) {
       this.logger.warn(
-        `Recuperacao de password ignorada emailHash=${this.hashAuditValue(email)} motivo=${!user ? 'utilizador-inexistente' : 'utilizador-inativo'}`,
+        `Recuperacao de password ignorada emailHash=${emailHash} motivo=${!user ? 'utilizador-inexistente' : 'utilizador-inativo'}`,
       );
       return respostaGenerica;
     }
@@ -138,7 +194,7 @@ export class AuthService {
 
     await this.mailService.sendPasswordResetEmail(user.Pessoa.Email, resetLink);
     this.logger.log(
-      `Email de recuperacao de password enviado userId=${user.ID_Utilizador} emailHash=${this.hashAuditValue(email)}`,
+      `Email de recuperacao de password enviado userId=${user.ID_Utilizador} emailHash=${emailHash}`,
     );
 
     return respostaGenerica;
@@ -151,8 +207,6 @@ export class AuthService {
    */
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
-    this.logger.log('Pedido de redefinicao de password recebido.');
-
     const tokenHash = this.hashResetToken(resetPasswordDto.token);
 
     const user = await this.prisma.utilizador.findFirst({
@@ -166,12 +220,10 @@ export class AuthService {
       this.logger.warn(
         'Redefinicao de password falhou: token invalido ou expirado.',
       );
-    }
-
-    if (!user)
       throw new BadRequestException(
         'O link de recuperação é inválido ou já expirou.',
       );
+    }
 
     const passwordHash = await bcrypt.hash(resetPasswordDto.password, 10);
 
@@ -183,7 +235,9 @@ export class AuthService {
         ResetPasswordTokenExpiresAt: null,
       },
     });
-    this.logger.log(`Password redefinida com sucesso userId=${user.ID_Utilizador}`);
+    this.logger.log(
+      `Password redefinida com sucesso userId=${user.ID_Utilizador}`,
+    );
 
     return {
       message: 'Password alterada com sucesso. Já pode iniciar sessão.',
@@ -213,17 +267,57 @@ export class AuthService {
   private async obterUtilizadorPorUsername(username: string) {
     return this.prisma.utilizador.findUnique({
       where: { Utilizador: username },
-      include: {
-        Pessoa: {
-          include: {
-            Professor: true,
-            Coordenador: true,
-            Direcao: true,
-            Enc_Educacao: true,
-          },
+      include: this.includePerfisUtilizador(),
+    });
+  }
+
+  private async obterUtilizadorPorId(idUtilizador: number) {
+    return this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: idUtilizador },
+      include: this.includePerfisUtilizador(),
+    });
+  }
+
+  private includePerfisUtilizador() {
+    return {
+      Pessoa: {
+        include: {
+          Professor: true,
+          Coordenador: true,
+          Enc_Educacao: true,
         },
       },
-    });
+    };
+  }
+
+  private criarPayloadSessao(user: any, role: Role, roles: Role[]) {
+    return {
+      sub: user.ID_Utilizador,
+      username: user.Utilizador,
+      nome: user.Pessoa?.Nome,
+      role,
+      roles,
+      idPessoa: user.ID_Pessoa,
+      Acoes_Rapidas: user.Acoes_Rapidas,
+    };
+  }
+
+  private determinarRoles(user: any): Role[] {
+    const roles: Role[] = [];
+
+    if (user.Pessoa?.Professor) roles.push(Role.PROFESSOR);
+    if (user.Pessoa?.Coordenador) roles.push(Role.COORDENADOR);
+    if (user.Pessoa?.Enc_Educacao) roles.push(Role.ENC_EDUCACAO);
+
+    if (roles.length === 0) {
+      throw new UnauthorizedException('Utilizador sem perfil vÃ¡lido.');
+    }
+
+    return roles;
+  }
+
+  private determinarRolePadrao(roles: Role[]): Role {
+    return roles[0];
   }
 
   /**

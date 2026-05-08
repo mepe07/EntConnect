@@ -1,3 +1,4 @@
+import { showToast } from '~/components/toast/toast';
 
 
 import React, { useState, useEffect } from 'react';
@@ -27,7 +28,7 @@ export function ModalPropostas({ isOpen, onClose, idStock, nomeArtigo, onAtualiz
             const dados = await marketplaceService.listarPropostas(idStock);
             setPropostas(dados);
         } catch (error: any) {
-            alert('Erro: ' + error.message);
+            showToast('Erro: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -42,7 +43,7 @@ export function ModalPropostas({ isOpen, onClose, idStock, nomeArtigo, onAtualiz
 
         try {
             await marketplaceService.responderProposta(idInteresse, decisao);
-            alert(`Pedido ${decisao.toLowerCase()} com sucesso!`);
+            showToast(`Pedido ${decisao.toLowerCase()} com sucesso!`);
 
 
             setPropostas(prev => prev.filter(p => p.ID_Interesse !== idInteresse));
@@ -52,7 +53,7 @@ export function ModalPropostas({ isOpen, onClose, idStock, nomeArtigo, onAtualiz
                 onAtualizacao();
             }
         } catch (error: any) {
-            alert('Erro: ' + error.message);
+            showToast('Erro: ' + error.message);
         }
     };
 

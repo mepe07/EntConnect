@@ -11,6 +11,7 @@ import { ButtonColorEnum } from '~/components/button/models/enums/button-color.e
 import { SizeEnum } from '~/components/models/enums/size.enum';
 
 
+import { showToast } from '~/components/toast/toast';
 export default function VerMarcacoes() {
 
 
@@ -76,10 +77,10 @@ export default function VerMarcacoes() {
         if (window.confirm(`Tem a certeza que deseja cancelar a inscrição do aluno: ${row.nomeAluno}?`)) {
             try {
                 await eeService.removerAlunoCoaching(row.idAluno, row.idCoaching);
-                alert('Inscrição cancelada com sucesso!');
+                showToast('Inscrição cancelada com sucesso!');
                 fetchMarcacoes();
             } catch (error) {
-                alert('Erro ao cancelar inscrição.');
+                showToast('Erro ao cancelar inscrição.');
             }
         }
     }

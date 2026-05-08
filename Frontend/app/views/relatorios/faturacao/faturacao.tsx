@@ -1,3 +1,4 @@
+import { showToast } from '~/components/toast/toast';
 
 import './faturacao.scss';
 
@@ -361,7 +362,7 @@ export function Faturacao() {
 
 
     const handlePesquisa = async (periodo: FiltroFaturacao = filtro) => {
-        if (!periodo.dataInicio || !periodo.dataFim) return alert('Por favor, selecione ambas as datas para realizar a pesquisa.');
+        if (!periodo.dataInicio || !periodo.dataFim) return showToast('Por favor, selecione ambas as datas para realizar a pesquisa.');
 
         setACarregar(true);
 
@@ -374,7 +375,7 @@ export function Faturacao() {
             setProfessorSelecionado(null);
         } catch (error) {
             console.error('Erro ao buscar dados de faturação:', error);
-            alert('Ocorreu um erro ao buscar os dados de faturação. Por favor, tente novamente mais tarde.');
+            showToast('Ocorreu um erro ao buscar os dados de faturação. Por favor, tente novamente mais tarde.');
         } finally {
             setACarregar(false);
         }
@@ -423,7 +424,7 @@ export function Faturacao() {
 
     const exportarFaturacao = () => {
         if (!pesquisaRealizada || faturas.length === 0) {
-            alert('Nao existem dados para exportar neste periodo.');
+            showToast('Nao existem dados para exportar neste periodo.');
             return;
         }
 

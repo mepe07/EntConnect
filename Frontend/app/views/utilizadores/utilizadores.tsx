@@ -1,3 +1,4 @@
+import { showToast } from '~/components/toast/toast';
 
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -172,7 +173,7 @@ export function Utilizadores() {
             );
             setFotosUtilizadores(fotos);
         } catch {
-            alert('Não foi possível ligar ao servidor!');
+            showToast('Não foi possível ligar ao servidor!');
         } finally {
             setLoading(false);
         }
@@ -348,11 +349,11 @@ export function Utilizadores() {
                 cargos: formNovo.cargos,
                 password: formNovo.password,
             });
-            alert('Utilizador criado com sucesso!');
+            showToast('Utilizador criado com sucesso!');
             fecharModalCriar();
             carregarUtilizadores();
         } catch (error: any) {
-            alert(error?.message || 'Erro ao criar o utilizador. Tenta novamente.');
+            showToast(error?.message || 'Erro ao criar o utilizador. Tenta novamente.');
         } finally {
             setLoadingCriar(false);
         }
@@ -408,7 +409,7 @@ export function Utilizadores() {
                 [utilizadorSelecionado.idUtilizador]: novaUrl
             }));
 
-            alert('Foto de perfil atualizada com sucesso!');
+            showToast('Foto de perfil atualizada com sucesso!');
         } catch (error: any) {
             console.error('Erro no upload:', error);
             setErroFoto(error.message || 'Erro ao carregar a imagem para o servidor.');
@@ -539,7 +540,7 @@ export function Utilizadores() {
                 setConfirmarPassword('');
             }
 
-            alert('Alterações guardadas com sucesso!');
+            showToast('Alterações guardadas com sucesso!');
         } catch (error: any) {
             setErroDados(error?.message || 'Erro ao guardar as alterações. Tenta novamente.');
         } finally {
@@ -689,7 +690,7 @@ export function Utilizadores() {
                     : u
             ));
         } catch {
-            alert(`Erro ao ${acao} o utilizador.`);
+            showToast(`Erro ao ${acao} o utilizador.`);
         }
     };
 
@@ -704,7 +705,7 @@ export function Utilizadores() {
             await utilizadorService.deleteUser(utilizador.idUtilizador);
             setUtilizadores(prev => prev.filter(u => u.idUtilizador !== utilizador.idUtilizador));
         } catch (error: any) {
-            alert(error?.message || 'Erro ao eliminar o utilizador.');
+            showToast(error?.message || 'Erro ao eliminar o utilizador.');
         }
     };
 
@@ -728,16 +729,16 @@ export function Utilizadores() {
 
             if (response.ok) {
                 const data = await response.json();
-                alert(data.mensagem || 'Utilizadores importados com sucesso!');
+                showToast(data.mensagem || 'Utilizadores importados com sucesso!');
                 setModalImportOpen(false);
                 carregarUtilizadores();
             } else {
                 const err = await response.json().catch(() => ({}));
-                alert(err?.message || 'Erro ao processar a importação.');
+                showToast(err?.message || 'Erro ao processar a importação.');
             }
         } catch (error) {
             console.error('Erro na importação:', error);
-            alert('Erro ao fazer upload. Tenta novamente.');
+            showToast('Erro ao fazer upload. Tenta novamente.');
         } finally {
             setLoadingImport(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -803,7 +804,7 @@ export function Utilizadores() {
 
         } catch (error) {
             console.error('Erro no download:', error);
-            alert('Não foi possível transferir o ficheiro modelo. Tenta novamente.');
+            showToast('Não foi possível transferir o ficheiro modelo. Tenta novamente.');
         }
     };
 

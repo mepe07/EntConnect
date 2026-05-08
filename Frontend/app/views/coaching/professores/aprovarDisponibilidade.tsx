@@ -13,6 +13,7 @@ import { SalasService } from '../../../services/salas.service';
 import { horariosService } from '~/services/horarios.service';
 
 
+import { showToast } from '~/components/toast/toast';
 export interface Disponibilidade {
     idDisponibilidade: number;
     nomeProfessor: string;
@@ -255,7 +256,7 @@ export default function ApproveAvailability() {
 
     async function confirmarAprovacao() {
         if (!estudioSelecionado || !valorPorAluno) {
-            alert('Por favor, selecione um estúdio e insira o valor por aluno.');
+            showToast('Por favor, selecione um estúdio e insira o valor por aluno.');
             return;
         }
 
@@ -292,7 +293,7 @@ export default function ApproveAvailability() {
 
             fetchDisponibilidades();
         } catch (error) {
-            alert('Erro ao atualizar a disponibilidade.');
+            showToast('Erro ao atualizar a disponibilidade.');
         }
     }
 

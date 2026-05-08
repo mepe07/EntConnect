@@ -10,6 +10,7 @@ import { ButtonTypeEnum } from '~/components/button/models/enums/button-type.enu
 import { ButtonColorEnum } from '~/components/button/models/enums/button-color.enum';
 import { SizeEnum } from '~/components/models/enums/size.enum';
 
+import { showToast } from '~/components/toast/toast';
 export default function VerConfirmacoesEE() {
     const userInfo = authService.getUserInfo() as User;
     const isEncEducacao = userInfo?.role === 'Enc_Educacao';
@@ -75,7 +76,7 @@ export default function VerConfirmacoesEE() {
         await eeService.confirmarSessaoEE(idEE, sessao.idCoaching, idEstadoCoaching);
 
 
-        alert('Confirmação registada!');
+        showToast('Confirmação registada!');
 
 
         setConfirmacoes((listaAtual) =>
@@ -85,7 +86,7 @@ export default function VerConfirmacoesEE() {
         fecharModal();
     } catch (error: any) {
         console.error('Erro ao confirmar sessão EE:', error);
-        alert(error.message || 'Erro ao atualizar o estado da sessão.');
+        showToast(error.message || 'Erro ao atualizar o estado da sessão.');
     } finally {
         setIsAguardar(false);
     }

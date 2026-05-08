@@ -4,6 +4,7 @@ import './professor.scss';
 import { professoresService } from '~/services/professor.service';
 
 
+import { showToast } from '~/components/toast/toast';
 interface Professor {
     ID_Pessoa: number;
     Pessoa: {
@@ -45,7 +46,7 @@ export function Professores() {
 
             setUltimaPagina(resposta.meta.lastPage);
         } catch (erro) {
-            alert("Erro ao carregar a lista.");
+            showToast("Erro ao carregar a lista.");
         }
     };
 
@@ -79,7 +80,7 @@ export function Professores() {
 
 
         if (!nome || !email || !nif || !contacto) {
-            alert("Por favor, preenche todos os campos obrigatórios (Nome, Email, NIF e Contacto).");
+            showToast("Por favor, preenche todos os campos obrigatórios (Nome, Email, NIF e Contacto).");
             return;
         }
 
@@ -107,7 +108,7 @@ export function Professores() {
         } catch (erro: any) {
 
             const mensagemErro = erro.response?.data?.message || "Erro ao guardar o professor.";
-            alert(mensagemErro);
+            showToast(mensagemErro);
         }
     };
 
@@ -120,7 +121,7 @@ export function Professores() {
                 setProfessores(professores.filter(p => p.ID_Pessoa !== id));
             } catch (erro: any) {
                 const mensagemErro = erro.response?.data?.message || "Erro ao apagar o professor.";
-                alert(mensagemErro);
+                showToast(mensagemErro);
             }
         }
     };
