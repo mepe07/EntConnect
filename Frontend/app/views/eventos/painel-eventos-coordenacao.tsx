@@ -1,3 +1,4 @@
+import { showToast } from '~/components/toast/toast';
 
 
 import { useEffect, useMemo, useState } from 'react';
@@ -312,7 +313,7 @@ export function PainelEventosCoordenacao() {
             await eventosService.removerEvento(evento.id);
             await carregarEventos();
         } catch (error) {
-            alert(
+            showToast(
                 error instanceof Error
                     ? error.message
                     : 'Não foi possível remover o evento.'
@@ -325,7 +326,7 @@ export function PainelEventosCoordenacao() {
             await eventosService.reativarEvento(evento.id);
             await carregarEventos();
         } catch (error) {
-            alert(
+            showToast(
                 error instanceof Error
                     ? error.message
                     : 'Não foi possível reativar o evento.'

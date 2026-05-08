@@ -13,6 +13,7 @@ import { InputComponent } from '~/components/input/input.component';
 import { SelectBoxComponent } from '~/components/selectbox/selectbox.component';
 import { EEService } from '~/services/EE.service';
 
+import { showToast } from '~/components/toast/toast';
 interface Disponibilidade {
     idDisponibilidade: number;
     nomeProfessor: string;
@@ -103,7 +104,7 @@ export default function CoachingEE() {
 
     async function handleInscreverAluno() {
         if (!disponibilidadeSelecionada || !alunoSelecionado) {
-            alert('Por favor selecione uma sessão e um aluno.');
+            showToast('Por favor selecione uma sessão e um aluno.');
             return;
         }
 
@@ -135,7 +136,7 @@ export default function CoachingEE() {
                 payload
             );
 
-            alert('Aluno inscrito com sucesso!');
+            showToast('Aluno inscrito com sucesso!');
             fecharModal();
 
 
@@ -143,7 +144,7 @@ export default function CoachingEE() {
 
         } catch (error: any) {
             console.error('Erro ao inscrever aluno:', error);
-            alert(error.message || 'Não foi possível inscrever o aluno.');
+            showToast(error.message || 'Não foi possível inscrever o aluno.');
         }
     }
 

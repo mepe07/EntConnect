@@ -2,6 +2,7 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -16,6 +17,8 @@ import { IS_PUBLIC_KEY } from './decorators/public.decorator';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
+  private readonly logger = new Logger(AuthGuard.name);
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -42,6 +45,9 @@ export class AuthGuard implements CanActivate {
     const token = this.extractTokenFromHeader(request);
 
     if (!token) {
+      this.logger.warn(
+        `Pedido sem token ${request.method} ${request.originalUrl ?? request.url}`,
+      );
       throw new UnauthorizedException(
         'Acesso negado. Precisas de fazer login.',
       );
@@ -53,6 +59,9 @@ export class AuthGuard implements CanActivate {
       });
       request['user'] = payload;
     } catch {
+      this.logger.warn(
+        `Token invalido ou expirado ${request.method} ${request.originalUrl ?? request.url}`,
+      );
       throw new UnauthorizedException('Token inválido ou expirado.');
     }
     return true;

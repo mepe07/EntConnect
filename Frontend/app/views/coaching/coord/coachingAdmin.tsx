@@ -9,6 +9,7 @@ import { SizeEnum } from '~/components/models/enums/size.enum';
 import './coachingAdmin.scss';
 
 
+import { showToast } from '~/components/toast/toast';
 interface AlunoSessao {
     idAluno: number;
     nome: string;
@@ -123,11 +124,11 @@ export default function CoachingAdmin() {
 
 
                 if (sessaoSelecionada.alunos.length === 1) {
-                    alert('Aluno removido. A sessão ficou sem alunos e foi apagada do sistema.');
+                    showToast('Aluno removido. A sessão ficou sem alunos e foi apagada do sistema.');
                     fecharModal();
                     fetchDadosDashboard();
                 } else {
-                    alert('Aluno removido com sucesso.');
+                    showToast('Aluno removido com sucesso.');
                     const novaListaAlunos = sessaoSelecionada.alunos.filter(a => a.idAluno !== idAluno);
                     setSessaoSelecionada({ ...sessaoSelecionada, alunos: novaListaAlunos });
 
@@ -135,7 +136,7 @@ export default function CoachingAdmin() {
                     fetchDadosDashboard();
                 }
             } catch (error) {
-                alert('Erro ao remover aluno.');
+                showToast('Erro ao remover aluno.');
             }
         }
     }
@@ -148,7 +149,7 @@ export default function CoachingAdmin() {
             setIsAlunoInfoModalAberto(true);
         } catch (error) {
             console.error(error);
-            alert('Erro ao carregar detalhes do aluno.');
+            showToast('Erro ao carregar detalhes do aluno.');
         } finally {
             setIsCarregandoAluno(false);
         }

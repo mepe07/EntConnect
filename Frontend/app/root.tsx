@@ -19,6 +19,7 @@ import { Login } from "./views/login/login";
 import { useEffect, useState } from "react";
 import { authService } from "./services/auth.service";
 import { ThemeToggle } from "./components/theme-toggle/theme-toggle";
+import { ToastProvider } from "./components/toast/toast";
 import { useTheme } from "./utils/theme";
 import type { User } from "./models/interfaces/user.interface";
 
@@ -62,6 +63,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       <body className="h-full bg-white m-0 p-0">
         {children}
+        <ToastProvider />
         <ScrollRestoration />
         <Scripts />
       </body>

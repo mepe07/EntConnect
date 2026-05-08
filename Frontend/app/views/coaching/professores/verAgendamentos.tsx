@@ -12,6 +12,7 @@ import { SizeEnum } from '~/components/models/enums/size.enum';
 import { AdminService } from '~/services/admin.service';
 
 
+import { showToast } from '~/components/toast/toast';
 export default function VerAgendamentos() {
     const userInfo = authService.getUserInfo() as User;
     const isProfessor = userInfo?.role.toLowerCase().includes('professor');
@@ -83,7 +84,7 @@ async function abrirModalAluno(aluno: any) {
             setIsAlunoInfoModalAberto(true);
         } catch (error) {
             console.error(error);
-            alert('Erro ao carregar detalhes do aluno. Verifica se tens permissão.');
+            showToast('Erro ao carregar detalhes do aluno. Verifica se tens permissão.');
         } finally {
             setIsCarregandoAluno(false);
         }

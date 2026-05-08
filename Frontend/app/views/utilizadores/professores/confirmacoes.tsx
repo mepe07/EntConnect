@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { profConfirmacoesService } from '~/services/profConfirmacoes.service';
 import './confirmacoes.scss';
 
+import { showToast } from '~/components/toast/toast';
 export default function Confirmacoes() {
     const [sessoes, setSessoes] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -37,7 +38,7 @@ export default function Confirmacoes() {
             );
 
         } catch (err: any) {
-            alert(err.message);
+            showToast(err.message);
         }
     };
 

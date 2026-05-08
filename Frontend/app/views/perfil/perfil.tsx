@@ -6,6 +6,7 @@ import './perfil.scss';
 import { getCroppedImg } from '../utils/cropImage';
 import { useLocation } from 'react-router';
 
+import { showToast } from '~/components/toast/toast';
 type AbaTipo = 'dados_pessoais' | 'meus_coachings' | 'minhas_faturas';
 
 export function Perfil() {
@@ -159,7 +160,7 @@ export function Perfil() {
                 body: formData,
             });
             if (response.ok) {
-                alert("Foto atualizada com sucesso!");
+                showToast("Foto atualizada com sucesso!");
                 buscarFotoAtual();
                 window.dispatchEvent(new Event('fotoPerfilAtualizada'));
                 setModalCorteAberto(false);
@@ -188,12 +189,12 @@ export function Perfil() {
             if (response.ok) {
                 setFotoUrl(null);
                 window.dispatchEvent(new Event('fotoPerfilAtualizada')); 
-                alert("Foto removida com sucesso!");
+                showToast("Foto removida com sucesso!");
             } else {
-                alert("Erro ao remover a foto.");
+                showToast("Erro ao remover a foto.");
             }
         } catch (error) {
-            alert("Erro de ligação ao servidor.");
+            showToast("Erro de ligação ao servidor.");
         } finally {
             setLoadingFoto(false);
         }
@@ -212,11 +213,11 @@ export function Perfil() {
                 body: JSON.stringify({ nome, nif, contacto })
             });
             if (response.ok) {
-                alert("Dados atualizados com sucesso!");
+                showToast("Dados atualizados com sucesso!");
                 setEditando(false);
             }
         } catch (error) {
-            alert("Erro de ligação.");
+            showToast("Erro de ligação.");
         } finally {
             setGuardando(false);
         }
@@ -224,7 +225,7 @@ export function Perfil() {
 
     const lidarComMudarPassword = async () => {
         if (passNova !== passConfirma) {
-            alert("A nova password e a confirmação não coincidem.");
+            showToast("A nova password e a confirmação não coincidem.");
             return;
         }
         try {
@@ -239,13 +240,13 @@ export function Perfil() {
             });
             const resultado = await response.json();
             if (response.ok) {
-                alert("Password alterada com sucesso!");
+                showToast("Password alterada com sucesso!");
                 fecharModalPassword();
             } else {
-                alert(resultado.message || "Erro ao mudar password.");
+                showToast(resultado.message || "Erro ao mudar password.");
             }
         } catch (e) {
-            alert("Erro de ligação ao servidor.");
+            showToast("Erro de ligação ao servidor.");
         }
     };
 

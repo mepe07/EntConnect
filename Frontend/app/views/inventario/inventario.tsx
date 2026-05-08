@@ -13,6 +13,7 @@ import './inventario.scss';
 import { ModalCriarItem } from './partials/modalCriarItem';
 import { ModalPublicar } from './partials/modalPublicar';
 
+import { showToast } from '~/components/toast/toast';
 function getStockPrincipal(item: Anuncio) { return item.Stock_Armazem?.[0]; }
 function getQuantidadeTotal(item: Anuncio) { return getStockPrincipal(item)?.Quantidade_Total ?? 0; }
 function getQuantidadeVenda(item: Anuncio) { return getStockPrincipal(item)?.Quantidade_Venda ?? 0; }
@@ -84,7 +85,7 @@ export function Inventario() {
 
     const adicionarNovoItem = async () => {
         if (!formCriar.titulo || formCriar.quantidade === 0) {
-            alert('Preenche o título e uma quantidade.');
+            showToast('Preenche o título e uma quantidade.');
             return;
         }
         try {
@@ -93,7 +94,7 @@ export function Inventario() {
             setFormCriar({ titulo: '', descricao: '', quantidade: 0, foto: '' });
             carregarInventario();
         } catch (err: any) {
-            alert(err.message);
+            showToast(err.message);
         }
     };
 
@@ -124,7 +125,7 @@ export function Inventario() {
             setVista('publicados');
             await carregarInventario();
         } catch (error: any) {
-            window.alert(error.message || 'Não foi possível publicar no Marketplace.');
+            showToast(error.message || 'Não foi possível publicar no Marketplace.');
         }
     };
 

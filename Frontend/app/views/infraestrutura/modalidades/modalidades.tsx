@@ -5,6 +5,7 @@ import { modalidadesService } from "~/services/modalidades.service";
 import './modalidades.scss';
 
 
+import { showToast } from '~/components/toast/toast';
 interface Modalidade {
     ID_Modalidade: number;
     Descricao: string;
@@ -24,7 +25,7 @@ export function Modalidades() {
             const dadosReais = await modalidadesService.getModalidades();
             setModalidades(dadosReais);
         } catch (erro) {
-            alert("Atenção: Não foi possível ligar ao servidor!");
+            showToast("Atenção: Não foi possível ligar ao servidor!");
         }
     };
 
@@ -50,7 +51,7 @@ export function Modalidades() {
     const handleSalvarModalidade = async () => {
 
         if (!novaDescricao.trim()) {
-            alert("O nome da modalidade não pode estar vazio!");
+            showToast("O nome da modalidade não pode estar vazio!");
             return;
         }
 
@@ -66,7 +67,7 @@ export function Modalidades() {
                 ));
             } catch (erro) {
                 console.error("Erro ao atualizar:", erro);
-                alert("Erro ao tentar atualizar a modalidade na Base de Dados!");
+                showToast("Erro ao tentar atualizar a modalidade na Base de Dados!");
                 return;
             }
         } else {
@@ -79,7 +80,7 @@ export function Modalidades() {
                 setModalidades([...modalidades, novaModalidadeDaBD]);
             } catch (erro) {
                 console.error("Erro ao criar:", erro);
-                alert("Erro ao tentar guardar a modalidade na Base de Dados!");
+                showToast("Erro ao tentar guardar a modalidade na Base de Dados!");
                 return;
             }
         }
@@ -97,13 +98,13 @@ export function Modalidades() {
             try {
                 await modalidadesService.deleteModalidade(id);
                 setModalidades(modalidades.filter(mod => mod.ID_Modalidade !== id));
-                alert("Modalidade apagada com sucesso!");
+                showToast("Modalidade apagada com sucesso!");
             } catch (erro: any) {
 
                 const mensagemBackend = erro.response?.data?.message;
 
 
-                alert(mensagemBackend || "Impossível remover a modalidade pois a mesma está atribuída a um estúdio.");
+                showToast(mensagemBackend || "Impossível remover a modalidade pois a mesma está atribuída a um estúdio.");
             }
         }
     };
