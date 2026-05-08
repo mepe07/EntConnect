@@ -39,7 +39,7 @@ export class CoachingService {
       select: { MaxAlunos: true },
     });
 
-    if (!disponibilidadeInfo || (disponibilidadeInfo.MaxAlunos ?? 0) <= 0) {
+    if (!disponibilidadeInfo || (disponibilidadeInfo.MaxAlunos ?? 0) < 1) {
       throw new Error('Não existem vagas disponíveis para esta sessão.');
     }
 

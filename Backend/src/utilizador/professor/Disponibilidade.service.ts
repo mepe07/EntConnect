@@ -2,6 +2,9 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDisponibilidadeDto } from '../dto/create-disponibilidade.dto';
 import { UpdateDisponibilidadeDto } from '../dto/update-disponibilidade.dto';
+import * as appInsights from 'applicationinsights';
+import { Logger } from '@nestjs/common';
+
 /**
  * Servico responsavel pela logica de Dispobilidade.
  */
@@ -10,12 +13,15 @@ import { UpdateDisponibilidadeDto } from '../dto/update-disponibilidade.dto';
 export class DispobilidadeService {
   constructor(private prisma: PrismaService) {}
 
+  private readonly logger = new Logger(DispobilidadeService.name);
+
   /**
    * Executa a operacao get availabilities.
    * @returns Resultado da operacao.
    */
 
   async getAvailabilities() {
+    this.logger.log('A carregar todas as disponibilidades da Base de Dados...');
     const disponibilidadesRaw = await this.prisma.disponibilidade.findMany({
       include: {
         Professor: { include: { Pessoa: true } },
@@ -88,6 +94,7 @@ export class DispobilidadeService {
    */
 
   async criarDisponibilidade(dto: CreateDisponibilidadeDto) {
+    this.logger.log('A criar disponibilidade...');
     const horaInicio = new Date(dto.Hora_Inicio);
     const inicioDoDiaAtual = new Date();
     inicioDoDiaAtual.setHours(0, 0, 0, 0);
