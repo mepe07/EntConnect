@@ -11,8 +11,6 @@ import { RequestLoggingInterceptor } from './common/interceptors/request-logging
 /**
  * Inicialização serviço Azure App Insights
  */
-// NOTA: Se testares localmente e a variável der undefined, pode ser necessário 
-// adicionar require('dotenv').config(); no topo do ficheiro para ler o .env antes do NestJS arrancar.
 const appInsightsConnectionString = process.env.APPINSIGHTS_CONNECTION_STRING;
 
 if (appInsightsConnectionString) {
