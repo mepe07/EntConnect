@@ -38,14 +38,25 @@ const CARGOS_DISPONIVEIS = [
     'Encarregado de Educação',
 ];
 
+const CARGO_SEM_CARGO = 'Sem Cargo';
+
+const normalizarListaCargos = (cargos: Array<string | null | undefined>) =>
+    cargos
+        .map(cargo => cargo?.trim())
+        .filter((cargo): cargo is string => Boolean(cargo) && cargo !== CARGO_SEM_CARGO);
+
 const obterCargosUtilizador = (utilizador?: Pick<Utilizador, 'cargo' | 'cargos'> | null) => {
-    if (utilizador?.cargos?.length) return utilizador.cargos;
-    return utilizador?.cargo ? [utilizador.cargo] : [];
+    const cargos = normalizarListaCargos([
+        ...(utilizador?.cargos ?? []),
+        utilizador?.cargo,
+    ]);
+
+    return Array.from(new Set(cargos));
 };
 
 const formatarCargos = (cargos: string[]) => cargos
     .map(cargo => cargoLabel[cargo] ?? cargo)
-    .join(', ');
+    .join(', ') || CARGO_SEM_CARGO;
 
 const cargosIguais = (a: string[], b: string[]) =>
     a.length === b.length && a.every(cargo => b.includes(cargo));
@@ -870,8 +881,11 @@ export function Utilizadores() {
                                 <td colSpan={7} className="tabela-vazia">Nenhum utilizador encontrado.</td>
                             </tr>
                         ) : (
-                            utilizadoresPagina.map((u) => (
-                                <tr key={u.idUtilizador}>
+                            utilizadoresPagina.map((u) => {
+                                const cargosFormatados = formatarCargos(obterCargosUtilizador(u));
+
+                                return (
+                                    <tr key={u.idUtilizador}>
                                     <td className="id-coluna">#{u.idUtilizador}</td>
                                     <td>
                                         <div className="user-info">
@@ -893,8 +907,8 @@ export function Utilizadores() {
                                     <td className="text-secondary">{u.username}</td>
                                     <td className="text-secondary">{u.email}</td>
                                     <td>
-                                        <span className="tag-role">
-                                            {formatarCargos(obterCargosUtilizador(u))}
+                                        <span className="tag-role" title={cargosFormatados}>
+                                            {cargosFormatados}
                                         </span>
                                     </td>
                                     <td>
@@ -925,8 +939,9 @@ export function Utilizadores() {
                                             <i className="fa-solid fa-trash"></i>
                                         </button>
                                     </td>
-                                </tr>
-                            ))
+                                    </tr>
+                                );
+                            })
                         )}
                     </tbody>
                 </table>

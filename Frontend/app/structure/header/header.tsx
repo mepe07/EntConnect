@@ -226,8 +226,6 @@ export function Header({ menuMobileAberto = false, onToggleMenuMobile }: HeaderP
                     onMouseEnter={openSubMenu}
                     onMouseLeave={scheduleSubMenuClose}
                 >
-                    <ThemeToggle className="header-theme-toggle" />
-
                     <div
                         className="profile-picture"
                         ref={profilePictureRef}
@@ -263,7 +261,6 @@ export function Header({ menuMobileAberto = false, onToggleMenuMobile }: HeaderP
                         </div>
                         {rolesDisponiveis.length > 1 && (
                             <div className="role-switcher">
-                                <label htmlFor="role-switcher">Role ativa</label>
                                 <select
                                     id="role-switcher"
                                     value={userInfo?.role || ''}
@@ -278,6 +275,10 @@ export function Header({ menuMobileAberto = false, onToggleMenuMobile }: HeaderP
                                 </select>
                             </div>
                         )}
+                        <div className="theme-switcher">
+                            <span>Tema</span>
+                            <ThemeToggle className="menu-theme-toggle" />
+                        </div>
                         <button
                             type="button"
                             onClick={() => {

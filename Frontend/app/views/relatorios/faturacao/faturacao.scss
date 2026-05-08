@@ -24,8 +24,9 @@
     .filtros-iniciais {
         display: flex;
         flex-wrap: wrap;
-        gap: 24px;
+        gap: 16px;
         align-items: flex-end;
+        overflow: hidden;
         background-color: #ffffff;
         padding: 32px;
         border-radius: 16px;
@@ -35,8 +36,9 @@
 
         .pesquisa-periodo {
             display: flex;
-            flex-wrap: wrap;
-            gap: 24px;
+            flex: 0 0 auto;
+            flex-wrap: nowrap;
+            gap: 16px;
             align-items: flex-end;
         }
 
@@ -48,14 +50,15 @@
 
             input[type="date"] {
                 appearance: none;
-                padding: 14px 45px 14px 20px;
+                height: 42px;
+                padding: 0 45px 0 20px;
                 border: 2px solid #f1f5f9;
                 border-radius: 10px;
                 background-color: #f8fafc;
                 color: #1e293b;
                 font-family: inherit;
                 font-size: 16px;
-                width: 100%;
+                width: clamp(210px, 18vw, 260px);
                 outline: none;
                 cursor: pointer;
 
@@ -86,7 +89,7 @@
                 font-weight: 900;
                 position: absolute;
                 right: 18px;
-                bottom: 16px;
+                bottom: 13px;
                 color: gray;
                 font-size: 15px;
                 pointer-events: none;
@@ -96,11 +99,25 @@
 
         .filtros-rapidos {
             display: flex;
+            flex: 1 1 360px;
             flex-wrap: wrap;
             gap: 10px;
             margin-left: auto;
             align-items: flex-end;
             justify-content: flex-end;
+            min-width: 0;
+
+            .button-container {
+                height: 42px;
+                font-size: 16px;
+                white-space: nowrap;
+            }
+        }
+
+        .button-container {
+            height: 42px;
+            font-size: 16px;
+            white-space: nowrap;
         }
     }
 
@@ -332,7 +349,12 @@
                 align-items: stretch;
             }
 
+            .grupo-data input[type="date"] {
+                width: 100%;
+            }
+
             .filtros-rapidos {
+                flex-wrap: wrap;
                 margin-left: 0;
                 justify-content: flex-start;
             }
@@ -359,6 +381,85 @@
                 .kpis .kpi-box .valor {
                     font-size: 26px;
                 }
+            }
+        }
+    }
+}
+
+body.entconnect-dark {
+    .pagina-faturacao {
+        background-color: #0f172a !important;
+        color: #e2e8f0 !important;
+
+        .cabecalho-pagina h1 {
+            color: #f8fafc !important;
+        }
+
+        .filtros-iniciais,
+        .detalhe-conteudo,
+        .empty-state,
+        .card-resumo {
+            background-color: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28) !important;
+        }
+
+        .cabecalho-detalhe {
+            border-color: #334155 !important;
+        }
+
+        .painel-esquerdo h3,
+        .grupo-data label,
+        .kpi-box .label,
+        .stats-resumo,
+        .empty-state h3 {
+            color: #94a3b8 !important;
+        }
+
+        .info-prof h4,
+        .info-selecionada h2,
+        .kpi-box .valor {
+            color: #f8fafc !important;
+        }
+
+        .card-resumo:hover {
+            background-color: #172033 !important;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.36) !important;
+        }
+
+        .card-resumo.ativo {
+            background-color: #172033 !important;
+            border-color: #60a5fa !important;
+            box-shadow: 0 18px 40px rgba(37, 99, 235, 0.22) !important;
+
+            .info-prof h4 {
+                color: #93c5fd !important;
+            }
+        }
+
+        .grupo-data input[type="date"],
+        .input-container input {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+            color-scheme: dark;
+
+            &:focus {
+                background-color: #111827 !important;
+                border-color: #60a5fa !important;
+            }
+        }
+
+        .grupo-data::after {
+            color: #94a3b8 !important;
+        }
+
+        .lista-cards {
+            scrollbar-color: #475569 transparent;
+
+            &::-webkit-scrollbar-thumb {
+                background: #475569 !important;
             }
         }
     }

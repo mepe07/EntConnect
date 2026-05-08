@@ -161,9 +161,9 @@ export function Estatisticas() {
                             </div>
                             <div className="grafico-pequeno">
                                 {existemDados ? (
-                                    <ResponsiveContainer width="100%" height={250}>
+                                    <ResponsiveContainer width="100%" height={300}>
                                         <PieChart>
-                                            <Pie data={dadosDonut} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                                            <Pie data={dadosDonut} cx="50%" cy="50%" innerRadius={68} outerRadius={100} paddingAngle={5} dataKey="value">
                                                 {dadosDonut.map((entry, index) => <Cell key={`cell-${index}`} fill={CORES_PIE[index % CORES_PIE.length]} />)}
                                             </Pie>
                                             <Tooltip formatter={(value: any) => [formatarMoeda(Number(value)), "Total"]} />
@@ -179,13 +179,13 @@ export function Estatisticas() {
                             <h3><i className="fa-solid fa-trophy"></i> Pódio de Faturação</h3>
                             <div className="grafico-pequeno">
                                 {existemDados ? (
-                                    <ResponsiveContainer width="100%" height={300}>
-                                        <BarChart data={dados.topProfessores} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                                    <ResponsiveContainer width="100%" height={340}>
+                                        <BarChart data={dados.topProfessores} layout="vertical" margin={{ top: 12, right: 24, left: 8, bottom: 20 }}>
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                                             <XAxis type="number" stroke="#94a3b8" tickFormatter={(value) => formatarMoeda(value)} />
-                                            <YAxis dataKey="nome" type="category" stroke="#64748b" fontWeight="600" width={100} />
+                                            <YAxis dataKey="nome" type="category" stroke="#64748b" fontWeight="600" width={86} />
                                             <Tooltip formatter={(value: any) => [formatarMoeda(Number(value)), "Faturou"]} cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '10px' }} />
-                                            <Bar dataKey="total" fill="#10b981" radius={[0, 4, 4, 0]} barSize={25} />
+                                            <Bar dataKey="total" fill="#10b981" radius={[0, 6, 6, 0]} barSize={34} minPointSize={6} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 ) : (
@@ -198,8 +198,8 @@ export function Estatisticas() {
                             <h3><i className="fa-solid fa-money-bill-trend-up"></i> Previsão (3 Meses)</h3>
                             <div className="grafico-pequeno">
                                 {existemDadosFuturos ? (
-                                    <ResponsiveContainer width="100%" height={300}>
-                                        <BarChart data={previsao || []} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                                    <ResponsiveContainer width="100%" height={340}>
+                                        <BarChart data={previsao || []} margin={{ top: 12, right: 20, left: 8, bottom: 12 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                             <XAxis dataKey="mes" stroke="#94a3b8" fontWeight="600" />
                                             <YAxis stroke="#94a3b8" tickFormatter={(value) => formatarMoeda(value)} fontSize="15px" />

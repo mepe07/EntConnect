@@ -220,7 +220,7 @@ export function NavigationMenu({ menuMobileAberto = false, onCloseMenuMobile }: 
                 <ThemeToggle className="mobile-theme-toggle" />
                 {rolesDisponiveis.length > 1 && (
                     <label className="mobile-role-switcher">
-                        <span>Role ativa</span>
+                        <span>Cargo ativo</span>
                         <select
                             value={userInfo?.role || ''}
                             disabled={roleEmAtualizacao}

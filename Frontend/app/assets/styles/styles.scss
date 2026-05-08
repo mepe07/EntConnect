@@ -224,9 +224,22 @@ body.entconnect-dark {
     }
 
     .body-wrapper,
-    .body-wrapper *,
     .public-theme-toggle ~ * {
         color: #e2e8f0 !important;
+    }
+
+    .body-wrapper h1,
+    .body-wrapper h2,
+    .body-wrapper h3,
+    .body-wrapper h4,
+    .body-wrapper h5,
+    .body-wrapper h6,
+    .body-wrapper label,
+    .body-wrapper p,
+    .body-wrapper span,
+    .body-wrapper strong,
+    .body-wrapper td {
+        color: inherit;
     }
 
     a {
@@ -276,72 +289,7 @@ body.entconnect-dark {
     }
 
     .card,
-    div[class*="section"],
-    section[class*="section"],
-    div[class*="Section"],
-    section[class*="Section"],
-    div[class*="hero"],
-    section[class*="hero"],
-    div[class*="Hero"],
-    section[class*="Hero"],
-    div[class*="toolbar"],
-    section[class*="toolbar"],
-    div[class*="Toolbar"],
-    section[class*="Toolbar"],
-    div[class*="wrapper"],
-    section[class*="wrapper"],
-    div[class*="Wrapper"],
-    section[class*="Wrapper"],
-    div[class*="card"],
-    section[class*="card"],
-    article[class*="card"],
-    div[class*="Card"],
-    section[class*="Card"],
-    article[class*="Card"],
-    div[class*="panel"],
-    section[class*="panel"],
-    article[class*="panel"],
-    div[class*="Panel"],
-    section[class*="Panel"],
-    article[class*="Panel"],
-    div[class*="box"],
-    section[class*="box"],
-    article[class*="box"],
-    div[class*="Box"],
-    section[class*="Box"],
-    article[class*="Box"],
-    div[class*="featured"],
-    section[class*="featured"],
-    article[class*="featured"],
-    div[class*="Featured"],
-    section[class*="Featured"],
-    article[class*="Featured"],
-    div[class*="compact"],
-    section[class*="compact"],
-    article[class*="compact"],
-    div[class*="Compact"],
-    section[class*="Compact"],
-    article[class*="Compact"],
-    div[class*="filters"],
-    section[class*="filters"],
-    article[class*="filters"],
-    div[class*="Filters"],
-    section[class*="Filters"],
-    article[class*="Filters"],
-    div[class*="stats"] article,
-    div[class*="Stats"] article,
-    div[class*="empty"],
-    section[class*="empty"],
-    article[class*="empty"],
-    div[class*="Empty"],
-    section[class*="Empty"],
-    article[class*="Empty"],
-    div[class*="modal"],
-    section[class*="modal"],
-    article[class*="modal"],
-    div[class*="Modal"],
-    section[class*="Modal"],
-    article[class*="Modal"],
+    .pagina-aprovacoes,
     [style*="background: white"],
     [style*="background: 'white'"],
     [style*="background-color: white"],
@@ -367,23 +315,24 @@ body.entconnect-dark {
         color: #e2e8f0 !important;
     }
 
+    .pagina-aprovacoes {
+        background-color: #0f172a !important;
+
+        h1 {
+            color: #f8fafc !important;
+        }
+    }
+
     .infoRow span,
-    [class*="infoRow"] span,
-    [class*="InfoRow"] span,
-    [class*="sideEmpty"],
-    [class*="SideEmpty"],
-    [class*="uploadArea"],
-    [class*="UploadArea"],
-    [class*="switchGrid"] label,
-    [class*="SwitchGrid"] label {
+    .sideEmpty,
+    .uploadArea,
+    .switchGrid label {
         background-color: #111827 !important;
         border-color: #334155 !important;
         color: #e2e8f0 !important;
     }
 
     .badge,
-    [class*="badge"],
-    [class*="Badge"],
     [class*="tag-estado"],
     [class*="status"] {
         color: #0f172a !important;
@@ -391,11 +340,7 @@ body.entconnect-dark {
 
     .btn-principal,
     .btn-primario,
-    .primaryButton,
-    [class*="primaryButton"],
-    [class*="PrimaryButton"],
-    button[class*="primary"],
-    button[class*="Primary"] {
+    .primaryButton {
         color: #ffffff !important;
     }
 
@@ -407,10 +352,8 @@ body.entconnect-dark {
     }
 
     .text-muted,
-    [class*="subtitle"],
-    [class*="Subtitle"],
     [class*="descricao"],
-    [class*="Descricao"] {
+    [class*="description"] {
         color: #94a3b8 !important;
     }
 

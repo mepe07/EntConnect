@@ -161,3 +161,40 @@
         }
     }
 }
+
+body.entconnect-dark {
+    .toolbar,
+    .table-container {
+        background-color: #111827 !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+    }
+
+    .table-container {
+        table {
+            thead th {
+                background-color: #1f2937 !important;
+                border-color: #334155 !important;
+                color: #f8fafc !important;
+            }
+
+            tbody {
+                tr:hover {
+                    background-color: rgba(148, 163, 184, 0.12) !important;
+                }
+
+                tr td {
+                    border-color: #334155 !important;
+                    color: #e2e8f0 !important;
+                }
+            }
+        }
+    }
+
+    .toolbar {
+        label {
+            color: #f8fafc !important;
+        }
+    }
+}
