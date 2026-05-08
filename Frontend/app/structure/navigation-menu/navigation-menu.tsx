@@ -142,10 +142,17 @@ function formatRoleName(role?: string) {
 interface NavigationMenuProps {
     menuMobileAberto?: boolean;
     onCloseMenuMobile?: () => void;
+    menuDesktopColapsado?: boolean;
+    onToggleMenuDesktop?: () => void;
 }
 
 
-export function NavigationMenu({ menuMobileAberto = false, onCloseMenuMobile }: NavigationMenuProps) {
+export function NavigationMenu({
+    menuMobileAberto = false,
+    onCloseMenuMobile,
+    menuDesktopColapsado = false,
+    onToggleMenuDesktop,
+}: NavigationMenuProps) {
     const location = useLocation();
     const navigate = useNavigate();
     const path = location.pathname.toLowerCase();
@@ -211,7 +218,10 @@ export function NavigationMenu({ menuMobileAberto = false, onCloseMenuMobile }: 
     };
 
     return (
-        <nav className={`navigation-menu ${menuMobileAberto ? 'mobile-open' : ''}`} aria-label="Menu principal">
+        <nav
+            className={`navigation-menu ${menuMobileAberto ? 'mobile-open' : ''} ${menuDesktopColapsado ? 'collapsed' : ''}`}
+            aria-label="Menu principal"
+        >
             <div className="mobile-user-menu">
                 <div className="mobile-user-avatar">{userLetter}</div>
                 <div className="mobile-user-details">
@@ -260,7 +270,7 @@ export function NavigationMenu({ menuMobileAberto = false, onCloseMenuMobile }: 
                     if (item.path && !item.submenu) {
                         return (
                             <li key={index} className={isActive(item.path) ? 'active' : ''}>
-                                <Link to={item.path} onClick={onCloseMenuMobile}>
+                                <Link to={item.path} onClick={onCloseMenuMobile} title={menuDesktopColapsado ? item.titulo : undefined}>
                                     <div className="item-content">
                                         {item.icone && <i className={item.icone}></i>}
                                         <span>{item.titulo}</span>
@@ -276,7 +286,19 @@ export function NavigationMenu({ menuMobileAberto = false, onCloseMenuMobile }: 
 
                         return (
                             <li key={index} className={`menu-dropdown ${isSubmenuActive(item.submenu) ? 'active-parent' : ''}`}>
-                                <div className="dropdown-titulo" onClick={() => toggleMenu(item.titulo)}>
+                                <div
+                                    className="dropdown-titulo"
+                                    title={menuDesktopColapsado ? item.titulo : undefined}
+                                    onClick={() => {
+                                        if (menuDesktopColapsado) {
+                                            onToggleMenuDesktop?.();
+                                            setMenuAberto(item.titulo);
+                                            return;
+                                        }
+
+                                        toggleMenu(item.titulo);
+                                    }}
+                                >
                                     <div className="item-content">
                                         {item.icone && <i className={item.icone}></i>}
                                         <span>{item.titulo}</span>
@@ -307,6 +329,18 @@ export function NavigationMenu({ menuMobileAberto = false, onCloseMenuMobile }: 
                     return null;
                 })}
             </ul>
+            <div className="desktop-collapse-control">
+                <ButtonComponent
+                    type="button"
+                    className="sidebar-collapse-button"
+                    aria-label={menuDesktopColapsado ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
+                    aria-expanded={!menuDesktopColapsado}
+                    title={menuDesktopColapsado ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
+                    onClick={onToggleMenuDesktop}
+                >
+                    <i className={`fa-solid ${menuDesktopColapsado ? 'fa-chevron-right' : 'fa-chevron-left'}`}></i>
+                </ButtonComponent>
+            </div>
         </nav>
     );
 }

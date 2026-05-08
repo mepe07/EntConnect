@@ -916,7 +916,8 @@ export function Utilizadores() {
                                             {u.ativo ? 'Ativo' : 'Bloqueado'}
                                         </span>
                                     </td>
-                                    <td className="acoes-coluna">
+                                    <td>
+                                        <div className="acoes-coluna">
                                         <ButtonComponent
                                             className="btn-icone editar"
                                             title="Ver detalhes e editar"
@@ -938,6 +939,7 @@ export function Utilizadores() {
                                         >
                                             <i className="fa-solid fa-trash"></i>
                                         </ButtonComponent>
+                                        </div>
                                     </td>
                                     </tr>
                                 );

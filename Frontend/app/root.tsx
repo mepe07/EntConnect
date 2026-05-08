@@ -79,6 +79,7 @@ export default function App() {
     const [sessaoValida, setSessaoValida] = useState(false);
     const [versaoSessao, setVersaoSessao] = useState(0);
     const [menuMobileAberto, setMenuMobileAberto] = useState(false);
+    const [menuDesktopColapsado, setMenuDesktopColapsado] = useState(false);
     const location = useLocation();
     const isRotaPublicaEventos =
         location.pathname === '/eventos' ||
@@ -88,6 +89,9 @@ export default function App() {
     useEffect(() => {
         setDomLoaded(true);
         authService.configurarValidacaoGlobal();
+
+        const menuGuardado = localStorage.getItem('entconnect-menu-desktop-colapsado');
+        setMenuDesktopColapsado(menuGuardado === 'true');
     }, []);
 
     useEffect(() => {
@@ -121,7 +125,7 @@ export default function App() {
     }, []);
 
     const page = (
-        <div className="app-layout min-h-screen bg-[#f8fafc]">
+        <div className={`app-layout min-h-screen bg-[#f8fafc] ${menuDesktopColapsado ? 'sidebar-collapsed' : ''}`}>
             <Header
                 key={`header-${versaoSessao}`}
                 menuMobileAberto={menuMobileAberto}
@@ -132,6 +136,14 @@ export default function App() {
                     key={`menu-${versaoSessao}`}
                     menuMobileAberto={menuMobileAberto}
                     onCloseMenuMobile={() => setMenuMobileAberto(false)}
+                    menuDesktopColapsado={menuDesktopColapsado}
+                    onToggleMenuDesktop={() => {
+                        setMenuDesktopColapsado((colapsado) => {
+                            const novoEstado = !colapsado;
+                            localStorage.setItem('entconnect-menu-desktop-colapsado', String(novoEstado));
+                            return novoEstado;
+                        });
+                    }}
                 />
                 {menuMobileAberto && (
                     <ButtonComponent
