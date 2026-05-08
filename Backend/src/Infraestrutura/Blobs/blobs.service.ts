@@ -2,6 +2,7 @@ import {
   Injectable,
   InternalServerErrorException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { BlobServiceClient } from '@azure/storage-blob';
 import 'multer';
@@ -12,12 +13,13 @@ import { Express } from 'express';
 
 @Injectable()
 export class BlobsService {
+  private readonly logger = new Logger(BlobsService.name);
   private blobServiceClient?: BlobServiceClient;
 
   constructor() {
     const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
     if (!connectionString) {
-      console.warn('Azure Connection String não encontrada!');
+      this.logger.warn('Azure Storage Connection String nao encontrada.');
     } else {
       this.blobServiceClient =
         BlobServiceClient.fromConnectionString(connectionString);
@@ -37,10 +39,17 @@ export class BlobsService {
     file: Express.Multer.File,
     nomePersonalizado: string,
   ): Promise<string> {
+    if (!this.blobServiceClient) {
+      this.logger.error(`Upload rejeitado: Azure nao configurado container=${containerName}`);
+    }
+
     if (!this.blobServiceClient)
       throw new InternalServerErrorException('Azure não configurado.');
 
     try {
+      this.logger.log(
+        `A carregar ficheiro para Azure container=${containerName} nome=${nomePersonalizado} mimetype=${file.mimetype} tamanho=${file.size}`,
+      );
       const containerClient =
         this.blobServiceClient.getContainerClient(containerName);
 
@@ -53,8 +62,15 @@ export class BlobsService {
         blobHTTPHeaders: { blobContentType: file.mimetype },
       });
 
+      this.logger.log(
+        `Ficheiro carregado para Azure container=${containerName} blob=${caminhoNoBlob}`,
+      );
       return blockBlobClient.url;
     } catch (error) {
+      this.logger.error(
+        `Erro ao carregar ficheiro para Azure container=${containerName} nome=${nomePersonalizado}`,
+        error instanceof Error ? error.stack : undefined,
+      );
       throw new BadRequestException(
         `Erro ao carregar para o contentor ${containerName}`,
       );
@@ -109,7 +125,10 @@ export class BlobsService {
       const buffer = await blockBlobClient.downloadToBuffer();
       return buffer.toString('latin1');
     } catch (error) {
-      console.error('Erro ao comunicar com o Azure Blob Storage:', error);
+      this.logger.error(
+        `Erro ao ler ficheiro do Azure container=${containerName} nome=${nomeFicheiro}`,
+        error instanceof Error ? error.stack : undefined,
+      );
       throw new BadRequestException(
         `Não foi possível ler o ficheiro "${nomeFicheiro}" no contentor "${containerName}". Confirma se os nomes estão corretos no Azure.`,
       );
@@ -139,9 +158,14 @@ export class BlobsService {
       const blockBlobClient = containerClient.getBlockBlobClient(nomeFicheiro);
 
       await blockBlobClient.deleteIfExists();
-      console.log(`🗑️ Ficheiro ${nomeFicheiro} apagado com sucesso do Azure!`);
+      this.logger.log(
+        `Ficheiro apagado do Azure container=${containerName} nome=${nomeFicheiro}`,
+      );
     } catch (error) {
-      console.error('Erro ao apagar ficheiro no Azure:', error);
+      this.logger.error(
+        `Erro ao apagar ficheiro no Azure container=${containerName} nome=${nomeFicheiro}`,
+        error instanceof Error ? error.stack : undefined,
+      );
     }
   }
 
@@ -171,8 +195,8 @@ export class BlobsService {
       const exists = await blockBlobClient.exists();
 
       if (exists) {
-        console.warn(
-          `O blob "${blobName}" já existe no contentor "${containerName}". Será substituído.`,
+        this.logger.warn(
+          `Blob ja existe e sera substituido container=${containerName} blob=${blobName}`,
         );
       }
 
@@ -180,9 +204,15 @@ export class BlobsService {
         blobHTTPHeaders: { blobContentType: file.mimetype },
       });
 
+      this.logger.log(
+        `Foto marketplace guardada container=${containerName} blob=${blobName} mimetype=${file.mimetype} tamanho=${file.size}`,
+      );
       return blockBlobClient.url;
     } catch (error) {
-      console.error('Erro ao guardar fotos do marketplace:', error);
+      this.logger.error(
+        `Erro ao guardar foto marketplace container=${containerName} nome=${nomePersonalizado}`,
+        error instanceof Error ? error.stack : undefined,
+      );
       throw new BadRequestException(
         `Erro ao guardar fotos do marketplace no contentor "${containerName}".`,
       );
@@ -228,7 +258,10 @@ export class BlobsService {
 
       return downloadResponse.readableStreamBody;
     } catch (error) {
-      console.error('Erro ao obter stream do Azure Blob Storage:', error);
+      this.logger.error(
+        `Erro ao obter stream do Azure container=${containerName} nome=${nomeFicheiro}`,
+        error instanceof Error ? error.stack : undefined,
+      );
       throw new InternalServerErrorException(
         `Não foi possível fazer download do ficheiro "${nomeFicheiro}".`,
       );

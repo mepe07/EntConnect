@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -57,6 +58,8 @@ import {
 
 @Injectable()
 export class MarketplaceService {
+  private readonly logger = new Logger(MarketplaceService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly blobsService: BlobsService,
@@ -240,6 +243,10 @@ export class MarketplaceService {
     utilizador: UtilizadorAutenticado,
     file?: Express.Multer.File,
   ) {
+    this.logger.log(
+      `A criar anuncio marketplace userId=${utilizador.sub} tipo=${dto.tipoAnuncio} comFoto=${Boolean(file)}`,
+    );
+
     const urlFoto = file
       ? await this.guardarFotoMarketplace(
           file,
@@ -249,7 +256,7 @@ export class MarketplaceService {
 
     const dataAtual = new Date();
 
-    return this.prisma.$transaction(async (tx) => {
+    const artigo = await this.prisma.$transaction(async (tx) => {
       const novoArtigo = await tx.artigo.create({
         data: montarDadosCriacaoAnuncio({
           dto,
@@ -268,6 +275,11 @@ export class MarketplaceService {
 
       return novoArtigo;
     });
+
+    this.logger.log(
+      `Anuncio marketplace criado idArtigo=${artigo.ID_Artigo} userId=${utilizador.sub}`,
+    );
+    return artigo;
   }
 
   /**
@@ -281,12 +293,19 @@ export class MarketplaceService {
     dto: PublicarInventarioEscolaDto,
     utilizador: UtilizadorAutenticado,
   ) {
+    this.logger.log(
+      `A publicar inventario da escola idArtigo=${dto.idArtigo} userId=${utilizador.sub}`,
+    );
+
     garantirAcessoAoInventarioDaEscola(utilizador.role);
 
     const artigo = await this.obterArtigoOuFalhar(dto.idArtigo);
 
     const dono = this.ehDonoDoAnuncio(artigo, utilizador);
     if (!dono) {
+      this.logger.warn(
+        `Publicacao de inventario rejeitada: utilizador nao e dono idArtigo=${dto.idArtigo} userId=${utilizador.sub}`,
+      );
       throw new ForbiddenException(
         'Este artigo do inventário não pertence à coordenadora autenticada.',
       );
@@ -309,7 +328,7 @@ export class MarketplaceService {
 
     const dataAtual = new Date();
 
-    return this.prisma.$transaction(async (tx) => {
+    const artigoPublicado = await this.prisma.$transaction(async (tx) => {
       await tx.stock_Armazem.update({
         where: { ID_Stock: stockPrincipal.ID_Stock },
         data: montarDadosStockPublicacaoInventario({
@@ -328,6 +347,11 @@ export class MarketplaceService {
         include: this.includeBaseArtigo(),
       });
     });
+
+    this.logger.log(
+      `Inventario publicado no marketplace idArtigo=${dto.idArtigo} userId=${utilizador.sub}`,
+    );
+    return artigoPublicado;
   }
 
   /**
@@ -345,6 +369,10 @@ export class MarketplaceService {
     utilizador: UtilizadorAutenticado,
     file?: Express.Multer.File,
   ) {
+    this.logger.log(
+      `A atualizar anuncio idArtigo=${idArtigo} userId=${utilizador.sub} comFoto=${Boolean(file)}`,
+    );
+
     const artigo = await this.obterArtigoOuFalhar(idArtigo);
     this.garantirAcessoAoAnuncio(artigo, utilizador);
 
@@ -381,7 +409,7 @@ export class MarketplaceService {
 
     const dataAtual = new Date();
 
-    return this.prisma.$transaction(async (tx) => {
+    const artigoAtualizado = await this.prisma.$transaction(async (tx) => {
       await tx.stock_Armazem.update({
         where: { ID_Stock: stockPrincipal.ID_Stock },
         data: montarDadosStockAtualizacaoAnuncio({
@@ -404,6 +432,9 @@ export class MarketplaceService {
         include: this.includeBaseArtigo(),
       });
     });
+
+    this.logger.log(`Anuncio atualizado idArtigo=${idArtigo} userId=${utilizador.sub}`);
+    return artigoAtualizado;
   }
 
   /**
@@ -419,6 +450,10 @@ export class MarketplaceService {
     dto: AlterarEstadoAnuncioDto,
     utilizador: UtilizadorAutenticado,
   ) {
+    this.logger.log(
+      `A alterar estado de anuncio idArtigo=${idArtigo} novoEstado=${dto.estado} userId=${utilizador.sub}`,
+    );
+
     const artigo = await this.obterArtigoOuFalhar(idArtigo);
 
     this.garantirAcessoAoAnuncio(artigo, utilizador);
@@ -428,7 +463,7 @@ export class MarketplaceService {
       utilizador,
     );
 
-    return this.prisma.artigo.update({
+    const artigoAtualizado = await this.prisma.artigo.update({
       where: { ID_Artigo: idArtigo },
       data: {
         Estado_Anuncio: dto.estado,
@@ -452,6 +487,11 @@ export class MarketplaceService {
       },
       include: this.includeBaseArtigo(),
     });
+
+    this.logger.log(
+      `Estado de anuncio alterado idArtigo=${idArtigo} novoEstado=${dto.estado} userId=${utilizador.sub}`,
+    );
+    return artigoAtualizado;
   }
 
   /**
@@ -462,15 +502,20 @@ export class MarketplaceService {
    */
 
   async removerAnuncio(idArtigo: number, utilizador: UtilizadorAutenticado) {
+    this.logger.log(`A remover anuncio idArtigo=${idArtigo} userId=${utilizador.sub}`);
+
     const artigo = await this.obterArtigoOuFalhar(idArtigo);
 
     if (!this.ehDonoDoAnuncio(artigo, utilizador)) {
+      this.logger.warn(
+        `Remocao de anuncio rejeitada: utilizador nao e dono idArtigo=${idArtigo} userId=${utilizador.sub}`,
+      );
       throw new ForbiddenException(
         'Só o dono do anúncio o pode remover diretamente.',
       );
     }
 
-    return this.prisma.artigo.update({
+    const artigoRemovido = await this.prisma.artigo.update({
       where: { ID_Artigo: idArtigo },
       data: {
         Estado_Anuncio: EstadoAnuncio.REMOVIDO,
@@ -479,6 +524,9 @@ export class MarketplaceService {
       },
       include: this.includeBaseArtigo(),
     });
+
+    this.logger.log(`Anuncio removido idArtigo=${idArtigo} userId=${utilizador.sub}`);
+    return artigoRemovido;
   }
 
   /**
@@ -494,6 +542,10 @@ export class MarketplaceService {
     dto: ModerarAnuncioMarketplaceDto,
     utilizador: UtilizadorAutenticado,
   ) {
+    this.logger.log(
+      `A moderar anuncio idArtigo=${idArtigo} acao=${dto.acao} userId=${utilizador.sub}`,
+    );
+
     garantirPermissaoDeModeracao(utilizador.role);
 
     const artigo = await this.obterArtigoOuFalhar(idArtigo);
@@ -509,7 +561,7 @@ export class MarketplaceService {
         motivoAtual: artigo.Motivo_Moderacao,
       });
 
-    return this.prisma.$transaction(async (tx) => {
+    const artigoModerado = await this.prisma.$transaction(async (tx) => {
       const artigoAtualizado = await tx.artigo.update({
         where: { ID_Artigo: idArtigo },
         data: {
@@ -535,6 +587,11 @@ export class MarketplaceService {
 
       return artigoAtualizado;
     });
+
+    this.logger.log(
+      `Anuncio moderado idArtigo=${idArtigo} acao=${dto.acao} estadoAnterior=${estadoAnterior} estadoNovo=${estadoNovo} userId=${utilizador.sub}`,
+    );
+    return artigoModerado;
   }
 
   /**
@@ -550,18 +607,28 @@ export class MarketplaceService {
     dto: RegistarInteresseMarketplaceDto,
     utilizador: UtilizadorAutenticado,
   ) {
+    this.logger.log(
+      `A registar interesse marketplace idArtigo=${idArtigo} userId=${utilizador.sub} tipo=${dto.tipo ?? TipoInteresse.CONTACTO}`,
+    );
+
     const artigo = await this.obterArtigoOuFalhar(idArtigo);
 
     if (
       !artigo.Publicado_No_Marketplace ||
       artigo.Estado_Anuncio !== EstadoAnuncio.ATIVO
     ) {
+      this.logger.warn(
+        `Interesse rejeitado: anuncio indisponivel idArtigo=${idArtigo} userId=${utilizador.sub}`,
+      );
       throw new BadRequestException(
         'Este anúncio não está disponível para novos contactos.',
       );
     }
 
     if (this.ehDonoDoAnuncio(artigo, utilizador)) {
+      this.logger.warn(
+        `Interesse rejeitado: dono tentou contactar proprio anuncio idArtigo=${idArtigo} userId=${utilizador.sub}`,
+      );
       throw new BadRequestException(
         'Não podes registar interesse no teu próprio anúncio.',
       );
@@ -573,7 +640,7 @@ export class MarketplaceService {
       throw new BadRequestException('O anúncio não tem stock associado.');
     }
 
-    return this.prisma.interesse_Artigo.create({
+    const interesse = await this.prisma.interesse_Artigo.create({
       data: {
         ID_Stock: stockPrincipal.ID_Stock,
         ID_Utilizador: utilizador.sub,
@@ -586,6 +653,11 @@ export class MarketplaceService {
           : null,
       },
     });
+
+    this.logger.log(
+      `Interesse marketplace registado idInteresse=${interesse.ID_Interesse} idArtigo=${idArtigo} userId=${utilizador.sub}`,
+    );
+    return interesse;
   }
 
   /**
@@ -637,6 +709,10 @@ export class MarketplaceService {
     utilizador: UtilizadorAutenticado,
     file?: Express.Multer.File,
   ) {
+    this.logger.log(
+      `A criar item de inventario userId=${utilizador.sub} comFoto=${Boolean(file)}`,
+    );
+
     garantirAcessoAoInventarioDaEscola(utilizador.role);
 
     const urlFoto = file
@@ -648,7 +724,7 @@ export class MarketplaceService {
 
     const dataAtual = new Date();
 
-    return this.prisma.$transaction(async (tx) => {
+    const artigo = await this.prisma.$transaction(async (tx) => {
       const novoArtigo = await tx.artigo.create({
         data: montarDadosCriacaoItemInventario({
           dto,
@@ -667,6 +743,11 @@ export class MarketplaceService {
 
       return novoArtigo;
     });
+
+    this.logger.log(
+      `Item de inventario criado idArtigo=${artigo.ID_Artigo} userId=${utilizador.sub}`,
+    );
+    return artigo;
   }
 
   /**

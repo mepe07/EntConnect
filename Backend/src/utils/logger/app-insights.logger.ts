@@ -39,8 +39,11 @@ export class AppInsightsLogger extends ConsoleLogger {
     super.error(message, ...optionalParams);
     
     if (appInsights.defaultClient) {
+      const context = optionalParams.length > 0 ? optionalParams[optionalParams.length - 1] : undefined;
+      const contextString = typeof context === 'string' ? context : undefined;
+
       appInsights.defaultClient.trackException({
-        exception: new Error(this.formataMensagem(message)),
+        exception: new Error(this.formataMensagem(message, contextString)),
       });
     }
   }
@@ -49,8 +52,11 @@ export class AppInsightsLogger extends ConsoleLogger {
     super.warn(message, ...optionalParams);
     
     if (appInsights.defaultClient) {
+      const context = optionalParams.length > 0 ? optionalParams[optionalParams.length - 1] : undefined;
+      const contextString = typeof context === 'string' ? context : undefined;
+
       appInsights.defaultClient.trackTrace({ 
-        message: `[AVISO] ${this.formataMensagem(message)}`,
+        message: `[AVISO] ${this.formataMensagem(message, contextString)}`,
         severity: 'Warning' // 2 = Warning
       });
     }

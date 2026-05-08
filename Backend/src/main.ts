@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -5,6 +6,7 @@ import { ValidationPipe, Logger } from '@nestjs/common'; // Adicionei o Logger a
 import * as appInsights from 'applicationinsights';
 import { AppInsightsLogger } from './utils/logger/app-insights.logger';
 import { AppModule } from './app.module';
+import { RequestLoggingInterceptor } from './common/interceptors/request-logging.interceptor';
 
 /**
  * Inicialização serviço Azure App Insights
@@ -16,7 +18,7 @@ const appInsightsConnectionString = process.env.APPINSIGHTS_CONNECTION_STRING;
 if (appInsightsConnectionString) {
   appInsights.setup(appInsightsConnectionString)
     .setAutoDependencyCorrelation(true) // Rastreia chamadas à Base de Dados e Blobs
-    .setAutoCollectRequests(true)       // Rastreia endpoints (GET, POST, etc.)
+    .setAutoCollectRequests(false)      // Requests registados manualmente no interceptor global
     .setAutoCollectExceptions(true)     // Apanha erros não tratados
     .setAutoCollectDependencies(true)   // Rastreia chamadas a APIs externas
     .setAutoCollectConsole(false)       // Desativado para evitar spam de objetos do NestJS
@@ -65,6 +67,8 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  app.useGlobalInterceptors(new RequestLoggingInterceptor());
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('API EntConnect')

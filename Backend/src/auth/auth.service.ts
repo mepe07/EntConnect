@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -18,6 +19,8 @@ import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -31,7 +34,15 @@ export class AuthService {
    */
 
   async login(loginDto: LoginDto) {
+    this.logger.log(`Tentativa de login para utilizador=${loginDto.username}`);
+
     const user = await this.obterUtilizadorPorUsername(loginDto.username);
+
+    if (!user) {
+      this.logger.warn(
+        `Login falhou: utilizador inexistente username=${loginDto.username}`,
+      );
+    }
 
     if (!user)
       throw new UnauthorizedException('Os dados introduzidos estão inválidos.');
@@ -41,8 +52,20 @@ export class AuthService {
       user.Password,
     );
 
+    if (!passwordValida) {
+      this.logger.warn(
+        `Login falhou: password invalida userId=${user.ID_Utilizador} username=${user.Utilizador}`,
+      );
+    }
+
     if (!passwordValida)
       throw new UnauthorizedException('Os dados introduzidos estão inválidos.');
+
+    if (!user.Ativo) {
+      this.logger.warn(
+        `Login bloqueado: conta inativa userId=${user.ID_Utilizador} username=${user.Utilizador}`,
+      );
+    }
 
     if (!user.Ativo)
       throw new UnauthorizedException(
@@ -50,6 +73,9 @@ export class AuthService {
       );
 
     const userRole = this.determinarRole(user);
+    this.logger.log(
+      `Login efetuado com sucesso userId=${user.ID_Utilizador} username=${user.Utilizador} role=${userRole}`,
+    );
 
     const payload = {
       sub: user.ID_Utilizador,
@@ -74,6 +100,9 @@ export class AuthService {
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     const email = forgotPasswordDto.email.trim().toLowerCase();
+    this.logger.log(
+      `Pedido de recuperacao de password emailHash=${this.hashAuditValue(email)}`,
+    );
 
     const user = await this.prisma.utilizador.findFirst({
       where: { Pessoa: { Email: { equals: email } } },
@@ -85,7 +114,12 @@ export class AuthService {
         'Se existir uma conta associada a esse email, receberá instruções para repor a password.',
     };
 
-    if (!user || !user.Ativo) return respostaGenerica;
+    if (!user || !user.Ativo) {
+      this.logger.warn(
+        `Recuperacao de password ignorada emailHash=${this.hashAuditValue(email)} motivo=${!user ? 'utilizador-inexistente' : 'utilizador-inativo'}`,
+      );
+      return respostaGenerica;
+    }
 
     const token = randomBytes(32).toString('hex');
     const tokenHash = this.hashResetToken(token);
@@ -103,6 +137,9 @@ export class AuthService {
     const resetLink = `${frontendUrl}/login?resetToken=${token}`;
 
     await this.mailService.sendPasswordResetEmail(user.Pessoa.Email, resetLink);
+    this.logger.log(
+      `Email de recuperacao de password enviado userId=${user.ID_Utilizador} emailHash=${this.hashAuditValue(email)}`,
+    );
 
     return respostaGenerica;
   }
@@ -114,6 +151,8 @@ export class AuthService {
    */
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    this.logger.log('Pedido de redefinicao de password recebido.');
+
     const tokenHash = this.hashResetToken(resetPasswordDto.token);
 
     const user = await this.prisma.utilizador.findFirst({
@@ -122,6 +161,12 @@ export class AuthService {
         ResetPasswordTokenExpiresAt: { gt: new Date() },
       },
     });
+
+    if (!user) {
+      this.logger.warn(
+        'Redefinicao de password falhou: token invalido ou expirado.',
+      );
+    }
 
     if (!user)
       throw new BadRequestException(
@@ -138,6 +183,7 @@ export class AuthService {
         ResetPasswordTokenExpiresAt: null,
       },
     });
+    this.logger.log(`Password redefinida com sucesso userId=${user.ID_Utilizador}`);
 
     return {
       message: 'Password alterada com sucesso. Já pode iniciar sessão.',
@@ -152,6 +198,10 @@ export class AuthService {
 
   private hashResetToken(token: string) {
     return createHash('sha256').update(token).digest('hex');
+  }
+
+  private hashAuditValue(value: string) {
+    return createHash('sha256').update(value).digest('hex').slice(0, 16);
   }
 
   /**
