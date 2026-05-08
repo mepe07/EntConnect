@@ -2,8 +2,6 @@ import { describe, beforeEach, afterEach, it, expect, jest } from '@jest/globals
 import { Test, TestingModule } from '@nestjs/testing';
 import { CoachingService } from './coaching.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
-import { mock } from 'node:test';
 
 describe('CoachingService - inscreverAluno', () => {
   let coachingService: CoachingService;
@@ -17,7 +15,9 @@ describe('CoachingService - inscreverAluno', () => {
     },
     coaching: {
       findFirst: jest.fn(),
+      findUnique: jest.fn(),
       create: jest.fn(),
+      update: jest.fn(),
     },
     coaching_Aluno: {
       create: jest.fn(),
@@ -48,7 +48,7 @@ describe('CoachingService - inscreverAluno', () => {
 
   describe('inscreverAluno', () => {
 
-    it.only('deve retornar erro se não existirem vagas (MaxAlunos = 0)', async () => {
+    it('deve retornar erro se não existirem vagas (MaxAlunos = 0)', async () => {
 
       // Arrange
       const idDisponibilidade = 1;
@@ -224,10 +224,153 @@ describe('CoachingService - inscreverAluno', () => {
     
   }); // Fim describe 'inscreverAluno'
 
+  describe('confirmarSessaoProfessor', () => {
+
+    it('deve retornar erro quando a sessao nao existe', async () => {
+
+      // Arrange
+      const idCoaching = 999;
+
+      jest.spyOn(prismaService.coaching, 'findUnique').mockResolvedValue(null as any);
+
+      // Act
+      const action = coachingService.confirmarSessaoProfessor(idCoaching);
+
+      // Assert
+      await expect(action).rejects.toThrow(`Sessão de coaching com ID ${idCoaching} não encontrada.`);
+
+      expect(prismaService.coaching.findUnique).toHaveBeenCalledWith({
+        where: { ID_Coaching: idCoaching },
+      });
+      expect(prismaService.coaching.update).not.toHaveBeenCalled();
+    });
+
+    it('deve retornar erro quando a sessao ainda nao iniciou', async () => {
+
+      // Arrange
+      const idCoaching = 1;
+      const mockSessao = {
+        ID_Coaching: idCoaching,
+        Inicio_Coaching: new Date('2099-05-09T09:00:00Z'),
+        ID_Estado_Coaching: 10,
+        confirmacao_EE: false,
+      };
+
+      jest.spyOn(prismaService.coaching, 'findUnique').mockResolvedValue(mockSessao as any);
+
+      // Act
+      const action = coachingService.confirmarSessaoProfessor(idCoaching);
+
+      // Assert
+      await expect(action).rejects.toThrow('Não pode confirmar uma sessão que ainda não se iniciou.');
+
+      expect(prismaService.coaching.findUnique).toHaveBeenCalledWith({
+        where: { ID_Coaching: idCoaching },
+      });
+      expect(prismaService.coaching.update).not.toHaveBeenCalled();
+    });
+
+    it('deve retornar erro quando a sessao ja esta concluida', async () => {
+
+      // Arrange
+      const idCoaching = 1;
+      const mockSessao = {
+        ID_Coaching: idCoaching,
+        Inicio_Coaching: new Date('2020-05-09T09:00:00Z'),
+        ID_Estado_Coaching: 13,
+        confirmacao_EE: false,
+      };
+
+      jest.spyOn(prismaService.coaching, 'findUnique').mockResolvedValue(mockSessao as any);
+
+      // Act
+      const action = coachingService.confirmarSessaoProfessor(idCoaching);
+
+      // Assert
+      await expect(action).rejects.toThrow('Esta sessão já se encontra concluída.');
+
+      expect(prismaService.coaching.findUnique).toHaveBeenCalledWith({
+        where: { ID_Coaching: idCoaching },
+      });
+      expect(prismaService.coaching.update).not.toHaveBeenCalled();
+    });
+
+    it('deve confirmar sessao do professor mantendo o estado atual', async () => {
+
+      // Arrange
+      const idCoaching = 1;
+      const mockSessao = {
+        ID_Coaching: idCoaching,
+        Inicio_Coaching: new Date('2020-05-09T09:00:00Z'),
+        ID_Estado_Coaching: 10,
+        confirmacao_EE: false,
+      };
+
+      const mockSessaoAtualizada = {
+        ...mockSessao,
+        confirmacao_prof: true,
+      };
+
+      jest.spyOn(prismaService.coaching, 'findUnique').mockResolvedValue(mockSessao as any);
+      jest.spyOn(prismaService.coaching, 'update').mockResolvedValue(mockSessaoAtualizada as any);
+
+      // Act
+      const result = await coachingService.confirmarSessaoProfessor(idCoaching);
+
+      // Assert
+      expect(prismaService.coaching.findUnique).toHaveBeenCalledWith({
+        where: { ID_Coaching: idCoaching },
+      });
+      expect(prismaService.coaching.update).toHaveBeenCalledWith({
+        where: { ID_Coaching: idCoaching },
+        data: {
+          confirmacao_prof: true,
+          ID_Estado_Coaching: mockSessao.ID_Estado_Coaching,
+        },
+      });
+      expect(result).toEqual(mockSessaoAtualizada);
+    });
+
+    it('deve confirmar sessao do professor e concluir quando o encarregado ja confirmou', async () => {
+
+      // Arrange
+      const idCoaching = 1;
+      const mockSessao = {
+        ID_Coaching: idCoaching,
+        Inicio_Coaching: new Date('2020-05-09T09:00:00Z'),
+        ID_Estado_Coaching: 10,
+        confirmacao_EE: true,
+      };
+
+      const mockSessaoAtualizada = {
+        ...mockSessao,
+        confirmacao_prof: true,
+        ID_Estado_Coaching: 13,
+      };
+
+      jest.spyOn(prismaService.coaching, 'findUnique').mockResolvedValue(mockSessao as any);
+      jest.spyOn(prismaService.coaching, 'update').mockResolvedValue(mockSessaoAtualizada as any);
+
+      // Act
+      const result = await coachingService.confirmarSessaoProfessor(idCoaching);
+
+      // Assert
+      expect(prismaService.coaching.findUnique).toHaveBeenCalledWith({
+        where: { ID_Coaching: idCoaching },
+      });
+      expect(prismaService.coaching.update).toHaveBeenCalledWith({
+        where: { ID_Coaching: idCoaching },
+        data: {
+          confirmacao_prof: true,
+          ID_Estado_Coaching: 13,
+        },
+      });
+      expect(result).toEqual(mockSessaoAtualizada);
+    });
+
+  }); // Fim describe 'confirmarSessaoProfessor'
+
 }); // Fim describe CoachingService
 
 
-// // it('cria uma sessão de coaching, inscreve o aluno e decrementa uma vaga quando ainda não existe sessão', ...)
-
-// // it('usa a sessão de coaching existente, inscreve o aluno e decrementa uma vaga quando a sessão já existe', ...)
 
