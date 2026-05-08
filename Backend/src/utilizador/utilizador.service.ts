@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   UnauthorizedException,
   NotFoundException,
   ConflictException,
@@ -18,6 +19,7 @@ import { UpsertEducandoDto } from './dto/upsert-educando.dto';
 
 @Injectable()
 export class UtilizadorService {
+  private readonly logger = new Logger(UtilizadorService.name);
   private readonly CARGOS_VALIDOS = [
     'Professor',
     'Coordenador',
@@ -93,6 +95,7 @@ export class UtilizadorService {
       cargos,
       password,
     } = createUtilizadorDto;
+    this.logger.log(`A criar utilizador username=${username} cargo=${cargo}`);
 
     const existente = await this.prisma.utilizador.findFirst({
       where: {
@@ -101,6 +104,9 @@ export class UtilizadorService {
     });
 
     if (existente) {
+      this.logger.warn(
+        `Criacao de utilizador rejeitada: username/email duplicado username=${username}`,
+      );
       throw new ConflictException(
         'Já existe um utilizador com esse username ou email.',
       );
@@ -126,6 +132,9 @@ export class UtilizadorService {
       },
       include: { Pessoa: true },
     });
+    this.logger.log(
+      `Utilizador criado idUtilizador=${novoUtilizador.ID_Utilizador} username=${novoUtilizador.Utilizador} cargo=${cargo}`,
+    );
 
     return {
       id: novoUtilizador.ID_Utilizador,
@@ -181,10 +190,13 @@ export class UtilizadorService {
    */
 
   async blockUser(id: number) {
-    return this.prisma.utilizador.update({
+    this.logger.log(`A bloquear utilizador idUtilizador=${id}`);
+    const utilizador = await this.prisma.utilizador.update({
       where: { ID_Utilizador: id },
       data: { Ativo: false },
     });
+    this.logger.log(`Utilizador bloqueado idUtilizador=${id}`);
+    return utilizador;
   }
 
   /**
@@ -194,10 +206,13 @@ export class UtilizadorService {
    */
 
   async unlockUser(id: number) {
-    return this.prisma.utilizador.update({
+    this.logger.log(`A desbloquear utilizador idUtilizador=${id}`);
+    const utilizador = await this.prisma.utilizador.update({
       where: { ID_Utilizador: id },
       data: { Ativo: true },
     });
+    this.logger.log(`Utilizador desbloqueado idUtilizador=${id}`);
+    return utilizador;
   }
 
   /**
@@ -208,20 +223,27 @@ export class UtilizadorService {
    */
 
   async updatePassword(id: number, plainPassword: string) {
+    this.logger.log(`A atualizar password por administracao idUtilizador=${id}`);
+
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: id },
     });
 
     if (!utilizador) {
+      this.logger.warn(
+        `Atualizacao de password rejeitada: utilizador inexistente idUtilizador=${id}`,
+      );
       throw new NotFoundException(`Utilizador com ID ${id} não encontrado.`);
     }
 
     const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-    return this.prisma.utilizador.update({
+    const atualizado = await this.prisma.utilizador.update({
       where: { ID_Utilizador: id },
       data: { Password: hashedPassword },
     });
+    this.logger.log(`Password atualizada por administracao idUtilizador=${id}`);
+    return atualizado;
   }
 
   /**
@@ -870,17 +892,25 @@ export class UtilizadorService {
    */
 
   async mudarPassword(id: number, dto: ChangePasswordDto) {
+    this.logger.log(`A mudar password pelo proprio utilizador idUtilizador=${id}`);
+
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: id },
     });
 
     if (!utilizador) {
+      this.logger.warn(
+        `Mudanca de password rejeitada: utilizador inexistente idUtilizador=${id}`,
+      );
       throw new NotFoundException('Utilizador não encontrado');
     }
 
     const passValida = await bcrypt.compare(dto.passAtual, utilizador.Password);
 
     if (!passValida) {
+      this.logger.warn(
+        `Mudanca de password rejeitada: password atual invalida idUtilizador=${id}`,
+      );
       throw new UnauthorizedException('A password atual está incorreta.');
     }
 
@@ -891,6 +921,7 @@ export class UtilizadorService {
       where: { ID_Utilizador: id },
       data: { Password: novaHash },
     });
+    this.logger.log(`Password alterada pelo proprio utilizador idUtilizador=${id}`);
 
     return { message: 'Password alterada com sucesso!' };
   }
@@ -903,22 +934,31 @@ export class UtilizadorService {
    */
 
   async updatePreferenciasAcoes(id: number, acoesIds: number[]) {
+    this.logger.log(
+      `A atualizar preferencias de acoes idUtilizador=${id} totalAcoes=${acoesIds.length}`,
+    );
+
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: id },
     });
 
     if (!utilizador) {
+      this.logger.warn(
+        `Atualizacao de preferencias rejeitada: utilizador inexistente idUtilizador=${id}`,
+      );
       throw new NotFoundException(`Utilizador com ID ${id} não encontrado.`);
     }
 
     const preferenciasJson = JSON.stringify(acoesIds);
 
-    return this.prisma.utilizador.update({
+    const atualizado = await this.prisma.utilizador.update({
       where: { ID_Utilizador: id },
       data: {
         Acoes_Rapidas: preferenciasJson,
       },
     });
+    this.logger.log(`Preferencias de acoes atualizadas idUtilizador=${id}`);
+    return atualizado;
   }
 
   /**
@@ -928,6 +968,8 @@ export class UtilizadorService {
    */
 
   async deleteUser(idUtilizador: number) {
+    this.logger.log(`A eliminar utilizador idUtilizador=${idUtilizador}`);
+
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: idUtilizador },
       include: {
@@ -942,6 +984,9 @@ export class UtilizadorService {
     });
 
     if (!utilizador || !utilizador.Pessoa) {
+      this.logger.warn(
+        `Eliminacao de utilizador rejeitada: inexistente idUtilizador=${idUtilizador}`,
+      );
       throw new NotFoundException('Utilizador não encontrado.');
     }
 
@@ -962,6 +1007,9 @@ export class UtilizadorService {
     });
 
     await this.prisma.pessoa.delete({ where: { ID_Pessoa: idPessoa } });
+    this.logger.log(
+      `Utilizador eliminado idUtilizador=${idUtilizador} idPessoa=${idPessoa}`,
+    );
 
     return { mensagem: 'Utilizador eliminado com sucesso.' };
   }

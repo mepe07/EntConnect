@@ -4,6 +4,7 @@ import { RolesService } from '~/services/roles.service';
 import { DisponibilidadesService } from '~/services/disponibilidades.service';
 import './adicionarDisponibilidade.scss';
 
+import { showToast } from '~/components/toast/toast';
 function getDataAtualInput() {
     const agora = new Date();
     const ano = agora.getFullYear();
@@ -47,12 +48,12 @@ export default function AdicionarDisponibilidade() {
         e.preventDefault();
 
         if (!idProfessorAtivo) {
-            alert("Erro: Não foi possível identificar o teu perfil de professor.");
+            showToast("Erro: Não foi possível identificar o teu perfil de professor.");
             return;
         }
 
         if (dataInicio < hoje) {
-            alert("Nao e possivel criar disponibilidades com data anterior a data atual.");
+            showToast("Nao e possivel criar disponibilidades com data anterior a data atual.");
             return;
         }
 
@@ -73,7 +74,7 @@ export default function AdicionarDisponibilidade() {
 
         try {
             await disponibilidadesService.criarDisponibilidade(payload);
-            alert("Disponibilidade criada com sucesso!");
+            showToast("Disponibilidade criada com sucesso!");
 
 
             setDataInicio('');
@@ -83,7 +84,7 @@ export default function AdicionarDisponibilidade() {
             setMaxAlunos(4);
         } catch (error) {
             console.error(error);
-            alert("Erro ao criar disponibilidade. Tenta novamente.");
+            showToast("Erro ao criar disponibilidade. Tenta novamente.");
         } finally {
             setIsCarregando(false);
         }

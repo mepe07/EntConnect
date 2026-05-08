@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Evento, Prisma } from '@prisma/client';
@@ -26,6 +27,8 @@ import { TipoEvento } from './enums/tipo-evento.enum';
 
 @Injectable()
 export class EventosService {
+  private readonly logger = new Logger(EventosService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly blobsService: BlobsService,
@@ -154,6 +157,10 @@ export class EventosService {
     utilizador: UtilizadorAutenticado,
     imagem?: Express.Multer.File,
   ) {
+    this.logger.log(
+      `A criar evento titulo="${dto.titulo}" userId=${utilizador.sub} comImagem=${Boolean(imagem)}`,
+    );
+
     garantirPermissaoGestaoEventos(utilizador.role);
 
     const dataInicio = this.converterData(
@@ -189,8 +196,16 @@ export class EventosService {
         data: dadosCriacao,
       });
 
+      this.logger.log(
+        `Evento criado idEvento=${evento.ID_Evento} slug=${evento.Slug} userId=${utilizador.sub}`,
+      );
       return this.mapearEvento(evento);
     } catch (error) {
+      this.logger.error(
+        `Erro ao criar evento titulo="${dto.titulo}" userId=${utilizador.sub}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+
       if (imagem && urlImagem) {
         await this.apagarImagemEventoPorUrl(urlImagem);
       }
@@ -214,6 +229,10 @@ export class EventosService {
     utilizador: UtilizadorAutenticado,
     imagem?: Express.Multer.File,
   ) {
+    this.logger.log(
+      `A atualizar evento idEvento=${idEvento} userId=${utilizador.sub} comImagem=${Boolean(imagem)}`,
+    );
+
     garantirPermissaoGestaoEventos(utilizador.role);
 
     const eventoAtual = await this.obterEventoOuFalhar(idEvento);
@@ -258,8 +277,16 @@ export class EventosService {
         await this.apagarImagemEventoPorUrl(eventoAtual.Imagem);
       }
 
+      this.logger.log(
+        `Evento atualizado idEvento=${idEvento} userId=${utilizador.sub}`,
+      );
       return this.mapearEvento(evento);
     } catch (error) {
+      this.logger.error(
+        `Erro ao atualizar evento idEvento=${idEvento} userId=${utilizador.sub}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+
       if (imagem && novaImagemUrl) {
         await this.apagarImagemEventoPorUrl(novaImagemUrl);
       }
@@ -276,6 +303,8 @@ export class EventosService {
    */
 
   async removerEvento(idEvento: number, utilizador: UtilizadorAutenticado) {
+    this.logger.log(`A remover evento idEvento=${idEvento} userId=${utilizador.sub}`);
+
     garantirPermissaoGestaoEventos(utilizador.role);
 
     await this.obterEventoOuFalhar(idEvento);
@@ -293,6 +322,7 @@ export class EventosService {
       },
     });
 
+    this.logger.log(`Evento removido idEvento=${idEvento} userId=${utilizador.sub}`);
     return this.mapearEvento(evento);
   }
 
@@ -304,6 +334,8 @@ export class EventosService {
    */
 
   async reativarEvento(idEvento: number, utilizador: UtilizadorAutenticado) {
+    this.logger.log(`A reativar evento idEvento=${idEvento} userId=${utilizador.sub}`);
+
     garantirPermissaoGestaoEventos(utilizador.role);
 
     await this.obterEventoOuFalhar(idEvento);
@@ -321,6 +353,7 @@ export class EventosService {
       },
     });
 
+    this.logger.log(`Evento reativado idEvento=${idEvento} userId=${utilizador.sub}`);
     return this.mapearEvento(evento);
   }
 

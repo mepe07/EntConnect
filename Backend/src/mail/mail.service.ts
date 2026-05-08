@@ -1,11 +1,17 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { createTransport, Transporter } from 'nodemailer';
+import { createHash } from 'crypto';
 /**
  * Servico responsavel pela logica de Mail.
  */
 
 @Injectable()
 export class MailService {
+  private readonly logger = new Logger(MailService.name);
   private transporter?: Transporter;
 
   /**
@@ -16,6 +22,10 @@ export class MailService {
    */
 
   async sendPasswordResetEmail(to: string, resetLink: string) {
+    this.logger.log(
+      `A enviar email de recuperacao de password emailHash=${this.hashAuditValue(to)}`,
+    );
+
     const transporter = this.getTransporter();
 
     await transporter.sendMail({
@@ -37,6 +47,9 @@ export class MailService {
                 <p>Se não pediu esta recuperação, pode ignorar este email.</p>
             `,
     });
+    this.logger.log(
+      `Email de recuperacao de password enviado emailHash=${this.hashAuditValue(to)}`,
+    );
   }
 
   /**
@@ -55,6 +68,7 @@ export class MailService {
     const pass = process.env.SMTP_PASS;
 
     if (!host || !user || !pass) {
+      this.logger.error('Servico de email nao configurado.');
       throw new InternalServerErrorException(
         'Serviço de email não configurado.',
       );
@@ -71,5 +85,12 @@ export class MailService {
     });
 
     return this.transporter;
+  }
+
+  private hashAuditValue(value: string) {
+    return createHash('sha256')
+      .update(value.trim().toLowerCase())
+      .digest('hex')
+      .slice(0, 16);
   }
 }

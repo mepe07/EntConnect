@@ -10,6 +10,7 @@ import { ButtonTypeEnum } from '~/components/button/models/enums/button-type.enu
 import { ButtonColorEnum } from '~/components/button/models/enums/button-color.enum';
 import { SizeEnum } from '~/components/models/enums/size.enum';
 
+import { showToast } from '~/components/toast/toast';
 export default function VerConfirmacoes() {
     const userInfo = authService.getUserInfo() as User;
     const isProfessor = userInfo?.role?.toLowerCase().includes('professor');
@@ -75,11 +76,11 @@ export default function VerConfirmacoes() {
         setIsAguardar(true);
         try {
             await agendamentosService.confirmarSessao(idProfessor, sessao.idCoaching, idEstadoCoaching);
-            alert('Estado atualizado com sucesso.');
+            showToast('Estado atualizado com sucesso.');
             fetchConfirmacoes();
         } catch (error) {
             console.error(error);
-            alert('Erro ao atualizar o estado da sessão.');
+            showToast('Erro ao atualizar o estado da sessão.');
         } finally {
             setIsAguardar(false);
         }

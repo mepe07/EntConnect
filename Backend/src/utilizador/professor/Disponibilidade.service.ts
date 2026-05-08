@@ -1,7 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDisponibilidadeDto } from '../dto/create-disponibilidade.dto';
 import { UpdateDisponibilidadeDto } from '../dto/update-disponibilidade.dto';
+
 /**
  * Servico responsavel pela logica de Dispobilidade.
  */
@@ -10,12 +11,15 @@ import { UpdateDisponibilidadeDto } from '../dto/update-disponibilidade.dto';
 export class DispobilidadeService {
   constructor(private prisma: PrismaService) {}
 
+  private readonly logger = new Logger(DispobilidadeService.name);
+
   /**
    * Executa a operacao get availabilities.
    * @returns Resultado da operacao.
    */
 
   async getAvailabilities() {
+    this.logger.log('A carregar todas as disponibilidades da Base de Dados...');
     const disponibilidadesRaw = await this.prisma.disponibilidade.findMany({
       include: {
         Professor: { include: { Pessoa: true } },
@@ -31,6 +35,10 @@ export class DispobilidadeService {
         },
       },
     });
+
+    this.logger.log(
+      `Disponibilidades carregadas total=${disponibilidadesRaw.length}`,
+    );
 
     return disponibilidadesRaw
       .map((disp) => {
@@ -88,6 +96,7 @@ export class DispobilidadeService {
    */
 
   async criarDisponibilidade(dto: CreateDisponibilidadeDto) {
+    this.logger.log('A criar disponibilidade...');
     const horaInicio = new Date(dto.Hora_Inicio);
     const inicioDoDiaAtual = new Date();
     inicioDoDiaAtual.setHours(0, 0, 0, 0);
@@ -96,6 +105,9 @@ export class DispobilidadeService {
     diaDisponibilidade.setHours(0, 0, 0, 0);
 
     if (diaDisponibilidade < inicioDoDiaAtual) {
+      this.logger.warn(
+        `Criacao de disponibilidade rejeitada: data no passado idProfessor=${dto.ID_Professor} horaInicio=${dto.Hora_Inicio}`,
+      );
       throw new BadRequestException(
         'Nao e possivel criar disponibilidades com data anterior a data atual.',
       );
@@ -115,6 +127,9 @@ export class DispobilidadeService {
         ValorPorAluno: null,
       },
     });
+    this.logger.log(
+      `Disponibilidade criada idDisponibilidade=${novaDisponibilidade.ID_Disponibilidade} idProfessor=${dto.ID_Professor} horaInicio=${horaInicio.toISOString()} duracao=${dto.Duracao}`,
+    );
 
     return {
       message: 'Disponibilidade criada com sucesso!',
@@ -138,6 +153,9 @@ export class DispobilidadeService {
         where: { ID_Disponibilidade: idDisponibilidade },
       })) === 0
     ) {
+      this.logger.warn(
+        `Atualizacao de disponibilidade rejeitada: idDisponibilidade=${idDisponibilidade} inexistente`,
+      );
       throw new BadRequestException(
         `A disponibilidade com ID ${idDisponibilidade} não existe.`,
       );
@@ -153,6 +171,9 @@ export class DispobilidadeService {
         DataAtualizacao: new Date(),
       },
     });
+    this.logger.log(
+      `Disponibilidade atualizada idDisponibilidade=${idDisponibilidade}`,
+    );
 
     return {
       message: 'Disponibiliade atualizada com sucesso.',

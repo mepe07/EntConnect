@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -19,6 +20,8 @@ import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autentica
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -34,25 +37,41 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const user = await this.obterUtilizadorPorUsername(loginDto.username);
 
-    if (!user)
+    if (!user) {
+      this.logger.warn(
+        `Login falhou: utilizador inexistente usernameHash=${this.hashAuditValue(loginDto.username)}`,
+      );
       throw new UnauthorizedException('Os dados introduzidos estão inválidos.');
+    }
 
     const passwordValida = await bcrypt.compare(
       loginDto.password,
       user.Password,
     );
 
-    if (!passwordValida)
+    if (!passwordValida) {
+      this.logger.warn(
+        `Login falhou: password invalida userId=${user.ID_Utilizador}`,
+      );
       throw new UnauthorizedException('Os dados introduzidos estão inválidos.');
+    }
 
-    if (!user.Ativo)
+    if (!user.Ativo) {
+      this.logger.warn(
+        `Login bloqueado: conta inativa userId=${user.ID_Utilizador}`,
+      );
       throw new UnauthorizedException(
         'A sua conta está inativa. Contacte a coordenação.',
       );
+    }
 
     const userRoles = this.determinarRoles(user);
     const userRole = this.determinarRolePadrao(userRoles);
     const payload = this.criarPayloadSessao(user, userRole, userRoles);
+
+    this.logger.log(
+      `Login efetuado com sucesso userId=${user.ID_Utilizador} role=${userRole} roles=${userRoles.join(',')}`,
+    );
 
     return {
       access_token: await this.jwtService.signAsync(payload),
@@ -72,18 +91,28 @@ export class AuthService {
     const user = await this.obterUtilizadorPorId(utilizador.sub);
 
     if (!user || !user.Ativo) {
+      this.logger.warn(
+        `Troca de role rejeitada: sessao invalida userId=${utilizador.sub}`,
+      );
       throw new UnauthorizedException('SessÃ£o invÃ¡lida.');
     }
 
     const userRoles = this.determinarRoles(user);
 
     if (!userRoles.includes(role)) {
+      this.logger.warn(
+        `Troca de role rejeitada: role sem permissao userId=${user.ID_Utilizador} role=${role}`,
+      );
       throw new UnauthorizedException(
         'A role selecionada nÃ£o estÃ¡ associada ao utilizador.',
       );
     }
 
     const payload = this.criarPayloadSessao(user, role, userRoles);
+
+    this.logger.log(
+      `Role ativa alterada userId=${user.ID_Utilizador} role=${role}`,
+    );
 
     return {
       access_token: await this.jwtService.signAsync(payload),
@@ -102,6 +131,9 @@ export class AuthService {
     const user = await this.obterUtilizadorPorId(utilizador.sub);
 
     if (!user || !user.Ativo) {
+      this.logger.warn(
+        `Atualizacao de sessao rejeitada userId=${utilizador.sub}`,
+      );
       throw new UnauthorizedException('SessÃ£o invÃ¡lida.');
     }
 
@@ -126,6 +158,7 @@ export class AuthService {
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     const email = forgotPasswordDto.email.trim().toLowerCase();
+    const emailHash = this.hashAuditValue(email);
 
     const user = await this.prisma.utilizador.findFirst({
       where: { Pessoa: { Email: { equals: email } } },
@@ -137,7 +170,12 @@ export class AuthService {
         'Se existir uma conta associada a esse email, receberá instruções para repor a password.',
     };
 
-    if (!user || !user.Ativo) return respostaGenerica;
+    if (!user || !user.Ativo) {
+      this.logger.warn(
+        `Recuperacao de password ignorada emailHash=${emailHash} motivo=${!user ? 'utilizador-inexistente' : 'utilizador-inativo'}`,
+      );
+      return respostaGenerica;
+    }
 
     const token = randomBytes(32).toString('hex');
     const tokenHash = this.hashResetToken(token);
@@ -155,6 +193,9 @@ export class AuthService {
     const resetLink = `${frontendUrl}/login?resetToken=${token}`;
 
     await this.mailService.sendPasswordResetEmail(user.Pessoa.Email, resetLink);
+    this.logger.log(
+      `Email de recuperacao de password enviado userId=${user.ID_Utilizador} emailHash=${emailHash}`,
+    );
 
     return respostaGenerica;
   }
@@ -175,10 +216,14 @@ export class AuthService {
       },
     });
 
-    if (!user)
+    if (!user) {
+      this.logger.warn(
+        'Redefinicao de password falhou: token invalido ou expirado.',
+      );
       throw new BadRequestException(
         'O link de recuperação é inválido ou já expirou.',
       );
+    }
 
     const passwordHash = await bcrypt.hash(resetPasswordDto.password, 10);
 
@@ -190,6 +235,9 @@ export class AuthService {
         ResetPasswordTokenExpiresAt: null,
       },
     });
+    this.logger.log(
+      `Password redefinida com sucesso userId=${user.ID_Utilizador}`,
+    );
 
     return {
       message: 'Password alterada com sucesso. Já pode iniciar sessão.',
@@ -204,6 +252,10 @@ export class AuthService {
 
   private hashResetToken(token: string) {
     return createHash('sha256').update(token).digest('hex');
+  }
+
+  private hashAuditValue(value: string) {
+    return createHash('sha256').update(value).digest('hex').slice(0, 16);
   }
 
   /**
