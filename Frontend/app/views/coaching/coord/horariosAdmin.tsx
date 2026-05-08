@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import React, { useEffect, useState } from 'react';
 import { modalidadesService } from '~/services/modalidades.service';
 import { salasService } from '~/services/salas.service';
@@ -365,9 +366,9 @@ export default function HorariosAdmin() {
                     <h1>Horários Fixos</h1>
                     <p>Faça a gestão da grelha de aulas recorrentes do estúdio.</p>
                 </div>
-                <button className="btn-primario" onClick={() => setIsCreateModalOpen(true)}>
+                <ButtonComponent className="btn-primario" onClick={() => setIsCreateModalOpen(true)}>
                     <i className="fa-solid fa-plus"></i> Criar Nova Aula
-                </button>
+                </ButtonComponent>
             </div>
 
             {(error || success) && (
@@ -455,9 +456,9 @@ export default function HorariosAdmin() {
                     <div className="modal-content form-modal" onClick={(event) => event.stopPropagation()}>
                         <div className="modal-header">
                             <h3>Adicionar Aula Fixa</h3>
-                            <button className="btn-fechar" onClick={() => setIsCreateModalOpen(false)}>
+                            <ButtonComponent className="btn-fechar" onClick={() => setIsCreateModalOpen(false)}>
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="modal-body">
@@ -575,15 +576,15 @@ export default function HorariosAdmin() {
                             </form>
                         </div>
                         <div className="modal-footer">
-                            <button type="button" className="btn-secundario" onClick={() => setIsCreateModalOpen(false)}>
+                            <ButtonComponent type="button" className="btn-secundario" onClick={() => setIsCreateModalOpen(false)}>
                                 Cancelar
-                            </button>
-                            <button type="submit" form="form-criar-aula" className="btn-primario" disabled={loading}>
+                            </ButtonComponent>
+                            <ButtonComponent type="submit" form="form-criar-aula" className="btn-primario" disabled={loading}>
                                 {loading
                                     ? <><i className="fa-solid fa-spinner fa-spin"></i> A gravar...</>
                                     : <><i className="fa-solid fa-check"></i> Gravar Aula Fixa</>
                                 }
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>
@@ -600,9 +601,9 @@ export default function HorariosAdmin() {
                                     {selectedHorario.Dias_Semana?.Nome_Dia} às {formatTime(selectedHorario.Hora_Inicio)}
                                 </span>
                             </div>
-                            <button className="btn-fechar" onClick={closeModal}>
+                            <ButtonComponent className="btn-fechar" onClick={closeModal}>
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="modal-body">
@@ -655,7 +656,7 @@ export default function HorariosAdmin() {
                                                 {formatDate(excecao.Data_Cancelada)}
                                             </span>
 
-                                            <button
+                                            <ButtonComponent
                                                 type="button"
                                                 onClick={() => handleDeleteException(excecao.ID_Excecao)}
                                                 disabled={loading}
@@ -666,7 +667,7 @@ export default function HorariosAdmin() {
                                                 }}
                                             >
                                                 <i className="fa-solid fa-trash"></i>
-                                            </button>
+                                            </ButtonComponent>
                                         </li>
                                     ))}
                                 </ul>
@@ -675,9 +676,9 @@ export default function HorariosAdmin() {
                             )}
 
                             {!isExceptionModalOpen ? (
-                                <button type="button" className="btn-secundario" style={{width: '100%', marginTop: '10px'}} onClick={openExceptionModal}>
+                                <ButtonComponent type="button" className="btn-secundario" style={{width: '100%', marginTop: '10px'}} onClick={openExceptionModal}>
                                     <i className="fa-solid fa-plus"></i> Adicionar Exceção
-                                </button>
+                                </ButtonComponent>
                             ) : (
                                 <div className="excecao-form-inline">
                                      <form onSubmit={async (e) => { e.preventDefault(); await handleCreateException(); }}>
@@ -686,12 +687,12 @@ export default function HorariosAdmin() {
                                             <input type="date" className="input-campo" value={exceptionDate} onChange={(e) => setExceptionDate(e.target.value)} required />
                                         </div>
                                         <div style={{display: 'flex', gap: '8px', marginTop: '10px'}}>
-                                            <button type="submit" className="btn-primario" style={{flex: 1}} disabled={loading}>
+                                            <ButtonComponent type="submit" className="btn-primario" style={{flex: 1}} disabled={loading}>
                                                 Confirmar
-                                            </button>
-                                            <button type="button" className="btn-secundario" onClick={closeExceptionModal}>
+                                            </ButtonComponent>
+                                            <ButtonComponent type="button" className="btn-secundario" onClick={closeExceptionModal}>
                                                 Cancelar
-                                            </button>
+                                            </ButtonComponent>
                                         </div>
                                     </form>
                                 </div>
@@ -700,7 +701,7 @@ export default function HorariosAdmin() {
                         </div>
 
                         <div className="modal-footer">
-                            <button
+                            <ButtonComponent
                                 type="button"
                                 className={`btn-secundario ${selectedHorario.Ativa ? 'btn-perigo' : 'btn-sucesso'}`}
                                 style={{ flex: 1 }}
@@ -711,9 +712,9 @@ export default function HorariosAdmin() {
                                     ? <><i className="fa-solid fa-pause"></i> Suspender</>
                                     : <><i className="fa-solid fa-play"></i> Reativar</>
                                 }
-                            </button>
+                            </ButtonComponent>
 
-                            <button
+                            <ButtonComponent
                                 type="button"
                                 className="btn-secundario btn-perigo"
                                 style={{ flex: 1 }}
@@ -722,16 +723,16 @@ export default function HorariosAdmin() {
                                 title="Eliminar permanentemente"
                             >
                                 <i className="fa-solid fa-trash"></i> Eliminar
-                            </button>
+                            </ButtonComponent>
 
-                            <button
+                            <ButtonComponent
                                 type="button"
                                 className="btn-primario"
                                 style={{ flex: 1 }}
                                 onClick={closeModal}
                             >
                                 Fechar
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>

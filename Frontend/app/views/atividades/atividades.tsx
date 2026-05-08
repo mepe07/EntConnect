@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import React, { useEffect, useMemo, useState } from 'react';
 import { marketplaceService } from '../../services/marketplace.service';
 import { EstadoAnuncio } from '../../types/marketplace.types';
@@ -186,9 +187,9 @@ export function Atividades() {
                     </p>
                 </div>
 
-                <button className="btn-secundario" onClick={carregarRegistoModeracao} disabled={loading}>
+                <ButtonComponent className="btn-secundario" onClick={carregarRegistoModeracao} disabled={loading}>
                     Atualizar
-                </button>
+                </ButtonComponent>
             </section>
 
             <section className="cartao-branco">
@@ -279,21 +280,21 @@ export function Atividades() {
 
                                         <td>
                                             <div className="acoes-linha">
-                                                <button
+                                                <ButtonComponent
                                                     className="btn-tabela btn-ver"
                                                     onClick={() => abrirModal(registo)}
                                                 >
                                                     Ver
-                                                </button>
+                                                </ButtonComponent>
 
                                                 {podeReativar(registo) && (
-                                                    <button
+                                                    <ButtonComponent
                                                         className="btn-tabela btn-reativar"
                                                         onClick={() => reativarAnuncio(registo)}
                                                         disabled={aReativar === registo.ID_Artigo}
                                                     >
                                                         {aReativar === registo.ID_Artigo ? 'A reativar...' : 'Reativar'}
-                                                    </button>
+                                                    </ButtonComponent>
                                                 )}
                                             </div>
                                         </td>
@@ -314,9 +315,9 @@ export function Atividades() {
                                 <h3>{obterNomeArtigo(registoSelecionado)}</h3>
                             </div>
 
-                            <button className="btn-fechar" onClick={fecharModal}>
+                            <ButtonComponent className="btn-fechar" onClick={fecharModal}>
                                 ×
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="modal-body">
@@ -370,18 +371,18 @@ export function Atividades() {
 
                         <div className="modal-footer">
                             {podeReativar(registoSelecionado) && (
-                                <button
+                                <ButtonComponent
                                     className="btn-primario"
                                     onClick={() => reativarAnuncio(registoSelecionado)}
                                     disabled={aReativar === registoSelecionado.ID_Artigo}
                                 >
                                     {aReativar === registoSelecionado.ID_Artigo ? 'A reativar...' : 'Reativar anúncio'}
-                                </button>
+                                </ButtonComponent>
                             )}
 
-                            <button className="btn-secundario" onClick={fecharModal}>
+                            <ButtonComponent className="btn-secundario" onClick={fecharModal}>
                                 Fechar
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>

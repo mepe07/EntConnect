@@ -28,6 +28,7 @@ export class UtilizadorService {
 
   private readonly CARGO_ENCARREGADO_EDUCACAO =
     this.CARGOS_VALIDOS[2];
+  private readonly CARGO_SEM_CARGO = 'Sem Cargo';
 
   constructor(private prisma: PrismaService) {}
 
@@ -1090,7 +1091,11 @@ export class UtilizadorService {
   private normalizarCargos(cargos: string | string[] | undefined): string[] {
     const lista = Array.isArray(cargos) ? cargos : cargos ? [cargos] : [];
     const cargosNormalizados = [
-      ...new Set(lista.map((cargo) => this.canonicalizarCargo(cargo))),
+      ...new Set(
+        lista
+          .map((cargo) => this.canonicalizarCargo(cargo))
+          .filter((cargo) => cargo && cargo !== this.CARGO_SEM_CARGO),
+      ),
     ];
 
     if (cargosNormalizados.length === 0) {

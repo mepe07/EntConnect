@@ -5,7 +5,7 @@ export class RolesService {
     private _apiUrl = API_BASE_URL;
 
     /**
-     * Headers JSON autenticados para consultar as roles do utilizador.
+     * Headers JSON autenticados para consultar os cargos do utilizador.
      */
     private getHeaders() {
         const token = authService.getToken();
@@ -24,7 +24,7 @@ export class RolesService {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
-            throw new Error(errorData?.message || `Erro ao obter roles: ${response.statusText}`);
+            throw new Error(errorData?.message || `Erro ao obter cargos: ${response.statusText}`);
         }
 
         return await response.json();

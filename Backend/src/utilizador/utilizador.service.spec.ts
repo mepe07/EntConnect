@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   NotFoundException,
   UnauthorizedException,
@@ -279,6 +280,34 @@ describe('UtilizadorService', () => {
     await expect(service.deleteUser(1)).resolves.toEqual({
       mensagem: 'Utilizador eliminado com sucesso.',
     });
+  });
+
+  it('deve ignorar Sem Cargo ao atualizar cargos de utilizador sem roles', async () => {
+    prismaMock.utilizador.findUnique.mockResolvedValue({
+      ID_Pessoa: 10,
+      Pessoa: {
+        Professor: null,
+        Coordenador: null,
+        Enc_Educacao: null,
+      },
+    });
+
+    await expect(
+      service.updateCargos(1, ['Sem Cargo', 'Professor']),
+    ).resolves.toEqual({
+      mensagem: 'Cargos atualizados para "Professor" com sucesso.',
+      cargos: ['Professor'],
+    });
+    expect(prismaMock.professor.create).toHaveBeenCalledWith({
+      data: { ID_Pessoa: 10 },
+    });
+  });
+
+  it('deve rejeitar Sem Cargo quando nao ha nenhum cargo real selecionado', async () => {
+    await expect(service.updateCargos(1, 'Sem Cargo')).rejects.toThrow(
+      BadRequestException,
+    );
+    expect(prismaMock.utilizador.findUnique).not.toHaveBeenCalled();
   });
 
   it('deve devolver faturas do encarregado', async () => {

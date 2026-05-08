@@ -18,6 +18,8 @@ export class AuthService {
 
     private _apiUrl = API_BASE_URL;
     private readonly tokenStorageKey = 'entconnect_token';
+    private readonly preferredRoleStoragePrefix = 'entconnect_preferred_role';
+    private readonly preferredRoleByUsernameStoragePrefix = 'entconnect_preferred_role_username';
 
     /**
      * Autentica o utilizador e guarda o token recebido no armazenamento local.
@@ -28,10 +30,11 @@ export class AuthService {
      */
     async login(username: string, password: string) {
         try {
+            const rolePreferida = this.obterRolePreferidaPorUsername(username);
             const response = await fetch(`${this._apiUrl}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password }),
+                body: JSON.stringify({ username, password, rolePreferida }),
             });
 
             if (!response.ok) {
@@ -53,6 +56,8 @@ export class AuthService {
 
             localStorage.setItem(this.tokenStorageKey, accessToken);
 
+            await this.aplicarRolePreferidaNoLogin(user);
+
             return true;
         } catch (error: Error | unknown) {
             console.error('Login error:', error);
@@ -61,9 +66,9 @@ export class AuthService {
     }
 
     /**
-     * Troca a role ativa e substitui o token local pelo token renovado.
+     * Troca o cargo ativo e substitui o token local pelo token renovado.
      *
-     * @param role - Role a ativar para a sessao atual.
+     * @param role - Cargo a ativar para a sessao atual.
      * @returns Dados atualizados do utilizador autenticado.
      */
     async trocarRole(role: string) {
@@ -100,9 +105,110 @@ export class AuthService {
         this._userInfo = user;
 
         localStorage.setItem(this.tokenStorageKey, accessToken);
+        this.guardarRolePreferida(user);
         window.dispatchEvent(new CustomEvent('entconnect-role-alterada', { detail: user }));
 
         return user;
+    }
+
+    private async aplicarRolePreferidaNoLogin(user: User) {
+        const rolePreferida = this.obterRolePreferida(user);
+        const rolesDisponiveis = user.roles ?? [];
+
+        if (!rolePreferida) {
+            return;
+        }
+
+        if (!rolesDisponiveis.includes(rolePreferida)) {
+            this.removerRolePreferida(user);
+            return;
+        }
+
+        if (rolePreferida === user.role) {
+            return;
+        }
+
+        try {
+            await this.trocarRole(rolePreferida);
+        } catch (error) {
+            console.warn('Nao foi possivel aplicar o cargo preferido no login:', error);
+            this.removerRolePreferida(user);
+        }
+    }
+
+    private guardarRolePreferida(user: User) {
+        const storageKey = this.obterChaveRolePreferida(user);
+
+        if (!user.role) {
+            return;
+        }
+
+        if (storageKey) {
+            localStorage.setItem(storageKey, user.role);
+        }
+
+        const usernameStorageKey = this.obterChaveRolePreferidaPorUsername(user.username);
+
+        if (usernameStorageKey) {
+            localStorage.setItem(usernameStorageKey, user.role);
+        }
+    }
+
+    private obterRolePreferida(user: User) {
+        const storageKey = this.obterChaveRolePreferida(user);
+        const userIdRole = storageKey ? localStorage.getItem(storageKey) : null;
+
+        if (userIdRole) {
+            return userIdRole;
+        }
+
+        const usernameRole = this.obterRolePreferidaPorUsername(user.username);
+
+        if (usernameRole) {
+            return usernameRole;
+        }
+
+        return null;
+    }
+
+    private removerRolePreferida(user: User) {
+        const storageKey = this.obterChaveRolePreferida(user);
+
+        if (storageKey) {
+            localStorage.removeItem(storageKey);
+        }
+
+        const usernameStorageKey = this.obterChaveRolePreferidaPorUsername(user.username);
+
+        if (usernameStorageKey) {
+            localStorage.removeItem(usernameStorageKey);
+        }
+    }
+
+    private obterChaveRolePreferida(user: User) {
+        const userId = user.sub ?? user.idUtilizador;
+
+        if (!userId) {
+            return null;
+        }
+
+        return `${this.preferredRoleStoragePrefix}_${userId}`;
+    }
+
+    private obterRolePreferidaPorUsername(username: string) {
+        const storageKey = this.obterChaveRolePreferidaPorUsername(username);
+
+        return storageKey ? localStorage.getItem(storageKey) : null;
+    }
+
+    private obterChaveRolePreferidaPorUsername(username?: string) {
+        const usernameNormalizado = username?.trim().toLowerCase();
+
+        if (!usernameNormalizado) {
+            return null;
+        }
+
+        return `${this.preferredRoleByUsernameStoragePrefix}_${usernameNormalizado}`;
     }
 
     /**

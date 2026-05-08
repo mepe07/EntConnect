@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { AuthService } from '~/services/auth.service';
@@ -194,13 +195,13 @@ export function Dashboard() {
                 <div className="acoes-rapidas-container">
                     <div className="botoes-acoes-topo" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                         {acoesVisiveis.map((acao) => (
-                            <button key={acao.id} type="button" className="btn-acao-mini" onClick={() => navigate(acao.rota)} title={acao.nome} aria-label={acao.nome}>
+                            <ButtonComponent key={acao.id} type="button" className="btn-acao-mini" onClick={() => navigate(acao.rota)} title={acao.nome} aria-label={acao.nome}>
                                 <i className={acao.icone}></i>
-                            </button>
+                            </ButtonComponent>
                         ))}
-                        <button type="button" className={`btn-acao-mini editar ${editandoAcoes ? 'ativo' : ''}`} onClick={() => setEditandoAcoes(!editandoAcoes)} title="Editar ações rápidas">
+                        <ButtonComponent type="button" className={`btn-acao-mini editar ${editandoAcoes ? 'ativo' : ''}`} onClick={() => setEditandoAcoes(!editandoAcoes)} title="Editar ações rápidas">
                             <i className={`fa-solid ${editandoAcoes ? 'fa-check' : 'fa-pen'}`}></i>
-                        </button>
+                        </ButtonComponent>
                     </div>
 
                     {editandoAcoes && (
@@ -209,9 +210,9 @@ export function Dashboard() {
                             {acoesPermitidasPorRole.map((acao) => (
                                 <div key={acao.id} className="item-edicao-mini">
                                     <span><i className={acao.icone}></i>{acao.nome}</span>
-                                    <button type="button" onClick={() => alternarVisibilidade(acao.id)}>
+                                    <ButtonComponent type="button" onClick={() => alternarVisibilidade(acao.id)}>
                                         <i className={`fa-solid ${acoesAtivasIds.includes(acao.id) ? 'fa-toggle-on toggle-on' : 'fa-toggle-off toggle-off'}`}></i>
-                                    </button>
+                                    </ButtonComponent>
                                 </div>
                             ))}
                         </div>

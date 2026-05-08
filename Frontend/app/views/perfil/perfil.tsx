@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import React, { useState, useEffect, useRef } from 'react';
 import Cropper from 'react-easy-crop';
 import { authService } from '~/services/auth.service';
@@ -269,15 +270,15 @@ export function Perfil() {
             <aside className="perfil-sidebar">
                 <h2>A Minha Conta</h2>
                 <nav>
-                    <button className={abaAtiva === 'dados_pessoais' ? 'ativo' : ''} onClick={() => setAbaAtiva('dados_pessoais')}>
+                    <ButtonComponent className={abaAtiva === 'dados_pessoais' ? 'ativo' : ''} onClick={() => setAbaAtiva('dados_pessoais')}>
                         👤 O Meu Perfil
-                    </button>
-                    <button className={abaAtiva === 'meus_coachings' ? 'ativo' : ''} onClick={() => setAbaAtiva('meus_coachings')}>
+                    </ButtonComponent>
+                    <ButtonComponent className={abaAtiva === 'meus_coachings' ? 'ativo' : ''} onClick={() => setAbaAtiva('meus_coachings')}>
                         🎯 Os Meus Coachings
-                    </button>
-                    <button className={abaAtiva === 'minhas_faturas' ? 'ativo' : ''} onClick={() => setAbaAtiva('minhas_faturas')}>
+                    </ButtonComponent>
+                    <ButtonComponent className={abaAtiva === 'minhas_faturas' ? 'ativo' : ''} onClick={() => setAbaAtiva('minhas_faturas')}>
                         🧾 As Minhas Faturas
-                    </button>
+                    </ButtonComponent>
                 </nav>
             </aside>
 
@@ -290,13 +291,13 @@ export function Perfil() {
                             <section className="seccao-perfil">
                                 <div className="perfil-header-topo">
                                     <h3>O Meu Perfil</h3>
-                                    <button
+                                    <ButtonComponent
                                         className="btn-editar"
                                         onClick={() => editando ? guardarAlteracoes() : setEditando(true)}
                                         disabled={guardando}
                                     >
                                         {guardando ? 'A guardar...' : editando ? '✅ Guardar' : '✏️ Editar Dados'}
-                                    </button>
+                                    </ButtonComponent>
                                 </div>
 
                                 <div className="perfil-info-principal">
@@ -324,15 +325,15 @@ export function Perfil() {
 
 
                                         <div className="botoes-foto-wrapper">
-                                            <button className="btn-link-foto" onClick={() => fileInputRef.current?.click()} disabled={loadingFoto}>
+                                            <ButtonComponent className="btn-link-foto" onClick={() => fileInputRef.current?.click()} disabled={loadingFoto}>
                                                 <i className="fa fa-camera"></i>
                                                 {fotoUrl ? 'Alterar Foto' : 'Carregar Foto'}
-                                            </button>
+                                            </ButtonComponent>
 
                                             {fotoUrl && (
-                                                <button className="btn-link-foto btn-remover" onClick={removerFoto} disabled={loadingFoto}>
+                                                <ButtonComponent className="btn-link-foto btn-remover" onClick={removerFoto} disabled={loadingFoto}>
                                                     <i className="fa fa-trash"></i> Remover
-                                                </button>
+                                                </ButtonComponent>
                                             )}
                                         </div>
                                     </div>
@@ -358,7 +359,7 @@ export function Perfil() {
                                                     <input type="text" value={contacto} disabled={!editando} onChange={(e) => setContacto(e.target.value)} />
                                                 </div>
                                                 {editando && (
-                                                    <button className="btn-cancelar" onClick={() => { setEditando(false); carregarDados(); }}>Cancelar</button>
+                                                    <ButtonComponent className="btn-cancelar" onClick={() => { setEditando(false); carregarDados(); }}>Cancelar</ButtonComponent>
                                                 )}
                                             </div>
                                         </div>
@@ -387,10 +388,10 @@ export function Perfil() {
                                             <hr />
                                             <h4>Segurança</h4>
                                             <p className="texto-seguranca">Protege a tua conta alterando a palavra-passe regularmente.</p>
-                                            <button className="btn-secundario" onClick={abrirModalPassword}>
+                                            <ButtonComponent className="btn-secundario" onClick={abrirModalPassword}>
                                                 <i className="fa fa-lock" style={{marginRight: '8px'}}></i>
                                                 Alterar Palavra-passe
-                                            </button>
+                                            </ButtonComponent>
                                         </div>
                                     </div>
                                 </div>
@@ -514,8 +515,8 @@ export function Perfil() {
                                     <input type="range" min={1} max={3} step={0.1} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} />
                                 </div>
                                 <div className="botoes-modal">
-                                    <button className="btn-modal-cancelar" onClick={() => setModalCorteAberto(false)}>Cancelar</button>
-                                    <button className="btn-modal-confirmar" onClick={finalizarCorte}>Confirmar e Guardar</button>
+                                    <ButtonComponent className="btn-modal-cancelar" onClick={() => setModalCorteAberto(false)}>Cancelar</ButtonComponent>
+                                    <ButtonComponent className="btn-modal-confirmar" onClick={finalizarCorte}>Confirmar e Guardar</ButtonComponent>
                                 </div>
                             </div>
                         </div>
@@ -567,15 +568,15 @@ export function Perfil() {
                                 </div>
 
                                 <div className="botoes-modal" style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-                                    <button className="btn-modal-cancelar" style={{ flex: 1 }} onClick={fecharModalPassword}>Cancelar</button>
-                                    <button
+                                    <ButtonComponent className="btn-modal-cancelar" style={{ flex: 1 }} onClick={fecharModalPassword}>Cancelar</ButtonComponent>
+                                    <ButtonComponent
                                         className="btn-modal-confirmar"
                                         style={{ flex: 1 }}
                                         onClick={lidarComMudarPassword}
                                         disabled={!passAtual || !passNova || passNova !== passConfirma}
                                     >
                                         Atualizar
-                                    </button>
+                                    </ButtonComponent>
                                 </div>
                             </div>
                         </div>

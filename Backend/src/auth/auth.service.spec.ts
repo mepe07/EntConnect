@@ -150,6 +150,68 @@ describe('AuthService', () => {
     });
   });
 
+  it('deve escolher a role preferida no login quando pertence ao utilizador', async () => {
+    const loginDto: LoginDto = {
+      ...criarLoginDto(),
+      rolePreferida: Role.COORDENADOR,
+    };
+    const utilizador = criarUtilizadorFake({
+      Pessoa: {
+        Nome: 'Simao Silva',
+        Professor: { ID_Pessoa: 10 },
+        Coordenador: { ID_Pessoa: 10 },
+        Enc_Educacao: null,
+      },
+    });
+
+    prismaMock.utilizador.findUnique.mockResolvedValue(utilizador);
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+    jwtServiceMock.signAsync.mockResolvedValue('fake-jwt-token');
+
+    const resultado = await service.login(loginDto);
+
+    expect(jwtServiceMock.signAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        role: Role.COORDENADOR,
+        roles: [Role.PROFESSOR, Role.COORDENADOR],
+      }),
+    );
+    expect(resultado).toEqual({
+      access_token: 'fake-jwt-token',
+      role: Role.COORDENADOR,
+      roles: [Role.PROFESSOR, Role.COORDENADOR],
+    });
+  });
+
+  it('deve ignorar a role preferida no login quando nao pertence ao utilizador', async () => {
+    const loginDto: LoginDto = {
+      ...criarLoginDto(),
+      rolePreferida: Role.COORDENADOR,
+    };
+    const utilizador = criarUtilizadorFake({
+      Pessoa: {
+        Nome: 'Simao Silva',
+        Professor: { ID_Pessoa: 10 },
+        Coordenador: null,
+        Enc_Educacao: null,
+      },
+    });
+
+    prismaMock.utilizador.findUnique.mockResolvedValue(utilizador);
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+    jwtServiceMock.signAsync.mockResolvedValue('fake-jwt-token');
+
+    const resultado = await service.login(loginDto);
+
+    expect(jwtServiceMock.signAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        role: Role.PROFESSOR,
+        roles: [Role.PROFESSOR],
+      }),
+    );
+    expect(resultado.role).toBe(Role.PROFESSOR);
+  });
+
   it('deve lançar erro quando o utilizador não existe', async () => {
     const loginDto = criarLoginDto();
 

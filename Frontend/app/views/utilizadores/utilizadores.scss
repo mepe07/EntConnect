@@ -163,7 +163,7 @@
         th:nth-child(4) { width: auto; }
         th:nth-child(5) { width: 140px; }
         th:nth-child(6) { width: 110px; }
-        th:nth-child(7) { width: 100px; }
+        th:nth-child(7) { width: 160px; }
 
         th {
             background-color: #fafafa;
@@ -234,6 +234,14 @@
             font-weight: 600;
             background-color: colors.$theme-20;
             color: colors.$theme-100;
+            box-sizing: border-box;
+            display: inline-block;
+            max-width: 100%;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+            white-space: nowrap;
         }
 
        .tag-estado {
@@ -883,13 +891,110 @@
 }
 
 
-@media (prefers-color-scheme: dark) {
+body.entconnect-dark {
+    .crud-container {
+        .crud-header {
+            .textos {
+                h1 {
+                    color: #f8fafc !important;
+                }
+
+                p {
+                    color: #94a3b8 !important;
+                }
+            }
+        }
+
+        .tabela-crud {
+            td,
+            .id-coluna,
+            .text-secondary {
+                color: #e2e8f0 !important;
+            }
+
+            .id-coluna,
+            .text-secondary {
+                color: #cbd5e1 !important;
+            }
+
+            .user-info {
+                strong,
+                span {
+                    color: #f8fafc !important;
+                }
+            }
+
+            .acoes-coluna {
+                .btn-icone {
+                    &.editar,
+                    &.desbloquear {
+                        color: #86efac !important;
+                    }
+
+                    &.bloquear,
+                    &.eliminar {
+                        color: #f87171 !important;
+                    }
+
+                    &:hover {
+                        background-color: rgba(148, 163, 184, 0.14) !important;
+                        border-color: #475569 !important;
+                    }
+                }
+            }
+        }
+    }
+
     .modal-body {
         p {
-            color: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .foto-actions,
+        .educando-form,
+        .educando-item,
+        .checkbox-list {
+            background-color: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+
+        .foto-actions {
+            .foto-nome {
+                color: #d1fae5 !important;
+            }
+
+            .btn-foto {
+                &.cancelar,
+                &.remover {
+                    background: #1f2937 !important;
+                    border-color: #334155 !important;
+                    color: #e2e8f0 !important;
+                }
+
+                &.remover {
+                    border-color: #7f1d1d !important;
+                    color: #fecaca !important;
+                }
+            }
+        }
+
+        .secao-titulo,
+        .form-group label,
+        .checkbox-option,
+        .educando-form strong,
+        .educando-item strong {
+            color: #e2e8f0 !important;
+        }
+
+        .educando-item span,
+        .educandos-vazio {
+            color: #94a3b8 !important;
         }
 
         .import-loading {
+            background-color: rgba(20, 83, 45, 0.45);
+            border-color: #166534;
             color: #2dd4bf;
             span {
                 color: #f8fafc;

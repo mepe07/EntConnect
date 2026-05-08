@@ -66,7 +66,7 @@ export class AuthService {
     }
 
     const userRoles = this.determinarRoles(user);
-    const userRole = this.determinarRolePadrao(userRoles);
+    const userRole = this.determinarRoleLogin(userRoles, loginDto.rolePreferida);
     const payload = this.criarPayloadSessao(user, userRole, userRoles);
 
     this.logger.log(
@@ -314,6 +314,14 @@ export class AuthService {
     }
 
     return roles;
+  }
+
+  private determinarRoleLogin(roles: Role[], rolePreferida?: Role): Role {
+    if (rolePreferida && roles.includes(rolePreferida)) {
+      return rolePreferida;
+    }
+
+    return this.determinarRolePadrao(roles);
   }
 
   private determinarRolePadrao(roles: Role[]): Role {
