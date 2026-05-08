@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import React, { useEffect, useMemo, useState } from 'react';
 import { authService } from '../../services/auth.service';
 import { marketplaceService } from '../../services/marketplace.service';
@@ -330,7 +331,7 @@ export function Marketplace() {
                 </div>
                 <div className="marketplace-topo-acoes">
                     <div className="perfil-indicador">Perfil: <strong>{isCoordenadora ? 'Coordenadora' : 'Utilizador'}</strong></div>
-                    <button className="btn-principal" onClick={() => setMostrarModalCriar(true)}>Novo anúncio</button>
+                    <ButtonComponent className="btn-principal" onClick={() => setMostrarModalCriar(true)}>Novo anúncio</ButtonComponent>
                 </div>
             </div>
 
@@ -349,10 +350,10 @@ export function Marketplace() {
                             <p>Mesmo tom visual do inventário: mais simples, direto e próximo da realidade da escola.</p>
                         </div>
                         <div className="tabs">
-                            <button className={vista === 'montra' ? 'ativo' : ''} onClick={() => abrirVista('montra')}>Montra</button>
-                            <button className={vista === 'detalhe' ? 'ativo' : ''} onClick={() => setVista('detalhe')}>Detalhe</button>
-                            <button className={vista === 'meus' ? 'ativo' : ''} onClick={() => abrirVista('meus')}>Meus anúncios</button>
-                            {isCoordenadora ? <button className={vista === 'moderacao' ? 'ativo' : ''} onClick={() => abrirVista('moderacao')}>Moderação</button> : null}
+                            <ButtonComponent className={vista === 'montra' ? 'ativo' : ''} onClick={() => abrirVista('montra')}>Montra</ButtonComponent>
+                            <ButtonComponent className={vista === 'detalhe' ? 'ativo' : ''} onClick={() => setVista('detalhe')}>Detalhe</ButtonComponent>
+                            <ButtonComponent className={vista === 'meus' ? 'ativo' : ''} onClick={() => abrirVista('meus')}>Meus anúncios</ButtonComponent>
+                            {isCoordenadora ? <ButtonComponent className={vista === 'moderacao' ? 'ativo' : ''} onClick={() => abrirVista('moderacao')}>Moderação</ButtonComponent> : null}
                         </div>
                     </div>
 
@@ -400,7 +401,7 @@ export function Marketplace() {
                                     </div>
                                     <div className="cartao-rodape">
                                         <span>Publicado por {getNomeCriador(anuncio)} · {formatarData(anuncio.Data_Atualizacao || anuncio.Data_Criacao)}</span>
-                                        <button className="btn-secundario" onClick={() => abrirDetalhe(anuncio)}>Ver detalhe</button>
+                                        <ButtonComponent className="btn-secundario" onClick={() => abrirDetalhe(anuncio)}>Ver detalhe</ButtonComponent>
                                     </div>
                                 </div>
                             ))}
@@ -409,7 +410,7 @@ export function Marketplace() {
 
                     {!loading && vista === 'detalhe' && anuncioSelecionado && (
                         <div className="detalhe-anuncio">
-                            <button className="btn-link" onClick={() => setVista(vistaAnterior)}>← Voltar</button>
+                            <ButtonComponent className="btn-link" onClick={() => setVista(vistaAnterior)}>← Voltar</ButtonComponent>
                             <div className="detalhe-grid">
                                 <div className="detalhe-principal">
                                     <img className="detalhe-imagem" src={anuncioSelecionado.Foto || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1200&auto=format&fit=crop'} alt={anuncioSelecionado.Nome} />
@@ -445,29 +446,29 @@ export function Marketplace() {
                                     <div className="bloco-lateral">
                                         <h3>Ações</h3>
                                         <div className="acoes-lateral">
-                                            {podeRegistarInteresse ? <button className="btn-principal" onClick={registarInteresse}>Tenho interesse</button> : null}
+                                            {podeRegistarInteresse ? <ButtonComponent className="btn-principal" onClick={registarInteresse}>Tenho interesse</ButtonComponent> : null}
 
                                             {isDono(anuncioSelecionado) && anuncioSelecionado.Estado_Anuncio === EstadoAnuncio.ATIVO ? (
-                                                <button className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.RESERVADO)}>Marcar como reservado</button>
+                                                <ButtonComponent className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.RESERVADO)}>Marcar como reservado</ButtonComponent>
                                             ) : null}
                                             {isDono(anuncioSelecionado) && anuncioSelecionado.Estado_Anuncio === EstadoAnuncio.RESERVADO ? (
-                                                <button className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.ATIVO)}>Reativar anúncio</button>
+                                                <ButtonComponent className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.ATIVO)}>Reativar anúncio</ButtonComponent>
                                             ) : null}
                                             {isDono(anuncioSelecionado) && (anuncioSelecionado.Estado_Anuncio === EstadoAnuncio.ATIVO || anuncioSelecionado.Estado_Anuncio === EstadoAnuncio.RESERVADO) ? (
-                                                <button className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.CONCLUIDO)}>Marcar como concluído</button>
+                                                <ButtonComponent className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.CONCLUIDO)}>Marcar como concluído</ButtonComponent>
                                             ) : null}
                                             {isDono(anuncioSelecionado) && anuncioSelecionado.Estado_Anuncio !== EstadoAnuncio.ARQUIVADO && anuncioSelecionado.Estado_Anuncio !== EstadoAnuncio.REMOVIDO ? (
-                                                <button className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.ARQUIVADO)}>Arquivar anúncio</button>
+                                                <ButtonComponent className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.ARQUIVADO)}>Arquivar anúncio</ButtonComponent>
                                             ) : null}
 
                                             {podeRemoverPorModeracao ? (
-                                                <button className="btn-perigo" onClick={() => abrirModalModeracao(anuncioSelecionado, 'remover')}>Remover por moderação</button>
+                                                <ButtonComponent className="btn-perigo" onClick={() => abrirModalModeracao(anuncioSelecionado, 'remover')}>Remover por moderação</ButtonComponent>
                                             ) : null}
                                             {podeReativarPorModeracao ? (
-                                                <button className="btn-secundario" onClick={() => abrirModalModeracao(anuncioSelecionado, 'reativar')}>Reativar anúncio</button>
+                                                <ButtonComponent className="btn-secundario" onClick={() => abrirModalModeracao(anuncioSelecionado, 'reativar')}>Reativar anúncio</ButtonComponent>
                                             ) : null}
                                             {podeArquivarPorModeracao ? (
-                                                <button className="btn-secundario" onClick={() => abrirModalModeracao(anuncioSelecionado, 'arquivar')}>Arquivar por moderação</button>
+                                                <ButtonComponent className="btn-secundario" onClick={() => abrirModalModeracao(anuncioSelecionado, 'arquivar')}>Arquivar por moderação</ButtonComponent>
                                             ) : null}
                                         </div>
                                     </div>
@@ -489,7 +490,7 @@ export function Marketplace() {
                                         <p>{getTamanho(anuncio)} · {getCor(anuncio)} · {getEstadoPeca(anuncio)}</p>
                                     </div>
                                     <div className="linha-acoes">
-                                        <button className="btn-secundario" onClick={() => abrirDetalhe(anuncio)}>Ver</button>
+                                        <ButtonComponent className="btn-secundario" onClick={() => abrirDetalhe(anuncio)}>Ver</ButtonComponent>
                                     </div>
                                 </div>
                             ))}
@@ -509,16 +510,16 @@ export function Marketplace() {
                                         <p>{getNomeCriador(anuncio)}</p>
                                     </div>
                                     <div className="linha-acoes">
-                                        <button className="btn-secundario" onClick={() => abrirDetalhe(anuncio)}>Ver</button>
+                                        <ButtonComponent className="btn-secundario" onClick={() => abrirDetalhe(anuncio)}>Ver</ButtonComponent>
                                         {anuncio.Estado_Anuncio === EstadoAnuncio.REMOVIDO ? (
                                             <>
-                                                <button className="btn-secundario" onClick={() => abrirModalModeracao(anuncio, 'reativar')}>Reativar</button>
-                                                <button className="btn-secundario" onClick={() => abrirModalModeracao(anuncio, 'arquivar')}>Arquivar</button>
+                                                <ButtonComponent className="btn-secundario" onClick={() => abrirModalModeracao(anuncio, 'reativar')}>Reativar</ButtonComponent>
+                                                <ButtonComponent className="btn-secundario" onClick={() => abrirModalModeracao(anuncio, 'arquivar')}>Arquivar</ButtonComponent>
                                             </>
                                         ) : (
                                             <>
-                                                <button className="btn-perigo" onClick={() => abrirModalModeracao(anuncio, 'remover')}>Remover</button>
-                                                <button className="btn-secundario" onClick={() => abrirModalModeracao(anuncio, 'arquivar')}>Arquivar</button>
+                                                <ButtonComponent className="btn-perigo" onClick={() => abrirModalModeracao(anuncio, 'remover')}>Remover</ButtonComponent>
+                                                <ButtonComponent className="btn-secundario" onClick={() => abrirModalModeracao(anuncio, 'arquivar')}>Arquivar</ButtonComponent>
                                             </>
                                         )}
                                     </div>
@@ -542,8 +543,8 @@ export function Marketplace() {
                         <p className="texto-ajuda">Anúncio: <strong>{anuncioSelecionado.Nome}</strong></p>
                         <textarea placeholder="Motivo da moderação" value={motivoModeracao} onChange={(e) => setMotivoModeracao(e.target.value)} />
                         <div className="modal-acoes">
-                            <button className="btn-secundario" onClick={() => setMostrarModalModeracao(false)}>Cancelar</button>
-                            <button className="btn-perigo" onClick={() => executarAcaoModeracao(acaoModeracaoPendente)}>Confirmar remoção</button>
+                            <ButtonComponent className="btn-secundario" onClick={() => setMostrarModalModeracao(false)}>Cancelar</ButtonComponent>
+                            <ButtonComponent className="btn-perigo" onClick={() => executarAcaoModeracao(acaoModeracaoPendente)}>Confirmar remoção</ButtonComponent>
                         </div>
                     </div>
                 </div>

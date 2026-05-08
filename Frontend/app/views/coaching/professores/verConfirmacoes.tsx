@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import './verAgendamentos.scss';
 import { TableColumnTypesEnum } from '~/components/table/models/enums/table-column-types.enum';
 import { TableComponent } from '~/components/table/table.component';
@@ -134,9 +135,9 @@ export default function VerConfirmacoes() {
                     <div className="modal-conteudo">
                         <div className="modal-cabecalho">
                             <h2>Detalhes da Sessão</h2>
-                            <button className="btn-fechar-icon" onClick={fecharModal}>
+                            <ButtonComponent className="btn-fechar-icon" onClick={fecharModal}>
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="detalhes-grid" style={{ marginBottom: '24px' }}>
@@ -165,9 +166,9 @@ export default function VerConfirmacoes() {
                         )}
 
                         <div className="modal-acoes" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
-                            <button className="btn-fechar" onClick={fecharModal}>
+                            <ButtonComponent className="btn-fechar" onClick={fecharModal}>
                                 Fechar
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>

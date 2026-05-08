@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import { SelectBoxComponent } from '~/components/selectbox/selectbox.component';
 import './verMarcacoes.scss';
 import { useEffect, useState } from 'react';
@@ -213,9 +214,9 @@ export default function VerMarcacoes() {
                         </div>
 
                         <div className="modal-acoes">
-                            <button className="btn-fechar" onClick={fecharModal}>
+                            <ButtonComponent className="btn-fechar" onClick={fecharModal}>
                                 Fechar
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>

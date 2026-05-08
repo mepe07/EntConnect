@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import React, { useEffect, useMemo, useState } from 'react';
 import { marketplaceService } from '../../services/marketplace.service';
 import {
@@ -138,11 +139,11 @@ export function Inventario() {
                     <p>Gestão prática de lotes, quantidades e publicação para o Marketplace.</p>
                 </div>
                 <div className="inventario-acoes-topo">
-                    <button className="btn-secundario" onClick={carregarInventario}>Atualizar</button>
-                    <button className="btn-principal" onClick={() => setVista('publicados')}>Ver publicados</button>
-                    <button className="btn-principal" onClick={() => setMostrarModalCriar(true)}>
+                    <ButtonComponent className="btn-secundario" onClick={carregarInventario}>Atualizar</ButtonComponent>
+                    <ButtonComponent className="btn-principal" onClick={() => setVista('publicados')}>Ver publicados</ButtonComponent>
+                    <ButtonComponent className="btn-principal" onClick={() => setMostrarModalCriar(true)}>
                         <i className="fa-solid fa-plus"></i> Novo Item
-                    </button>
+                    </ButtonComponent>
                 </div>
             </div>
 
@@ -161,9 +162,9 @@ export function Inventario() {
                             <p>Vista operacional da coordenadora com foco em detalhe, stock e publicação rápida.</p>
                         </div>
                         <div className="tabs">
-                            <button className={vista === 'lista' ? 'ativo' : ''} onClick={() => setVista('lista')}>Lista</button>
-                            <button className={vista === 'detalhe' ? 'ativo' : ''} onClick={() => setVista('detalhe')}>Detalhe</button>
-                            <button className={vista === 'publicados' ? 'ativo' : ''} onClick={() => setVista('publicados')}>Publicados</button>
+                            <ButtonComponent className={vista === 'lista' ? 'ativo' : ''} onClick={() => setVista('lista')}>Lista</ButtonComponent>
+                            <ButtonComponent className={vista === 'detalhe' ? 'ativo' : ''} onClick={() => setVista('detalhe')}>Detalhe</ButtonComponent>
+                            <ButtonComponent className={vista === 'publicados' ? 'ativo' : ''} onClick={() => setVista('publicados')}>Publicados</ButtonComponent>
                         </div>
                     </div>
 
@@ -196,8 +197,8 @@ export function Inventario() {
                                         </div>
                                     </div>
                                     <div className="linha-acoes">
-                                        <button className="btn-secundario" onClick={() => abrirDetalhe(item)}>Ver detalhe</button>
-                                        <button className="btn-principal" onClick={() => { setItemSelecionado(item); setMostrarModalPublicar(true); }}>Publicar</button>
+                                        <ButtonComponent className="btn-secundario" onClick={() => abrirDetalhe(item)}>Ver detalhe</ButtonComponent>
+                                        <ButtonComponent className="btn-principal" onClick={() => { setItemSelecionado(item); setMostrarModalPublicar(true); }}>Publicar</ButtonComponent>
                                     </div>
                                 </div>
                             ))}
@@ -206,7 +207,7 @@ export function Inventario() {
 
                     {!loading && vista === 'detalhe' && itemSelecionado && (
                         <div className="detalhe-lote">
-                            <button className="btn-link" onClick={() => setVista('lista')}>← Voltar à lista</button>
+                            <ButtonComponent className="btn-link" onClick={() => setVista('lista')}>← Voltar à lista</ButtonComponent>
                             <div className="detalhe-grid">
                                 <div className="detalhe-principal">
                                     <img className="detalhe-imagem" src={itemSelecionado.Foto || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1200&auto=format&fit=crop'} alt={itemSelecionado.Nome} />
@@ -237,8 +238,8 @@ export function Inventario() {
                                     <div className="bloco-lateral">
                                         <h3>Ações do lote</h3>
                                         <div className="acoes-lateral">
-                                            <button className="btn-principal" onClick={() => setMostrarModalPublicar(true)}>{itemSelecionado.Publicado_No_Marketplace ? 'Rever publicação' : 'Publicar no Marketplace'}</button>
-                                            <button className="btn-secundario" onClick={() => setVista('publicados')}>Ver publicados</button>
+                                            <ButtonComponent className="btn-principal" onClick={() => setMostrarModalPublicar(true)}>{itemSelecionado.Publicado_No_Marketplace ? 'Rever publicação' : 'Publicar no Marketplace'}</ButtonComponent>
+                                            <ButtonComponent className="btn-secundario" onClick={() => setVista('publicados')}>Ver publicados</ButtonComponent>
                                         </div>
                                     </div>
                                 </div>
@@ -262,8 +263,8 @@ export function Inventario() {
                                         </div>
                                     </div>
                                     <div className="linha-acoes">
-                                        <button className="btn-secundario" onClick={() => abrirDetalhe(item)}>Ver detalhe</button>
-                                        <button className="btn-principal" onClick={() => { setItemSelecionado(item); setMostrarModalPublicar(true); }}>Rever publicação</button>
+                                        <ButtonComponent className="btn-secundario" onClick={() => abrirDetalhe(item)}>Ver detalhe</ButtonComponent>
+                                        <ButtonComponent className="btn-principal" onClick={() => { setItemSelecionado(item); setMostrarModalPublicar(true); }}>Rever publicação</ButtonComponent>
                                     </div>
                                 </div>
                             ))}

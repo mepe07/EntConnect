@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 
 
 import React from 'react';
@@ -50,12 +51,12 @@ export function ModalContacto({ isOpen, onClose, vendedor, nomeArtigo }: ModalCo
                     </div>
                 </div>
 
-                <button
+                <ButtonComponent
                     onClick={onClose}
                     style={{ marginTop: '1.5rem', width: '100%', background: '#f1f5f9', color: '#475569', border: 'none', padding: '0.8rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
                 >
                     Fechar
-                </button>
+                </ButtonComponent>
             </div>
         </>
     );

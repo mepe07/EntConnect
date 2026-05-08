@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import { showToast } from '~/components/toast/toast';
 
 
@@ -346,10 +347,10 @@ export function PainelEventosCoordenacao() {
                     </p>
                 </div>
 
-                <button type="button" className={styles.primaryButton} onClick={abrirCriacao}>
+                <ButtonComponent type="button" className={styles.primaryButton} onClick={abrirCriacao}>
                     <i className="fa-solid fa-plus"></i>
                     Novo evento
-                </button>
+                </ButtonComponent>
             </section>
 
             <section className={styles.statsGrid}>
@@ -493,30 +494,30 @@ export function PainelEventosCoordenacao() {
                                         </Link>
                                     )}
 
-                                    <button
+                                    <ButtonComponent
                                         type="button"
                                         className={styles.secondaryAction}
                                         onClick={() => abrirEdicao(evento)}
                                     >
                                         Editar
-                                    </button>
+                                    </ButtonComponent>
 
                                     {evento.ativo ? (
-                                        <button
+                                        <ButtonComponent
                                             type="button"
                                             className={styles.dangerAction}
                                             onClick={() => removerEvento(evento)}
                                         >
                                             Remover
-                                        </button>
+                                        </ButtonComponent>
                                     ) : (
-                                        <button
+                                        <ButtonComponent
                                             type="button"
                                             className={styles.successAction}
                                             onClick={() => reativarEvento(evento)}
                                         >
                                             Reativar
-                                        </button>
+                                        </ButtonComponent>
                                     )}
                                 </div>
                             </div>
@@ -539,9 +540,9 @@ export function PainelEventosCoordenacao() {
                                 <h2>{eventoEdicao ? eventoEdicao.titulo : 'Criar evento'}</h2>
                             </div>
 
-                            <button type="button" onClick={fecharModal}>
+                            <ButtonComponent type="button" onClick={fecharModal}>
                                 ×
-                            </button>
+                            </ButtonComponent>
                         </header>
 
                         <form className={styles.form} onSubmit={submeterFormulario}>
@@ -716,13 +717,13 @@ export function PainelEventosCoordenacao() {
                             </div>
 
                             <footer className={styles.modalFooter}>
-                                <button type="button" onClick={fecharModal}>
+                                <ButtonComponent type="button" onClick={fecharModal}>
                                     Cancelar
-                                </button>
+                                </ButtonComponent>
 
-                                <button type="submit" disabled={aGuardar}>
+                                <ButtonComponent type="submit" disabled={aGuardar}>
                                     {aGuardar ? 'A guardar...' : 'Guardar evento'}
-                                </button>
+                                </ButtonComponent>
                             </footer>
                         </form>
                     </section>

@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import React, { useState, useEffect } from 'react';
 import { TipoAnuncio } from '../../../types/marketplace.types';
 
@@ -93,10 +94,10 @@ export function ModalPublicar({ isOpen, onClose, onConfirm, loteInfo }: ModalPub
                 {totalAlocado === 0 && <div style={{ color: '#f59e0b', fontSize: '0.85rem', marginTop: '1rem' }}>ℹ️ Aloca pelo menos 1 unidade para publicar.</div>}
 
                 <div className="modal-acoes" style={{ marginTop: '1.5rem' }}>
-                    <button className="btn-secundario" onClick={onClose}>Cancelar</button>
-                    <button className="btn-principal" onClick={handleSalvar} disabled={ultrapassouLimite || totalAlocado === 0} style={{ opacity: (ultrapassouLimite || totalAlocado === 0) ? 0.5 : 1 }}>
+                    <ButtonComponent className="btn-secundario" onClick={onClose}>Cancelar</ButtonComponent>
+                    <ButtonComponent className="btn-principal" onClick={handleSalvar} disabled={ultrapassouLimite || totalAlocado === 0} style={{ opacity: (ultrapassouLimite || totalAlocado === 0) ? 0.5 : 1 }}>
                         Publicar Item
-                    </button>
+                    </ButtonComponent>
                 </div>
             </div>
         </>

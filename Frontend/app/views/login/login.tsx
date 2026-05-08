@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent, KeyboardEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
@@ -209,7 +210,7 @@ export function Login() {
                 />
                 <label htmlFor="passwordInput">Password</label>
 
-                <button
+                <ButtonComponent
                     type="button"
                     className={styles.eyeButton}
                     onClick={() => setMostrarPassword(!mostrarPassword)}
@@ -219,7 +220,7 @@ export function Login() {
                         :
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     }
-                </button>
+                </ButtonComponent>
 
                 {capsLockAtivo && <span className={styles.capsWarning}>Caps Lock!</span>}
             </div>
@@ -233,14 +234,14 @@ export function Login() {
                     Lembrar-me
                 </label>
 
-                <button type="button" className={styles.forgotPassword} onClick={() => trocarModo('forgot')}>
+                <ButtonComponent type="button" className={styles.forgotPassword} onClick={() => trocarModo('forgot')}>
                     Esqueci-me da password.
-                </button>
+                </ButtonComponent>
             </div>
 
-            <button type="submit" className={styles.submitButton} disabled={isSubmitting}>
+            <ButtonComponent type="submit" className={styles.submitButton} disabled={isSubmitting}>
                 {isSubmitting ? 'A entrar...' : 'Entrar na Plataforma'}
-            </button>
+            </ButtonComponent>
         </form>
     );
 
@@ -272,13 +273,13 @@ export function Login() {
                 </a>
             )}
 
-            <button type="submit" className={styles.submitButton} disabled={isSubmitting}>
+            <ButtonComponent type="submit" className={styles.submitButton} disabled={isSubmitting}>
                 {isSubmitting ? 'A enviar...' : 'Enviar instruções'}
-            </button>
+            </ButtonComponent>
 
-            <button type="button" className={styles.secondaryButton} onClick={() => trocarModo('login')}>
+            <ButtonComponent type="button" className={styles.secondaryButton} onClick={() => trocarModo('login')}>
                 Voltar ao login
-            </button>
+            </ButtonComponent>
         </form>
     );
 
@@ -302,13 +303,13 @@ export function Login() {
                 />
                 <label htmlFor="novaPasswordInput">Nova password</label>
 
-                <button
+                <ButtonComponent
                     type="button"
                     className={styles.eyeButton}
                     onClick={() => setMostrarNovaPassword(!mostrarNovaPassword)}
                 >
                     {mostrarNovaPassword ? '🙈' : '👁️'}
-                </button>
+                </ButtonComponent>
             </div>
 
             <div className={styles.inputGroup}>
@@ -331,13 +332,13 @@ export function Login() {
 
             {renderMensagens()}
 
-            <button type="submit" className={styles.submitButton} disabled={isSubmitting || !resetToken}>
+            <ButtonComponent type="submit" className={styles.submitButton} disabled={isSubmitting || !resetToken}>
                 {isSubmitting ? 'A guardar...' : 'Guardar nova password'}
-            </button>
+            </ButtonComponent>
 
-            <button type="button" className={styles.secondaryButton} onClick={() => trocarModo('login')}>
+            <ButtonComponent type="button" className={styles.secondaryButton} onClick={() => trocarModo('login')}>
                 Voltar ao login
-            </button>
+            </ButtonComponent>
         </form>
     );
 

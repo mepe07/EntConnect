@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import React, { useState, useEffect } from 'react';
 import { coachingService } from '~/services/coaching.service';
 import './coaching.scss';
@@ -98,9 +99,9 @@ const renderBadgeEstado = (estado: string) => {
                     <label>Data Final</label>
                     <input type="date" value={dataFimInput} onChange={(e) => setDataFimInput(e.target.value)} />
                 </div>
-                <button className="btn-pesquisar" onClick={aplicarFiltro}>
+                <ButtonComponent className="btn-pesquisar" onClick={aplicarFiltro}>
                     <i className="fa-solid fa-magnifying-glass"></i> Pesquisar
-                </button>
+                </ButtonComponent>
             </div>
 
             {filtroDataInicio !== 'aguardar' && (

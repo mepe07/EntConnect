@@ -31,7 +31,7 @@
 
     .pagamentos-filtros {
         display: grid;
-        grid-template-columns: repeat(5, minmax(150px, 1fr));
+        grid-template-columns: repeat(4, minmax(150px, 1fr)) max-content;
         gap: 16px;
         align-items: end;
         padding: 18px;
@@ -71,7 +71,12 @@
         .filtro-acoes {
             display: flex;
             gap: 10px;
-            min-width: 0;
+            justify-content: flex-end;
+            min-width: max-content;
+
+            button {
+                white-space: nowrap;
+            }
         }
     }
 
@@ -383,6 +388,12 @@
 
         .pagamentos-filtros {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+
+            .filtro-acoes {
+                grid-column: 1 / -1;
+                min-width: 0;
+                justify-content: flex-start;
+            }
         }
 
         .pagamentos-resumo {

@@ -38,14 +38,25 @@ const CARGOS_DISPONIVEIS = [
     'Encarregado de Educação',
 ];
 
+const CARGO_SEM_CARGO = 'Sem Cargo';
+
+const normalizarListaCargos = (cargos: Array<string | null | undefined>) =>
+    cargos
+        .map(cargo => cargo?.trim())
+        .filter((cargo): cargo is string => Boolean(cargo) && cargo !== CARGO_SEM_CARGO);
+
 const obterCargosUtilizador = (utilizador?: Pick<Utilizador, 'cargo' | 'cargos'> | null) => {
-    if (utilizador?.cargos?.length) return utilizador.cargos;
-    return utilizador?.cargo ? [utilizador.cargo] : [];
+    const cargos = normalizarListaCargos([
+        ...(utilizador?.cargos ?? []),
+        utilizador?.cargo,
+    ]);
+
+    return Array.from(new Set(cargos));
 };
 
 const formatarCargos = (cargos: string[]) => cargos
     .map(cargo => cargoLabel[cargo] ?? cargo)
-    .join(', ');
+    .join(', ') || CARGO_SEM_CARGO;
 
 const cargosIguais = (a: string[], b: string[]) =>
     a.length === b.length && a.every(cargo => b.includes(cargo));
@@ -870,8 +881,11 @@ export function Utilizadores() {
                                 <td colSpan={7} className="tabela-vazia">Nenhum utilizador encontrado.</td>
                             </tr>
                         ) : (
-                            utilizadoresPagina.map((u) => (
-                                <tr key={u.idUtilizador}>
+                            utilizadoresPagina.map((u) => {
+                                const cargosFormatados = formatarCargos(obterCargosUtilizador(u));
+
+                                return (
+                                    <tr key={u.idUtilizador}>
                                     <td className="id-coluna">#{u.idUtilizador}</td>
                                     <td>
                                         <div className="user-info">
@@ -893,8 +907,8 @@ export function Utilizadores() {
                                     <td className="text-secondary">{u.username}</td>
                                     <td className="text-secondary">{u.email}</td>
                                     <td>
-                                        <span className="tag-role">
-                                            {formatarCargos(obterCargosUtilizador(u))}
+                                        <span className="tag-role" title={cargosFormatados}>
+                                            {cargosFormatados}
                                         </span>
                                     </td>
                                     <td>
@@ -902,31 +916,34 @@ export function Utilizadores() {
                                             {u.ativo ? 'Ativo' : 'Bloqueado'}
                                         </span>
                                     </td>
-                                    <td className="acoes-coluna">
-                                        <button
+                                    <td>
+                                        <div className="acoes-coluna">
+                                        <ButtonComponent
                                             className="btn-icone editar"
                                             title="Ver detalhes e editar"
                                             onClick={() => abrirModal(u)}
                                         >
                                             <i className="fa-solid fa-eye"></i>
-                                        </button>
-                                        <button
+                                        </ButtonComponent>
+                                        <ButtonComponent
                                             className={`btn-icone ${u.ativo ? 'bloquear' : 'desbloquear'}`}
                                             title={u.ativo ? 'Bloquear utilizador' : 'Desbloquear utilizador'}
                                             onClick={() => handleToggleAtivo(u)}
                                         >
                                             <i className={`fa-solid ${u.ativo ? 'fa-lock' : 'fa-lock-open'}`}></i>
-                                        </button>
-                                        <button
+                                        </ButtonComponent>
+                                        <ButtonComponent
                                             className="btn-icone eliminar"
                                             title="Eliminar utilizador"
                                             onClick={() => handleEliminarUtilizador(u)}
                                         >
                                             <i className="fa-solid fa-trash"></i>
-                                        </button>
+                                        </ButtonComponent>
+                                        </div>
                                     </td>
-                                </tr>
-                            ))
+                                    </tr>
+                                );
+                            })
                         )}
                     </tbody>
                 </table>
@@ -949,22 +966,22 @@ export function Utilizadores() {
                         <span>por página &mdash; {utilizadoresFiltrados.length} resultado{utilizadoresFiltrados.length !== 1 ? 's' : ''}</span>
                     </div>
                     <div className="paginacao-controlos">
-                        <button
+                        <ButtonComponent
                             className="btn-pagina"
                             onClick={() => irParaPagina(1)}
                             disabled={paginaAtual === 1}
                             title="Primeira página"
                         >
                             <i className="fa-solid fa-angles-left"></i>
-                        </button>
-                        <button
+                        </ButtonComponent>
+                        <ButtonComponent
                             className="btn-pagina"
                             onClick={() => irParaPagina(paginaAtual - 1)}
                             disabled={paginaAtual === 1}
                             title="Página anterior"
                         >
                             <i className="fa-solid fa-angle-left"></i>
-                        </button>
+                        </ButtonComponent>
                         <span className="paginacao-paginas">
                             {Array.from({ length: totalPaginas }, (_, i) => i + 1)
                                 .filter(p => p === 1 || p === totalPaginas || Math.abs(p - paginaAtual) <= 1)
@@ -977,33 +994,33 @@ export function Utilizadores() {
                                     p === '...' ? (
                                         <span key={`ellipsis-${idx}`} className="paginacao-ellipsis">…</span>
                                     ) : (
-                                        <button
+                                        <ButtonComponent
                                             key={p}
                                             className={`btn-pagina ${paginaAtual === p ? 'ativo' : ''}`}
                                             onClick={() => irParaPagina(p as number)}
                                         >
                                             {p}
-                                        </button>
+                                        </ButtonComponent>
                                     )
                                 )
                             }
                         </span>
-                        <button
+                        <ButtonComponent
                             className="btn-pagina"
                             onClick={() => irParaPagina(paginaAtual + 1)}
                             disabled={paginaAtual === totalPaginas}
                             title="Próxima página"
                         >
                             <i className="fa-solid fa-angle-right"></i>
-                        </button>
-                        <button
+                        </ButtonComponent>
+                        <ButtonComponent
                             className="btn-pagina"
                             onClick={() => irParaPagina(totalPaginas)}
                             disabled={paginaAtual === totalPaginas}
                             title="Última página"
                         >
                             <i className="fa-solid fa-angles-right"></i>
-                        </button>
+                        </ButtonComponent>
                     </div>
                 </div>
             )}
@@ -1048,9 +1065,9 @@ export function Utilizadores() {
                                     </span>
                                 </div>
                             </div>
-                            <button className="btn-fechar" onClick={fecharModal}>
+                            <ButtonComponent className="btn-fechar" onClick={fecharModal}>
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="modal-body">
@@ -1063,7 +1080,7 @@ export function Utilizadores() {
                                             <span className="foto-nome">
                                                 <i className="fa-solid fa-image"></i> {ficheiroFoto.name}
                                             </span>
-                                            <button
+                                            <ButtonComponent
                                                 className="btn-foto confirmar"
                                                 onClick={handleUploadFoto}
                                                 disabled={loadingFoto}
@@ -1072,13 +1089,13 @@ export function Utilizadores() {
                                                     ? <><i className="fa-solid fa-spinner fa-spin"></i> A enviar...</>
                                                     : <><i className="fa-solid fa-upload"></i> Confirmar</>
                                                 }
-                                            </button>
-                                            <button className="btn-foto cancelar" onClick={handleCancelarFoto}>
+                                            </ButtonComponent>
+                                            <ButtonComponent className="btn-foto cancelar" onClick={handleCancelarFoto}>
                                                 Cancelar
-                                            </button>
+                                            </ButtonComponent>
                                         </>
                                     ) : (
-                                        <button
+                                        <ButtonComponent
                                             className="btn-foto remover"
                                             onClick={handleRemoverFoto}
                                             disabled={loadingFoto}
@@ -1087,7 +1104,7 @@ export function Utilizadores() {
                                                 ? <><i className="fa-solid fa-spinner fa-spin"></i> A remover...</>
                                                 : <><i className="fa-solid fa-trash"></i> Remover foto</>
                                             }
-                                        </button>
+                                        </ButtonComponent>
                                     )}
                                 </div>
                             )}
@@ -1198,22 +1215,22 @@ export function Utilizadores() {
                                                                 </span>
                                                         </div>
                                                         <div className="educando-acoes">
-                                                            <button
+                                                            <ButtonComponent
                                                                 type="button"
                                                                 className="btn-educando"
                                                                 title="Editar educando"
                                                                 onClick={() => handleEditarEducando(educando)}
                                                             >
                                                                 <i className="fa-solid fa-pen"></i>
-                                                            </button>
-                                                            <button
+                                                            </ButtonComponent>
+                                                            <ButtonComponent
                                                                 type="button"
                                                                 className="btn-educando remover"
                                                                 title="Remover educando"
                                                                 onClick={() => handleRemoverEducando(educando)}
                                                             >
                                                                 <i className="fa-solid fa-trash"></i>
-                                                            </button>
+                                                            </ButtonComponent>
                                                         </div>
                                                     </div>
                                                 ))
@@ -1243,7 +1260,7 @@ export function Utilizadores() {
                                                             </option>
                                                         ))}
                                                     </select>
-                                                    <button
+                                                    <ButtonComponent
                                                         type="button"
                                                         className="btn-guardar-educando"
                                                         onClick={handleAssociarEducando}
@@ -1253,7 +1270,7 @@ export function Utilizadores() {
                                                             ? <><i className="fa-solid fa-spinner fa-spin"></i> A associar...</>
                                                             : <><i className="fa-solid fa-link"></i> Associar</>
                                                         }
-                                                    </button>
+                                                    </ButtonComponent>
                                                 </div>
                                             </div>
 
@@ -1262,9 +1279,9 @@ export function Utilizadores() {
                                             <div className="educando-form-header">
                                                 <strong>{educandoForm.idAluno ? 'Editar educando' : 'Adicionar educando'}</strong>
                                                 {educandoForm.idAluno && (
-                                                    <button type="button" onClick={handleCancelarEducando}>
+                                                    <ButtonComponent type="button" onClick={handleCancelarEducando}>
                                                         Cancelar
-                                                    </button>
+                                                    </ButtonComponent>
                                                 )}
                                             </div>
 
@@ -1330,7 +1347,7 @@ export function Utilizadores() {
                                                 </div>
                                             )}
 
-                                            <button
+                                            <ButtonComponent
                                                 type="button"
                                                 className="btn-guardar-educando"
                                                 onClick={handleGuardarEducando}
@@ -1340,7 +1357,7 @@ export function Utilizadores() {
                                                     ? <><i className="fa-solid fa-spinner fa-spin"></i> A guardar...</>
                                                     : <><i className="fa-solid fa-floppy-disk"></i> {educandoForm.idAluno ? 'Guardar educando' : 'Adicionar educando'}</>
                                                 }
-                                            </button>
+                                            </ButtonComponent>
                                         </div>
                                     </div>
                                 </>
@@ -1364,14 +1381,14 @@ export function Utilizadores() {
                                         onChange={(e) => { setNovaPassword(e.target.value); setErroPassword(''); }}
                                         className={erroPassword ? 'input-erro' : ''}
                                     />
-                                    <button
+                                    <ButtonComponent
                                         type="button"
                                         className="btn-toggle-password"
                                         onClick={() => setMostrarPassword(!mostrarPassword)}
                                         title={mostrarPassword ? 'Ocultar password' : 'Mostrar password'}
                                     >
                                         <i className={`fa-solid ${mostrarPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                                    </button>
+                                    </ButtonComponent>
                                 </div>
                             </div>
 
@@ -1397,10 +1414,10 @@ export function Utilizadores() {
                         </div>
 
                         <div className="modal-footer">
-                            <button className="btn-secundario" onClick={fecharModal}>
+                            <ButtonComponent className="btn-secundario" onClick={fecharModal}>
                                 Fechar
-                            </button>
-                            <button
+                            </ButtonComponent>
+                            <ButtonComponent
                                 className="btn-primario"
                                 onClick={handleGuardarTudo}
                                 disabled={loadingSaveDados}
@@ -1409,7 +1426,7 @@ export function Utilizadores() {
                                     ? <><i className="fa-solid fa-spinner fa-spin"></i> A guardar...</>
                                     : <><i className="fa-solid fa-floppy-disk"></i> Guardar Alterações</>
                                 }
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>
@@ -1430,9 +1447,9 @@ export function Utilizadores() {
                                     <span className="tag-estado small aviso">A criar</span>
                                 </div>
                             </div>
-                            <button className="btn-fechar" onClick={fecharModalCriar}>
+                            <ButtonComponent className="btn-fechar" onClick={fecharModalCriar}>
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="modal-body">
@@ -1560,14 +1577,14 @@ export function Utilizadores() {
                                         value={formNovo.password}
                                         onChange={(e) => handleFormNovo('password', e.target.value)}
                                     />
-                                    <button
+                                    <ButtonComponent
                                         type="button"
                                         className="btn-toggle-password"
                                         onClick={() => setMostrarPasswordNovo(!mostrarPasswordNovo)}
                                         title={mostrarPasswordNovo ? 'Ocultar password' : 'Mostrar password'}
                                     >
                                         <i className={`fa-solid ${mostrarPasswordNovo ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                                    </button>
+                                    </ButtonComponent>
                                 </div>
                                 {errosCriar.password && (
                                     <span className="campo-erro">{errosCriar.password}</span>
@@ -1593,10 +1610,10 @@ export function Utilizadores() {
                         </div>
 
                         <div className="modal-footer">
-                            <button className="btn-secundario" onClick={fecharModalCriar} disabled={loadingCriar}>
+                            <ButtonComponent className="btn-secundario" onClick={fecharModalCriar} disabled={loadingCriar}>
                                 Cancelar
-                            </button>
-                            <button
+                            </ButtonComponent>
+                            <ButtonComponent
                                 className="btn-primario"
                                 onClick={handleCriarUtilizador}
                                 disabled={loadingCriar}
@@ -1605,7 +1622,7 @@ export function Utilizadores() {
                                     ? <><i className="fa-solid fa-spinner fa-spin"></i> A criar...</>
                                     : <><i className="fa-solid fa-user-plus"></i> Criar Utilizador</>
                                 }
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>
@@ -1630,9 +1647,9 @@ export function Utilizadores() {
                                     <h2><i className="fa-solid fa-upload"></i> Importar Utilizadores</h2>
                                 </div>
                             </div>
-                            <button className="btn-fechar" onClick={() => setModalImportOpen(false)} disabled={loadingImport}>
+                            <ButtonComponent className="btn-fechar" onClick={() => setModalImportOpen(false)} disabled={loadingImport}>
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="modal-body">
@@ -1649,13 +1666,13 @@ export function Utilizadores() {
                                 </div>
 
 
-                                <button
+                                <ButtonComponent
                                     type="button"
                                     onClick={handleDownloadModelo}
                                     className="btn-download-modelo"
                                 >
                                     <i className="fa-solid fa-download"></i> Descarregar
-                                </button>
+                                </ButtonComponent>
 
 
                             </div>
@@ -1669,10 +1686,10 @@ export function Utilizadores() {
                         </div>
 
                         <div className="modal-footer">
-                            <button className="btn-secundario" onClick={() => setModalImportOpen(false)} disabled={loadingImport}>
+                            <ButtonComponent className="btn-secundario" onClick={() => setModalImportOpen(false)} disabled={loadingImport}>
                                 Cancelar
-                            </button>
-                            <button
+                            </ButtonComponent>
+                            <ButtonComponent
                                 className="btn-primario"
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={loadingImport}
@@ -1681,7 +1698,7 @@ export function Utilizadores() {
                                     ? <><i className="fa-solid fa-spinner fa-spin"></i> A importar...</>
                                     : <><i className="fa-solid fa-folder-open"></i> Selecionar Ficheiro</>
                                 }
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>

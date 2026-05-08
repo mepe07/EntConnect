@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import React, { useState } from 'react';
 import { TipoAnuncio, type CriarAnuncioPayload } from '../../../types/marketplace.types';
 import '../marketplace.scss';
@@ -263,20 +264,20 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
                 </div>
 
                 <div className="modal-acoes" style={{ marginTop: '24px', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                    <button
+                    <ButtonComponent
                         className="btn-secundario"
                         onClick={onClose}
                         disabled={loading}
                     >
                         Cancelar
-                    </button>
-                    <button
+                    </ButtonComponent>
+                    <ButtonComponent
                         className="btn-principal"
                         onClick={handleSubmit}
                         disabled={loading}
                     >
                         {loading ? 'A publicar...' : 'Publicar Anúncio'}
-                    </button>
+                    </ButtonComponent>
                 </div>
             </div>
         </>
