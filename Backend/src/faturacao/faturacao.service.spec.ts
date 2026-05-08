@@ -1,13 +1,15 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { describe, beforeEach, afterEach, it, expect, jest } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
-
-import { PrismaService } from '../prisma/prisma.service';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { FaturacaoService } from './faturacao.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 describe('FaturacaoService', () => {
-  let service: FaturacaoService;
+  let faturacaoService: FaturacaoService;
+  let prismaService: PrismaService;
 
-  const prismaMock = {
+  // Mock Prisma
+  const mockPrismaService = {
     coaching_Aluno: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
@@ -40,92 +42,193 @@ describe('FaturacaoService', () => {
       ...override,
     }) as any;
 
+  // Configuração do módulo de teste
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FaturacaoService,
-        { provide: PrismaService, useValue: prismaMock },
+        {
+          provide: PrismaService,
+          useValue: mockPrismaService,
+        },
       ],
     }).compile();
 
-    service = module.get<FaturacaoService>(FaturacaoService);
-    jest.resetAllMocks();
+    faturacaoService = module.get<FaturacaoService>(FaturacaoService);
+    prismaService = module.get<PrismaService>(PrismaService);
   });
 
-  it('deve obter faturação geral mapeada', async () => {
-    prismaMock.coaching_Aluno.findMany.mockResolvedValue([criarFatura()]);
-
-    const resultado = await service.obterFaturacaoGeral();
-
-    expect(resultado[0]).toEqual(
-      expect.objectContaining({
-        idCoaching: 1,
-        idAluno: 2,
-        nomeProfessor: 'Prof',
-        valorTotal: 25,
-        valorEmFalta: 10,
-        estaPago: false,
-        salaNome: 'Estúdio A',
-      }),
-    );
+  // Limpar os mocks depois de cada teste
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('deve obter pagamentos admin e filtrar por estado', async () => {
-    prismaMock.coaching_Aluno.findMany.mockResolvedValue([
-      criarFatura({ ValorEmFalta: 0 }),
-      criarFatura({
-        ValorEmFalta: 10,
-        Coaching: {
-          ...criarFatura().Coaching,
-          Inicio_Coaching: new Date('2020-01-01'),
-        },
-      }),
-    ]);
+  describe('obterFaturacaoGeral', () => {
+    it('deve obter faturação geral mapeada com sucesso', async () => {
+      // Arrange
+      const mockFaturas = [criarFatura()];
+      jest.spyOn(prismaService.coaching_Aluno, 'findMany').mockResolvedValue(mockFaturas as any);
 
-    const resultado = await service.obterPagamentosCoachingAdmin({
-      estado: 'pago',
+      // Act
+      const resultado = await faturacaoService.obterFaturacaoGeral();
+
+      // Assert
+      expect(prismaService.coaching_Aluno.findMany).toHaveBeenCalled();
+      expect(resultado[0]).toEqual(
+        expect.objectContaining({
+          idCoaching: 1,
+          idAluno: 2,
+          nomeProfessor: 'Prof',
+          valorTotal: 25,
+          valorEmFalta: 10,
+          estaPago: false,
+          salaNome: 'Estúdio A',
+        }),
+      );
+    });
+  });
+
+  describe('obterPagamentosCoachingAdmin', () => {
+    it('deve obter pagamentos admin e filtrar corretamente por estado', async () => {
+      // Arrange
+      const mockFaturas = [
+        criarFatura({ ValorEmFalta: 0 }), // Estado "pago"
+        criarFatura({
+          ValorEmFalta: 10, // Estado não pago
+          Coaching: {
+            ...criarFatura().Coaching,
+            Inicio_Coaching: new Date('2020-01-01'),
+          },
+        }),
+      ];
+      jest.spyOn(prismaService.coaching_Aluno, 'findMany').mockResolvedValue(mockFaturas as any);
+
+      const filtros = { estado: 'pago' };
+
+      // Act
+      const resultado = await faturacaoService.obterPagamentosCoachingAdmin(filtros);
+
+      // Assert
+      expect(prismaService.coaching_Aluno.findMany).toHaveBeenCalled();
+      expect(resultado).toHaveLength(1); // Espera-se que só retorne o pago
+      expect(resultado[0]).toEqual(
+        expect.objectContaining({ estadoPagamento: 'pago', valorPago: 25 }),
+      );
+    });
+  });
+
+  describe('getDashboardFinanceiro', () => {
+    it('deve gerar dashboard financeiro com resumo e top professores', async () => {
+      // Arrange
+      const dataInicio = new Date('2026-05-01');
+      const dataFim = new Date('2026-05-01');
+      const mockFaturas = [criarFatura()];
+      
+      jest.spyOn(prismaService.coaching_Aluno, 'findMany').mockResolvedValue(mockFaturas as any);
+
+      // Act
+      const resultado = await faturacaoService.getDashboardFinanceiro(dataInicio, dataFim);
+
+      // Assert
+      expect(prismaService.coaching_Aluno.findMany).toHaveBeenCalled();
+      expect(resultado.resumoGeral).toEqual({ totalPago: 15, totalEmDivida: 10 });
+      expect(resultado.topProfessores).toEqual([{ nome: 'Prof', total: 15 }]);
+    });
+  });
+
+  describe('registarPagamento', () => {
+    it('lança NotFoundException quando a inscrição/fatura não existe', async () => {
+      // Arrange
+      const idCoaching = 1;
+      const idAluno = 2;
+      
+      jest.spyOn(prismaService.coaching_Aluno, 'findUnique').mockResolvedValue(null);
+
+      // Act
+      const action = faturacaoService.registarPagamento(idCoaching, idAluno);
+
+      // Assert
+      await expect(action).rejects.toThrow(NotFoundException);
+      expect(prismaService.coaching_Aluno.findUnique).toHaveBeenCalled();
+      
+      // Garantir que a execução parou e não tentou atualizar nada
+      expect(prismaService.coaching_Aluno.update).not.toHaveBeenCalled();
     });
 
-    expect(resultado).toHaveLength(1);
-    expect(resultado[0]).toEqual(
-      expect.objectContaining({ estadoPagamento: 'pago', valorPago: 25 }),
-    );
-  });
+    it('lança BadRequestException se o valor a pagar for inválido (<= 0)', async () => {
+      // Arrange
+      const idCoaching = 1;
+      const idAluno = 2;
+      const valorInvalido = 0;
+      const mockFatura = criarFatura();
 
-  it('deve gerar dashboard financeiro', async () => {
-    prismaMock.coaching_Aluno.findMany.mockResolvedValue([criarFatura()]);
+      jest.spyOn(prismaService.coaching_Aluno, 'findUnique').mockResolvedValue(mockFatura as any);
 
-    const resultado = await service.getDashboardFinanceiro(
-      new Date('2026-05-01'),
-      new Date('2026-05-01'),
-    );
+      // Act
+      const action = faturacaoService.registarPagamento(idCoaching, idAluno, valorInvalido);
 
-    expect(resultado.resumoGeral).toEqual({ totalPago: 15, totalEmDivida: 10 });
-    expect(resultado.topProfessores).toEqual([{ nome: 'Prof', total: 15 }]);
-  });
-
-  it('deve registar pagamento total, parcial e rejeitar inválidos', async () => {
-    prismaMock.coaching_Aluno.findUnique.mockResolvedValue(criarFatura());
-    prismaMock.coaching_Aluno.update.mockResolvedValue({
-      ID_Coaching: 1,
-      ID_Aluno: 2,
-      ValorEmFalta: 0,
+      // Assert
+      await expect(action).rejects.toThrow(BadRequestException);
+      expect(prismaService.coaching_Aluno.update).not.toHaveBeenCalled();
     });
 
-    await expect(service.registarPagamento(1, 2)).resolves.toEqual(
-      expect.objectContaining({
-        valorEmFalta: 0,
-        valorPagoRegistado: 10,
-      }),
-    );
+    it('deve registar o pagamento total com sucesso', async () => {
+      // Arrange
+      const idCoaching = 1;
+      const idAluno = 2;
+      const mockFatura = criarFatura({ ValorEmFalta: 10 });
+      
+      jest.spyOn(prismaService.coaching_Aluno, 'findUnique').mockResolvedValue(mockFatura as any);
+      
+      jest.spyOn(prismaService.coaching_Aluno, 'update').mockResolvedValue({
+        ID_Coaching: idCoaching,
+        ID_Aluno: idAluno,
+        ValorEmFalta: 0,
+      } as any);
 
-    await expect(service.registarPagamento(1, 2, 0)).rejects.toThrow(
-      BadRequestException,
-    );
+      // Act
+      // Simulando liquidação total (sem passar o 3º parâmetro de valor parcial)
+      const resultado = await faturacaoService.registarPagamento(idCoaching, idAluno);
 
-    prismaMock.coaching_Aluno.findUnique.mockResolvedValue(null);
-    await expect(service.registarPagamento(1, 2)).rejects.toThrow(
-      NotFoundException,
-    );
-  });
-});
+      // Assert
+      expect(prismaService.coaching_Aluno.update).toHaveBeenCalled();
+      expect(resultado).toEqual(
+        expect.objectContaining({
+          valorEmFalta: 0,
+          valorPagoRegistado: 10,
+        }),
+      );
+    });
+
+    it('deve registar um pagamento parcial com sucesso', async () => {
+      
+      // Arrange
+      const idCoaching = 1;
+      const idAluno = 2;
+      const valorPagoParcial = 5;
+      const mockFatura = criarFatura({ ValorEmFalta: 10 });
+      
+      jest.spyOn(prismaService.coaching_Aluno, 'findUnique').mockResolvedValue(mockFatura as any);
+      
+      jest.spyOn(prismaService.coaching_Aluno, 'update').mockResolvedValue({
+        ID_Coaching: idCoaching,
+        ID_Aluno: idAluno,
+        ValorEmFalta: 5, // Ficam 5 em falta
+      } as any);
+
+      // Act
+      const resultado = await faturacaoService.registarPagamento(idCoaching, idAluno, valorPagoParcial);
+
+      // Assert
+      expect(prismaService.coaching_Aluno.update).toHaveBeenCalled();
+      expect(resultado).toEqual(
+        expect.objectContaining({
+          valorEmFalta: 5,
+          valorPagoRegistado: 5,
+        }),
+      );
+    });
+
+  }); // Fim describe 'registarPagamento'
+
+}); // Fim describe FaturacaoService
