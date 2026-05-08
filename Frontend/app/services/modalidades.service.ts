@@ -11,9 +11,7 @@ class ModalidadesService {
         const token = authService.getToken();
         return {
             'Content-Type': 'application/json',
-
-
-            'Authorization': `Bearer ${token}`
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
         };
     }
 

@@ -7,6 +7,8 @@ import {
 import { CreateCoachingDto } from './dto/create-coaching.dto';
 import { UpdateCoachingDto } from './dto/update-coaching.dto';
 import { PrismaService } from '../prisma/prisma.service';
+
+
 /**
  * Servico responsavel pela logica de Coaching.
  */

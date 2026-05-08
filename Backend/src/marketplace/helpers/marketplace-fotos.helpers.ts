@@ -15,7 +15,7 @@ export function validarFotoMarketplace(file: Express.Multer.File): void {
     );
   }
 
-  const limiteMB = 10;
+  const limiteMB = 5;
   const limiteBytes = limiteMB * 1024 * 1024;
 
   if (file.size > limiteBytes) {

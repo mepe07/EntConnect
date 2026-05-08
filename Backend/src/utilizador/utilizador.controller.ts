@@ -63,6 +63,13 @@ import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autentica
  * Controlador responsavel pelos pedidos de Utilizador.
  */
 
+const TODAS_AS_ROLES = [
+    Role.COORDENADOR,
+    Role.PROFESSOR,
+    Role.ENC_EDUCACAO,
+];
+
+@UseGuards(AuthGuard, RolesGuard)
 @ApiTags('Utilizadores')
 @Controller('utilizador')
 export class UtilizadorController {
@@ -79,6 +86,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Get()
   @ApiOperation({ summary: 'Listar todos os utilizadores' })
   @ApiResponse({ status: 200 })
@@ -90,6 +98,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Get('alunos/sem-encarregado')
   @ApiOperation({
     summary: 'Listar alunos sem encarregado de educacao associado',
@@ -105,7 +114,6 @@ export class UtilizadorController {
    */
 
   @Get('enc-educacao/me/alunos')
-  @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.ENC_EDUCACAO)
   @ApiOperation({ summary: 'Listar os educandos do encarregado autenticado' })
   async getMeusEducandos(@Request() req: { user: UtilizadorAutenticado }) {
@@ -117,14 +125,13 @@ export class UtilizadorController {
    */
 
   @Post('enc-educacao/me/alunos')
-  @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.ENC_EDUCACAO)
   @ApiOperation({
     summary: 'Adicionar educando ao encarregado autenticado (bloqueado)',
   })
   async criarMeuEducando() {
     throw new ForbiddenException(
-      'A gestão de educandos deve ser feita pela coordenação ou direção.',
+      'A gestão de educandos deve ser feita pela coordenação.',
     );
   }
   /**
@@ -133,14 +140,13 @@ export class UtilizadorController {
    */
 
   @Put('enc-educacao/me/alunos/:idAluno')
-  @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.ENC_EDUCACAO)
   @ApiOperation({
     summary: 'Editar educando do encarregado autenticado (bloqueado)',
   })
   async atualizarMeuEducando() {
     throw new ForbiddenException(
-      'A gestão de educandos deve ser feita pela coordenação ou direção.',
+      'A gestão de educandos deve ser feita pela coordenação.',
     );
   }
   /**
@@ -149,7 +155,6 @@ export class UtilizadorController {
    */
 
   @Delete('enc-educacao/me/alunos/:idAluno')
-  @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.ENC_EDUCACAO)
   @ApiOperation({
     summary:
@@ -157,7 +162,7 @@ export class UtilizadorController {
   })
   async removerMeuEducando() {
     throw new ForbiddenException(
-      'A gestão de educandos deve ser feita pela coordenação ou direção.',
+      'A gestão de educandos deve ser feita pela coordenação.',
     );
   }
   /**
@@ -166,6 +171,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Get('download-template')
   @ApiOperation({
     summary: 'Faz o download do ficheiro CSV modelo para importar utilizadores',
@@ -194,6 +200,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(...TODAS_AS_ROLES)
   @Get(':id')
   @ApiOperation({
     summary: 'Obter um utilizador pelo ID (inclui dados pessoais)',
@@ -209,6 +216,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Patch(':id/block')
   @ApiOperation({ summary: 'Bloquear um utilizador' })
   @ApiResponse({ status: 200 })
@@ -222,6 +230,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Patch(':id/unlock')
   @ApiOperation({ summary: 'Desbloquear um utilizador' })
   @ApiResponse({ status: 200 })
@@ -235,6 +244,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(...TODAS_AS_ROLES)
   @Get(':id/roles-ids')
   @ApiOperation({
     summary:
@@ -254,6 +264,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.ENC_EDUCACAO)
   @Get(':id/EE/marcacoes')
   @ApiOperation({ summary: 'Obter marcações por EE' })
   @ApiResponse({ status: 200 })
@@ -266,6 +277,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.ENC_EDUCACAO)
   @Get(':id/EE/confirmacoes')
   @ApiOperation({ summary: 'Obter sessões passadas por EE para confirmação' })
   @ApiResponse({
@@ -282,7 +294,8 @@ export class UtilizadorController {
    * @param idEstadoCoaching Dados recebidos para a operacao.
    * @returns Resultado da operacao.
    */
-
+  
+  @Roles(Role.ENC_EDUCACAO)
   @Patch(':id/EE/confirmacoes/:idCoaching')
   @ApiOperation({
     summary:
@@ -317,7 +330,8 @@ export class UtilizadorController {
    * @param file Dados recebidos para a operacao.
    * @returns Resultado da operacao.
    */
-
+  
+  @Roles(Role.COORDENADOR)
   @Post('importusersblob')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
@@ -387,6 +401,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(...TODAS_AS_ROLES)
   @Put(':id/uploadphoto')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
@@ -443,7 +458,7 @@ export class UtilizadorController {
    * @param id Dados recebidos para a operacao.
    * @returns Resultado da operacao.
    */
-
+  @Roles(...TODAS_AS_ROLES)
   @Get(':id/foto')
   @ApiOperation({ summary: 'Obter o URL da foto de perfil do utilizador' })
   @ApiResponse({ status: 200, description: 'URL retornado com sucesso.' })
@@ -456,7 +471,7 @@ export class UtilizadorController {
    * @param id Dados recebidos para a operacao.
    * @returns Resultado da operacao.
    */
-
+  @Roles(...TODAS_AS_ROLES)
   @Patch(':id/removephoto')
   @ApiOperation({
     summary: 'Remover a foto de perfil do utilizador (coloca a null)',
@@ -481,6 +496,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Post()
   @ApiOperation({ summary: 'Criar um novo utilizador manualmente' })
   @ApiResponse({ status: 201, description: 'Utilizador criado com sucesso.' })
@@ -493,7 +509,7 @@ export class UtilizadorController {
    * @param id Dados recebidos para a operacao.
    * @returns Resultado da operacao.
    */
-
+  @Roles(Role.PROFESSOR, Role.ENC_EDUCACAO)
   @Get(':id/coachings')
   @ApiOperation({
     summary: 'Obter o horário das sessões de coaching (Coach ou Bailarino)',
@@ -514,6 +530,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Put(':id/update-cargo')
   @ApiOperation({ summary: 'Atualizar o cargo do utilizador' })
   @ApiParam({ name: 'id', description: 'ID do Utilizador', example: 1 })
@@ -525,11 +542,12 @@ export class UtilizadorController {
   async updateCargo(
     @Param('id', ParseIntPipe) id: number,
     @Body('cargo') cargo: string,
+    @Body('cargos') cargos: string[] | undefined,
     @Body('confirmarRemocaoAssociacoes') confirmarRemocaoAssociacoes?: boolean,
   ) {
-    return this.utilizadorService.updateCargo(
+    return this.utilizadorService.updateCargos(
       id,
-      cargo,
+      cargos ?? cargo,
       confirmarRemocaoAssociacoes === true,
     );
   }
@@ -539,6 +557,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminar um utilizador e todos os seus dados' })
   @ApiParam({ name: 'id', description: 'ID do Utilizador', example: 1 })
@@ -557,6 +576,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(...TODAS_AS_ROLES)
   @Put(':id/update-pessoal')
   @ApiOperation({
     summary: 'Atualizar dados pessoais (Nome, NIF e Contacto)',
@@ -584,6 +604,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(...TODAS_AS_ROLES)
   @Put(':id/change-password')
   @ApiOperation({ summary: 'Alterar a password do utilizador' })
   async changePassword(
@@ -597,7 +618,8 @@ export class UtilizadorController {
    * @param id Dados recebidos para a operacao.
    * @returns Resultado da operacao.
    */
-
+  
+  @Roles(Role.ENC_EDUCACAO)
   @Get('encarregado/:id')
   @ApiOperation({
     summary: 'Obter histórico de faturação de um Encarregado de Educação',
@@ -642,6 +664,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR, Role.ENC_EDUCACAO)
   @Get('enc-educacao/:id/alunos')
   @ApiOperation({ summary: 'Obter alunos de um Encarregado de Educação' })
   @ApiParam({ name: 'id', description: 'ID do Encarregado de Educação' })
@@ -656,7 +679,6 @@ export class UtilizadorController {
    */
 
   @Post('enc-educacao/:id/alunos')
-  @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.COORDENADOR)
   @ApiOperation({
     summary: 'Adicionar um educando a um Encarregado de Educacao',
@@ -677,7 +699,6 @@ export class UtilizadorController {
    */
 
   @Put('enc-educacao/:id/alunos/:idAluno')
-  @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.COORDENADOR)
   @ApiOperation({ summary: 'Editar um educando de um Encarregado de Educacao' })
   @ApiParam({ name: 'id', description: 'ID do Encarregado de Educacao' })
@@ -697,7 +718,6 @@ export class UtilizadorController {
    */
 
   @Patch('enc-educacao/:id/alunos/:idAluno/associar')
-  @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.COORDENADOR)
   @ApiOperation({
     summary: 'Associar um aluno sem encarregado a um Encarregado de Educacao',
@@ -718,7 +738,6 @@ export class UtilizadorController {
    */
 
   @Delete('enc-educacao/:id/alunos/:idAluno')
-  @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.COORDENADOR)
   @ApiOperation({
     summary: 'Remover a associacao de um educando a um Encarregado de Educacao',
@@ -738,6 +757,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(...TODAS_AS_ROLES)
   @Patch(':id/password')
   @ApiOperation({ summary: 'Atualizar a password de um utilizador' })
   @ApiParam({ name: 'id', description: 'ID do utilizador', type: Number })
@@ -756,7 +776,7 @@ export class UtilizadorController {
    * @param acoesIds Dados recebidos para a operacao.
    * @returns Resultado da operacao.
    */
-
+  @Roles(...TODAS_AS_ROLES)
   @Put(':id/preferencias-acoes')
   @ApiOperation({
     summary: 'Atualizar as preferências de ações rápidas do utilizador',
@@ -795,6 +815,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.PROFESSOR)
   @Get('professor/:id/agendamentos')
   @ApiOperation({ summary: 'Obter os agendamentos de um professor' })
   @ApiResponse({ status: 200 })
@@ -806,7 +827,8 @@ export class UtilizadorController {
    * @param idProfessor Dados recebidos para a operacao.
    * @returns Resultado da operacao.
    */
-
+  
+  @Roles(Role.PROFESSOR, Role.COORDENADOR)
   @Get('professor/:id/confirmacoes')
   @ApiOperation({
     summary: 'Obter as sessões passadas do professor para confirmação',
@@ -826,6 +848,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.PROFESSOR)
   @Patch('professor/:id/confirmacoes/:idCoaching')
   @ApiOperation({
     summary: 'Confirmar realização ou não realização de uma sessão de coaching',
@@ -859,6 +882,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(...TODAS_AS_ROLES)
   @Get('professor/disponibilidade')
   @ApiOperation({ summary: 'Obter disponibilidades dos professores' })
   @ApiResponse({ status: 200 })
@@ -871,6 +895,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.PROFESSOR)
   @Post('professor/adicionar-disponibilidade')
   @ApiOperation({
     summary: 'Adicionar nova disponibilidade de calendário para o professor',
@@ -889,6 +914,7 @@ export class UtilizadorController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR, Role.PROFESSOR)
   @Patch('professor/disponibilidade/:id/atualizar-disponibilidade')
   @ApiOperation({ summary: 'Atualizar disponibilidade - Ex: aprovar' })
   @ApiParam({
@@ -911,7 +937,7 @@ export class UtilizadorController {
 /**
  * Controlador responsavel pelos pedidos de Professor.
  */
-
+@UseGuards(AuthGuard, RolesGuard)
 @ApiTags('Professores')
 @Controller('professor')
 export class ProfessorController {
@@ -921,7 +947,7 @@ export class ProfessorController {
    * @param createProfessorDto Dados recebidos para a operacao.
    * @returns Resultado da operacao.
    */
-
+  @Roles(Role.COORDENADOR)
   @Post()
   @ApiOperation({ summary: 'Criar um novo professor (e a respetiva pessoa)' })
   @ApiResponse({ status: 201, description: 'Professor criado com sucesso.' })
@@ -937,7 +963,7 @@ export class ProfessorController {
    * @param page Dados recebidos para a operacao.
    * @returns Resultado da operacao.
    */
-
+  @Roles(Role.COORDENADOR)
   @Get()
   @ApiOperation({ summary: 'Listar professores com paginação (20 por página)' })
   findAll(@Query('page') page: string) {
@@ -950,7 +976,7 @@ export class ProfessorController {
    * @param updateProfessorDto Dados recebidos para a operacao.
    * @returns Resultado da operacao.
    */
-
+    @Roles(Role.COORDENADOR)
   @Patch(':id')
   @ApiOperation({ summary: 'Editar os dados de um professor existente' })
   update(
@@ -964,7 +990,8 @@ export class ProfessorController {
    * @param id Dados recebidos para a operacao.
    * @returns Resultado da operacao.
    */
-
+  
+  @Roles(Role.COORDENADOR)
   @Delete(':id')
   @ApiOperation({ summary: 'Remover um professor (e os seus dados pessoais)' })
   remove(@Param('id', ParseIntPipe) id: number) {

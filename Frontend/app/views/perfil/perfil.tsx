@@ -85,7 +85,6 @@ export function Perfil() {
                 let cargoDetectado = 'Utilizador Registado';
                 if (p) {
                     const funcoes = [];
-                    if (p.Direcao) funcoes.push('Direção');
                     if (p.Professor) funcoes.push('Professor');
                     if (p.Enc_Educacao) funcoes.push('Enc. Educação');
                     if (funcoes.length > 0) cargoDetectado = funcoes.join(' / ');
@@ -107,7 +106,7 @@ export function Perfil() {
 
             if (abaAtiva === 'minhas_faturas') {
                 // Endpoint especifico do encarregado; nao usa a listagem administrativa de faturacao.
-                const resFaturas = await fetch(`http://localhost:3000/utilizador/encarregado/${currentUserId}`, { headers });
+                const resFaturas = await fetch(`${API_BASE_URL}/utilizador/encarregado/${currentUserId}`, { headers });
                 
                 if (resFaturas.ok) {
                     const dadosFaturas = await resFaturas.json();

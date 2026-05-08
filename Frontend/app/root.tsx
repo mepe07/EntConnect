@@ -74,6 +74,8 @@ export default function App() {
     useTheme();
     const [domLoaded, setDomLoaded] = useState(false);
     const [sessaoValida, setSessaoValida] = useState(false);
+    const [versaoSessao, setVersaoSessao] = useState(0);
+    const [menuMobileAberto, setMenuMobileAberto] = useState(false);
     const location = useLocation();
     const isRotaPublicaEventos =
         location.pathname === '/eventos' ||
@@ -82,13 +84,29 @@ export default function App() {
 
     useEffect(() => {
         setDomLoaded(true);
+        authService.configurarValidacaoGlobal();
     }, []);
 
     useEffect(() => {
 
 
         setSessaoValida(authService.isAuthenticated());
-    }, [location.pathname]);
+        setMenuMobileAberto(false);
+    }, [location.pathname, versaoSessao]);
+
+    useEffect(() => {
+        function handleRoleAlterada() {
+            setVersaoSessao((versaoAtual) => versaoAtual + 1);
+        }
+
+        window.addEventListener('entconnect-role-alterada', handleRoleAlterada);
+        window.addEventListener('entconnect-sessao-invalida', handleRoleAlterada);
+
+        return () => {
+            window.removeEventListener('entconnect-role-alterada', handleRoleAlterada);
+            window.removeEventListener('entconnect-sessao-invalida', handleRoleAlterada);
+        };
+    }, []);
 
     useEffect(() => {
 
@@ -101,10 +119,26 @@ export default function App() {
 
     const page = (
         <div className="app-layout min-h-screen bg-[#f8fafc]">
-            <Header />
+            <Header
+                key={`header-${versaoSessao}`}
+                menuMobileAberto={menuMobileAberto}
+                onToggleMenuMobile={() => setMenuMobileAberto((aberto) => !aberto)}
+            />
             <div className="main-wrapper">
-                <NavigationMenu />
-                <div className="body-wrapper ml-[280px] mt-[76px] w-full min-h-[calc(100vh-76px)] p-6">
+                <NavigationMenu
+                    key={`menu-${versaoSessao}`}
+                    menuMobileAberto={menuMobileAberto}
+                    onCloseMenuMobile={() => setMenuMobileAberto(false)}
+                />
+                {menuMobileAberto && (
+                    <button
+                        type="button"
+                        className="mobile-menu-overlay"
+                        aria-label="Fechar menu"
+                        onClick={() => setMenuMobileAberto(false)}
+                    />
+                )}
+                <div className="body-wrapper">
                     <Outlet />
                 </div>
             </div>

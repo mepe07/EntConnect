@@ -1,48 +1,44 @@
-
-
 import { authService } from './auth.service';
 import type { LinhaFaturacaoCoaching } from '../models/interfaces/faturacao.interface';
-
 import { API_BASE_URL } from "../../src/config/api.config";
 
 class FaturacaoService {
-
-
     private readonly API_URL = `${API_BASE_URL}/faturacao`;
 
-    async getRelatorio(inicio: string, fim: string) {
-
-
-        const urlCompleto = `${this.API_URL}/Relatorio?inicio=${inicio}&fim=${fim}`;
-
-        console.log("A pedir dados a:", urlCompleto);
-
+    /**
+     * Headers JSON autenticados para os endpoints privados de faturação.
+     */
+    private getHeaders() {
         const token = authService.getToken();
+
+        return {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+    }
+
+    async getRelatorio(inicio: string, fim: string) {
+        const urlCompleto = `${this.API_URL}/Relatorio?inicio=${inicio}&fim=${fim}`;
 
         try {
             const response = await fetch(urlCompleto, {
-
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                method: 'GET',
+                headers: this.getHeaders(),
             });
 
             if (!response.ok) {
-
                 const erroDoServidor = await response.json().catch(() => null);
                 throw new Error(erroDoServidor?.message || `Erro HTTP: ${response.status}`);
             }
 
             return await response.json();
-
         } catch (erro) {
-            console.error("O Estafeta caiu da mota:", erro);
+            console.error('Erro ao obter relatório de faturação:', erro);
             throw erro;
         }
     }
 
-    // Metodos de faturacao de coaching usados nas vistas administrativas.
+    // Métodos de faturação de coaching usados nas vistas administrativas.
     async getPagamentosCoaching(filtros: {
         inicio?: string;
         fim?: string;
@@ -60,14 +56,10 @@ class FaturacaoService {
 
         const query = params.toString();
         const urlCompleto = `${this.API_URL}/pagamentos-coaching${query ? `?${query}` : ''}`;
-        const token = authService.getToken();
 
         const response = await fetch(urlCompleto, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-            },
+            headers: this.getHeaders(),
         });
 
         if (!response.ok) {
@@ -79,14 +71,9 @@ class FaturacaoService {
     }
 
     async registarPagamento(idCoaching: number, idAluno: number, valorPago?: number) {
-        const token = authService.getToken();
-
         const response = await fetch(`${this.API_URL}/pagar/${idCoaching}/${idAluno}`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-            },
+            headers: this.getHeaders(),
             body: JSON.stringify(valorPago === undefined ? {} : { valorPago }),
         });
 
@@ -101,67 +88,62 @@ class FaturacaoService {
     async getHistorico(inicio: string, fim: string) {
         const urlCompleto = `${this.API_URL}/Historico?inicio=${inicio}&fim=${fim}`;
 
-        console.log("A pedir histórico a:", urlCompleto);
-
         try {
-            const response = await fetch(urlCompleto);
-
-            if (!response.ok) {
-                const erroDoServidor = await response.json().catch(() => null);
-                throw new Error(erroDoServidor?.message || `Erro HTTP: ${response.status}`);
-            }
-
-            return await response.json();
-
-        } catch (erro) {
-            console.error("O Estafeta do histórico caiu da mota:", erro);
-            throw erro;
-        }
-    }
-    async getDashboardFinanceiro(inicio: string, fim: string) {
-        const urlCompleto = `${this.API_URL}/dashboard-financeiro?inicio=${inicio}&fim=${fim}`;
-        console.log("A pedir estatísticas a:", urlCompleto);
-
-
-        const token = authService.getToken();
-
-        try {
-
             const response = await fetch(urlCompleto, {
                 method: 'GET',
-                headers: {
-
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                headers: this.getHeaders(),
             });
 
             if (!response.ok) {
-
                 const erroDoServidor = await response.json().catch(() => null);
                 throw new Error(erroDoServidor?.message || `Erro HTTP: ${response.status}`);
             }
 
             return await response.json();
         } catch (erro) {
-            console.error("O Estafeta das estatísticas caiu da mota:", erro);
+            console.error('Erro ao obter histórico de faturação:', erro);
+            throw erro;
+        }
+    }
+
+    async getDashboardFinanceiro(inicio: string, fim: string) {
+        const urlCompleto = `${this.API_URL}/dashboard-financeiro?inicio=${inicio}&fim=${fim}`;
+
+        try {
+            const response = await fetch(urlCompleto, {
+                method: 'GET',
+                headers: this.getHeaders(),
+            });
+
+            if (!response.ok) {
+                const erroDoServidor = await response.json().catch(() => null);
+                throw new Error(erroDoServidor?.message || `Erro HTTP: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (erro) {
+            console.error('Erro ao obter dashboard financeiro:', erro);
             throw erro;
         }
     }
 
     async getPrevisaoFinanceira() {
         const urlCompleto = `${this.API_URL}/previsao-financeira`;
-        console.log("A pedir a bola de cristal a:", urlCompleto);
 
         try {
-            const response = await fetch(urlCompleto);
+            const response = await fetch(urlCompleto, {
+                method: 'GET',
+                headers: this.getHeaders(),
+            });
+
             if (!response.ok) {
                 const erroDoServidor = await response.json().catch(() => null);
                 throw new Error(erroDoServidor?.message || `Erro HTTP: ${response.status}`);
             }
+
             return await response.json();
         } catch (erro) {
-            console.error("A bola de cristal do estafeta partiu-se:", erro);
+            console.error('Erro ao obter previsão financeira:', erro);
             throw erro;
         }
     }
