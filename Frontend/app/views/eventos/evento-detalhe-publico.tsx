@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 
 
 import { useEffect, useMemo, useState } from 'react';
@@ -135,13 +136,13 @@ export function EventoDetalhePublico() {
                     </p>
 
                     <div className={styles.errorActions}>
-                        <button
+                        <ButtonComponent
                             type="button"
                             className={styles.primaryButton}
                             onClick={() => navigate('/login')}
                         >
                             Voltar ao login
-                        </button>
+                        </ButtonComponent>
                     </div>
                 </section>
             </main>

@@ -201,3 +201,89 @@
         }
     }
 }
+
+body.entconnect-dark {
+    .pagina-coaching-ee {
+        .modal-overlay {
+            background-color: rgba(2, 6, 23, 0.72);
+        }
+
+        .modal-conteudo {
+            background: #111827 !important;
+            border: 1px solid #1f2937;
+            color: #e2e8f0 !important;
+            box-shadow: 0 28px 70px rgba(0, 0, 0, 0.42);
+        }
+
+        .modal-cabecalho {
+            border-bottom-color: #334155;
+
+            h2 {
+                color: #f8fafc !important;
+            }
+
+            .modal-fechar {
+                color: #94a3b8;
+
+                &:hover {
+                    color: #fecaca;
+                }
+            }
+        }
+
+        .modal-corpo {
+            .session-info {
+                background: #0f172a !important;
+                border-color: #334155 !important;
+                color: #e2e8f0 !important;
+
+                h3 {
+                    color: #f8fafc !important;
+                }
+
+                p {
+                    color: #cbd5e1 !important;
+
+                    strong {
+                        color: #f8fafc !important;
+                    }
+                }
+            }
+
+            .form-group label {
+                color: #cbd5e1 !important;
+            }
+
+            .input-observacoes {
+                background-color: #0f172a !important;
+                border-color: #334155 !important;
+                color: #e2e8f0 !important;
+
+                &::placeholder {
+                    color: #94a3b8 !important;
+                }
+            }
+
+            .modal-acoes {
+                .btn-cancelar {
+                    background: #f8fafc !important;
+                    border-color: #cbd5e1 !important;
+                    color: #334155 !important;
+
+                    &:hover {
+                        background: #e2e8f0 !important;
+                    }
+                }
+
+                .btn-confirmar {
+                    color: #ffffff !important;
+
+                    &:disabled {
+                        background: #475569 !important;
+                        color: #94a3b8 !important;
+                    }
+                }
+            }
+        }
+    }
+}

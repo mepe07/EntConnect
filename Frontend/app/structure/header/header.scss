@@ -70,15 +70,6 @@ header {
             align-items: center;
             gap: 12px;
 
-            .header-theme-toggle {
-                width: 44px;
-                height: 44px;
-                min-width: 44px;
-                background: rgba(255, 255, 255, 0.12);
-                border-color: rgba(255, 255, 255, 0.24);
-                color: #ffffff;
-            }
-
             .profile-picture {
                 display: flex;
                 align-items: center;
@@ -153,16 +144,9 @@ header {
                 .role-switcher {
                     display: flex;
                     flex-direction: column;
-                    gap: 4px;
                     padding-bottom: 8px;
                     margin-bottom: 8px;
                     border-bottom: 1px solid colors.$gray-3;
-
-                    label {
-                        font-size: 11px;
-                        font-weight: 600;
-                        color: colors.$gray-7;
-                    }
 
                     select {
                         width: 100%;
@@ -172,6 +156,35 @@ header {
                         background-color: #ffffff;
                         color: colors.$gray-8;
                         font-size: 13px;
+                    }
+                }
+
+                .theme-switcher {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 10px;
+                    padding-bottom: 8px;
+                    margin-bottom: 8px;
+                    border-bottom: 1px solid colors.$gray-3;
+
+                    span {
+                        font-size: 13px;
+                        font-weight: 600;
+                        color: colors.$gray-8;
+                    }
+
+                    .menu-theme-toggle {
+                        width: 32px;
+                        height: 32px;
+                        min-width: 32px;
+                        background: rgba(colors.$theme-100, 0.1);
+                        border-color: rgba(colors.$theme-100, 0.18);
+                        color: colors.$theme-100;
+
+                        i {
+                            font-size: 14px;
+                        }
                     }
                 }
 
@@ -269,12 +282,22 @@ body.entconnect-dark header {
             .role-switcher {
                 border-bottom-color: #334155;
 
-                label {
-                    color: #94a3b8;
-                }
-
                 select {
                     background-color: #0f172a;
+                    border-color: #334155;
+                    color: #f8fafc;
+                }
+            }
+
+            .theme-switcher {
+                border-bottom-color: #334155;
+
+                span {
+                    color: #cbd5e1;
+                }
+
+                .menu-theme-toggle {
+                    background: rgba(255, 255, 255, 0.08);
                     border-color: #334155;
                     color: #f8fafc;
                 }

@@ -10,15 +10,18 @@ import './button.component.scss';
 export function ButtonComponent({
     label,
     icon,
+    children,
     tooltip,
     ariaLabel,
     disabled,
     buttonType = 'button',
+    type,
     form,
     className = '',
     style,
     config,
-    onClick
+    onClick,
+    ...buttonProps
 }: ButtonComponentProps) {
     const typeClass = config?.type ?? '';
     const colorClass = config?.color ?? '';
@@ -29,17 +32,19 @@ export function ButtonComponent({
 
     return (
         <button
-            type={buttonType}
+            {...buttonProps}
+            type={type ?? buttonType}
             form={form}
             className={classes}
             disabled={disabled}
             onClick={onClick}
-            title={tooltip}
-            aria-label={ariaLabel ?? tooltip}
+            title={tooltip ?? buttonProps.title}
+            aria-label={ariaLabel ?? tooltip ?? buttonProps['aria-label']}
             style={style}
         >
             {icon && <i className={icon} aria-hidden="true" />}
             {label && <span>{label}</span>}
+            {children}
         </button>
     );
 }

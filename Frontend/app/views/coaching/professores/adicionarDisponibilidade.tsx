@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import React, { useState, useEffect } from 'react';
 import { authService } from '~/services/auth.service';
 import { RolesService } from '~/services/roles.service';
@@ -163,9 +164,9 @@ export default function AdicionarDisponibilidade() {
                     </div>
 
                     <div className="form-acoes">
-                        <button type="submit" className="btn-gravar" disabled={isCarregando}>
+                        <ButtonComponent type="submit" className="btn-gravar" disabled={isCarregando}>
                             {isCarregando ? 'A Gravar...' : 'Gravar Disponibilidade'}
-                        </button>
+                        </ButtonComponent>
                     </div>
 
                 </form>

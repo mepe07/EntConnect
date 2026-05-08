@@ -60,7 +60,8 @@
 
     .filtros-iniciais {
         display: flex;
-        gap: 24px;
+        flex-wrap: nowrap;
+        gap: 16px;
         align-items: flex-end;
         background-color: #ffffff;
         padding: 32px;
@@ -84,13 +85,15 @@
             }
 
             input[type="date"] {
-                padding: 12px 16px;
+                height: 42px;
+                padding: 0 16px;
                 border: 2px solid #f1f5f9;
                 border-radius: 10px;
                 background-color: #f8fafc;
                 color: #1e293b;
                 font-family: inherit;
                 font-size: 16px;
+                width: 260px;
                 outline: none;
                 transition: all 0.2s;
 
@@ -99,6 +102,12 @@
                     background-color: #ffffff;
                 }
             }
+        }
+
+        .button-container {
+            height: 42px;
+            font-size: 16px;
+            white-space: nowrap;
         }
     }
 
@@ -172,13 +181,15 @@
 
     .layout-grelha-dashboard {
         display: grid;
-
-        grid-template-columns: repeat(3, 1fr);
-        gap: 32px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+        align-items: stretch;
 
         .card-dashboard {
             background-color: #ffffff;
-            padding: 40px;
+            min-width: 0;
+            min-height: 460px;
+            padding: 32px;
             border-radius: 24px;
             border: 1px solid #e2e8f0;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
@@ -189,10 +200,11 @@
                 font-size: 1.2rem;
                 font-weight: 800;
                 color: #0f172a;
-                margin-bottom: 30px;
+                margin-bottom: 24px;
                 display: flex;
                 align-items: center;
                 gap: 12px;
+                line-height: 1.25;
 
                 i {
                     color: #3b82f6;
@@ -202,11 +214,12 @@
 
             .kpis-resumo {
                 display: flex;
-                gap: 20px;
-                margin-bottom: 30px;
+                flex-wrap: wrap;
+                gap: 16px;
+                margin-bottom: 24px;
 
                 .kpi {
-                    flex: 1;
+                    flex: 1 1 180px;
                     padding: 16px 20px;
                     border-radius: 12px;
                     border: 1px solid #e2e8f0;
@@ -256,9 +269,35 @@
             .grafico-pequeno {
                 flex-grow: 1;
                 width: 100%;
+                min-width: 0;
+                min-height: 300px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
+            }
+
+            &:nth-child(2) {
+                grid-column: 1 / -1;
+                order: 3;
+                min-height: 440px;
+            }
+
+            &:nth-child(3) {
+                order: 2;
+            }
+        }
+    }
+
+    @media (max-width: 1180px) {
+        .layout-grelha-dashboard {
+            grid-template-columns: 1fr;
+
+            .card-dashboard {
+                min-height: auto;
+
+                &:nth-child(2) {
+                    grid-column: auto;
+                }
             }
         }
     }
@@ -285,4 +324,122 @@
 		opacity: 1;
 		transform: translateY(0);
 	}
+}
+
+body.entconnect-dark {
+    .pagina-estatisticas {
+        background-color: #0f172a !important;
+        color: #e2e8f0 !important;
+
+        .cabecalho-estatisticas h1,
+        .card-grafico-gigante h3,
+        .card-dashboard h3 {
+            color: #f8fafc !important;
+        }
+
+        .botoes-tempo,
+        .filtros-iniciais,
+        .loading-state,
+        .card-grafico-gigante,
+        .card-dashboard {
+            background-color: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28) !important;
+        }
+
+        .botoes-tempo button {
+            color: #cbd5e1 !important;
+
+            &:hover {
+                background-color: #172033 !important;
+                color: #f8fafc !important;
+            }
+
+            &.ativo {
+                background-color: #2563eb !important;
+                color: #ffffff !important;
+                box-shadow: 0 2px 10px rgba(37, 99, 235, 0.32) !important;
+            }
+        }
+
+        .grupo-data label,
+        .loading-state,
+        .empty-state-grafico,
+        .empty-state-grafico-pequeno {
+            color: #94a3b8 !important;
+        }
+
+        .grupo-data input[type="date"] {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+            color-scheme: dark;
+
+            &:focus {
+                background-color: #111827 !important;
+                border-color: #60a5fa !important;
+            }
+        }
+
+        .empty-state-grafico i {
+            color: #64748b !important;
+        }
+
+        .empty-state-grafico-pequeno {
+            background-color: #0f172a !important;
+            border-color: #475569 !important;
+        }
+
+        .kpis-resumo .kpi {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+
+            &.verde {
+                .label {
+                    color: #86efac !important;
+                }
+
+                .valor {
+                    color: #4ade80 !important;
+                }
+            }
+
+            &.vermelho {
+                .label {
+                    color: #fca5a5 !important;
+                }
+
+                .valor {
+                    color: #f87171 !important;
+                }
+            }
+        }
+
+        .recharts-cartesian-grid line {
+            stroke: #334155 !important;
+        }
+
+        .recharts-text {
+            fill: #cbd5e1 !important;
+        }
+
+        .recharts-tooltip-wrapper .recharts-default-tooltip {
+            background-color: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.34) !important;
+        }
+    }
+
+    @media (max-width: 900px) {
+        .cabecalho-estatisticas,
+        .filtros-iniciais {
+            flex-wrap: wrap;
+        }
+
+        .filtros-iniciais .grupo-data input[type="date"] {
+            width: 100%;
+        }
+    }
 }

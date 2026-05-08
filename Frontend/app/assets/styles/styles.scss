@@ -32,6 +32,14 @@ body {
         background-color: colors.$gray-1;
         overflow-y: auto;
         overflow-x: hidden;
+        transition: margin-left 0.25s ease, width 0.25s ease;
+    }
+
+    .app-layout.sidebar-collapsed {
+        .body-wrapper {
+            margin-left: 76px;
+            width: calc(100% - 76px);
+        }
     }
 
     .public-theme-toggle {
@@ -84,6 +92,13 @@ body {
             margin-left: 0;
             margin-top: 64px;
             padding: 18px 14px 28px;
+        }
+
+        .app-layout.sidebar-collapsed {
+            .body-wrapper {
+                width: 100%;
+                margin-left: 0;
+            }
         }
 
         .mobile-menu-overlay {
@@ -224,9 +239,22 @@ body.entconnect-dark {
     }
 
     .body-wrapper,
-    .body-wrapper *,
     .public-theme-toggle ~ * {
         color: #e2e8f0 !important;
+    }
+
+    .body-wrapper h1,
+    .body-wrapper h2,
+    .body-wrapper h3,
+    .body-wrapper h4,
+    .body-wrapper h5,
+    .body-wrapper h6,
+    .body-wrapper label,
+    .body-wrapper p,
+    .body-wrapper span,
+    .body-wrapper strong,
+    .body-wrapper td {
+        color: inherit;
     }
 
     a {
@@ -276,72 +304,7 @@ body.entconnect-dark {
     }
 
     .card,
-    div[class*="section"],
-    section[class*="section"],
-    div[class*="Section"],
-    section[class*="Section"],
-    div[class*="hero"],
-    section[class*="hero"],
-    div[class*="Hero"],
-    section[class*="Hero"],
-    div[class*="toolbar"],
-    section[class*="toolbar"],
-    div[class*="Toolbar"],
-    section[class*="Toolbar"],
-    div[class*="wrapper"],
-    section[class*="wrapper"],
-    div[class*="Wrapper"],
-    section[class*="Wrapper"],
-    div[class*="card"],
-    section[class*="card"],
-    article[class*="card"],
-    div[class*="Card"],
-    section[class*="Card"],
-    article[class*="Card"],
-    div[class*="panel"],
-    section[class*="panel"],
-    article[class*="panel"],
-    div[class*="Panel"],
-    section[class*="Panel"],
-    article[class*="Panel"],
-    div[class*="box"],
-    section[class*="box"],
-    article[class*="box"],
-    div[class*="Box"],
-    section[class*="Box"],
-    article[class*="Box"],
-    div[class*="featured"],
-    section[class*="featured"],
-    article[class*="featured"],
-    div[class*="Featured"],
-    section[class*="Featured"],
-    article[class*="Featured"],
-    div[class*="compact"],
-    section[class*="compact"],
-    article[class*="compact"],
-    div[class*="Compact"],
-    section[class*="Compact"],
-    article[class*="Compact"],
-    div[class*="filters"],
-    section[class*="filters"],
-    article[class*="filters"],
-    div[class*="Filters"],
-    section[class*="Filters"],
-    article[class*="Filters"],
-    div[class*="stats"] article,
-    div[class*="Stats"] article,
-    div[class*="empty"],
-    section[class*="empty"],
-    article[class*="empty"],
-    div[class*="Empty"],
-    section[class*="Empty"],
-    article[class*="Empty"],
-    div[class*="modal"],
-    section[class*="modal"],
-    article[class*="modal"],
-    div[class*="Modal"],
-    section[class*="Modal"],
-    article[class*="Modal"],
+    .pagina-aprovacoes,
     [style*="background: white"],
     [style*="background: 'white'"],
     [style*="background-color: white"],
@@ -367,23 +330,149 @@ body.entconnect-dark {
         color: #e2e8f0 !important;
     }
 
+    .pagina-aprovacoes {
+        background-color: #0f172a !important;
+
+        h1 {
+            color: #f8fafc !important;
+        }
+    }
+
+    .pagina-coaching-ee,
+    .ver-marcacoes-container,
+    .pagina-agendamentos,
+    .pagina-ver-agendamentos,
+    .confirmacoes-container,
+    .pagina-educandos-ee,
+    .pagina-adicionar-disponibilidade,
+    .coaching-container,
+    .pagamentos-coaching,
+    .horarios-admin,
+    .calendario-admin,
+    .faturacao-container {
+        min-height: calc(100vh - 76px);
+        background-color: #0f172a !important;
+        color: #e2e8f0 !important;
+    }
+
+    .pagina-coaching-ee h1,
+    .ver-marcacoes-container h1,
+    .pagina-agendamentos h1,
+    .pagina-ver-agendamentos h1,
+    .confirmacoes-container h1,
+    .pagina-educandos-ee h1,
+    .pagina-adicionar-disponibilidade h1,
+    .coaching-container h1,
+    .pagamentos-coaching h1,
+    .horarios-admin h1,
+    .calendario-admin h1,
+    .faturacao-container h1,
+    .pagina-coaching-ee h2,
+    .ver-marcacoes-container h2,
+    .pagina-agendamentos h2,
+    .pagina-ver-agendamentos h2,
+    .confirmacoes-container h2,
+    .pagina-educandos-ee h2,
+    .pagina-adicionar-disponibilidade h2,
+    .coaching-container h2,
+    .pagamentos-coaching h2,
+    .horarios-admin h2,
+    .calendario-admin h2,
+    .faturacao-container h2 {
+        color: #f8fafc !important;
+    }
+
+    .pagina-coaching-ee p,
+    .ver-marcacoes-container p,
+    .pagina-agendamentos p,
+    .pagina-ver-agendamentos p,
+    .confirmacoes-container p,
+    .pagina-educandos-ee p,
+    .pagina-adicionar-disponibilidade p,
+    .coaching-container p,
+    .pagamentos-coaching p,
+    .horarios-admin p,
+    .calendario-admin p,
+    .faturacao-container p,
+    .pagina-coaching-ee label,
+    .ver-marcacoes-container label,
+    .pagina-agendamentos label,
+    .pagina-ver-agendamentos label,
+    .confirmacoes-container label,
+    .pagina-educandos-ee label,
+    .pagina-adicionar-disponibilidade label,
+    .coaching-container label,
+    .pagamentos-coaching label,
+    .horarios-admin label,
+    .calendario-admin label,
+    .faturacao-container label {
+        color: #cbd5e1 !important;
+    }
+
+    .pagina-educandos-ee {
+        .cabecalho-educandos span {
+            background-color: rgba(20, 83, 45, 0.36) !important;
+            color: #bbf7d0 !important;
+        }
+
+        .estado-lista,
+        .educando-item,
+        .mensagem {
+            background-color: #111827 !important;
+            border-color: #334155 !important;
+            color: #cbd5e1 !important;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+        }
+
+        .educando-principal strong {
+            color: #f8fafc !important;
+        }
+
+        .educando-principal span,
+        .educando-detalhes span {
+            color: #94a3b8 !important;
+        }
+    }
+
+    .confirmacoes-container {
+        .search-section,
+        .table-wrapper {
+            background-color: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+        }
+
+        .search-input {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+
+        .search-input::placeholder {
+            color: #94a3b8 !important;
+        }
+    }
+
+    .pagina-adicionar-disponibilidade {
+        .card-formulario {
+            background-color: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+        }
+    }
+
     .infoRow span,
-    [class*="infoRow"] span,
-    [class*="InfoRow"] span,
-    [class*="sideEmpty"],
-    [class*="SideEmpty"],
-    [class*="uploadArea"],
-    [class*="UploadArea"],
-    [class*="switchGrid"] label,
-    [class*="SwitchGrid"] label {
+    .sideEmpty,
+    .uploadArea,
+    .switchGrid label {
         background-color: #111827 !important;
         border-color: #334155 !important;
         color: #e2e8f0 !important;
     }
 
     .badge,
-    [class*="badge"],
-    [class*="Badge"],
     [class*="tag-estado"],
     [class*="status"] {
         color: #0f172a !important;
@@ -391,11 +480,7 @@ body.entconnect-dark {
 
     .btn-principal,
     .btn-primario,
-    .primaryButton,
-    [class*="primaryButton"],
-    [class*="PrimaryButton"],
-    button[class*="primary"],
-    button[class*="Primary"] {
+    .primaryButton {
         color: #ffffff !important;
     }
 
@@ -407,10 +492,8 @@ body.entconnect-dark {
     }
 
     .text-muted,
-    [class*="subtitle"],
-    [class*="Subtitle"],
     [class*="descricao"],
-    [class*="Descricao"] {
+    [class*="description"] {
         color: #94a3b8 !important;
     }
 
