@@ -88,10 +88,10 @@ export function Estatisticas() {
             <div className="cabecalho-estatisticas">
                 <h1>Painel Estratégico</h1>
                 <div className="botoes-tempo">
-                    <button className={tipoFiltro === 'Hoje' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido('Hoje')}>Hoje</button>
-                    <button className={tipoFiltro === 'Semana' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido('Semana')}>Últimos 7 Dias</button>
-                    <button className={tipoFiltro === 'Mes' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido('Mes')}>Últimos 30 Dias</button>
-                    <button className={tipoFiltro === 'Personalizado' ? 'ativo' : ''} onClick={() => setTipoFiltro('Personalizado')}>Personalizado</button>
+                    <ButtonComponent className={tipoFiltro === 'Hoje' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido('Hoje')}>Hoje</ButtonComponent>
+                    <ButtonComponent className={tipoFiltro === 'Semana' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido('Semana')}>Últimos 7 Dias</ButtonComponent>
+                    <ButtonComponent className={tipoFiltro === 'Mes' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido('Mes')}>Últimos 30 Dias</ButtonComponent>
+                    <ButtonComponent className={tipoFiltro === 'Personalizado' ? 'ativo' : ''} onClick={() => setTipoFiltro('Personalizado')}>Personalizado</ButtonComponent>
                 </div>
             </div>
 

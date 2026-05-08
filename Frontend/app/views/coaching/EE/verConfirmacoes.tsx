@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import './verMarcacoes.scss';
 import { useEffect, useState } from 'react';
 import { authService } from '~/services/auth.service';
@@ -156,9 +157,9 @@ export default function VerConfirmacoesEE() {
                     <div className="modal-conteudo">
                         <div className="modal-cabecalho">
                             <h2>Detalhes da Sessão</h2>
-                            <button className="btn-fechar-icon" onClick={fecharModal}>
+                            <ButtonComponent className="btn-fechar-icon" onClick={fecharModal}>
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="detalhes-grid">
@@ -171,9 +172,9 @@ export default function VerConfirmacoesEE() {
                         </div>
 
                         <div className="modal-acoes">
-                            <button className="btn-fechar" onClick={fecharModal}>
+                            <ButtonComponent className="btn-fechar" onClick={fecharModal}>
                                 Fechar
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>

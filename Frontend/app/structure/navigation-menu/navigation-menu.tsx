@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 
 import './navigation-menu.scss';
 import { useLocation, Link, useNavigate } from 'react-router';
@@ -235,7 +236,7 @@ export function NavigationMenu({ menuMobileAberto = false, onCloseMenuMobile }: 
                     </label>
                 )}
                 <div className="mobile-user-actions">
-                    <button
+                    <ButtonComponent
                         type="button"
                         onClick={() => {
                             onCloseMenuMobile?.();
@@ -244,7 +245,7 @@ export function NavigationMenu({ menuMobileAberto = false, onCloseMenuMobile }: 
                     >
                         <i className="fa-solid fa-user-gear"></i>
                         <span>A Minha Conta</span>
-                    </button>
+                    </ButtonComponent>
                     <a href="#" onClick={(e) => authService.logout(e)}>
                         <i className="fa fa-arrow-right-from-bracket"></i>
                         <span>Sair</span>

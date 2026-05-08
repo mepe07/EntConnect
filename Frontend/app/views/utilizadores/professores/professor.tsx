@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import React, { useState, useEffect } from 'react';
 import { InputComponent } from "~/components/input/input.component";
 import './professor.scss';
@@ -22,6 +23,8 @@ export function Professores() {
     const [termoPesquisa, setTermoPesquisa] = useState('');
     const [paginaAtual, setPaginaAtual] = useState(1);
     const [ultimaPagina, setUltimaPagina] = useState(1);
+    const itensPorPagina = 20;
+    const [totalProfessores, setTotalProfessores] = useState(0);
 
 
     const [modalAberto, setModalAberto] = useState(false);
@@ -44,7 +47,8 @@ export function Professores() {
 
             setProfessores(resposta.data);
 
-            setUltimaPagina(resposta.meta.lastPage);
+            setTotalProfessores(resposta.meta.total);
+            setUltimaPagina(Math.max(resposta.meta.lastPage, 1));
         } catch (erro) {
             showToast("Erro ao carregar a lista.");
         }
@@ -133,6 +137,10 @@ export function Professores() {
         prof.Pessoa.NIF.includes(termoPesquisa)
     );
 
+    const irParaPagina = (pagina: number) => {
+        if (pagina >= 1 && pagina <= ultimaPagina) setPaginaAtual(pagina);
+    };
+
     return (
         <div className="crud-container">
             <div className="crud-header">
@@ -141,9 +149,9 @@ export function Professores() {
                     <p>Cria, edita e remove os docentes da escola.</p>
                 </div>
 
-                <button className="btn-principal" onClick={abrirModalNovo}>
+                <ButtonComponent className="btn-principal" onClick={abrirModalNovo}>
                     <i className="fa-solid fa-plus"></i> Novo Professor
-                </button>
+                </ButtonComponent>
             </div>
 
             <div className="crud-toolbar">
@@ -152,7 +160,7 @@ export function Professores() {
                         id="pesquisa-prof"
                         placeholder="🔍 Procurar por nome, email ou NIF..."
                         value={termoPesquisa}
-                        onChange={(e) => setTermoPesquisa(e.target.value)}
+                        onChange={(e) => { setTermoPesquisa(e.target.value); setPaginaAtual(1); }}
                     />
                 </div>
             </div>
@@ -183,50 +191,95 @@ export function Professores() {
                                     <td>{prof.Pessoa.NIF}</td>
                                     <td>{prof.Pessoa.Contacto}</td>
                                     <td className="acoes-coluna">
-                                        <button className="btn-icone editar" onClick={() => abrirModalEdicao(prof)}>
+                                        <ButtonComponent className="btn-icone editar" onClick={() => abrirModalEdicao(prof)}>
                                             <i className="fa-solid fa-pen"></i>
-                                        </button>
-                                        <button className="btn-icone apagar" onClick={() => handleApagar(prof.ID_Pessoa)}>
+                                        </ButtonComponent>
+                                        <ButtonComponent className="btn-icone apagar" onClick={() => handleApagar(prof.ID_Pessoa)}>
                                             <i className="fa-solid fa-trash"></i>
-                                        </button>
+                                        </ButtonComponent>
                                     </td>
                                 </tr>
                             ))
                         )}
                     </tbody>
                 </table>
-                <div className="paginacao-container">
-                    <button
-                        className="btn-paginacao"
-                        disabled={paginaAtual === 1}
-                        onClick={() => setPaginaAtual(prev => prev - 1)}
-                    >
-                        <i className="fa-solid fa-chevron-left"></i> Anterior
-                    </button>
-
-                    <span className="info-paginas">
-                        Página <strong>{paginaAtual}</strong> de {ultimaPagina}
-                    </span>
-
-                    <button
-                        className="btn-paginacao"
-                        disabled={paginaAtual === ultimaPagina}
-                        onClick={() => setPaginaAtual(prev => prev + 1)}
-                    >
-                        Próximo <i className="fa-solid fa-chevron-right"></i>
-                    </button>
-                </div>
             </div>
 
+            {totalProfessores > 0 && (
+                <div className="paginacao">
+                    <div className="paginacao-info">
+                        <span>Mostrar</span>
+                        <span className="paginacao-select paginacao-select-fixo">{itensPorPagina}</span>
+                        <span>por página &mdash; {totalProfessores} resultado{totalProfessores !== 1 ? 's' : ''}</span>
+                    </div>
 
+                    <div className="paginacao-controlos">
+                        <ButtonComponent
+                            className="btn-pagina"
+                            onClick={() => irParaPagina(1)}
+                            disabled={paginaAtual === 1}
+                            title="Primeira página"
+                        >
+                            <i className="fa-solid fa-angles-left"></i>
+                        </ButtonComponent>
+                        <ButtonComponent
+                            className="btn-pagina"
+                            onClick={() => irParaPagina(paginaAtual - 1)}
+                            disabled={paginaAtual === 1}
+                            title="Página anterior"
+                        >
+                            <i className="fa-solid fa-angle-left"></i>
+                        </ButtonComponent>
+                        <span className="paginacao-paginas">
+                            {Array.from({ length: ultimaPagina }, (_, i) => i + 1)
+                                .filter(p => p === 1 || p === ultimaPagina || Math.abs(p - paginaAtual) <= 1)
+                                .reduce<(number | '...')[]>((acc, p, idx, arr) => {
+                                    if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) acc.push('...');
+                                    acc.push(p);
+                                    return acc;
+                                }, [])
+                                .map((p, idx) =>
+                                    p === '...' ? (
+                                        <span key={`ellipsis-${idx}`} className="paginacao-ellipsis">...</span>
+                                    ) : (
+                                        <ButtonComponent
+                                            key={p}
+                                            className={`btn-pagina ${paginaAtual === p ? 'ativo' : ''}`}
+                                            onClick={() => irParaPagina(p as number)}
+                                        >
+                                            {p}
+                                        </ButtonComponent>
+                                    )
+                                )
+                            }
+                        </span>
+                        <ButtonComponent
+                            className="btn-pagina"
+                            onClick={() => irParaPagina(paginaAtual + 1)}
+                            disabled={paginaAtual === ultimaPagina}
+                            title="Próxima página"
+                        >
+                            <i className="fa-solid fa-angle-right"></i>
+                        </ButtonComponent>
+                        <ButtonComponent
+                            className="btn-pagina"
+                            onClick={() => irParaPagina(ultimaPagina)}
+                            disabled={paginaAtual === ultimaPagina}
+                            title="Última página"
+                        >
+                            <i className="fa-solid fa-angles-right"></i>
+                        </ButtonComponent>
+                    </div>
+                </div>
+            )}
             {modalAberto && (
                 <div className="modal-overlay">
                     <div className="modal-content" style={{ maxWidth: '700px' }}>
                         <div className="modal-header">
                             <h2>{professorEmEdicao ? "Editar Professor" : "Adicionar Novo Professor"}</h2>
-                            <button className="btn-fechar" onClick={() => setModalAberto(false)}>
+                            <ButtonComponent className="btn-fechar" onClick={() => setModalAberto(false)}>
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="modal-body">
@@ -295,10 +348,10 @@ export function Professores() {
                         </div>
 
                         <div className="modal-footer">
-                            <button className="btn-secundario" onClick={() => setModalAberto(false)}>Cancelar</button>
-                            <button className="btn-primario" onClick={handleSalvar}>
+                            <ButtonComponent className="btn-secundario" onClick={() => setModalAberto(false)}>Cancelar</ButtonComponent>
+                            <ButtonComponent className="btn-primario" onClick={handleSalvar}>
                                 {professorEmEdicao ? "Guardar Alterações" : "Registar Professor"}
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>

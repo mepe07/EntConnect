@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import {
   isRouteErrorResponse,
   Links,
@@ -133,7 +134,7 @@ export default function App() {
                     onCloseMenuMobile={() => setMenuMobileAberto(false)}
                 />
                 {menuMobileAberto && (
-                    <button
+                    <ButtonComponent
                         type="button"
                         className="mobile-menu-overlay"
                         aria-label="Fechar menu"

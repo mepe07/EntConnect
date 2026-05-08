@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { authService } from "~/services/auth.service";
@@ -209,7 +210,7 @@ export function Header({ menuMobileAberto = false, onToggleMenuMobile }: HeaderP
                     onClick={() => navigate('/')}
                 />
 
-                <button
+                <ButtonComponent
                     type="button"
                     className={`hamburger-button ${menuMobileAberto ? 'active' : ''}`}
                     aria-label={menuMobileAberto ? 'Fechar menu' : 'Abrir menu'}
@@ -219,7 +220,7 @@ export function Header({ menuMobileAberto = false, onToggleMenuMobile }: HeaderP
                     <span></span>
                     <span></span>
                     <span></span>
-                </button>
+                </ButtonComponent>
 
                 <div
                     className="menu"
@@ -279,7 +280,7 @@ export function Header({ menuMobileAberto = false, onToggleMenuMobile }: HeaderP
                             <span>Tema</span>
                             <ThemeToggle className="menu-theme-toggle" />
                         </div>
-                        <button
+                        <ButtonComponent
                             type="button"
                             onClick={() => {
                                 setSubMenuVisible(false);
@@ -288,7 +289,7 @@ export function Header({ menuMobileAberto = false, onToggleMenuMobile }: HeaderP
                             className="account-link"
                         >
                             <i className="fa-solid fa-user-gear"></i> A Minha Conta
-                        </button>
+                        </ButtonComponent>
                         <a href="#" onClick={(e) => authService.logout(e)} className="logout-link">
                             <i className="fa fa-arrow-right-from-bracket"></i> Sair
                         </a>

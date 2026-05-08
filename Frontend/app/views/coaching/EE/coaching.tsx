@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import './coaching.scss';
 import { useEffect, useState } from 'react';
 import { TableComponent } from '~/components/table/table.component';
@@ -248,9 +249,9 @@ export default function CoachingEE() {
                     <div className="modal-conteudo">
                         <div className="modal-cabecalho">
                             <h2>Adicionar aluno à sessão</h2>
-                            <button className="modal-fechar" onClick={fecharModal}>
+                            <ButtonComponent className="modal-fechar" onClick={fecharModal}>
                                 <i className="fa-solid fa-xmark" />
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="modal-corpo">
@@ -286,16 +287,16 @@ export default function CoachingEE() {
                             </div>
 
                             <div className="modal-acoes">
-                                <button className="btn-cancelar" onClick={fecharModal}>
+                                <ButtonComponent className="btn-cancelar" onClick={fecharModal}>
                                     Cancelar
-                                </button>
-                                <button
+                                </ButtonComponent>
+                                <ButtonComponent
                                     className="btn-confirmar"
                                     onClick={handleInscreverAluno}
                                     disabled={!alunoSelecionado}
                                 >
                                     Inscrever
-                                </button>
+                                </ButtonComponent>
                             </div>
                         </div>
                     </div>

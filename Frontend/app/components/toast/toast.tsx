@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import './toast.css';
+import { ButtonComponent } from '~/components/button/button.component';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -104,14 +105,14 @@ export function ToastProvider() {
                         {toastIcons[toast.type]}
                     </span>
                     <p className="toast-text">{toast.message}</p>
-                    <button
+                    <ButtonComponent
                         type="button"
                         className="toast-close"
                         aria-label="Fechar notificacao"
                         onClick={() => setToasts((currentToasts) => currentToasts.filter((item) => item.id !== toast.id))}
                     >
                         &times;
-                    </button>
+                    </ButtonComponent>
                 </div>
             ))}
         </div>
