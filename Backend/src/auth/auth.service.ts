@@ -104,7 +104,7 @@ export class AuthService {
         `Troca de role rejeitada: role sem permissao userId=${user.ID_Utilizador} role=${role}`,
       );
       throw new UnauthorizedException(
-        'A role selecionada nÃ£o estÃ¡ associada ao utilizador.',
+        'A role selecionada não estão associada ao utilizador.',
       );
     }
 

@@ -19,6 +19,8 @@ describe('AuthService', () => {
   const prismaMock = {
     utilizador: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      update: jest.fn(),
     },
   };
 
@@ -355,8 +357,35 @@ describe('AuthService', () => {
       ),
     ).rejects.toThrow(
       new UnauthorizedException(
-        'A role selecionada nÃ£o estÃ¡ associada ao utilizador.',
+        'A role selecionada não estão associada ao utilizador.',
       ),
     );
   });
+
+  it('deve enviar um email de recuperação de password se o utilizador existir', async () => {
+    // Prepara os dados falsos
+    const emailTest = 'simao@entartes.pt';
+    const utilizador = criarUtilizadorFake({ 
+      ID_Utilizador: 1,
+      Ativo: true, 
+      Pessoa: { Email: emailTest, Nome: 'Simão' } 
+    });
+
+    //Simula que a BD encontrou o utilizador
+    prismaMock.utilizador.findFirst.mockResolvedValue(utilizador);
+    
+    //Como a função também faz um update à BD para guardar o token, é boa prática simular o update
+    prismaMock.utilizador.update.mockResolvedValue(utilizador);
+
+    //Corre a tua função (utilizando o nome correto do serviço)
+    await service.forgotPassword({ email: emailTest });
+
+    //Verifica se o envio de email foi disparado com os dados certos
+    //Como o token gerado com o 'crypto' é aleatório, usamos expect.stringContaining
+    expect(mailServiceMock.sendPasswordResetEmail).toHaveBeenCalledWith(
+      emailTest,
+      expect.stringContaining('/login?resetToken=')
+    );
+  });
+
 });
