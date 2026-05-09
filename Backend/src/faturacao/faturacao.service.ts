@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -11,6 +12,8 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class FaturacaoService {
+  private readonly logger = new Logger(FaturacaoService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -703,6 +706,10 @@ export class FaturacaoService {
     idAluno: number,
     valorPago?: number,
   ) {
+    this.logger.log(
+      `A registar pagamento idCoaching=${idCoaching} idAluno=${idAluno} valorPago=${valorPago ?? 'total'}`,
+    );
+
     const registoAtual = await this.prisma.coaching_Aluno.findUnique({
       where: {
         ID_Coaching_ID_Aluno: {
@@ -716,6 +723,9 @@ export class FaturacaoService {
     });
 
     if (!registoAtual) {
+      this.logger.warn(
+        `Pagamento rejeitado: inscricao inexistente idCoaching=${idCoaching} idAluno=${idAluno}`,
+      );
       throw new NotFoundException('Inscricao de coaching nao encontrada.');
     }
 
@@ -723,6 +733,9 @@ export class FaturacaoService {
     const valorEmFaltaAtual = this.obterValorEmFalta(registoAtual, valorTotal);
 
     if (valorEmFaltaAtual <= 0) {
+      this.logger.log(
+        `Pagamento ignorado: inscricao ja paga idCoaching=${idCoaching} idAluno=${idAluno}`,
+      );
       return {
         message: 'Esta inscricao ja esta paga.',
         idCoaching,
@@ -738,6 +751,9 @@ export class FaturacaoService {
       : this.toNumber(valorPago);
 
     if (!pagamentoTotal && valorARegistar <= 0) {
+      this.logger.warn(
+        `Pagamento rejeitado: valor invalido idCoaching=${idCoaching} idAluno=${idAluno} valor=${valorARegistar}`,
+      );
       throw new BadRequestException(
         'O valor do pagamento tem de ser superior a zero.',
       );
@@ -760,6 +776,9 @@ export class FaturacaoService {
         ValorEmFalta: novoValorEmFalta,
       },
     });
+    this.logger.log(
+      `Pagamento registado idCoaching=${idCoaching} idAluno=${idAluno} valorPagoRegistado=${valorPagoRegistado} valorEmFalta=${novoValorEmFalta}`,
+    );
 
     return {
       message: 'Pagamento registado com sucesso.',

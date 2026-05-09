@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import { SelectBoxComponent } from '~/components/selectbox/selectbox.component';
 import './verMarcacoes.scss';
 import { useEffect, useState } from 'react';
@@ -11,6 +12,7 @@ import { ButtonColorEnum } from '~/components/button/models/enums/button-color.e
 import { SizeEnum } from '~/components/models/enums/size.enum';
 
 
+import { showToast } from '~/components/toast/toast';
 export default function VerMarcacoes() {
 
 
@@ -76,10 +78,10 @@ export default function VerMarcacoes() {
         if (window.confirm(`Tem a certeza que deseja cancelar a inscrição do aluno: ${row.nomeAluno}?`)) {
             try {
                 await eeService.removerAlunoCoaching(row.idAluno, row.idCoaching);
-                alert('Inscrição cancelada com sucesso!');
+                showToast('Inscrição cancelada com sucesso!');
                 fetchMarcacoes();
             } catch (error) {
-                alert('Erro ao cancelar inscrição.');
+                showToast('Erro ao cancelar inscrição.');
             }
         }
     }
@@ -212,9 +214,9 @@ export default function VerMarcacoes() {
                         </div>
 
                         <div className="modal-acoes">
-                            <button className="btn-fechar" onClick={fecharModal}>
+                            <ButtonComponent className="btn-fechar" onClick={fecharModal}>
                                 Fechar
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>

@@ -3,6 +3,7 @@ import {
   ExecutionContext,
   ForbiddenException,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
@@ -14,6 +15,8 @@ import { UtilizadorAutenticado } from '../../common/interfaces/utilizador-autent
 
 @Injectable()
 export class RolesGuard implements CanActivate {
+  private readonly logger = new Logger(RolesGuard.name);
+
   constructor(private readonly reflector: Reflector) {}
 
   /**
@@ -36,12 +39,18 @@ export class RolesGuard implements CanActivate {
     const utilizador = request.user as UtilizadorAutenticado | undefined;
 
     if (!utilizador) {
+      this.logger.warn(
+        `Acesso bloqueado sem utilizador autenticado ${request.method} ${request.originalUrl ?? request.url}`,
+      );
       throw new ForbiddenException('Utilizador não autenticado.');
     }
 
     const temPermissao = rolesPermitidas.includes(utilizador.role);
 
     if (!temPermissao) {
+      this.logger.warn(
+        `Acesso negado por role userId=${utilizador.sub} role=${utilizador.role} rolesPermitidas=${rolesPermitidas.join(',')}`,
+      );
       throw new ForbiddenException(
         'Sem permissões para aceder a este endpoint.',
       );

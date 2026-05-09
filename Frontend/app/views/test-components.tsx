@@ -13,6 +13,7 @@ import { InfoTypesEnum } from "~/components/models/enums/info-types.enum";
 import { CardComponent } from "~/components/card/card.component";
 import { CardTypeEnum } from "~/components/card/models/enums/card-type.enum";
 
+import { showToast } from '~/components/toast/toast';
 export function TestComponents() {
   const [inputValue, setInputValue] = useState("");
   const [selectedOption, setSelectedOption] = useState("option2");
@@ -58,17 +59,17 @@ export function TestComponents() {
         label="Edit"
         icon="fa-pen-to-square"
         config={{ type: ButtonTypeEnum.Primary, size: SizeEnum.Regular }}
-        onClick={() => alert("Button clicked!")} />
+        onClick={() => showToast("Button clicked!")} />
       <ButtonComponent
         label="Edit"
         icon="fa-pen-to-square"
         config={{ type: ButtonTypeEnum.Secondary, size: SizeEnum.Regular }}
-        onClick={() => alert("Button clicked!")} />
+        onClick={() => showToast("Button clicked!")} />
       <ButtonComponent
         label="Edit"
         icon="fa-pen-to-square"
         config={{ type: ButtonTypeEnum.Tertiary, size: SizeEnum.Regular }}
-        onClick={() => alert("Button clicked!")} />
+        onClick={() => showToast("Button clicked!")} />
       <br />
       <br />
       <CardComponent title="Test Card" description="This is a simple test card." type={CardTypeEnum.Warning} />
@@ -107,13 +108,13 @@ export function TestComponents() {
               icon: "fa-trash",
               tooltip: "Eliminar",
               config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Error },
-              onClick: (row) => alert(`Delete ${row.name}`)
+              onClick: (row) => showToast(`Delete ${row.name}`)
             },
             {
               icon: "fa-eye",
               tooltip: "Ver",
               config: { type: ButtonTypeEnum.Tertiary },
-              onClick: (row) => alert(`View ${row.name}`)
+              onClick: (row) => showToast(`View ${row.name}`)
             }
           ]
         }}

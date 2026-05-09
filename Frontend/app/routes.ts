@@ -26,8 +26,6 @@ export default [
 
     route("admin/pagamentos-coaching", "routes/pagamentosCoaching.tsx"),
 
-    // NavBar diz: path: '/admin/utilizadores'
-
     route("admin/utilizadores", "routes/configuracoes/utilizadores.tsx"),
 
 

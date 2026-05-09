@@ -1,3 +1,4 @@
+import { showToast } from '~/components/toast/toast';
 
 import './historico.scss';
 import { useState, useMemo, useEffect } from 'react';
@@ -28,7 +29,7 @@ export function HistoricoCoaching() {
 
 
     const handlePesquisa = async () => {
-        if (!filtro.dataInicio || !filtro.dataFim) return alert('Por favor, selecione ambas as datas.');
+        if (!filtro.dataInicio || !filtro.dataFim) return showToast('Por favor, selecione ambas as datas.');
 
         setACarregar(true);
         try {
@@ -39,7 +40,7 @@ export function HistoricoCoaching() {
             setAlunoSelecionado(null);
         } catch (error) {
             console.error('Erro ao buscar histórico:', error);
-            alert('Ocorreu um erro. O servidor pode estar em baixo.');
+            showToast('Ocorreu um erro. O servidor pode estar em baixo.');
         } finally {
             setACarregar(false);
         }

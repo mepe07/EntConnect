@@ -1,7 +1,9 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import React, { useState } from 'react';
 import { TipoAnuncio, type CriarAnuncioPayload } from '../../../types/marketplace.types';
 import '../marketplace.scss';
 
+import { showToast } from '~/components/toast/toast';
 interface ModalCriarAnuncioProps {
     isOpen: boolean;
     onClose: () => void;
@@ -95,18 +97,18 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
 
     const handleSubmit = async () => {
         if (!form.titulo || form.quantidadeTotal < 1) {
-            alert('Por favor, preenche o título e a quantidade.');
+            showToast('Por favor, preenche o título e a quantidade.');
             return;
         }
 
         if (usaDistribuicao) {
             if (totalDistribuido < 1) {
-                alert('Indica pelo menos 1 unidade para venda ou aluguer.');
+                showToast('Indica pelo menos 1 unidade para venda ou aluguer.');
                 return;
             }
 
             if (totalDistribuido > form.quantidadeTotal) {
-                alert('A soma de venda e aluguer não pode ultrapassar a quantidade total.');
+                showToast('A soma de venda e aluguer não pode ultrapassar a quantidade total.');
                 return;
             }
         }
@@ -262,20 +264,20 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
                 </div>
 
                 <div className="modal-acoes" style={{ marginTop: '24px', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                    <button
+                    <ButtonComponent
                         className="btn-secundario"
                         onClick={onClose}
                         disabled={loading}
                     >
                         Cancelar
-                    </button>
-                    <button
+                    </ButtonComponent>
+                    <ButtonComponent
                         className="btn-principal"
                         onClick={handleSubmit}
                         disabled={loading}
                     >
                         {loading ? 'A publicar...' : 'Publicar Anúncio'}
-                    </button>
+                    </ButtonComponent>
                 </div>
             </div>
         </>

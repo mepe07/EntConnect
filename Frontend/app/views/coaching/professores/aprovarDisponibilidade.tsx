@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import './aprovarDisponibilidade.scss';
 import { useEffect, useState } from 'react';
 import { TableComponent } from '~/components/table/table.component';
@@ -13,6 +14,7 @@ import { SalasService } from '../../../services/salas.service';
 import { horariosService } from '~/services/horarios.service';
 
 
+import { showToast } from '~/components/toast/toast';
 export interface Disponibilidade {
     idDisponibilidade: number;
     nomeProfessor: string;
@@ -255,7 +257,7 @@ export default function ApproveAvailability() {
 
     async function confirmarAprovacao() {
         if (!estudioSelecionado || !valorPorAluno) {
-            alert('Por favor, selecione um estúdio e insira o valor por aluno.');
+            showToast('Por favor, selecione um estúdio e insira o valor por aluno.');
             return;
         }
 
@@ -292,7 +294,7 @@ export default function ApproveAvailability() {
 
             fetchDisponibilidades();
         } catch (error) {
-            alert('Erro ao atualizar a disponibilidade.');
+            showToast('Erro ao atualizar a disponibilidade.');
         }
     }
 
@@ -367,9 +369,9 @@ export default function ApproveAvailability() {
                     <div className="modal-conteudo">
                         <div className="modal-cabecalho">
                             <h2>Aprovar Horário</h2>
-                            <button className="modal-fechar" onClick={fecharModal}>
+                            <ButtonComponent className="modal-fechar" onClick={fecharModal}>
                                 <i className="fa-solid fa-xmark" />
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="modal-corpo">
@@ -413,16 +415,16 @@ export default function ApproveAvailability() {
                             </div>
 
                             <div className="modal-acoes" style={{ marginTop: '30px' }}>
-                                <button className="btn-cancelar" onClick={fecharModal}>
+                                <ButtonComponent className="btn-cancelar" onClick={fecharModal}>
                                     Cancelar
-                                </button>
-                                <button
+                                </ButtonComponent>
+                                <ButtonComponent
                                     className="btn-confirmar"
                                     onClick={confirmarAprovacao}
                                     disabled={!estudioSelecionado || !valorPorAluno || estudiosLivres.length === 0}
                                 >
                                     Confirmar Aprovação
-                                </button>
+                                </ButtonComponent>
                             </div>
                         </div>
                     </div>

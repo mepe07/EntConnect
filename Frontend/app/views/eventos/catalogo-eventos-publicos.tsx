@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 
 
 import { useEffect, useMemo, useState } from 'react';
@@ -162,7 +163,7 @@ export function CatalogoEventosPublicos() {
 
                 <div className={styles.filterButtons}>
                     {FILTROS_TIPO.map((filtro) => (
-                        <button
+                        <ButtonComponent
                             key={filtro.valor}
                             type="button"
                             className={
@@ -173,7 +174,7 @@ export function CatalogoEventosPublicos() {
                             onClick={() => setTipoSelecionado(filtro.valor)}
                         >
                             {filtro.label}
-                        </button>
+                        </ButtonComponent>
                     ))}
                 </div>
             </section>

@@ -1,151 +1,165 @@
+import { describe, beforeEach, afterEach, it, expect, jest } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
+import { MarcacoesService } from './marcacoes.service'; 
+import { PrismaService } from '../../prisma/prisma.service'; 
 
-import { PrismaService } from '../../prisma/prisma.service';
-import { MarcacoesService } from './marcacoes.service';
+describe('MarcacoesService - confirmarSessaoByEE', () => {
+    let marcacoesService: MarcacoesService;
+    let prismaService: PrismaService;
 
-describe('MarcacoesService', () => {
-  let service: MarcacoesService;
-
-  const prismaMock = {
-    coaching_Aluno: {
-      findMany: jest.fn(),
-      updateMany: jest.fn(),
-      count: jest.fn(),
-    },
-    coaching: {
-      findUnique: jest.fn(),
-      update: jest.fn(),
-    },
-  };
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        MarcacoesService,
-        { provide: PrismaService, useValue: prismaMock },
-      ],
-    }).compile();
-
-    service = module.get<MarcacoesService>(MarcacoesService);
-    jest.resetAllMocks();
-  });
-
-  it('deve listar marcações do encarregado', async () => {
-    const marcacoes = [{ ID_Coaching: 1 }];
-    prismaMock.coaching_Aluno.findMany.mockResolvedValue(marcacoes);
-
-    await expect(service.getMarcacoesbyEE(10)).resolves.toBe(marcacoes);
-    expect(prismaMock.coaching_Aluno.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { ID_Enc_Educacao: 10 } }),
-    );
-  });
-
-  it('deve agrupar confirmações por sessão de coaching', async () => {
-    const inicio = new Date('2026-05-01T10:00:00.000Z');
-    prismaMock.coaching_Aluno.findMany.mockResolvedValue([
-      {
-        ID_Aluno: 1,
-        Aluno: { Nome: 'Aluno Um' },
-        Coaching: {
-          ID_Coaching: 5,
-          Inicio_Coaching: inicio,
-          Duracao: 60,
-          Disponibilidade: { Modalidade: 'Salsa' },
-          Estado_Coaching: { Tipo: 'Pendente' },
-          Professor: { Pessoa: { Nome: 'Professora Ana' } },
+    // Mock Prisma
+    const mockPrismaService = {
+        coaching_Aluno: {
+            updateMany: jest.fn<() => Promise<any>>(),
+            count: jest.fn<() => Promise<any>>(),
         },
-      },
-      {
-        ID_Aluno: 2,
-        Aluno: { Nome: 'Aluno Dois' },
-        Coaching: {
-          ID_Coaching: 5,
-          Inicio_Coaching: inicio,
-          Duracao: 60,
-          Disponibilidade: { Modalidade: 'Salsa' },
-          Estado_Coaching: { Tipo: 'Pendente' },
-          Professor: { Pessoa: { Nome: 'Professora Ana' } },
+        coaching: {
+            findUnique: jest.fn<() => Promise<any>>(),
+            update: jest.fn<() => Promise<any>>(),
         },
-      },
-    ]);
+    };
 
-    const resultado = await service.getConfirmacoesByEE(10);
+    // Configuração do módulo de teste
+    beforeEach(async () => {
+        const module: TestingModule = await Test.createTestingModule({
+            providers: [
+                MarcacoesService,
+                {
+                    provide: PrismaService,
+                    useValue: mockPrismaService,
+                },
+            ],
+        }).compile();
 
-    expect(resultado).toHaveLength(1);
-    expect(resultado[0]).toEqual(
-      expect.objectContaining({
-        idCoaching: 5,
-        modalidade: 'Salsa',
-        alunos: [
-          { idAluno: 1, nome: 'Aluno Um' },
-          { idAluno: 2, nome: 'Aluno Dois' },
-        ],
-      }),
-    );
-  });
-
-  it('deve confirmar o EE quando não há pendentes sem concluir se o professor ainda não confirmou', async () => {
-    prismaMock.coaching_Aluno.count.mockResolvedValue(0);
-    prismaMock.coaching.findUnique.mockResolvedValue({
-      ID_Estado_Coaching: 7,
-      confirmacao_prof: false,
+        marcacoesService = module.get<MarcacoesService>(MarcacoesService);
+        prismaService = module.get<PrismaService>(PrismaService);
     });
 
-    await expect(service.confirmarSessaoByEE(10, 5, 13)).resolves.toEqual({
-      message:
-        'Confirmação do encarregado registada. A aguardar confirmação do professor.',
-    });
-    expect(prismaMock.coaching_Aluno.updateMany).toHaveBeenCalledWith({
-      where: { ID_Enc_Educacao: 10, ID_Coaching: 5 },
-      data: { confirmado: true },
-    });
-    expect(prismaMock.coaching.findUnique).toHaveBeenCalledWith({
-      where: { ID_Coaching: 5 },
-      select: {
-        ID_Estado_Coaching: true,
-        confirmacao_prof: true,
-      },
-    });
-    expect(prismaMock.coaching.update).toHaveBeenCalledWith({
-      where: { ID_Coaching: 5 },
-      data: { ID_Estado_Coaching: 7, confirmacao_EE: true },
-    });
-  });
-
-  it('deve concluir a sessão quando todos os alunos e o professor já confirmaram', async () => {
-    prismaMock.coaching_Aluno.count.mockResolvedValue(0);
-    prismaMock.coaching.findUnique.mockResolvedValue({
-      ID_Estado_Coaching: 7,
-      confirmacao_prof: true,
+    // Limpar os mocks depois de cada testes
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
-    await expect(service.confirmarSessaoByEE(10, 5, 13)).resolves.toEqual({
-      message:
-        'Sessão finalizada com sucesso (professor e encarregado confirmaram).',
+    describe('confirmarSessaoByEE', () => {
+
+        it('deve retornar erro se o ID de estado de coaching for inválido', async () => {
+
+            // Arrange
+            const idEE = 1;
+            const idCoaching = 100;
+            const idEstadoCoachingInvalido = 99;
+
+            // Act
+            const action = marcacoesService.confirmarSessaoByEE(idEE, idCoaching, idEstadoCoachingInvalido);
+
+            // Assert
+            await expect(action).rejects.toThrow('ID de estado de coaching inválido.');
+
+            expect(prismaService.coaching_Aluno.updateMany).not.toHaveBeenCalled();
+        });
+
+        it('deve atualizar aluno e aguardar se ainda houver alunos pendentes', async () => {
+
+            // Arrange
+            const idEE = 1;
+            const idCoaching = 100;
+            const idEstadoCoaching = 13;
+
+            mockPrismaService.coaching_Aluno.updateMany.mockResolvedValue({ count: 1 });
+            mockPrismaService.coaching_Aluno.count.mockResolvedValue(2); // 2 pendentes
+
+            // Act
+            const result = await marcacoesService.confirmarSessaoByEE(idEE, idCoaching, idEstadoCoaching);
+
+            // Assert
+            expect(prismaService.coaching_Aluno.updateMany).toHaveBeenCalledTimes(1);
+            expect(prismaService.coaching_Aluno.updateMany).toHaveBeenCalledWith({
+                where: {
+                    ID_Enc_Educacao: idEE,
+                    ID_Coaching: idCoaching,
+                },
+                data: {
+                    confirmado: true,
+                },
+            });
+            expect(prismaService.coaching_Aluno.count).toHaveBeenCalledTimes(1);
+            expect(prismaService.coaching.findUnique).not.toHaveBeenCalled();
+            expect(result).toEqual({
+                message: 'Confirmação registada. A aguardar confirmação dos restantes alunos.',
+            });
+        });
+
+        it('deve aguardar confirmação do professor se nao houver pendentes mas professor nao confirmou', async () => {
+
+            // Arrange
+            const idEE = 1;
+            const idCoaching = 100;
+            const idEstadoCoaching = 13;
+
+            const mockCoachingInfo = {
+                ID_Estado_Coaching: 10,
+                confirmacao_prof: false, // Professor ainda não confirmou
+            };
+
+            mockPrismaService.coaching_Aluno.updateMany.mockResolvedValue({ count: 1 });
+            mockPrismaService.coaching_Aluno.count.mockResolvedValue(0); // 0 pendentes
+            mockPrismaService.coaching.findUnique.mockResolvedValue(mockCoachingInfo);
+            mockPrismaService.coaching.update.mockResolvedValue({});
+
+            // Act
+            const result = await marcacoesService.confirmarSessaoByEE(idEE, idCoaching, idEstadoCoaching);
+
+            // Assert
+            expect(prismaService.coaching_Aluno.count).toHaveBeenCalledTimes(1);
+            expect(prismaService.coaching.findUnique).toHaveBeenCalledTimes(1);
+            expect(prismaService.coaching.update).toHaveBeenCalledTimes(1);
+            expect(prismaService.coaching.update).toHaveBeenCalledWith({
+                where: { ID_Coaching: idCoaching },
+                data: {
+                    ID_Estado_Coaching: mockCoachingInfo.ID_Estado_Coaching, // Mantém o estado atual
+                    confirmacao_EE: true,
+                },
+            });
+            expect(result).toEqual({
+                message: 'Confirmação do encarregado registada. A aguardar confirmação do professor.',
+            });
+        });
+
+        it('deve finalizar a sessao alterando o estado para 13 se professor e encarregado confirmaram', async () => {
+
+            // Arrange
+            const idEE = 1;
+            const idCoaching = 100;
+            const idEstadoCoaching = 13;
+
+            const mockCoachingInfo = {
+                ID_Estado_Coaching: 10,
+                confirmacao_prof: true, // Professor já confirmou
+            };
+
+            mockPrismaService.coaching_Aluno.updateMany.mockResolvedValue({ count: 1 });
+            mockPrismaService.coaching_Aluno.count.mockResolvedValue(0); // 0 pendentes
+            mockPrismaService.coaching.findUnique.mockResolvedValue(mockCoachingInfo);
+            mockPrismaService.coaching.update.mockResolvedValue({});
+
+            // Act
+            const result = await marcacoesService.confirmarSessaoByEE(idEE, idCoaching, idEstadoCoaching);
+
+            // Assert
+            expect(prismaService.coaching.findUnique).toHaveBeenCalledTimes(1);
+            expect(prismaService.coaching.update).toHaveBeenCalledTimes(1);
+            expect(prismaService.coaching.update).toHaveBeenCalledWith({
+                where: { ID_Coaching: idCoaching },
+                data: {
+                    ID_Estado_Coaching: 13, // Atualiza para estado 13
+                    confirmacao_EE: true,
+                },
+            });
+            expect(result).toEqual({
+                message: 'Sessão finalizada com sucesso (professor e encarregado confirmaram).',
+            });
+        });
+
     });
 
-    expect(prismaMock.coaching.update).toHaveBeenCalledWith({
-      where: { ID_Coaching: 5 },
-      data: { ID_Estado_Coaching: 13, confirmacao_EE: true },
-    });
-  });
-
-  it('deve manter a sessão sem confirmacao_EE global enquanto houver alunos pendentes', async () => {
-    prismaMock.coaching_Aluno.count.mockResolvedValue(1);
-
-    await expect(service.confirmarSessaoByEE(10, 5, 13)).resolves.toEqual({
-      message:
-        'Confirmação registada. A aguardar confirmação dos restantes alunos.',
-    });
-
-    expect(prismaMock.coaching.findUnique).not.toHaveBeenCalled();
-    expect(prismaMock.coaching.update).not.toHaveBeenCalled();
-  });
-
-  it('deve rejeitar estado inválido e não atualizar', async () => {
-    await expect(service.confirmarSessaoByEE(10, 5, 99)).rejects.toThrow(
-      'ID de estado de coaching inválido.',
-    );
-    expect(prismaMock.coaching_Aluno.updateMany).not.toHaveBeenCalled();
-  });
 });

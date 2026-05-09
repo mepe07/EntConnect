@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { authService } from "~/services/auth.service";
@@ -12,8 +13,7 @@ const roleDisplayNames: Record<string, string> = {
     Professor: 'Professor',
     Enc_Educacao: 'Enc. Educação',
     EncEducacao: 'Enc. Educação',
-    Direcao: 'Direção',
-    Direção: 'Direção',
+    'Encarregado de Educação': 'Enc. Educação',
 };
 
 /**
@@ -35,7 +35,12 @@ function formatRoleName(role?: string) {
  * Mostra a identidade do utilizador, sincroniza a fotografia de perfil e
  * disponibiliza o acesso à conta e ao logout.
  */
-export function Header() {
+interface HeaderProps {
+    menuMobileAberto?: boolean;
+    onToggleMenuMobile?: () => void;
+}
+
+export function Header({ menuMobileAberto = false, onToggleMenuMobile }: HeaderProps) {
 
     const navigate = useNavigate();
 
@@ -43,9 +48,31 @@ export function Header() {
     const [userInfo, setUserInfo] = useState<User | null>(null);
     const [subMenuVisible, setSubMenuVisible] = useState(false);
     const [fotoPerfilUrl, setFotoPerfilUrl] = useState<string | null>(null);
+    const [roleEmAtualizacao, setRoleEmAtualizacao] = useState(false);
 
     const profilePictureRef = useRef<HTMLDivElement>(null);
     const subMenuRef = useRef<HTMLDivElement>(null);
+    const subMenuCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const cancelSubMenuClose = () => {
+        if (subMenuCloseTimeoutRef.current) {
+            clearTimeout(subMenuCloseTimeoutRef.current);
+            subMenuCloseTimeoutRef.current = null;
+        }
+    };
+
+    const openSubMenu = () => {
+        cancelSubMenuClose();
+        setSubMenuVisible(true);
+    };
+
+    const scheduleSubMenuClose = () => {
+        cancelSubMenuClose();
+        subMenuCloseTimeoutRef.current = setTimeout(() => {
+            setSubMenuVisible(false);
+            subMenuCloseTimeoutRef.current = null;
+        }, 180);
+    };
 
 
     useEffect(() => {
@@ -54,11 +81,50 @@ export function Header() {
         if (info) {
             setUserInfo(info as User);
         }
+
+        authService.atualizarSessao()
+            .then((userAtualizado) => {
+                if (userAtualizado) setUserInfo(userAtualizado);
+            })
+            .catch((error) => {
+                console.error('Erro ao atualizar sessao:', error);
+            });
+    }, []);
+
+    useEffect(() => {
+        function handleRoleAlterada(event: Event) {
+            const detail = (event as CustomEvent<User>).detail;
+            setUserInfo(detail || authService.getUserInfo());
+        }
+
+        window.addEventListener('entconnect-role-alterada', handleRoleAlterada);
+
+        return () => {
+            window.removeEventListener('entconnect-role-alterada', handleRoleAlterada);
+        };
     }, []);
 
     const userDisplayName = userInfo?.nome || userInfo?.username;
     const userRoleDisplayName = formatRoleName(userInfo?.role);
     const userLetter = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : 'U';
+    const rolesDisponiveis = userInfo?.roles?.length ? userInfo.roles : userInfo?.role ? [userInfo.role] : [];
+
+    const handleTrocarRole = async (role: string) => {
+        if (!role || role === userInfo?.role || roleEmAtualizacao) return;
+
+        setRoleEmAtualizacao(true);
+
+        try {
+            const userAtualizado = await authService.trocarRole(role);
+            setUserInfo(userAtualizado);
+            setSubMenuVisible(false);
+            navigate('/');
+        } catch (error) {
+            console.error('Erro ao trocar role:', error);
+        } finally {
+            setRoleEmAtualizacao(false);
+        }
+    };
 
 
     useEffect(() => {
@@ -127,6 +193,12 @@ export function Header() {
         };
     }, [subMenuVisible]);
 
+    useEffect(() => {
+        return () => {
+            cancelSubMenuClose();
+        };
+    }, []);
+
     return (
         <header>
             <div className="header-container">
@@ -138,9 +210,23 @@ export function Header() {
                     onClick={() => navigate('/')}
                 />
 
-                <div className="menu">
-                    <ThemeToggle className="header-theme-toggle" />
+                <ButtonComponent
+                    type="button"
+                    className={`hamburger-button ${menuMobileAberto ? 'active' : ''}`}
+                    aria-label={menuMobileAberto ? 'Fechar menu' : 'Abrir menu'}
+                    aria-expanded={menuMobileAberto}
+                    onClick={onToggleMenuMobile}
+                >
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </ButtonComponent>
 
+                <div
+                    className="menu"
+                    onMouseEnter={openSubMenu}
+                    onMouseLeave={scheduleSubMenuClose}
+                >
                     <div
                         className="profile-picture"
                         ref={profilePictureRef}
@@ -167,12 +253,34 @@ export function Header() {
                     <div
                         className={`sub-menu ${subMenuVisible ? "active" : ""}`}
                         ref={subMenuRef}
+                        onMouseEnter={openSubMenu}
+                        onMouseLeave={scheduleSubMenuClose}
                     >
                         <div className='user-info'>
                             <p>{userDisplayName}</p>
                             <p>{userRoleDisplayName}</p>
                         </div>
-                        <button
+                        {rolesDisponiveis.length > 1 && (
+                            <div className="role-switcher">
+                                <select
+                                    id="role-switcher"
+                                    value={userInfo?.role || ''}
+                                    disabled={roleEmAtualizacao}
+                                    onChange={(event) => handleTrocarRole(event.target.value)}
+                                >
+                                    {rolesDisponiveis.map((role) => (
+                                        <option key={role} value={role}>
+                                            {formatRoleName(role)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                        <div className="theme-switcher">
+                            <span>Tema</span>
+                            <ThemeToggle className="menu-theme-toggle" />
+                        </div>
+                        <ButtonComponent
                             type="button"
                             onClick={() => {
                                 setSubMenuVisible(false);
@@ -181,7 +289,7 @@ export function Header() {
                             className="account-link"
                         >
                             <i className="fa-solid fa-user-gear"></i> A Minha Conta
-                        </button>
+                        </ButtonComponent>
                         <a href="#" onClick={(e) => authService.logout(e)} className="logout-link">
                             <i className="fa fa-arrow-right-from-bracket"></i> Sair
                         </a>

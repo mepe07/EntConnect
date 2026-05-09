@@ -1,17 +1,22 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateCoachingDto } from './dto/create-coaching.dto';
 import { UpdateCoachingDto } from './dto/update-coaching.dto';
 import { PrismaService } from '../prisma/prisma.service';
+
+
 /**
  * Servico responsavel pela logica de Coaching.
  */
 
 @Injectable()
 export class CoachingService {
+  private readonly logger = new Logger(CoachingService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -21,9 +26,16 @@ export class CoachingService {
    */
 
   async create(createCoachingDto: CreateCoachingDto) {
-    return this.prisma.coaching.create({
+    this.logger.log(
+      `A criar coaching idProfessor=${createCoachingDto.ID_Professor} idSala=${createCoachingDto.ID_Sala} idEstado=${createCoachingDto.ID_Estado_Coaching}`,
+    );
+
+    const coaching = await this.prisma.coaching.create({
       data: createCoachingDto,
     });
+
+    this.logger.log(`Coaching criado idCoaching=${coaching.ID_Coaching}`);
+    return coaching;
   }
 
   /**
@@ -34,12 +46,19 @@ export class CoachingService {
    */
 
   async inscreverAluno(idDisponibilidade: number, body: any) {
+    this.logger.log(
+      `A inscrever aluno em coaching idDisponibilidade=${idDisponibilidade} idAluno=${body.idAluno} idEncEducacao=${body.idEncEducacao}`,
+    );
+
     const disponibilidadeInfo = await this.prisma.disponibilidade.findUnique({
       where: { ID_Disponibilidade: idDisponibilidade },
       select: { MaxAlunos: true },
     });
 
-    if (!disponibilidadeInfo || (disponibilidadeInfo.MaxAlunos ?? 0) <= 0) {
+    if (!disponibilidadeInfo || (disponibilidadeInfo.MaxAlunos ?? 0) < 1) {
+      this.logger.warn(
+        `Inscricao rejeitada por falta de vagas idDisponibilidade=${idDisponibilidade} idAluno=${body.idAluno}`,
+      );
       throw new Error('Não existem vagas disponíveis para esta sessão.');
     }
 
@@ -60,6 +79,9 @@ export class CoachingService {
           ID_Disponibilidade: idDisponibilidade,
         },
       });
+      this.logger.log(
+        `Coaching criado automaticamente para inscricao idCoaching=${coaching.ID_Coaching} idDisponibilidade=${idDisponibilidade}`,
+      );
     }
 
     const novaInscricao = await this.prisma.coaching_Aluno.create({
@@ -83,6 +105,9 @@ export class CoachingService {
         },
       },
     });
+    this.logger.log(
+      `Aluno inscrito com sucesso idCoaching=${coaching.ID_Coaching} idAluno=${body.idAluno} idDisponibilidade=${idDisponibilidade}`,
+    );
 
     return {
       message: 'Aluno inscrito com sucesso!',
@@ -98,6 +123,10 @@ export class CoachingService {
    */
 
   async removerAluno(idAluno: number, idCoaching: number) {
+    this.logger.log(
+      `A remover aluno de coaching idCoaching=${idCoaching} idAluno=${idAluno}`,
+    );
+
     let coachingAluno = await this.prisma.coaching_Aluno.findFirst({
       where: {
         ID_Aluno: idAluno,
@@ -106,6 +135,9 @@ export class CoachingService {
     });
 
     if (!coachingAluno) {
+      this.logger.warn(
+        `Remocao de aluno rejeitada: inscricao inexistente idCoaching=${idCoaching} idAluno=${idAluno}`,
+      );
       throw new Error('Inscrição não encontrada!');
     }
 
@@ -148,8 +180,12 @@ export class CoachingService {
           ID_Coaching: idCoaching,
         },
       });
+      this.logger.log(`Coaching removido por ficar sem alunos idCoaching=${idCoaching}`);
     }
 
+    this.logger.log(
+      `Aluno removido com sucesso idCoaching=${idCoaching} idAluno=${idAluno}`,
+    );
     return { message: 'Aluno removido com sucesso!' };
   }
 
@@ -373,11 +409,16 @@ export class CoachingService {
    */
 
   async confirmarSessaoProfessor(idCoaching: number) {
+    this.logger.log(`Professor a confirmar sessao idCoaching=${idCoaching}`);
+
     const sessao = await this.prisma.coaching.findUnique({
       where: { ID_Coaching: idCoaching },
     });
 
     if (!sessao) {
+      this.logger.warn(
+        `Confirmacao de sessao rejeitada: coaching inexistente idCoaching=${idCoaching}`,
+      );
       throw new NotFoundException(
         `Sessão de coaching com ID ${idCoaching} não encontrada.`,
       );
@@ -387,12 +428,18 @@ export class CoachingService {
     const dataInicio = new Date(sessao.Inicio_Coaching!);
 
     if (agora < dataInicio) {
+      this.logger.warn(
+        `Confirmacao de sessao rejeitada: sessao ainda nao iniciada idCoaching=${idCoaching}`,
+      );
       throw new BadRequestException(
         'Não pode confirmar uma sessão que ainda não se iniciou.',
       );
     }
 
     if (sessao.ID_Estado_Coaching === 13) {
+      this.logger.warn(
+        `Confirmacao de sessao rejeitada: sessao ja concluida idCoaching=${idCoaching}`,
+      );
       throw new BadRequestException('Esta sessão já se encontra concluída.');
     }
 
@@ -402,12 +449,17 @@ export class CoachingService {
       novoEstado = 13;
     }
 
-    return this.prisma.coaching.update({
+    const sessaoAtualizada = await this.prisma.coaching.update({
       where: { ID_Coaching: idCoaching },
       data: {
         confirmacao_prof: true,
         ID_Estado_Coaching: novoEstado,
       },
     });
+
+    this.logger.log(
+      `Sessao confirmada por professor idCoaching=${idCoaching} novoEstado=${novoEstado}`,
+    );
+    return sessaoAtualizada;
   }
 }

@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import React from 'react';
 import type { CriarItemInventarioPayload } from '../../../types/marketplace.types';
 
@@ -63,8 +64,8 @@ export function ModalCriarItem({ form, setForm, onClose, onGuardar }: Props) {
                 </div>
 
                 <div className="modal-acoes" style={{ marginTop: '1.5rem' }}>
-                    <button className="btn-secundario" onClick={onClose}>Cancelar</button>
-                    <button className="btn-principal" onClick={onGuardar}>Guardar Item</button>
+                    <ButtonComponent className="btn-secundario" onClick={onClose}>Cancelar</ButtonComponent>
+                    <ButtonComponent className="btn-principal" onClick={onGuardar}>Guardar Item</ButtonComponent>
                 </div>
             </div>
         </>

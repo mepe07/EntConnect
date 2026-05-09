@@ -13,12 +13,21 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateModalidadeDto } from './dto/create-modalidade.dto';
 import { UpdateModalidadeDto } from './dto/update-modalidade.dto';
 import { ModalidadeService } from './modalidade/modalidade.service';
-import { RolesGuard } from '../auth/guards/roles.guard';
 import { AuthGuard } from '../auth/auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../auth/enums/roles.enum';
+
+const TODAS_AS_ROLES = [
+    Role.COORDENADOR,
+    Role.PROFESSOR,
+    Role.ENC_EDUCACAO,
+];
 /**
  * Controlador responsavel pelos pedidos de Modalidade.
  */
 
+@UseGuards(AuthGuard, RolesGuard)
 @ApiTags('Modalidades')
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('modalidade')
@@ -28,7 +37,8 @@ export class ModalidadeController {
    * Lista todos os registos disponiveis.
    * @returns Resultado da operacao.
    */
-
+  
+  @Roles(...TODAS_AS_ROLES)
   @Get()
   @ApiOperation({ summary: 'Listar todas as modalidades' })
   findAll() {
@@ -40,6 +50,7 @@ export class ModalidadeController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Post()
   @ApiOperation({ summary: 'Adicionar uma nova modalidade à base de dados' })
   @ApiResponse({
@@ -57,6 +68,7 @@ export class ModalidadeController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Patch(':id')
   @ApiOperation({ summary: 'Editar uma modalidade existente' })
   update(
@@ -71,6 +83,7 @@ export class ModalidadeController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Delete(':id')
   @ApiOperation({ summary: 'Remover uma modalidade' })
   remove(@Param('id', ParseIntPipe) id: number) {

@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import React, { useState, useEffect } from 'react';
 import { InputComponent } from "~/components/input/input.component";
 
@@ -5,6 +6,7 @@ import { modalidadesService } from "~/services/modalidades.service";
 import './modalidades.scss';
 
 
+import { showToast } from '~/components/toast/toast';
 interface Modalidade {
     ID_Modalidade: number;
     Descricao: string;
@@ -24,7 +26,7 @@ export function Modalidades() {
             const dadosReais = await modalidadesService.getModalidades();
             setModalidades(dadosReais);
         } catch (erro) {
-            alert("Atenção: Não foi possível ligar ao servidor!");
+            showToast("Atenção: Não foi possível ligar ao servidor!");
         }
     };
 
@@ -50,7 +52,7 @@ export function Modalidades() {
     const handleSalvarModalidade = async () => {
 
         if (!novaDescricao.trim()) {
-            alert("O nome da modalidade não pode estar vazio!");
+            showToast("O nome da modalidade não pode estar vazio!");
             return;
         }
 
@@ -66,7 +68,7 @@ export function Modalidades() {
                 ));
             } catch (erro) {
                 console.error("Erro ao atualizar:", erro);
-                alert("Erro ao tentar atualizar a modalidade na Base de Dados!");
+                showToast("Erro ao tentar atualizar a modalidade na Base de Dados!");
                 return;
             }
         } else {
@@ -79,7 +81,7 @@ export function Modalidades() {
                 setModalidades([...modalidades, novaModalidadeDaBD]);
             } catch (erro) {
                 console.error("Erro ao criar:", erro);
-                alert("Erro ao tentar guardar a modalidade na Base de Dados!");
+                showToast("Erro ao tentar guardar a modalidade na Base de Dados!");
                 return;
             }
         }
@@ -97,13 +99,13 @@ export function Modalidades() {
             try {
                 await modalidadesService.deleteModalidade(id);
                 setModalidades(modalidades.filter(mod => mod.ID_Modalidade !== id));
-                alert("Modalidade apagada com sucesso!");
+                showToast("Modalidade apagada com sucesso!");
             } catch (erro: any) {
 
                 const mensagemBackend = erro.response?.data?.message;
 
 
-                alert(mensagemBackend || "Impossível remover a modalidade pois a mesma está atribuída a um estúdio.");
+                showToast(mensagemBackend || "Impossível remover a modalidade pois a mesma está atribuída a um estúdio.");
             }
         }
     };
@@ -121,9 +123,9 @@ export function Modalidades() {
                     <p>Cria, edita e remove os estilos de dança da escola.</p>
                 </div>
 
-                <button className="btn-principal" onClick={abrirModalNovo}>
+                <ButtonComponent className="btn-principal" onClick={abrirModalNovo}>
                     <i className="fa-solid fa-plus"></i> Nova Modalidade
-                </button>
+                </ButtonComponent>
             </div>
 
             <div className="crud-toolbar">
@@ -157,13 +159,13 @@ export function Modalidades() {
                                     <td className="id-coluna">#{mod.ID_Modalidade}</td>
                                     <td><strong><i className="fa-solid fa-music text-gray"></i> {mod.Descricao}</strong></td>
                                     <td className="acoes-coluna">
-                                        <button className="btn-icone editar" onClick={() => abrirModalEdicao(mod)}>
+                                        <ButtonComponent className="btn-icone editar" onClick={() => abrirModalEdicao(mod)}>
                                             <i className="fa-solid fa-pen"></i>
-                                        </button>
+                                        </ButtonComponent>
 
-                                        <button className="btn-icone apagar" onClick={() => handleApagarModalidade(mod.ID_Modalidade)}>
+                                        <ButtonComponent className="btn-icone apagar" onClick={() => handleApagarModalidade(mod.ID_Modalidade)}>
                                             <i className="fa-solid fa-trash"></i>
-                                        </button>
+                                        </ButtonComponent>
                                     </td>
                                 </tr>
                             ))
@@ -178,9 +180,9 @@ export function Modalidades() {
                     <div className="modal-content">
                         <div className="modal-header">
                             <h2>{modalidadeEmEdicao ? "Editar Modalidade" : "Adicionar Nova Modalidade"}</h2>
-                            <button className="btn-fechar" onClick={() => { setModalAberto(false); setModalidadeEmEdicao(null); }}>
+                            <ButtonComponent className="btn-fechar" onClick={() => { setModalAberto(false); setModalidadeEmEdicao(null); }}>
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="modal-body">
@@ -196,11 +198,11 @@ export function Modalidades() {
                         </div>
 
                         <div className="modal-footer">
-                            <button className="btn-secundario" onClick={() => { setModalAberto(false); setModalidadeEmEdicao(null); }}>Cancelar</button>
+                            <ButtonComponent className="btn-secundario" onClick={() => { setModalAberto(false); setModalidadeEmEdicao(null); }}>Cancelar</ButtonComponent>
 
-                            <button className="btn-primario" onClick={handleSalvarModalidade}>
+                            <ButtonComponent className="btn-primario" onClick={handleSalvarModalidade}>
                                 {modalidadeEmEdicao ? "Guardar Alterações" : "Guardar Modalidade"}
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>

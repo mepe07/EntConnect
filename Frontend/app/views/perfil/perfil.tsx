@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import React, { useState, useEffect, useRef } from 'react';
 import Cropper from 'react-easy-crop';
 import { authService } from '~/services/auth.service';
@@ -6,15 +7,11 @@ import './perfil.scss';
 import { getCroppedImg } from '../utils/cropImage';
 import { useLocation } from 'react-router';
 
+import { showToast } from '~/components/toast/toast';
 type AbaTipo = 'dados_pessoais' | 'meus_coachings' | 'minhas_faturas';
 
 export function Perfil() {
-    
-    // 1. O hook location TEM de estar aqui dentro
     const location = useLocation();
-    
-    // 2. Inicializamos o estado lendo o que vem do navigate da Dashboard!
-    // Se não vier nada (abriu o menu normal), vai para 'dados_pessoais'
     const [abaAtiva, setAbaAtiva] = useState<AbaTipo>(location.state?.abaAtiva || 'dados_pessoais');
     
     const [meusCoachings, setMeusCoachings] = useState<any[]>([]);
@@ -90,7 +87,6 @@ export function Perfil() {
                 let cargoDetectado = 'Utilizador Registado';
                 if (p) {
                     const funcoes = [];
-                    if (p.Direcao) funcoes.push('Direção');
                     if (p.Professor) funcoes.push('Professor');
                     if (p.Enc_Educacao) funcoes.push('Enc. Educação');
                     if (funcoes.length > 0) cargoDetectado = funcoes.join(' / ');
@@ -111,12 +107,11 @@ export function Perfil() {
             }
 
             if (abaAtiva === 'minhas_faturas') {
-                //Garante que o caminho é /utilizador/encarregado/ e não /faturacao/
-                const resFaturas = await fetch(`http://localhost:3000/utilizador/encarregado/${currentUserId}`, { headers });
+                // Endpoint especifico do encarregado; nao usa a listagem administrativa de faturacao.
+                const resFaturas = await fetch(`${API_BASE_URL}/utilizador/encarregado/${currentUserId}`, { headers });
                 
                 if (resFaturas.ok) {
                     const dadosFaturas = await resFaturas.json();
-                    console.log("Faturas recebidas no React:", dadosFaturas); // Adiciona este log para debug
                     setMinhasFaturas(Array.isArray(dadosFaturas) ? dadosFaturas : []);
                 } else {
                     console.error("Erro ao procurar faturas. Status:", resFaturas.status);
@@ -166,7 +161,7 @@ export function Perfil() {
                 body: formData,
             });
             if (response.ok) {
-                alert("Foto atualizada com sucesso!");
+                showToast("Foto atualizada com sucesso!");
                 buscarFotoAtual();
                 window.dispatchEvent(new Event('fotoPerfilAtualizada'));
                 setModalCorteAberto(false);
@@ -195,12 +190,12 @@ export function Perfil() {
             if (response.ok) {
                 setFotoUrl(null);
                 window.dispatchEvent(new Event('fotoPerfilAtualizada')); 
-                alert("Foto removida com sucesso!");
+                showToast("Foto removida com sucesso!");
             } else {
-                alert("Erro ao remover a foto.");
+                showToast("Erro ao remover a foto.");
             }
         } catch (error) {
-            alert("Erro de ligação ao servidor.");
+            showToast("Erro de ligação ao servidor.");
         } finally {
             setLoadingFoto(false);
         }
@@ -219,11 +214,11 @@ export function Perfil() {
                 body: JSON.stringify({ nome, nif, contacto })
             });
             if (response.ok) {
-                alert("Dados atualizados com sucesso!");
+                showToast("Dados atualizados com sucesso!");
                 setEditando(false);
             }
         } catch (error) {
-            alert("Erro de ligação.");
+            showToast("Erro de ligação.");
         } finally {
             setGuardando(false);
         }
@@ -231,7 +226,7 @@ export function Perfil() {
 
     const lidarComMudarPassword = async () => {
         if (passNova !== passConfirma) {
-            alert("A nova password e a confirmação não coincidem.");
+            showToast("A nova password e a confirmação não coincidem.");
             return;
         }
         try {
@@ -246,13 +241,13 @@ export function Perfil() {
             });
             const resultado = await response.json();
             if (response.ok) {
-                alert("Password alterada com sucesso!");
+                showToast("Password alterada com sucesso!");
                 fecharModalPassword();
             } else {
-                alert(resultado.message || "Erro ao mudar password.");
+                showToast(resultado.message || "Erro ao mudar password.");
             }
         } catch (e) {
-            alert("Erro de ligação ao servidor.");
+            showToast("Erro de ligação ao servidor.");
         }
     };
 
@@ -275,15 +270,15 @@ export function Perfil() {
             <aside className="perfil-sidebar">
                 <h2>A Minha Conta</h2>
                 <nav>
-                    <button className={abaAtiva === 'dados_pessoais' ? 'ativo' : ''} onClick={() => setAbaAtiva('dados_pessoais')}>
+                    <ButtonComponent className={abaAtiva === 'dados_pessoais' ? 'ativo' : ''} onClick={() => setAbaAtiva('dados_pessoais')}>
                         👤 O Meu Perfil
-                    </button>
-                    <button className={abaAtiva === 'meus_coachings' ? 'ativo' : ''} onClick={() => setAbaAtiva('meus_coachings')}>
+                    </ButtonComponent>
+                    <ButtonComponent className={abaAtiva === 'meus_coachings' ? 'ativo' : ''} onClick={() => setAbaAtiva('meus_coachings')}>
                         🎯 Os Meus Coachings
-                    </button>
-                    <button className={abaAtiva === 'minhas_faturas' ? 'ativo' : ''} onClick={() => setAbaAtiva('minhas_faturas')}>
+                    </ButtonComponent>
+                    <ButtonComponent className={abaAtiva === 'minhas_faturas' ? 'ativo' : ''} onClick={() => setAbaAtiva('minhas_faturas')}>
                         🧾 As Minhas Faturas
-                    </button>
+                    </ButtonComponent>
                 </nav>
             </aside>
 
@@ -296,13 +291,13 @@ export function Perfil() {
                             <section className="seccao-perfil">
                                 <div className="perfil-header-topo">
                                     <h3>O Meu Perfil</h3>
-                                    <button
+                                    <ButtonComponent
                                         className="btn-editar"
                                         onClick={() => editando ? guardarAlteracoes() : setEditando(true)}
                                         disabled={guardando}
                                     >
                                         {guardando ? 'A guardar...' : editando ? '✅ Guardar' : '✏️ Editar Dados'}
-                                    </button>
+                                    </ButtonComponent>
                                 </div>
 
                                 <div className="perfil-info-principal">
@@ -330,15 +325,15 @@ export function Perfil() {
 
 
                                         <div className="botoes-foto-wrapper">
-                                            <button className="btn-link-foto" onClick={() => fileInputRef.current?.click()} disabled={loadingFoto}>
+                                            <ButtonComponent className="btn-link-foto" onClick={() => fileInputRef.current?.click()} disabled={loadingFoto}>
                                                 <i className="fa fa-camera"></i>
                                                 {fotoUrl ? 'Alterar Foto' : 'Carregar Foto'}
-                                            </button>
+                                            </ButtonComponent>
 
                                             {fotoUrl && (
-                                                <button className="btn-link-foto btn-remover" onClick={removerFoto} disabled={loadingFoto}>
+                                                <ButtonComponent className="btn-link-foto btn-remover" onClick={removerFoto} disabled={loadingFoto}>
                                                     <i className="fa fa-trash"></i> Remover
-                                                </button>
+                                                </ButtonComponent>
                                             )}
                                         </div>
                                     </div>
@@ -364,7 +359,7 @@ export function Perfil() {
                                                     <input type="text" value={contacto} disabled={!editando} onChange={(e) => setContacto(e.target.value)} />
                                                 </div>
                                                 {editando && (
-                                                    <button className="btn-cancelar" onClick={() => { setEditando(false); carregarDados(); }}>Cancelar</button>
+                                                    <ButtonComponent className="btn-cancelar" onClick={() => { setEditando(false); carregarDados(); }}>Cancelar</ButtonComponent>
                                                 )}
                                             </div>
                                         </div>
@@ -393,19 +388,16 @@ export function Perfil() {
                                             <hr />
                                             <h4>Segurança</h4>
                                             <p className="texto-seguranca">Protege a tua conta alterando a palavra-passe regularmente.</p>
-                                            <button className="btn-secundario" onClick={abrirModalPassword}>
+                                            <ButtonComponent className="btn-secundario" onClick={abrirModalPassword}>
                                                 <i className="fa fa-lock" style={{marginRight: '8px'}}></i>
                                                 Alterar Palavra-passe
-                                            </button>
+                                            </ButtonComponent>
                                         </div>
                                     </div>
                                 </div>
                             </section>
                         )}
 
-                        {/* ========================================== */}
-                        {/* ABA: OS MEUS COACHINGS */}
-                        {/* ========================================== */}
                         {abaAtiva === 'meus_coachings' && (
                             <section className="seccao-aulas">
                                 <h3>As Minhas Sessões de Coaching</h3>
@@ -419,7 +411,6 @@ export function Perfil() {
                                         <table className="tabela-custom">
                                             <thead>
                                                 <tr>
-                                                    {/* Nomes atualizados conforme o print */}
                                                     <th>Coaching</th>
                                                     <th>Professor</th>
                                                     <th>Data</th>
@@ -435,7 +426,6 @@ export function Perfil() {
                                                         <td>{sessao.data || sessao.Data}</td>
                                                         <td>{sessao.horario || sessao.Horario}</td>
                                                         <td>
-                                                            {/* Texto em maiúsculas para o Estúdio */}
                                                             <span className={`etiqueta ${String(sessao.formato || '').toLowerCase().includes('online') ? 'verde' : 'amarela'}`}>
                                                                 {String(sessao.formato || 'Presencial').toUpperCase()}
                                                             </span>
@@ -449,9 +439,6 @@ export function Perfil() {
                             </section>
                         )}
 
-                        {/* ========================================== */}
-                        {/* ABA: AS MINHAS FATURAS */}
-                        {/* ========================================== */}
                         {abaAtiva === 'minhas_faturas' && (
                             <section className="seccao-aulas">
                                 <h3>Histórico de Faturação</h3>
@@ -465,7 +452,6 @@ export function Perfil() {
                                         <table className="tabela-custom">
                                             <thead>
                                                 <tr>
-                                                    {/* Nomes atualizados conforme o print e o teu pedido */}
                                                     <th>Data</th>
                                                     <th>Modalidade</th>
                                                     <th>Valor</th>
@@ -475,7 +461,7 @@ export function Perfil() {
                                             <tbody>
                                                 {minhasFaturas.map((fatura, index) => {
                                                     const valor = fatura.Valor || fatura.valor || fatura.ValorEmFalta || 0;
-                                                    // "Modalidade" agora mapeia para a descrição/observações
+                                                    // A coluna "Modalidade" usa a descricao enviada pela API de faturacao do encarregado.
                                                     const modalidade = fatura.Descricao || fatura.descricao || fatura.Observacoes || 'Coaching';
                                                     const dataStr = fatura.Data || fatura.data || fatura.Data_Inscricao || '--/--/----';
                                                     const isEmDivida = fatura.estado === 'Em Dívida' || fatura.ValorEmFalta > 0 || fatura.Pago === false;
@@ -486,7 +472,6 @@ export function Perfil() {
                                                             <td><strong>{modalidade}</strong></td>
                                                             <td>{formatarEuros(valor)}</td>
                                                             <td>
-                                                                {/* Texto em maiúsculas: EM DÍVIDA ou PAGO */}
                                                                 <span className={`etiqueta ${isEmDivida ? 'vermelha' : 'verde'}`}>
                                                                     {isEmDivida ? 'EM DÍVIDA' : 'PAGO'}
                                                                 </span>
@@ -530,8 +515,8 @@ export function Perfil() {
                                     <input type="range" min={1} max={3} step={0.1} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} />
                                 </div>
                                 <div className="botoes-modal">
-                                    <button className="btn-modal-cancelar" onClick={() => setModalCorteAberto(false)}>Cancelar</button>
-                                    <button className="btn-modal-confirmar" onClick={finalizarCorte}>Confirmar e Guardar</button>
+                                    <ButtonComponent className="btn-modal-cancelar" onClick={() => setModalCorteAberto(false)}>Cancelar</ButtonComponent>
+                                    <ButtonComponent className="btn-modal-confirmar" onClick={finalizarCorte}>Confirmar e Guardar</ButtonComponent>
                                 </div>
                             </div>
                         </div>
@@ -583,15 +568,15 @@ export function Perfil() {
                                 </div>
 
                                 <div className="botoes-modal" style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-                                    <button className="btn-modal-cancelar" style={{ flex: 1 }} onClick={fecharModalPassword}>Cancelar</button>
-                                    <button
+                                    <ButtonComponent className="btn-modal-cancelar" style={{ flex: 1 }} onClick={fecharModalPassword}>Cancelar</ButtonComponent>
+                                    <ButtonComponent
                                         className="btn-modal-confirmar"
                                         style={{ flex: 1 }}
                                         onClick={lidarComMudarPassword}
                                         disabled={!passAtual || !passNova || passNova !== passConfirma}
                                     >
                                         Atualizar
-                                    </button>
+                                    </ButtonComponent>
                                 </div>
                             </div>
                         </div>

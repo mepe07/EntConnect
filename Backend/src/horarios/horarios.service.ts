@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -55,6 +56,8 @@ function normalizeDate(dateString: string) {
 
 @Injectable()
 export class HorariosService {
+  private readonly logger = new Logger(HorariosService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -148,12 +151,16 @@ export class HorariosService {
    */
 
   async createHorario(createAulaFixaDto: CreateAulaFixaDto) {
+    this.logger.log(
+      `A criar horario fixo diaSemana=${createAulaFixaDto.diaSemana} idProfessor=${createAulaFixaDto.idProfessor} idEstudio=${createAulaFixaDto.idEstudio}`,
+    );
+
     const horaInicio = parseTimeToDate(createAulaFixaDto.horaInicio);
     const professorUtilizadorId = await this.resolveProfessorUtilizadorId(
       createAulaFixaDto.idProfessor,
     );
 
-    return this.prisma.aula_Fixa.create({
+    const horario = await this.prisma.aula_Fixa.create({
       data: {
         Dia_Semana: createAulaFixaDto.diaSemana,
         Hora_Inicio: horaInicio,
@@ -165,6 +172,8 @@ export class HorariosService {
         Ativa: createAulaFixaDto.ativa ?? true,
       },
     });
+    this.logger.log(`Horario fixo criado idAulaFixa=${horario.ID_AulaFixa}`);
+    return horario;
   }
 
   /**
@@ -175,19 +184,24 @@ export class HorariosService {
    */
 
   async updateHorario(id: number, updateAulaFixaDto: UpdateAulaFixaDto) {
+    this.logger.log(`A atualizar horario fixo idAulaFixa=${id}`);
+
     const data: Record<string, any> = {};
     if (updateAulaFixaDto.ativa !== undefined) {
       data.Ativa = updateAulaFixaDto.ativa;
     }
 
     if (Object.keys(data).length === 0) {
+      this.logger.warn(`Atualizacao de horario rejeitada: sem campos idAulaFixa=${id}`);
       throw new BadRequestException('Nenhum campo para atualizar.');
     }
 
-    return this.prisma.aula_Fixa.update({
+    const horario = await this.prisma.aula_Fixa.update({
       where: { ID_AulaFixa: id },
       data,
     });
+    this.logger.log(`Horario fixo atualizado idAulaFixa=${id}`);
+    return horario;
   }
 
   /**
@@ -197,16 +211,21 @@ export class HorariosService {
    */
 
   async deleteHorario(id: number) {
+    this.logger.log(`A eliminar horario fixo idAulaFixa=${id}`);
+
     const horario = await this.prisma.aula_Fixa.findUnique({
       where: { ID_AulaFixa: id },
     });
     if (!horario) {
+      this.logger.warn(`Eliminacao de horario rejeitada: inexistente idAulaFixa=${id}`);
       throw new NotFoundException('Horário fixo não encontrado.');
     }
 
-    return this.prisma.aula_Fixa.delete({
+    const removido = await this.prisma.aula_Fixa.delete({
       where: { ID_AulaFixa: id },
     });
+    this.logger.log(`Horario fixo eliminado idAulaFixa=${id}`);
+    return removido;
   }
 
   /**
@@ -216,17 +235,24 @@ export class HorariosService {
    */
 
   async deleteExcecao(idExcecao: number) {
+    this.logger.log(`A eliminar excecao de horario idExcecao=${idExcecao}`);
+
     const excecao = await this.prisma.excecao_Aula_Fixa.findUnique({
       where: { ID_Excecao: idExcecao },
     });
 
     if (!excecao) {
+      this.logger.warn(
+        `Eliminacao de excecao rejeitada: inexistente idExcecao=${idExcecao}`,
+      );
       throw new NotFoundException('Exceção não encontrada.');
     }
 
-    return this.prisma.excecao_Aula_Fixa.delete({
+    const removida = await this.prisma.excecao_Aula_Fixa.delete({
       where: { ID_Excecao: idExcecao },
     });
+    this.logger.log(`Excecao de horario eliminada idExcecao=${idExcecao}`);
+    return removida;
   }
 
   /**
@@ -237,11 +263,16 @@ export class HorariosService {
    */
 
   async createExcecao(id: number, createExcecaoDto: CreateExcecaoAulaFixaDto) {
+    this.logger.log(
+      `A criar excecao de horario idAulaFixa=${id} data=${createExcecaoDto.dataCancelada}`,
+    );
+
     const horario = await this.prisma.aula_Fixa.findUnique({
       where: { ID_AulaFixa: id },
     });
 
     if (!horario) {
+      this.logger.warn(`Criacao de excecao rejeitada: horario inexistente idAulaFixa=${id}`);
       throw new NotFoundException('Horário fixo não encontrado.');
     }
 
@@ -255,14 +286,19 @@ export class HorariosService {
     });
 
     if (existing) {
+      this.logger.warn(
+        `Criacao de excecao rejeitada: duplicada idAulaFixa=${id} data=${createExcecaoDto.dataCancelada}`,
+      );
       throw new BadRequestException('Já existe uma exceção para essa data.');
     }
 
-    return this.prisma.excecao_Aula_Fixa.create({
+    const excecao = await this.prisma.excecao_Aula_Fixa.create({
       data: {
         ID_AulaFixa: id,
         Data_Cancelada: dataCancelada,
       },
     });
+    this.logger.log(`Excecao de horario criada idExcecao=${excecao.ID_Excecao} idAulaFixa=${id}`);
+    return excecao;
   }
 }

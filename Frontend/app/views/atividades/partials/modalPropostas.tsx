@@ -1,3 +1,5 @@
+import { ButtonComponent } from '~/components/button/button.component';
+import { showToast } from '~/components/toast/toast';
 
 
 import React, { useState, useEffect } from 'react';
@@ -27,7 +29,7 @@ export function ModalPropostas({ isOpen, onClose, idStock, nomeArtigo, onAtualiz
             const dados = await marketplaceService.listarPropostas(idStock);
             setPropostas(dados);
         } catch (error: any) {
-            alert('Erro: ' + error.message);
+            showToast('Erro: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -42,7 +44,7 @@ export function ModalPropostas({ isOpen, onClose, idStock, nomeArtigo, onAtualiz
 
         try {
             await marketplaceService.responderProposta(idInteresse, decisao);
-            alert(`Pedido ${decisao.toLowerCase()} com sucesso!`);
+            showToast(`Pedido ${decisao.toLowerCase()} com sucesso!`);
 
 
             setPropostas(prev => prev.filter(p => p.ID_Interesse !== idInteresse));
@@ -52,7 +54,7 @@ export function ModalPropostas({ isOpen, onClose, idStock, nomeArtigo, onAtualiz
                 onAtualizacao();
             }
         } catch (error: any) {
-            alert('Erro: ' + error.message);
+            showToast('Erro: ' + error.message);
         }
     };
 
@@ -68,7 +70,7 @@ export function ModalPropostas({ isOpen, onClose, idStock, nomeArtigo, onAtualiz
             <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', width: '90%', maxWidth: '700px', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', zIndex: 1001, padding: '2rem', maxHeight: '85vh', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '2px solid #f1f5f9', paddingBottom: '1rem' }}>
                     <h2 style={{ margin: 0, color: '#0f172a' }}>📋 Gestão de Propostas</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#94a3b8' }}>&times;</button>
+                    <ButtonComponent onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#94a3b8' }}>&times;</ButtonComponent>
                 </div>
 
                 <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.95rem' }}>
@@ -122,18 +124,18 @@ export function ModalPropostas({ isOpen, onClose, idStock, nomeArtigo, onAtualiz
                                 </div>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', minWidth: '120px' }}>
-                                    <button
+                                    <ButtonComponent
                                         onClick={() => handleDecisao(prop.ID_Interesse, 'Aprovado')}
                                         style={{ background: '#10b981', color: 'white', border: 'none', padding: '0.7rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s', boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)' }}
                                     >
                                         ✅ Aprovar
-                                    </button>
-                                    <button
+                                    </ButtonComponent>
+                                    <ButtonComponent
                                         onClick={() => handleDecisao(prop.ID_Interesse, 'Rejeitado')}
                                         style={{ background: 'white', color: '#ef4444', border: '1px solid #fca5a5', padding: '0.7rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }}
                                     >
                                         ❌ Rejeitar
-                                    </button>
+                                    </ButtonComponent>
                                 </div>
 
                             </div>

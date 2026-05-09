@@ -1,10 +1,12 @@
+import { ButtonComponent } from '~/components/button/button.component';
 
 import './navigation-menu.scss';
-import { useLocation, Link } from 'react-router';
+import { useLocation, Link, useNavigate } from 'react-router';
 import { useState } from 'react';
 import { authService } from '~/services/auth.service';
 import type { MenuConfig } from '../../models/interfaces/menu.interface';
 import type { User } from '../../models/interfaces/user.interface';
+import { ThemeToggle } from '~/components/theme-toggle/theme-toggle';
 
 
 const MENU_CONFIG: MenuConfig = {
@@ -71,7 +73,6 @@ const MENU_CONFIG: MenuConfig = {
             submenu: [
                 { titulo: 'Disponibilidades', path: '/agenda/disponibilidades' },
                 { titulo: 'Agendamentos', path: '/agenda/agendamentos' },
-                // // { titulo: 'Propostas de Coaching', path: '/agenda/propostas' },
                 { titulo: 'Confirmações', path: '/agenda/confirmacoes' },
             ]
         },
@@ -102,7 +103,6 @@ const MENU_CONFIG: MenuConfig = {
             icone: 'fa-solid fa-handshake-angle',
             submenu: [
                 { titulo: 'Ver Oferta', path: '/coaching/oferta' },
-                // // { titulo: 'Nova Proposta', path: '/coaching/nova-proposta' },
                 { titulo: 'Marcações', path: '/coaching/marcacoes' },
                 { titulo: 'Confirmações', path: '/coaching/confirmacoes' },
             ]
@@ -125,16 +125,48 @@ const MENU_CONFIG: MenuConfig = {
     ]
 };
 
+const roleDisplayNames: Record<string, string> = {
+    Coordenador: 'Coordenador',
+    Professor: 'Professor',
+    Enc_Educacao: 'Enc. Educacao',
+    EncEducacao: 'Enc. Educacao',
+    'Encarregado de Educacao': 'Enc. Educacao',
+};
 
-export function NavigationMenu() {
+function formatRoleName(role?: string) {
+    if (!role) return '';
+
+    return roleDisplayNames[role] ?? role.replaceAll('_', ' ');
+}
+
+interface NavigationMenuProps {
+    menuMobileAberto?: boolean;
+    onCloseMenuMobile?: () => void;
+    menuDesktopColapsado?: boolean;
+    onToggleMenuDesktop?: () => void;
+}
+
+
+export function NavigationMenu({
+    menuMobileAberto = false,
+    onCloseMenuMobile,
+    menuDesktopColapsado = false,
+    onToggleMenuDesktop,
+}: NavigationMenuProps) {
     const location = useLocation();
+    const navigate = useNavigate();
     const path = location.pathname.toLowerCase();
 
 
     const [menuAberto, setMenuAberto] = useState<string | null>(null);
+    const [roleEmAtualizacao, setRoleEmAtualizacao] = useState(false);
 
     const userInfo = authService.getUserInfo() as User;
     const roleDoUser = userInfo?.role;
+    const userDisplayName = userInfo?.nome || userInfo?.username;
+    const userRoleDisplayName = formatRoleName(userInfo?.role);
+    const userLetter = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : 'U';
+    const rolesDisponiveis = userInfo?.roles?.length ? userInfo.roles : userInfo?.role ? [userInfo.role] : [];
 
 
     let menuAtivo = MENU_CONFIG.encarregado;
@@ -169,8 +201,67 @@ export function NavigationMenu() {
         setMenuAberto(menuAberto === titulo ? null : titulo);
     };
 
+    const handleTrocarRole = async (role: string) => {
+        if (!role || role === userInfo?.role || roleEmAtualizacao) return;
+
+        setRoleEmAtualizacao(true);
+
+        try {
+            await authService.trocarRole(role);
+            onCloseMenuMobile?.();
+            navigate('/');
+        } catch (error) {
+            console.error('Erro ao trocar role:', error);
+        } finally {
+            setRoleEmAtualizacao(false);
+        }
+    };
+
     return (
-        <nav className="navigation-menu">
+        <nav
+            className={`navigation-menu ${menuMobileAberto ? 'mobile-open' : ''} ${menuDesktopColapsado ? 'collapsed' : ''}`}
+            aria-label="Menu principal"
+        >
+            <div className="mobile-user-menu">
+                <div className="mobile-user-avatar">{userLetter}</div>
+                <div className="mobile-user-details">
+                    <strong>{userDisplayName}</strong>
+                    <span>{userRoleDisplayName}</span>
+                </div>
+                <ThemeToggle className="mobile-theme-toggle" />
+                {rolesDisponiveis.length > 1 && (
+                    <label className="mobile-role-switcher">
+                        <span>Cargo ativo</span>
+                        <select
+                            value={userInfo?.role || ''}
+                            disabled={roleEmAtualizacao}
+                            onChange={(event) => handleTrocarRole(event.target.value)}
+                        >
+                            {rolesDisponiveis.map((role) => (
+                                <option key={role} value={role}>
+                                    {formatRoleName(role)}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                )}
+                <div className="mobile-user-actions">
+                    <ButtonComponent
+                        type="button"
+                        onClick={() => {
+                            onCloseMenuMobile?.();
+                            navigate('/conta');
+                        }}
+                    >
+                        <i className="fa-solid fa-user-gear"></i>
+                        <span>A Minha Conta</span>
+                    </ButtonComponent>
+                    <a href="#" onClick={(e) => authService.logout(e)}>
+                        <i className="fa fa-arrow-right-from-bracket"></i>
+                        <span>Sair</span>
+                    </a>
+                </div>
+            </div>
             <ul>
 
                 {(menuAtivo || []).map((item, index) => {
@@ -179,7 +270,7 @@ export function NavigationMenu() {
                     if (item.path && !item.submenu) {
                         return (
                             <li key={index} className={isActive(item.path) ? 'active' : ''}>
-                                <Link to={item.path}>
+                                <Link to={item.path} onClick={onCloseMenuMobile} title={menuDesktopColapsado ? item.titulo : undefined}>
                                     <div className="item-content">
                                         {item.icone && <i className={item.icone}></i>}
                                         <span>{item.titulo}</span>
@@ -195,7 +286,19 @@ export function NavigationMenu() {
 
                         return (
                             <li key={index} className={`menu-dropdown ${isSubmenuActive(item.submenu) ? 'active-parent' : ''}`}>
-                                <div className="dropdown-titulo" onClick={() => toggleMenu(item.titulo)}>
+                                <div
+                                    className="dropdown-titulo"
+                                    title={menuDesktopColapsado ? item.titulo : undefined}
+                                    onClick={() => {
+                                        if (menuDesktopColapsado) {
+                                            onToggleMenuDesktop?.();
+                                            setMenuAberto(item.titulo);
+                                            return;
+                                        }
+
+                                        toggleMenu(item.titulo);
+                                    }}
+                                >
                                     <div className="item-content">
                                         {item.icone && <i className={item.icone}></i>}
                                         <span>{item.titulo}</span>
@@ -212,7 +315,7 @@ export function NavigationMenu() {
                                 <ul className={`submenu ${isAberto ? 'open' : ''}`}>
                                     {item.submenu?.map((subItem, subIndex) => (
                                         <li key={subIndex} className={`sub-item ${isActive(subItem.path || '') ? 'active' : ''}`}>
-                                            <Link to={subItem.path || '#'}>
+                                            <Link to={subItem.path || '#'} onClick={onCloseMenuMobile}>
                                                 {subItem.icone && <i className={subItem.icone}></i>}
                                                 <span>{subItem.titulo}</span>
                                             </Link>
@@ -226,6 +329,18 @@ export function NavigationMenu() {
                     return null;
                 })}
             </ul>
+            <div className="desktop-collapse-control">
+                <ButtonComponent
+                    type="button"
+                    className="sidebar-collapse-button"
+                    aria-label={menuDesktopColapsado ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
+                    aria-expanded={!menuDesktopColapsado}
+                    title={menuDesktopColapsado ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
+                    onClick={onToggleMenuDesktop}
+                >
+                    <i className={`fa-solid ${menuDesktopColapsado ? 'fa-chevron-right' : 'fa-chevron-left'}`}></i>
+                </ButtonComponent>
+            </div>
         </nav>
     );
 }

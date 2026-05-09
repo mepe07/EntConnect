@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import './verAgendamentos.scss';
 import { TableColumnTypesEnum } from '~/components/table/models/enums/table-column-types.enum';
 import { TableComponent } from '~/components/table/table.component';
@@ -10,6 +11,7 @@ import { ButtonTypeEnum } from '~/components/button/models/enums/button-type.enu
 import { ButtonColorEnum } from '~/components/button/models/enums/button-color.enum';
 import { SizeEnum } from '~/components/models/enums/size.enum';
 
+import { showToast } from '~/components/toast/toast';
 export default function VerConfirmacoes() {
     const userInfo = authService.getUserInfo() as User;
     const isProfessor = userInfo?.role?.toLowerCase().includes('professor');
@@ -75,11 +77,11 @@ export default function VerConfirmacoes() {
         setIsAguardar(true);
         try {
             await agendamentosService.confirmarSessao(idProfessor, sessao.idCoaching, idEstadoCoaching);
-            alert('Estado atualizado com sucesso.');
+            showToast('Estado atualizado com sucesso.');
             fetchConfirmacoes();
         } catch (error) {
             console.error(error);
-            alert('Erro ao atualizar o estado da sessão.');
+            showToast('Erro ao atualizar o estado da sessão.');
         } finally {
             setIsAguardar(false);
         }
@@ -133,9 +135,9 @@ export default function VerConfirmacoes() {
                     <div className="modal-conteudo">
                         <div className="modal-cabecalho">
                             <h2>Detalhes da Sessão</h2>
-                            <button className="btn-fechar-icon" onClick={fecharModal}>
+                            <ButtonComponent className="btn-fechar-icon" onClick={fecharModal}>
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="detalhes-grid" style={{ marginBottom: '24px' }}>
@@ -164,9 +166,9 @@ export default function VerConfirmacoes() {
                         )}
 
                         <div className="modal-acoes" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
-                            <button className="btn-fechar" onClick={fecharModal}>
+                            <ButtonComponent className="btn-fechar" onClick={fecharModal}>
                                 Fechar
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>

@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import './verMarcacoes.scss';
 import { useEffect, useState } from 'react';
 import { authService } from '~/services/auth.service';
@@ -10,6 +11,7 @@ import { ButtonTypeEnum } from '~/components/button/models/enums/button-type.enu
 import { ButtonColorEnum } from '~/components/button/models/enums/button-color.enum';
 import { SizeEnum } from '~/components/models/enums/size.enum';
 
+import { showToast } from '~/components/toast/toast';
 export default function VerConfirmacoesEE() {
     const userInfo = authService.getUserInfo() as User;
     const isEncEducacao = userInfo?.role === 'Enc_Educacao';
@@ -75,7 +77,7 @@ export default function VerConfirmacoesEE() {
         await eeService.confirmarSessaoEE(idEE, sessao.idCoaching, idEstadoCoaching);
 
 
-        alert('Confirmação registada!');
+        showToast('Confirmação registada!');
 
 
         setConfirmacoes((listaAtual) =>
@@ -85,7 +87,7 @@ export default function VerConfirmacoesEE() {
         fecharModal();
     } catch (error: any) {
         console.error('Erro ao confirmar sessão EE:', error);
-        alert(error.message || 'Erro ao atualizar o estado da sessão.');
+        showToast(error.message || 'Erro ao atualizar o estado da sessão.');
     } finally {
         setIsAguardar(false);
     }
@@ -155,9 +157,9 @@ export default function VerConfirmacoesEE() {
                     <div className="modal-conteudo">
                         <div className="modal-cabecalho">
                             <h2>Detalhes da Sessão</h2>
-                            <button className="btn-fechar-icon" onClick={fecharModal}>
+                            <ButtonComponent className="btn-fechar-icon" onClick={fecharModal}>
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="detalhes-grid">
@@ -170,9 +172,9 @@ export default function VerConfirmacoesEE() {
                         </div>
 
                         <div className="modal-acoes">
-                            <button className="btn-fechar" onClick={fecharModal}>
+                            <ButtonComponent className="btn-fechar" onClick={fecharModal}>
                                 Fechar
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>

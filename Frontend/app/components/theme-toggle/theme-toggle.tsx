@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import { useTheme } from '~/utils/theme';
 import './theme-toggle.scss';
 
@@ -11,7 +12,7 @@ export function ThemeToggle({ className = '' }: ThemeToggleProps) {
     const title = isDarkTheme ? 'Mudar para modo claro' : 'Mudar para modo escuro';
 
     return (
-        <button
+        <ButtonComponent
             type="button"
             className={`theme-toggle-button ${className}`.trim()}
             onClick={toggleTheme}
@@ -19,6 +20,6 @@ export function ThemeToggle({ className = '' }: ThemeToggleProps) {
             aria-label={title}
         >
             <i className={iconClassName} aria-hidden="true"></i>
-        </button>
+        </ButtonComponent>
     );
 }

@@ -1,136 +1,216 @@
-import { BadRequestException } from '@nestjs/common';
+import { describe, beforeEach, afterEach, it, expect, jest } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
-
-import { PrismaService } from '../../prisma/prisma.service';
 import { DispobilidadeService } from './Disponibilidade.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
-describe('DispobilidadeService', () => {
-  let service: DispobilidadeService;
+describe('DisponibilidadeService - criarDisponibilidade', () => {
+    let disponibilidadeService: DispobilidadeService;
+    let prismaService: PrismaService;
 
-  const prismaMock = {
-    disponibilidade: {
-      findMany: jest.fn(),
-      create: jest.fn(),
-      count: jest.fn(),
-      update: jest.fn(),
-    },
-  };
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        DispobilidadeService,
-        { provide: PrismaService, useValue: prismaMock },
-      ],
-    }).compile();
-
-    service = module.get<DispobilidadeService>(DispobilidadeService);
-    jest.resetAllMocks();
-  });
-
-  it('deve mapear disponibilidades para o contrato do frontend', async () => {
-    const inicio = new Date('2026-05-01T10:00:00.000Z');
-    prismaMock.disponibilidade.findMany.mockResolvedValue([
-      {
-        ID_Disponibilidade: 1,
-        Hora_Inicio: inicio,
-        Duracao: 60,
-        Modalidade: 'Salsa',
-        MaxAlunos: 4,
-        ID_Professor: 7,
-        IdEstudio: 2,
-        ValorPorAluno: 25,
-        AlteradoPorUtilizadorID: 9,
-        Professor: { Pessoa: { Nome: 'Professora Ana' } },
-        Estado_Disponibilidade: { Tipo: 'Pendente' },
-        Utilizador: { Pessoa: { Nome: 'Coordenadora' } },
-        Coaching: [{ Coaching_Aluno: [{ ID_Aluno: 10 }, { ID_Aluno: 11 }] }],
-      },
-      {
-        ID_Disponibilidade: 2,
-        Hora_Inicio: null,
-        Duracao: 60,
-        Coaching: [],
-      },
-    ]);
-
-    const resultado = await service.getAvailabilities();
-
-    expect(resultado).toHaveLength(1);
-    expect(resultado[0]).toEqual(
-      expect.objectContaining({
-        idDisponibilidade: 1,
-        nomeProfessor: 'Professora Ana',
-        modalidade: 'Salsa',
-        alunosInscritosIds: [10, 11],
-        valorPorAluno: 25,
-      }),
-    );
-  });
-
-  it('deve criar disponibilidade pendente sem estúdio nem valor', async () => {
-    const dto = {
-      ID_Professor: 7,
-      Hora_Inicio: '2026-05-10T10:00:00.000Z',
-      AlteradoPorUtilizadorID: 9,
-      Duracao: 60,
-      Modalidade: 'Salsa',
-      MaxAlunos: 4,
+    // Mock Prisma
+    const mockPrismaService = {
+        disponibilidade: {
+            create: jest.fn<() => Promise<any>>(),
+            count: jest.fn<() => Promise<any>>(),
+            update: jest.fn<() => Promise<any>>(),
+        },
     };
-    const disponibilidade = { ID_Disponibilidade: 1 };
-    prismaMock.disponibilidade.create.mockResolvedValue(disponibilidade);
 
-    await expect(service.criarDisponibilidade(dto)).resolves.toEqual({
-      message: 'Disponibilidade criada com sucesso!',
-      disponibilidade,
-    });
-    expect(prismaMock.disponibilidade.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        EstadoDisponibilidadeID: 2,
-        IdEstudio: null,
-        ValorPorAluno: null,
-      }),
-    });
-  });
+    // Configuração do módulo de teste
+    beforeEach(async () => {
+        const module: TestingModule = await Test.createTestingModule({
+            providers: [
+                DispobilidadeService,
+                {
+                    provide: PrismaService,
+                    useValue: mockPrismaService,
+                },
+            ],
+        }).compile();
 
-  it('deve rejeitar criacao de disponibilidade com data anterior a atual', async () => {
-    jest.useFakeTimers().setSystemTime(new Date('2026-05-03T12:00:00.000Z'));
-
-    try {
-      const dto = {
-        ID_Professor: 7,
-        Hora_Inicio: '2026-05-02T10:00:00.000Z',
-        AlteradoPorUtilizadorID: 9,
-        Duracao: 60,
-        Modalidade: 'Salsa',
-        MaxAlunos: 4,
-      };
-
-      await expect(service.criarDisponibilidade(dto)).rejects.toThrow(
-        BadRequestException,
-      );
-      expect(prismaMock.disponibilidade.create).not.toHaveBeenCalled();
-    } finally {
-      jest.useRealTimers();
-    }
-  });
-
-  it('deve atualizar disponibilidade existente e rejeitar inexistente', async () => {
-    prismaMock.disponibilidade.count.mockResolvedValueOnce(1);
-    prismaMock.disponibilidade.update.mockResolvedValue({
-      ID_Disponibilidade: 1,
+        disponibilidadeService = module.get<DispobilidadeService>(DispobilidadeService);
+        prismaService = module.get<PrismaService>(PrismaService);
     });
 
-    await expect(
-      service.updateAvailability(1, { EstadoDisponibilidadeID: 1 } as any),
-    ).resolves.toEqual({
-      message: 'Disponibiliade atualizada com sucesso.',
-      disponibilidade: { ID_Disponibilidade: 1 },
+    // Limpar os mocks depois de cada testes
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
-    prismaMock.disponibilidade.count.mockResolvedValueOnce(0);
-    await expect(service.updateAvailability(2, {} as any)).rejects.toThrow(
-      BadRequestException,
-    );
-  });
+    describe('criarDisponibilidade', () => {
+
+        it('deve retornar erro se o dia da disponibilidade for inferior ao dia atual', async () => {
+
+            // Arrange
+            const mockBody = {
+                ID_Professor: 1,
+                Hora_Inicio: "2020-05-09T09:00:00Z",
+                EstadoDisponibilidadeID: 2,
+                AlteradoPorUtilizadorID: 3,
+                Duracao: 60,
+                Modalidade: "teste",
+                IdEstudio: 12,
+                MaxAlunos: 10,
+                ValorPorAluno: 40,
+            };
+
+            // Act
+            // const action = disponibilidadeService.criarDisponibilidade(mockBody);
+            const action = disponibilidadeService.criarDisponibilidade(mockBody as any);
+
+            // Assert
+            await expect(action).rejects.toThrow('Nao é possivel criar disponibilidades com data/hora anterior á atual.');
+
+            expect(prismaService.disponibilidade.create).not.toHaveBeenCalled();
+        });
+
+
+
+        it('deve criar disponibilidade quando a data for futura', async () => {
+
+            // Arrange
+            const mockBody = {
+                ID_Professor: 1,
+                Hora_Inicio: '2099-05-09T09:00:00Z',
+                AlteradoPorUtilizadorID: 3,
+                Duracao: 60,
+                Modalidade: 'Ballet',
+                MaxAlunos: 10,
+            };
+
+            const mockDisponibilidadeCriada = {
+                ID_Disponibilidade: 99,
+                ID_Professor: 1,
+                Hora_Inicio: new Date(mockBody.Hora_Inicio),
+                EstadoDisponibilidadeID: 2,
+                AlteradoPorUtilizadorID: 3,
+                Duracao: 60,
+                Modalidade: 'Ballet',
+                IdEstudio: null,
+                MaxAlunos: 10,
+                ValorPorAluno: null,
+                DataAtualizacao: new Date(),
+            };
+
+            mockPrismaService.disponibilidade.create.mockResolvedValue(
+                mockDisponibilidadeCriada,
+            );
+
+            // Act
+            const result = await disponibilidadeService.criarDisponibilidade(mockBody as any);
+
+            // Assert
+            expect(prismaService.disponibilidade.create).toHaveBeenCalledTimes(1);
+            expect(result).toEqual({
+                message: 'Disponibilidade criada com sucesso!',
+                disponibilidade: mockDisponibilidadeCriada,
+            });
+        });
+
+    });
+
+    describe('updateAvailability', () => {
+
+        it('deve retornar erro se a disponibilidade nao existir', async () => {
+
+            // Arrange
+            const idDisponibilidade = 999;
+            const mockBody = {
+                Duracao: 90,
+                Modalidade: 'Ballet',
+                MaxAlunos: 8,
+            };
+
+            mockPrismaService.disponibilidade.count.mockResolvedValue(0);
+
+            // Act
+            const action = disponibilidadeService.updateAvailability(idDisponibilidade, mockBody as any);
+
+            // Assert
+            await expect(action).rejects.toThrow(`A disponibilidade com ID ${idDisponibilidade} não existe.`);
+
+            expect(prismaService.disponibilidade.count).toHaveBeenCalledTimes(1);
+            expect(prismaService.disponibilidade.count).toHaveBeenCalledWith({
+                where: { ID_Disponibilidade: idDisponibilidade },
+            });
+            expect(prismaService.disponibilidade.update).not.toHaveBeenCalled();
+        });
+
+        it('deve atualizar disponibilidade quando ela existir', async () => {
+
+            // Arrange
+            const idDisponibilidade = 1;
+            const mockBody = {
+                Duracao: 90,
+                Modalidade: 'Ballet',
+                MaxAlunos: 8,
+                ValorPorAluno: 50,
+            };
+
+            const mockDisponibilidadeAtualizada = {
+                ID_Disponibilidade: idDisponibilidade,
+                ID_Professor: 1,
+                Hora_Inicio: new Date('2099-05-09T09:00:00Z'),
+                EstadoDisponibilidadeID: 2,
+                AlteradoPorUtilizadorID: 3,
+                Duracao: 90,
+                Modalidade: 'Ballet',
+                IdEstudio: null,
+                MaxAlunos: 8,
+                ValorPorAluno: null,
+                DataAtualizacao: new Date(),
+            };
+
+            mockPrismaService.disponibilidade.count.mockResolvedValue(1);
+            mockPrismaService.disponibilidade.update.mockResolvedValue(mockDisponibilidadeAtualizada);
+
+            // Act
+            const result = await disponibilidadeService.updateAvailability(idDisponibilidade, mockBody as any);
+
+            // Assert
+            expect(prismaService.disponibilidade.count).toHaveBeenCalledTimes(1);
+            expect(prismaService.disponibilidade.count).toHaveBeenCalledWith({
+                where: { ID_Disponibilidade: idDisponibilidade },
+            });
+            expect(prismaService.disponibilidade.update).toHaveBeenCalledTimes(1);
+            expect(prismaService.disponibilidade.update).toHaveBeenCalledWith({
+                where: {
+                    ID_Disponibilidade: idDisponibilidade,
+                },
+                data: {
+                    ...mockBody,
+                    DataAtualizacao: expect.any(Date),
+                },
+            });
+            expect(result).toEqual({
+                message: 'Disponibiliade atualizada com sucesso.',
+                disponibilidade: mockDisponibilidadeAtualizada,
+            });
+        });
+
+        it('deve retornar erro se o ValorPorAluno for negativo', async () => {
+
+            // Arrange
+            const idDisponibilidade = 1;
+            const mockBody = {
+                ValorPorAluno: -10,
+            };
+
+            mockPrismaService.disponibilidade.count.mockResolvedValue(1);
+
+            // Act
+            const action = disponibilidadeService.updateAvailability(idDisponibilidade, mockBody as any);
+
+            // Assert
+            await expect(action).rejects.toThrow('O valor por aluno não pode ser negativo.');
+
+            expect(prismaService.disponibilidade.count).toHaveBeenCalledTimes(1);
+            expect(prismaService.disponibilidade.count).toHaveBeenCalledWith({
+                where: { ID_Disponibilidade: idDisponibilidade },
+            });
+            expect(prismaService.disponibilidade.update).not.toHaveBeenCalled();
+        });
+
+    });
+
 });

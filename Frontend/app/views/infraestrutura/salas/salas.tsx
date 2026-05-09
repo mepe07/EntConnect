@@ -1,3 +1,5 @@
+import { ButtonComponent } from '~/components/button/button.component';
+import { showToast } from '~/components/toast/toast';
 
 
 
@@ -31,7 +33,7 @@ export function Salas() {
             const dadosReais = await salasService.getSalas();
             setSalas(dadosReais);
         } catch (erro) {
-            alert("Atenção: Não foi possível ligar ao servidor!");
+            showToast("Atenção: Não foi possível ligar ao servidor!");
         }
     };
 
@@ -80,7 +82,7 @@ export function Salas() {
 
         } catch (erro) {
             console.error("Erro ao atualizar:", erro);
-            alert("Erro ao tentar atualizar o estúdio na Base de Dados!");
+            showToast("Erro ao tentar atualizar o estúdio na Base de Dados!");
             return;
         }
     } else {
@@ -99,7 +101,7 @@ export function Salas() {
             } catch (erro) {
 
                 console.error("O estafeta tropeçou! Eis o relatório do acidente:", erro);
-                alert("Erro ao tentar guardar o estúdio na Base de Dados!");
+                showToast("Erro ao tentar guardar o estúdio na Base de Dados!");
 
 
                 return;
@@ -119,10 +121,10 @@ export function Salas() {
             try {
                 await salasService.deleteSala(id);
                 setSalas(salas.filter(sala => sala.ID_Sala !== id));
-                alert("Sala apagada com sucesso da Base de Dados!");
+                showToast("Sala apagada com sucesso da Base de Dados!");
             } catch (erro: any) {
 
-                alert(erro.message);
+                showToast(erro.message);
             }
         }
     };
@@ -141,9 +143,9 @@ export function Salas() {
                     <p>Cria, edita e verifica a disponibilidade das salas da escola.</p>
                 </div>
 
-                <button className="btn-principal" onClick={abrirModalNovo}>
+                <ButtonComponent className="btn-principal" onClick={abrirModalNovo}>
                     <i className="fa-solid fa-plus"></i> Novo Estúdio
-                </button>
+                </ButtonComponent>
             </div>
 
             <div className="crud-toolbar">
@@ -185,13 +187,13 @@ export function Salas() {
                                         </span>
                                     </td>
                                     <td className="acoes-coluna">
-                                        <button className="btn-icone editar" onClick={() => abrirModalEdicao(sala)}>
+                                        <ButtonComponent className="btn-icone editar" onClick={() => abrirModalEdicao(sala)}>
                                             <i className="fa-solid fa-pen"></i>
-                                        </button>
+                                        </ButtonComponent>
 
-                                        <button className="btn-icone apagar" onClick={() => handleApagarSala(sala.ID_Sala)}>
+                                        <ButtonComponent className="btn-icone apagar" onClick={() => handleApagarSala(sala.ID_Sala)}>
                                             <i className="fa-solid fa-trash"></i>
-                                        </button>
+                                        </ButtonComponent>
                                     </td>
                                 </tr>
                             ))
@@ -206,9 +208,9 @@ export function Salas() {
                     <div className="modal-content">
                         <div className="modal-header">
                             <h2>{salaEmEdicao ? "Editar Estúdio" : "Adicionar Novo Estúdio"}</h2>
-                            <button className="btn-fechar" onClick={() => { setModalAberto(false); setSalaEmEdicao(null); }}>
+                            <ButtonComponent className="btn-fechar" onClick={() => { setModalAberto(false); setSalaEmEdicao(null); }}>
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="modal-body">
@@ -249,11 +251,11 @@ export function Salas() {
                         </div>
 
                         <div className="modal-footer">
-                            <button className="btn-secundario" onClick={() => { setModalAberto(false); setSalaEmEdicao(null); }}>Cancelar</button>
+                            <ButtonComponent className="btn-secundario" onClick={() => { setModalAberto(false); setSalaEmEdicao(null); }}>Cancelar</ButtonComponent>
 
-                            <button className="btn-primario" onClick={handleSalvarSala}>
+                            <ButtonComponent className="btn-primario" onClick={handleSalvarSala}>
                                 {salaEmEdicao ? "Guardar Alterações" : "Guardar Estúdio"}
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>

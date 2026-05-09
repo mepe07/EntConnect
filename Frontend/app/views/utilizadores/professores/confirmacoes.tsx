@@ -1,7 +1,9 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import React, { useEffect, useState } from 'react';
 import { profConfirmacoesService } from '~/services/profConfirmacoes.service';
 import './confirmacoes.scss';
 
+import { showToast } from '~/components/toast/toast';
 export default function Confirmacoes() {
     const [sessoes, setSessoes] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -37,7 +39,7 @@ export default function Confirmacoes() {
             );
 
         } catch (err: any) {
-            alert(err.message);
+            showToast(err.message);
         }
     };
 
@@ -113,16 +115,16 @@ export default function Confirmacoes() {
                                     <td>{sessao.modalidade}</td>
                                     <td>{sessao.estado}</td>
                                     <td className="acoes-celula">
-                                        <button
+                                        <ButtonComponent
                                             className="btn-acao btn-sucesso"
                                             onClick={() => handleConfirmar(sessao.idCoaching)}
                                             title="Confirmar que a sessão foi realizada"
                                         >
                                             <i className="fa-solid fa-check"></i>
-                                        </button>
-                                        <button className="btn-acao btn-perigo" title="Marcar como não realizada">
+                                        </ButtonComponent>
+                                        <ButtonComponent className="btn-acao btn-perigo" title="Marcar como não realizada">
                                             <i className="fa-solid fa-xmark"></i>
-                                        </button>
+                                        </ButtonComponent>
                                     </td>
                                 </tr>
                             ))

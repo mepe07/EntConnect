@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import React, { useEffect, useMemo, useState } from 'react';
 import { calendarService } from '~/services/calendar.service';
 import './calendarioAdmin.scss';
@@ -288,20 +289,20 @@ export default function Calendario() {
 
                 <div className="calendario-actions">
                     <div className="calendario-buttons">
-                        <button type="button" className="tool-button" onClick={() => changeDate(-1)} aria-label="Anterior">
+                        <ButtonComponent type="button" className="tool-button" onClick={() => changeDate(-1)} aria-label="Anterior">
                             ←
-                        </button>
-                        <button type="button" className="tool-button" onClick={() => setSelectedDate(new Date())}>
+                        </ButtonComponent>
+                        <ButtonComponent type="button" className="tool-button" onClick={() => setSelectedDate(new Date())}>
                             Hoje
-                        </button>
-                        <button type="button" className="tool-button" onClick={() => changeDate(1)} aria-label="Próximo">
+                        </ButtonComponent>
+                        <ButtonComponent type="button" className="tool-button" onClick={() => changeDate(1)} aria-label="Próximo">
                             →
-                        </button>
+                        </ButtonComponent>
                     </div>
 
                     <div className="view-mode-buttons">
                         {(['month', 'week', 'day'] as ViewMode[]).map((mode) => (
-                            <button
+                            <ButtonComponent
                                 key={mode}
                                 type="button"
                                 className={`view-button ${viewMode === mode ? 'active' : ''}`}
@@ -313,7 +314,7 @@ export default function Calendario() {
                                 }}
                             >
                                 {mode === 'month' ? 'Mensal' : mode === 'week' ? 'Semanal' : 'Diário'}
-                            </button>
+                            </ButtonComponent>
                         ))}
                     </div>
                 </div>
@@ -461,9 +462,9 @@ export default function Calendario() {
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h2>{selectedItem.type === 'evento' ? 'Detalhes do Evento' : 'Detalhes do Coaching'}</h2>
-                            <button type="button" className="modal-close" onClick={closeItemModal}>
+                            <ButtonComponent type="button" className="modal-close" onClick={closeItemModal}>
                                 ×
-                            </button>
+                            </ButtonComponent>
                         </div>
                         <div className="modal-body">
                             {selectedItem.type === 'evento' ? (

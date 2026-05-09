@@ -1,8 +1,10 @@
 import {
   Injectable,
+  Logger,
   UnauthorizedException,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { CreateUtilizadorDto } from './dto/create-utilizador.dto';
 import { UpdateUtilizadorDto } from './dto/update-utilizador.dto';
@@ -17,6 +19,17 @@ import { UpsertEducandoDto } from './dto/upsert-educando.dto';
 
 @Injectable()
 export class UtilizadorService {
+  private readonly logger = new Logger(UtilizadorService.name);
+  private readonly CARGOS_VALIDOS = [
+    'Professor',
+    'Coordenador',
+    'Encarregado de Educa\u00e7\u00e3o',
+  ];
+
+  private readonly CARGO_ENCARREGADO_EDUCACAO =
+    this.CARGOS_VALIDOS[2];
+  private readonly CARGO_SEM_CARGO = 'Sem Cargo';
+
   constructor(private prisma: PrismaService) {}
 
   /**
@@ -31,7 +44,6 @@ export class UtilizadorService {
           include: {
             Professor: true,
             Coordenador: true,
-            Direcao: true,
             Enc_Educacao: true,
           },
         },
@@ -45,11 +57,11 @@ export class UtilizadorService {
         cargoAtribuido = 'Professor';
       } else if (user.Pessoa?.Coordenador) {
         cargoAtribuido = 'Coordenador';
-      } else if (user.Pessoa?.Direcao) {
-        cargoAtribuido = 'Direção';
       } else if (user.Pessoa?.Enc_Educacao) {
         cargoAtribuido = 'Encarregado de Educação';
       }
+
+      const cargos = this.obterCargosDaPessoa(user.Pessoa);
 
       return {
         idUtilizador: user.ID_Utilizador,
@@ -61,6 +73,7 @@ export class UtilizadorService {
         contacto: user.Pessoa?.Contacto,
         nif: user.Pessoa?.NIF,
         cargo: cargoAtribuido,
+        cargos,
       };
     });
   }
@@ -80,8 +93,10 @@ export class UtilizadorService {
       nif,
       dataNascimento,
       cargo,
+      cargos,
       password,
     } = createUtilizadorDto;
+    this.logger.log(`A criar utilizador username=${username} cargo=${cargo}`);
 
     const existente = await this.prisma.utilizador.findFirst({
       where: {
@@ -90,23 +105,15 @@ export class UtilizadorService {
     });
 
     if (existente) {
+      this.logger.warn(
+        `Criacao de utilizador rejeitada: username/email duplicado username=${username}`,
+      );
       throw new ConflictException(
         'Já existe um utilizador com esse username ou email.',
       );
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    const dadosCargo =
-      cargo === 'Professor'
-        ? { Professor: { create: {} } }
-        : cargo === 'Coordenador'
-          ? { Coordenador: { create: {} } }
-          : cargo === 'Direção'
-            ? { Direcao: { create: {} } }
-            : cargo === 'Encarregado de Educação'
-              ? { Enc_Educacao: { create: {} } }
-              : {};
 
     const novoUtilizador = await this.prisma.utilizador.create({
       data: {
@@ -120,12 +127,15 @@ export class UtilizadorService {
             Contacto: contacto ?? '',
             NIF: nif ?? '',
             Data_Nascimento: new Date(dataNascimento),
-            ...dadosCargo,
+            ...this.criarDadosCargos(this.normalizarCargos(cargos ?? cargo)),
           },
         },
       },
       include: { Pessoa: true },
     });
+    this.logger.log(
+      `Utilizador criado idUtilizador=${novoUtilizador.ID_Utilizador} username=${novoUtilizador.Utilizador} cargo=${cargo}`,
+    );
 
     return {
       id: novoUtilizador.ID_Utilizador,
@@ -181,10 +191,13 @@ export class UtilizadorService {
    */
 
   async blockUser(id: number) {
-    return this.prisma.utilizador.update({
+    this.logger.log(`A bloquear utilizador idUtilizador=${id}`);
+    const utilizador = await this.prisma.utilizador.update({
       where: { ID_Utilizador: id },
       data: { Ativo: false },
     });
+    this.logger.log(`Utilizador bloqueado idUtilizador=${id}`);
+    return utilizador;
   }
 
   /**
@@ -194,10 +207,13 @@ export class UtilizadorService {
    */
 
   async unlockUser(id: number) {
-    return this.prisma.utilizador.update({
+    this.logger.log(`A desbloquear utilizador idUtilizador=${id}`);
+    const utilizador = await this.prisma.utilizador.update({
       where: { ID_Utilizador: id },
       data: { Ativo: true },
     });
+    this.logger.log(`Utilizador desbloqueado idUtilizador=${id}`);
+    return utilizador;
   }
 
   /**
@@ -208,20 +224,27 @@ export class UtilizadorService {
    */
 
   async updatePassword(id: number, plainPassword: string) {
+    this.logger.log(`A atualizar password por administracao idUtilizador=${id}`);
+
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: id },
     });
 
     if (!utilizador) {
+      this.logger.warn(
+        `Atualizacao de password rejeitada: utilizador inexistente idUtilizador=${id}`,
+      );
       throw new NotFoundException(`Utilizador com ID ${id} não encontrado.`);
     }
 
     const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-    return this.prisma.utilizador.update({
+    const atualizado = await this.prisma.utilizador.update({
       where: { ID_Utilizador: id },
       data: { Password: hashedPassword },
     });
+    this.logger.log(`Password atualizada por administracao idUtilizador=${id}`);
+    return atualizado;
   }
 
   /**
@@ -699,7 +722,6 @@ export class UtilizadorService {
       include: {
         Pessoa: {
           include: {
-            Direcao: true,
             Professor: true,
             Enc_Educacao: true,
           },
@@ -709,6 +731,78 @@ export class UtilizadorService {
 
     if (!utilizador) throw new NotFoundException('Utilizador não encontrado');
     return utilizador;
+  }
+
+  async updateCargos(
+    idUtilizador: number,
+    novosCargosPayload: string | string[],
+    confirmarRemocaoAssociacoes = false,
+  ) {
+    const novosCargos = this.normalizarCargos(novosCargosPayload);
+    const cargoEncarregadoEducacao = this.CARGO_ENCARREGADO_EDUCACAO;
+
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: idUtilizador },
+      include: {
+        Pessoa: {
+          include: {
+            Professor: true,
+            Coordenador: true,
+            Enc_Educacao: true,
+          },
+        },
+      },
+    });
+
+    if (!utilizador || !utilizador.Pessoa) {
+      throw new NotFoundException('Utilizador nÃ£o encontrado.');
+    }
+
+    const idPessoa = utilizador.ID_Pessoa;
+    const pessoa = utilizador.Pessoa;
+    const cargosAtuais = this.obterCargosDaPessoa(pessoa);
+    const removeEncarregadoEducacao =
+      cargosAtuais.includes(cargoEncarregadoEducacao) &&
+      !novosCargos.includes(cargoEncarregadoEducacao);
+
+    if (removeEncarregadoEducacao) {
+      const impacto =
+        await this.obterImpactoRemocaoEncarregadoEducacao(idPessoa);
+
+      if (
+        (impacto.alunosAssociados > 0 ||
+          impacto.inscricoesCoachingAssociadas > 0) &&
+        !confirmarRemocaoAssociacoes
+      ) {
+        throw new ConflictException({
+          code: 'CONFIRMACAO_REMOCAO_ASSOCIACOES_ENCARREGADO',
+          message:
+            'Este utilizador tem alunos ou inscricoes de coaching associadas enquanto encarregado de educacao.',
+          impacto,
+        });
+      }
+    }
+
+    if (pessoa.Professor && !novosCargos.includes('Professor'))
+      await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Coordenador && !novosCargos.includes('Coordenador'))
+      await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
+    if (pessoa.Enc_Educacao && removeEncarregadoEducacao) {
+      await this.removerAssociacoesEncarregadoEducacao(idPessoa);
+      await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
+    }
+
+    if (!pessoa.Professor && novosCargos.includes('Professor'))
+      await this.prisma.professor.create({ data: { ID_Pessoa: idPessoa } });
+    if (!pessoa.Coordenador && novosCargos.includes('Coordenador'))
+      await this.prisma.coordenador.create({ data: { ID_Pessoa: idPessoa } });
+    if (!pessoa.Enc_Educacao && novosCargos.includes(cargoEncarregadoEducacao))
+      await this.prisma.enc_Educacao.create({ data: { ID_Pessoa: idPessoa } });
+
+    return {
+      mensagem: `Cargos atualizados para "${novosCargos.join(', ')}" com sucesso.`,
+      cargos: novosCargos,
+    };
   }
 
   /**
@@ -727,10 +821,9 @@ export class UtilizadorService {
     const cargosValidos = [
       'Professor',
       'Coordenador',
-      'Direção',
       'Encarregado de Educação',
     ];
-    const cargoEncarregadoEducacao = cargosValidos[3];
+    const cargoEncarregadoEducacao = cargosValidos[2];
     if (!cargosValidos.includes(novoCargo)) {
       throw new NotFoundException(`Cargo "${novoCargo}" não é válido.`);
     }
@@ -742,7 +835,6 @@ export class UtilizadorService {
           include: {
             Professor: true,
             Coordenador: true,
-            Direcao: true,
             Enc_Educacao: true,
           },
         },
@@ -778,8 +870,6 @@ export class UtilizadorService {
       await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
     if (pessoa.Coordenador)
       await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
-    if (pessoa.Direcao)
-      await this.prisma.direcao.delete({ where: { ID_Pessoa: idPessoa } });
     if (pessoa.Enc_Educacao) {
       await this.removerAssociacoesEncarregadoEducacao(idPessoa);
       await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
@@ -789,8 +879,6 @@ export class UtilizadorService {
       await this.prisma.professor.create({ data: { ID_Pessoa: idPessoa } });
     else if (novoCargo === 'Coordenador')
       await this.prisma.coordenador.create({ data: { ID_Pessoa: idPessoa } });
-    else if (novoCargo === 'Direção')
-      await this.prisma.direcao.create({ data: { ID_Pessoa: idPessoa } });
     else if (novoCargo === cargoEncarregadoEducacao)
       await this.prisma.enc_Educacao.create({ data: { ID_Pessoa: idPessoa } });
 
@@ -805,17 +893,25 @@ export class UtilizadorService {
    */
 
   async mudarPassword(id: number, dto: ChangePasswordDto) {
+    this.logger.log(`A mudar password pelo proprio utilizador idUtilizador=${id}`);
+
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: id },
     });
 
     if (!utilizador) {
+      this.logger.warn(
+        `Mudanca de password rejeitada: utilizador inexistente idUtilizador=${id}`,
+      );
       throw new NotFoundException('Utilizador não encontrado');
     }
 
     const passValida = await bcrypt.compare(dto.passAtual, utilizador.Password);
 
     if (!passValida) {
+      this.logger.warn(
+        `Mudanca de password rejeitada: password atual invalida idUtilizador=${id}`,
+      );
       throw new UnauthorizedException('A password atual está incorreta.');
     }
 
@@ -826,6 +922,7 @@ export class UtilizadorService {
       where: { ID_Utilizador: id },
       data: { Password: novaHash },
     });
+    this.logger.log(`Password alterada pelo proprio utilizador idUtilizador=${id}`);
 
     return { message: 'Password alterada com sucesso!' };
   }
@@ -838,22 +935,31 @@ export class UtilizadorService {
    */
 
   async updatePreferenciasAcoes(id: number, acoesIds: number[]) {
+    this.logger.log(
+      `A atualizar preferencias de acoes idUtilizador=${id} totalAcoes=${acoesIds.length}`,
+    );
+
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: id },
     });
 
     if (!utilizador) {
+      this.logger.warn(
+        `Atualizacao de preferencias rejeitada: utilizador inexistente idUtilizador=${id}`,
+      );
       throw new NotFoundException(`Utilizador com ID ${id} não encontrado.`);
     }
 
     const preferenciasJson = JSON.stringify(acoesIds);
 
-    return this.prisma.utilizador.update({
+    const atualizado = await this.prisma.utilizador.update({
       where: { ID_Utilizador: id },
       data: {
         Acoes_Rapidas: preferenciasJson,
       },
     });
+    this.logger.log(`Preferencias de acoes atualizadas idUtilizador=${id}`);
+    return atualizado;
   }
 
   /**
@@ -863,6 +969,8 @@ export class UtilizadorService {
    */
 
   async deleteUser(idUtilizador: number) {
+    this.logger.log(`A eliminar utilizador idUtilizador=${idUtilizador}`);
+
     const utilizador = await this.prisma.utilizador.findUnique({
       where: { ID_Utilizador: idUtilizador },
       include: {
@@ -870,7 +978,6 @@ export class UtilizadorService {
           include: {
             Professor: true,
             Coordenador: true,
-            Direcao: true,
             Enc_Educacao: true,
           },
         },
@@ -878,6 +985,9 @@ export class UtilizadorService {
     });
 
     if (!utilizador || !utilizador.Pessoa) {
+      this.logger.warn(
+        `Eliminacao de utilizador rejeitada: inexistente idUtilizador=${idUtilizador}`,
+      );
       throw new NotFoundException('Utilizador não encontrado.');
     }
 
@@ -888,8 +998,6 @@ export class UtilizadorService {
       await this.prisma.professor.delete({ where: { ID_Pessoa: idPessoa } });
     if (pessoa.Coordenador)
       await this.prisma.coordenador.delete({ where: { ID_Pessoa: idPessoa } });
-    if (pessoa.Direcao)
-      await this.prisma.direcao.delete({ where: { ID_Pessoa: idPessoa } });
     if (pessoa.Enc_Educacao) {
       await this.removerAssociacoesEncarregadoEducacao(idPessoa);
       await this.prisma.enc_Educacao.delete({ where: { ID_Pessoa: idPessoa } });
@@ -900,6 +1008,9 @@ export class UtilizadorService {
     });
 
     await this.prisma.pessoa.delete({ where: { ID_Pessoa: idPessoa } });
+    this.logger.log(
+      `Utilizador eliminado idUtilizador=${idUtilizador} idPessoa=${idPessoa}`,
+    );
 
     return { mensagem: 'Utilizador eliminado com sucesso.' };
   }
@@ -954,6 +1065,64 @@ export class UtilizadorService {
         estado: isEmDivida ? 'EM DÍVIDA' : 'PAGO',
       };
     });
+  }
+
+  private obterCargosDaPessoa(pessoa: any): string[] {
+    const cargos: string[] = [];
+
+    if (pessoa?.Professor) cargos.push('Professor');
+    if (pessoa?.Coordenador) cargos.push('Coordenador');
+    if (pessoa?.Enc_Educacao) cargos.push(this.CARGO_ENCARREGADO_EDUCACAO);
+
+    return cargos;
+  }
+
+  private canonicalizarCargo(cargo: string): string {
+    const cargoLimpo = cargo.trim();
+    const aliases: Record<string, string> = {
+      'Encarregado de Educa\u00e7\u00e3o': this.CARGO_ENCARREGADO_EDUCACAO,
+      'Encarregado de EducaÃ§Ã£o': this.CARGO_ENCARREGADO_EDUCACAO,
+      'Encarregado de EducaÃƒÂ§ÃƒÂ£o': this.CARGO_ENCARREGADO_EDUCACAO,
+    };
+
+    return aliases[cargoLimpo] ?? cargoLimpo;
+  }
+
+  private normalizarCargos(cargos: string | string[] | undefined): string[] {
+    const lista = Array.isArray(cargos) ? cargos : cargos ? [cargos] : [];
+    const cargosNormalizados = [
+      ...new Set(
+        lista
+          .map((cargo) => this.canonicalizarCargo(cargo))
+          .filter((cargo) => cargo && cargo !== this.CARGO_SEM_CARGO),
+      ),
+    ];
+
+    if (cargosNormalizados.length === 0) {
+      throw new BadRequestException('Seleciona pelo menos um cargo.');
+    }
+
+    const cargoInvalido = cargosNormalizados.find(
+      (cargo) => !this.CARGOS_VALIDOS.includes(cargo),
+    );
+
+    if (cargoInvalido) {
+      throw new NotFoundException(`Cargo "${cargoInvalido}" nao e valido.`);
+    }
+
+    return cargosNormalizados;
+  }
+
+  private criarDadosCargos(cargos: string[]) {
+    return {
+      ...(cargos.includes('Professor') ? { Professor: { create: {} } } : {}),
+      ...(cargos.includes('Coordenador')
+        ? { Coordenador: { create: {} } }
+        : {}),
+      ...(cargos.includes(this.CARGO_ENCARREGADO_EDUCACAO)
+        ? { Enc_Educacao: { create: {} } }
+        : {}),
+    };
   }
 
   /**

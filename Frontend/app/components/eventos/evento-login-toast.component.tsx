@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 
 
 import { useEffect, useMemo, useState } from 'react';
@@ -218,7 +219,7 @@ export function EventoLoginToast() {
                 }
             }}
         >
-            <button
+            <ButtonComponent
                 type="button"
                 className={styles.botaoFechar}
                 onClick={(eventoClick) => {
@@ -228,7 +229,7 @@ export function EventoLoginToast() {
                 aria-label="Fechar notificação de evento"
             >
                 ×
-            </button>
+            </ButtonComponent>
 
             <div className={styles.icone}>
                 🎭

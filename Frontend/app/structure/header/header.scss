@@ -26,20 +26,49 @@ header {
             }
         }
 
+        .hamburger-button {
+            display: none;
+            width: 44px;
+            height: 44px;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 5px;
+            padding: 0;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            border-radius: 6px;
+            cursor: pointer;
+
+            span {
+                display: block;
+                width: 20px;
+                height: 2px;
+                background: #ffffff;
+                border-radius: 999px;
+                transition: transform 0.2s ease, opacity 0.2s ease;
+            }
+
+            &.active {
+                span:nth-child(1) {
+                    transform: translateY(7px) rotate(45deg);
+                }
+
+                span:nth-child(2) {
+                    opacity: 0;
+                }
+
+                span:nth-child(3) {
+                    transform: translateY(-7px) rotate(-45deg);
+                }
+            }
+        }
+
         .menu {
             position: relative;
             display: inline-flex;
             align-items: center;
             gap: 12px;
-
-            .header-theme-toggle {
-                width: 44px;
-                height: 44px;
-                min-width: 44px;
-                background: rgba(255, 255, 255, 0.12);
-                border-color: rgba(255, 255, 255, 0.24);
-                color: #ffffff;
-            }
 
             .profile-picture {
                 display: flex;
@@ -73,12 +102,21 @@ header {
                 top: calc(100% + 16px);
                 right: 0px;
                 padding: 10px;
-                width: 160px;
+                width: 180px;
                 background-color: colors.$gray-1;
                 border: 1px solid colors.$gray-3;
                 border-radius: 4px;
                 z-index: 999;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+
+                &::before {
+                    content: "";
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    top: -16px;
+                    height: 16px;
+                }
 
                 .user-info {
                     display: flex;
@@ -100,6 +138,53 @@ header {
                         text-align: center;
                         border-bottom: 1px solid colors.$gray-3;
                         margin-top: 4px;
+                    }
+                }
+
+                .role-switcher {
+                    display: flex;
+                    flex-direction: column;
+                    padding-bottom: 8px;
+                    margin-bottom: 8px;
+                    border-bottom: 1px solid colors.$gray-3;
+
+                    select {
+                        width: 100%;
+                        height: 32px;
+                        border: 1px solid colors.$gray-3;
+                        border-radius: 4px;
+                        background-color: #ffffff;
+                        color: colors.$gray-8;
+                        font-size: 13px;
+                    }
+                }
+
+                .theme-switcher {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 10px;
+                    padding-bottom: 8px;
+                    margin-bottom: 8px;
+                    border-bottom: 1px solid colors.$gray-3;
+
+                    span {
+                        font-size: 13px;
+                        font-weight: 600;
+                        color: colors.$gray-8;
+                    }
+
+                    .menu-theme-toggle {
+                        width: 32px;
+                        height: 32px;
+                        min-width: 32px;
+                        background: rgba(colors.$theme-100, 0.1);
+                        border-color: rgba(colors.$theme-100, 0.18);
+                        color: colors.$theme-100;
+
+                        i {
+                            font-size: 14px;
+                        }
                     }
                 }
 
@@ -141,6 +226,30 @@ header {
     }
 }
 
+@media (max-width: 768px) {
+    header {
+        height: 64px;
+
+        .header-container {
+            height: 64px;
+            padding: 0 12px;
+
+            .logo {
+                width: 140px;
+            }
+
+            .hamburger-button {
+                display: inline-flex;
+                order: 3;
+            }
+
+            .menu {
+                display: none;
+            }
+        }
+    }
+}
+
 
 body.entconnect-dark header {
     .menu {
@@ -168,6 +277,30 @@ body.entconnect-dark header {
             .account-link,
             .logout-link {
                 color: #cbd5e1;
+            }
+
+            .role-switcher {
+                border-bottom-color: #334155;
+
+                select {
+                    background-color: #0f172a;
+                    border-color: #334155;
+                    color: #f8fafc;
+                }
+            }
+
+            .theme-switcher {
+                border-bottom-color: #334155;
+
+                span {
+                    color: #cbd5e1;
+                }
+
+                .menu-theme-toggle {
+                    background: rgba(255, 255, 255, 0.08);
+                    border-color: #334155;
+                    color: #f8fafc;
+                }
             }
 
             .account-link {

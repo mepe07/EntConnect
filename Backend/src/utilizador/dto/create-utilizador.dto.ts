@@ -5,6 +5,8 @@ import {
   MinLength,
   IsNotEmpty,
   IsDateString,
+  IsArray,
+  ArrayNotEmpty,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -47,11 +49,30 @@ export class CreateUtilizadorDto {
 
   @ApiProperty({
     example: 'Professor',
-    enum: ['Professor', 'Coordenador', 'Direção', 'Encarregado de Educação'],
+    enum: [
+      'Professor',
+      'Coordenador',
+      'Encarregado de Educa\u00e7\u00e3o',
+    ],
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  cargo!: string;
+  cargo?: string;
+
+  @ApiPropertyOptional({
+    example: ['Professor', 'Coordenador'],
+    enum: [
+      'Professor',
+      'Coordenador',
+      'Encarregado de Educa\u00e7\u00e3o',
+    ],
+    isArray: true,
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  cargos?: string[];
 
   @ApiProperty({ example: 'password123', minLength: 6 })
   @IsString()

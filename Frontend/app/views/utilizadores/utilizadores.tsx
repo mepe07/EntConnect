@@ -1,3 +1,4 @@
+import { showToast } from '~/components/toast/toast';
 
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -23,6 +24,7 @@ interface Utilizador {
     contacto: string;
     nif: string;
     cargo: string;
+    cargos?: string[];
 }
 
 
@@ -33,9 +35,31 @@ const cargoLabel: Record<string, string> = {
 const CARGOS_DISPONIVEIS = [
     'Professor',
     'Coordenador',
-    'Direção',
     'Encarregado de Educação',
 ];
+
+const CARGO_SEM_CARGO = 'Sem Cargo';
+
+const normalizarListaCargos = (cargos: Array<string | null | undefined>) =>
+    cargos
+        .map(cargo => cargo?.trim())
+        .filter((cargo): cargo is string => Boolean(cargo) && cargo !== CARGO_SEM_CARGO);
+
+const obterCargosUtilizador = (utilizador?: Pick<Utilizador, 'cargo' | 'cargos'> | null) => {
+    const cargos = normalizarListaCargos([
+        ...(utilizador?.cargos ?? []),
+        utilizador?.cargo,
+    ]);
+
+    return Array.from(new Set(cargos));
+};
+
+const formatarCargos = (cargos: string[]) => cargos
+    .map(cargo => cargoLabel[cargo] ?? cargo)
+    .join(', ') || CARGO_SEM_CARGO;
+
+const cargosIguais = (a: string[], b: string[]) =>
+    a.length === b.length && a.every(cargo => b.includes(cargo));
 
 interface NovoUtilizadorForm {
     nome: string;
@@ -44,10 +68,12 @@ interface NovoUtilizadorForm {
     contacto: string;
     nif: string;
     dataNascimento: string;
-    cargo: string;
+    cargos: string[];
     password: string;
     confirmarPassword: string;
 }
+
+type NovoUtilizadorErros = Partial<Record<keyof NovoUtilizadorForm, string>>;
 
 interface EducandoForm {
     idAluno?: number;
@@ -65,7 +91,7 @@ const FORM_VAZIO: NovoUtilizadorForm = {
     contacto: '',
     nif: '',
     dataNascimento: '',
-    cargo: '',
+    cargos: [],
     password: '',
     confirmarPassword: '',
 };
@@ -85,9 +111,6 @@ export function Utilizadores() {
 
     const [searchParams, setSearchParams] = useSearchParams();
     
-    // ==========================================
-    // PAGINAÇÃO
-    // ==========================================
     const [paginaAtual, setPaginaAtual] = useState(1);
     const [itensPorPagina, setItensPorPagina] = useState(10);
 
@@ -107,7 +130,7 @@ export function Utilizadores() {
     const [editNome, setEditNome] = useState('');
     const [editContacto, setEditContacto] = useState('');
     const [editNif, setEditNif] = useState('');
-    const [editCargo, setEditCargo] = useState('');
+    const [editCargos, setEditCargos] = useState<string[]>([]);
     const [erroDados, setErroDados] = useState('');
     const [loadingSaveDados, setLoadingSaveDados] = useState(false);
 
@@ -134,7 +157,7 @@ export function Utilizadores() {
     const [modalCriarAberto, setModalCriarAberto] = useState(false);
     const [formNovo, setFormNovo] = useState<NovoUtilizadorForm>(FORM_VAZIO);
     const [mostrarPasswordNovo, setMostrarPasswordNovo] = useState(false);
-    const [errosCriar, setErrosCriar] = useState<Partial<NovoUtilizadorForm>>({});
+    const [errosCriar, setErrosCriar] = useState<NovoUtilizadorErros>({});
     const [loadingCriar, setLoadingCriar] = useState(false);
 
 
@@ -161,7 +184,7 @@ export function Utilizadores() {
             );
             setFotosUtilizadores(fotos);
         } catch {
-            alert('Não foi possível ligar ao servidor!');
+            showToast('Não foi possível ligar ao servidor!');
         } finally {
             setLoading(false);
         }
@@ -171,7 +194,8 @@ export function Utilizadores() {
         useState<Record<number, string | null>>({});
 
     const isEncarregadoEducacao = (utilizador?: Utilizador | null) =>
-        utilizador?.cargo?.toLowerCase().includes('encarregado') ?? false;
+        obterCargosUtilizador(utilizador)
+            .some(cargo => cargo.toLowerCase().includes('encarregado'));
 
     const formatarDataInput = (data?: string | Date | null) => {
         if (!data) return '';
@@ -203,7 +227,7 @@ export function Utilizadores() {
         setEditNome(utilizador.nome || '');
         setEditContacto(utilizador.contacto || '');
         setEditNif(utilizador.nif || '');
-        setEditCargo(utilizador.cargo || '');
+        setEditCargos(obterCargosUtilizador(utilizador));
         setErroDados('');
         setNovaPassword('');
         setConfirmarPassword('');
@@ -237,7 +261,7 @@ export function Utilizadores() {
         setEditNome('');
         setEditContacto('');
         setEditNif('');
-        setEditCargo('');
+        setEditCargos([]);
         setErroDados('');
         setFotoAtual(null);
         setFotoPreview(null);
@@ -250,19 +274,14 @@ export function Utilizadores() {
     };
 
     useEffect(() => {
-        // Só entra aqui se o loading tiver acabado!
         if (!loading && searchParams.get('novo') === 'true') {
             abrirModalCriar();
             
-            // Remove o parâmetro do URL
+            // O parametro e consumido para evitar reabrir o modal ao navegar para tras.
             searchParams.delete('novo');
             setSearchParams(searchParams, { replace: true });
         }
-    }, [loading, searchParams, setSearchParams]); // Adicionámos o 'loading' nas dependências
-
-    // ==========================================
-    // MODAL CRIAR UTILIZADOR
-    // ==========================================
+    }, [loading, searchParams, setSearchParams]);
 
     const abrirModalCriar = () => {
         setFormNovo(FORM_VAZIO);
@@ -275,16 +294,32 @@ export function Utilizadores() {
         setModalCriarAberto(false);
     };
 
-    const handleFormNovo = (campo: keyof NovoUtilizadorForm, valor: string) => {
+    const handleFormNovo = (campo: keyof NovoUtilizadorForm, valor: string | string[]) => {
         setFormNovo(prev => ({ ...prev, [campo]: valor }));
 
         if (errosCriar[campo]) {
             setErrosCriar(prev => ({ ...prev, [campo]: '' }));
         }
     };
+
+    const toggleCargoNovo = (cargo: string) => {
+        const cargos = formNovo.cargos.includes(cargo)
+            ? formNovo.cargos.filter(cargoAtual => cargoAtual !== cargo)
+            : [...formNovo.cargos, cargo];
+
+        handleFormNovo('cargos', cargos);
+    };
+
+    const toggleEditCargo = (cargo: string) => {
+        setEditCargos(prev => prev.includes(cargo)
+            ? prev.filter(cargoAtual => cargoAtual !== cargo)
+            : [...prev, cargo]
+        );
+        setErroDados('');
+    };
     
     const validarFormNovo = (): boolean => {
-    const erros: Partial<NovoUtilizadorForm> = {};
+    const erros: NovoUtilizadorErros = {};
 
         if (!formNovo.nome.trim()) erros.nome = 'O nome é obrigatório.';
         if (!formNovo.username.trim()) erros.username = 'O username é obrigatório.';
@@ -293,7 +328,7 @@ export function Utilizadores() {
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formNovo.email)) {
             erros.email = 'Introduz um email válido.';
         }
-        if (!formNovo.cargo) erros.cargo = 'Seleciona um cargo.';
+        if (formNovo.cargos.length === 0) erros.cargos = 'Seleciona pelo menos um cargo.';
         if (!formNovo.dataNascimento) erros.dataNascimento = 'A data de nascimento é obrigatória.';
         if (!formNovo.password) {
             erros.password = 'A password é obrigatória.';
@@ -322,14 +357,14 @@ export function Utilizadores() {
                 contacto: formNovo.contacto.trim() || undefined,
                 nif: formNovo.nif.trim() || undefined,
                 dataNascimento: formNovo.dataNascimento,
-                cargo: formNovo.cargo,
+                cargos: formNovo.cargos,
                 password: formNovo.password,
             });
-            alert('Utilizador criado com sucesso!');
+            showToast('Utilizador criado com sucesso!');
             fecharModalCriar();
             carregarUtilizadores();
         } catch (error: any) {
-            alert(error?.message || 'Erro ao criar o utilizador. Tenta novamente.');
+            showToast(error?.message || 'Erro ao criar o utilizador. Tenta novamente.');
         } finally {
             setLoadingCriar(false);
         }
@@ -385,7 +420,7 @@ export function Utilizadores() {
                 [utilizadorSelecionado.idUtilizador]: novaUrl
             }));
 
-            alert('Foto de perfil atualizada com sucesso!');
+            showToast('Foto de perfil atualizada com sucesso!');
         } catch (error: any) {
             console.error('Erro no upload:', error);
             setErroFoto(error.message || 'Erro ao carregar a imagem para o servidor.');
@@ -442,6 +477,11 @@ export function Utilizadores() {
         }
 
 
+        if (editCargos.length === 0) {
+            setErroDados('Seleciona pelo menos um cargo.');
+            return;
+        }
+
         const passwordPreenchida = novaPassword || confirmarPassword;
         if (passwordPreenchida) {
             if (novaPassword.length < 6) {
@@ -457,9 +497,11 @@ export function Utilizadores() {
         setLoadingSaveDados(true);
         try {
 
-            if (editCargo !== utilizadorSelecionado!.cargo) {
+            const cargosAtuais = obterCargosUtilizador(utilizadorSelecionado);
+
+            if (!cargosIguais(editCargos, cargosAtuais)) {
                 try {
-                    await utilizadorService.updateCargo(utilizadorSelecionado!.idUtilizador, editCargo);
+                    await utilizadorService.updateCargo(utilizadorSelecionado!.idUtilizador, editCargos);
                 } catch (error: any) {
                     if (error instanceof ConfirmacaoRemocaoAssociacoesEncarregadoError) {
                         const { alunosAssociados, inscricoesCoachingAssociadas } = error.impacto;
@@ -475,7 +517,7 @@ export function Utilizadores() {
                             return;
                         }
 
-                        await utilizadorService.updateCargo(utilizadorSelecionado!.idUtilizador, editCargo, true);
+                        await utilizadorService.updateCargo(utilizadorSelecionado!.idUtilizador, editCargos, true);
                     } else {
                         throw error;
                     }
@@ -494,7 +536,8 @@ export function Utilizadores() {
                 nome: editNome.trim(),
                 contacto: editContacto.trim(),
                 nif: editNif.trim(),
-                cargo: editCargo,
+                cargo: editCargos[0] ?? 'Sem Cargo',
+                cargos: editCargos,
             };
             setUtilizadorSelecionado(updated);
             setUtilizadores(prev =>
@@ -508,7 +551,7 @@ export function Utilizadores() {
                 setConfirmarPassword('');
             }
 
-            alert('Alterações guardadas com sucesso!');
+            showToast('Alterações guardadas com sucesso!');
         } catch (error: any) {
             setErroDados(error?.message || 'Erro ao guardar as alterações. Tenta novamente.');
         } finally {
@@ -658,7 +701,7 @@ export function Utilizadores() {
                     : u
             ));
         } catch {
-            alert(`Erro ao ${acao} o utilizador.`);
+            showToast(`Erro ao ${acao} o utilizador.`);
         }
     };
 
@@ -673,7 +716,7 @@ export function Utilizadores() {
             await utilizadorService.deleteUser(utilizador.idUtilizador);
             setUtilizadores(prev => prev.filter(u => u.idUtilizador !== utilizador.idUtilizador));
         } catch (error: any) {
-            alert(error?.message || 'Erro ao eliminar o utilizador.');
+            showToast(error?.message || 'Erro ao eliminar o utilizador.');
         }
     };
 
@@ -697,16 +740,16 @@ export function Utilizadores() {
 
             if (response.ok) {
                 const data = await response.json();
-                alert(data.mensagem || 'Utilizadores importados com sucesso!');
+                showToast(data.mensagem || 'Utilizadores importados com sucesso!');
                 setModalImportOpen(false);
                 carregarUtilizadores();
             } else {
                 const err = await response.json().catch(() => ({}));
-                alert(err?.message || 'Erro ao processar a importação.');
+                showToast(err?.message || 'Erro ao processar a importação.');
             }
         } catch (error) {
             console.error('Erro na importação:', error);
-            alert('Erro ao fazer upload. Tenta novamente.');
+            showToast('Erro ao fazer upload. Tenta novamente.');
         } finally {
             setLoadingImport(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -718,7 +761,9 @@ export function Utilizadores() {
         u.nome?.toLowerCase().includes(termoPesquisa.toLowerCase()) ||
         u.username?.toLowerCase().includes(termoPesquisa.toLowerCase()) ||
         u.email?.toLowerCase().includes(termoPesquisa.toLowerCase()) ||
-        u.cargo?.toLowerCase().includes(termoPesquisa.toLowerCase())
+        obterCargosUtilizador(u).some(cargo =>
+            cargo.toLowerCase().includes(termoPesquisa.toLowerCase())
+        )
     );
 
     const totalPaginas = Math.ceil(utilizadoresFiltrados.length / itensPorPagina);
@@ -770,7 +815,7 @@ export function Utilizadores() {
 
         } catch (error) {
             console.error('Erro no download:', error);
-            alert('Não foi possível transferir o ficheiro modelo. Tenta novamente.');
+            showToast('Não foi possível transferir o ficheiro modelo. Tenta novamente.');
         }
     };
 
@@ -836,8 +881,11 @@ export function Utilizadores() {
                                 <td colSpan={7} className="tabela-vazia">Nenhum utilizador encontrado.</td>
                             </tr>
                         ) : (
-                            utilizadoresPagina.map((u) => (
-                                <tr key={u.idUtilizador}>
+                            utilizadoresPagina.map((u) => {
+                                const cargosFormatados = formatarCargos(obterCargosUtilizador(u));
+
+                                return (
+                                    <tr key={u.idUtilizador}>
                                     <td className="id-coluna">#{u.idUtilizador}</td>
                                     <td>
                                         <div className="user-info">
@@ -859,8 +907,8 @@ export function Utilizadores() {
                                     <td className="text-secondary">{u.username}</td>
                                     <td className="text-secondary">{u.email}</td>
                                     <td>
-                                        <span className="tag-role">
-                                            {cargoLabel[u.cargo] ?? u.cargo}
+                                        <span className="tag-role" title={cargosFormatados}>
+                                            {cargosFormatados}
                                         </span>
                                     </td>
                                     <td>
@@ -868,31 +916,34 @@ export function Utilizadores() {
                                             {u.ativo ? 'Ativo' : 'Bloqueado'}
                                         </span>
                                     </td>
-                                    <td className="acoes-coluna">
-                                        <button
+                                    <td>
+                                        <div className="acoes-coluna">
+                                        <ButtonComponent
                                             className="btn-icone editar"
                                             title="Ver detalhes e editar"
                                             onClick={() => abrirModal(u)}
                                         >
                                             <i className="fa-solid fa-eye"></i>
-                                        </button>
-                                        <button
+                                        </ButtonComponent>
+                                        <ButtonComponent
                                             className={`btn-icone ${u.ativo ? 'bloquear' : 'desbloquear'}`}
                                             title={u.ativo ? 'Bloquear utilizador' : 'Desbloquear utilizador'}
                                             onClick={() => handleToggleAtivo(u)}
                                         >
                                             <i className={`fa-solid ${u.ativo ? 'fa-lock' : 'fa-lock-open'}`}></i>
-                                        </button>
-                                        <button
+                                        </ButtonComponent>
+                                        <ButtonComponent
                                             className="btn-icone eliminar"
                                             title="Eliminar utilizador"
                                             onClick={() => handleEliminarUtilizador(u)}
                                         >
                                             <i className="fa-solid fa-trash"></i>
-                                        </button>
+                                        </ButtonComponent>
+                                        </div>
                                     </td>
-                                </tr>
-                            ))
+                                    </tr>
+                                );
+                            })
                         )}
                     </tbody>
                 </table>
@@ -915,22 +966,22 @@ export function Utilizadores() {
                         <span>por página &mdash; {utilizadoresFiltrados.length} resultado{utilizadoresFiltrados.length !== 1 ? 's' : ''}</span>
                     </div>
                     <div className="paginacao-controlos">
-                        <button
+                        <ButtonComponent
                             className="btn-pagina"
                             onClick={() => irParaPagina(1)}
                             disabled={paginaAtual === 1}
                             title="Primeira página"
                         >
                             <i className="fa-solid fa-angles-left"></i>
-                        </button>
-                        <button
+                        </ButtonComponent>
+                        <ButtonComponent
                             className="btn-pagina"
                             onClick={() => irParaPagina(paginaAtual - 1)}
                             disabled={paginaAtual === 1}
                             title="Página anterior"
                         >
                             <i className="fa-solid fa-angle-left"></i>
-                        </button>
+                        </ButtonComponent>
                         <span className="paginacao-paginas">
                             {Array.from({ length: totalPaginas }, (_, i) => i + 1)
                                 .filter(p => p === 1 || p === totalPaginas || Math.abs(p - paginaAtual) <= 1)
@@ -943,33 +994,33 @@ export function Utilizadores() {
                                     p === '...' ? (
                                         <span key={`ellipsis-${idx}`} className="paginacao-ellipsis">…</span>
                                     ) : (
-                                        <button
+                                        <ButtonComponent
                                             key={p}
                                             className={`btn-pagina ${paginaAtual === p ? 'ativo' : ''}`}
                                             onClick={() => irParaPagina(p as number)}
                                         >
                                             {p}
-                                        </button>
+                                        </ButtonComponent>
                                     )
                                 )
                             }
                         </span>
-                        <button
+                        <ButtonComponent
                             className="btn-pagina"
                             onClick={() => irParaPagina(paginaAtual + 1)}
                             disabled={paginaAtual === totalPaginas}
                             title="Próxima página"
                         >
                             <i className="fa-solid fa-angle-right"></i>
-                        </button>
-                        <button
+                        </ButtonComponent>
+                        <ButtonComponent
                             className="btn-pagina"
                             onClick={() => irParaPagina(totalPaginas)}
                             disabled={paginaAtual === totalPaginas}
                             title="Última página"
                         >
                             <i className="fa-solid fa-angles-right"></i>
-                        </button>
+                        </ButtonComponent>
                     </div>
                 </div>
             )}
@@ -1014,9 +1065,9 @@ export function Utilizadores() {
                                     </span>
                                 </div>
                             </div>
-                            <button className="btn-fechar" onClick={fecharModal}>
+                            <ButtonComponent className="btn-fechar" onClick={fecharModal}>
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="modal-body">
@@ -1029,7 +1080,7 @@ export function Utilizadores() {
                                             <span className="foto-nome">
                                                 <i className="fa-solid fa-image"></i> {ficheiroFoto.name}
                                             </span>
-                                            <button
+                                            <ButtonComponent
                                                 className="btn-foto confirmar"
                                                 onClick={handleUploadFoto}
                                                 disabled={loadingFoto}
@@ -1038,13 +1089,13 @@ export function Utilizadores() {
                                                     ? <><i className="fa-solid fa-spinner fa-spin"></i> A enviar...</>
                                                     : <><i className="fa-solid fa-upload"></i> Confirmar</>
                                                 }
-                                            </button>
-                                            <button className="btn-foto cancelar" onClick={handleCancelarFoto}>
+                                            </ButtonComponent>
+                                            <ButtonComponent className="btn-foto cancelar" onClick={handleCancelarFoto}>
                                                 Cancelar
-                                            </button>
+                                            </ButtonComponent>
                                         </>
                                     ) : (
-                                        <button
+                                        <ButtonComponent
                                             className="btn-foto remover"
                                             onClick={handleRemoverFoto}
                                             disabled={loadingFoto}
@@ -1053,7 +1104,7 @@ export function Utilizadores() {
                                                 ? <><i className="fa-solid fa-spinner fa-spin"></i> A remover...</>
                                                 : <><i className="fa-solid fa-trash"></i> Remover foto</>
                                             }
-                                        </button>
+                                        </ButtonComponent>
                                     )}
                                 </div>
                             )}
@@ -1114,17 +1165,20 @@ export function Utilizadores() {
                                         placeholder="Ex: 123456789"
                                     />
                                 </div>
-                                <div className="form-group readonly">
-                                    <label>Cargo</label>
-                                    <select
-                                        className="input-campo"
-                                        value={editCargo}
-                                        onChange={(e) => { setEditCargo(e.target.value); setErroDados(''); }}
-                                    >
+                                <div className="form-group">
+                                    <label>Cargos</label>
+                                    <div className="checkbox-list">
                                         {CARGOS_DISPONIVEIS.map(c => (
-                                            <option key={c} value={c}>{c}</option>
+                                            <label key={c} className="checkbox-option">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={editCargos.includes(c)}
+                                                    onChange={() => toggleEditCargo(c)}
+                                                />
+                                                <span>{c}</span>
+                                            </label>
                                         ))}
-                                    </select>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1161,22 +1215,22 @@ export function Utilizadores() {
                                                                 </span>
                                                         </div>
                                                         <div className="educando-acoes">
-                                                            <button
+                                                            <ButtonComponent
                                                                 type="button"
                                                                 className="btn-educando"
                                                                 title="Editar educando"
                                                                 onClick={() => handleEditarEducando(educando)}
                                                             >
                                                                 <i className="fa-solid fa-pen"></i>
-                                                            </button>
-                                                            <button
+                                                            </ButtonComponent>
+                                                            <ButtonComponent
                                                                 type="button"
                                                                 className="btn-educando remover"
                                                                 title="Remover educando"
                                                                 onClick={() => handleRemoverEducando(educando)}
                                                             >
                                                                 <i className="fa-solid fa-trash"></i>
-                                                            </button>
+                                                            </ButtonComponent>
                                                         </div>
                                                     </div>
                                                 ))
@@ -1206,7 +1260,7 @@ export function Utilizadores() {
                                                             </option>
                                                         ))}
                                                     </select>
-                                                    <button
+                                                    <ButtonComponent
                                                         type="button"
                                                         className="btn-guardar-educando"
                                                         onClick={handleAssociarEducando}
@@ -1216,7 +1270,7 @@ export function Utilizadores() {
                                                             ? <><i className="fa-solid fa-spinner fa-spin"></i> A associar...</>
                                                             : <><i className="fa-solid fa-link"></i> Associar</>
                                                         }
-                                                    </button>
+                                                    </ButtonComponent>
                                                 </div>
                                             </div>
 
@@ -1225,9 +1279,9 @@ export function Utilizadores() {
                                             <div className="educando-form-header">
                                                 <strong>{educandoForm.idAluno ? 'Editar educando' : 'Adicionar educando'}</strong>
                                                 {educandoForm.idAluno && (
-                                                    <button type="button" onClick={handleCancelarEducando}>
+                                                    <ButtonComponent type="button" onClick={handleCancelarEducando}>
                                                         Cancelar
-                                                    </button>
+                                                    </ButtonComponent>
                                                 )}
                                             </div>
 
@@ -1293,7 +1347,7 @@ export function Utilizadores() {
                                                 </div>
                                             )}
 
-                                            <button
+                                            <ButtonComponent
                                                 type="button"
                                                 className="btn-guardar-educando"
                                                 onClick={handleGuardarEducando}
@@ -1303,7 +1357,7 @@ export function Utilizadores() {
                                                     ? <><i className="fa-solid fa-spinner fa-spin"></i> A guardar...</>
                                                     : <><i className="fa-solid fa-floppy-disk"></i> {educandoForm.idAluno ? 'Guardar educando' : 'Adicionar educando'}</>
                                                 }
-                                            </button>
+                                            </ButtonComponent>
                                         </div>
                                     </div>
                                 </>
@@ -1327,14 +1381,14 @@ export function Utilizadores() {
                                         onChange={(e) => { setNovaPassword(e.target.value); setErroPassword(''); }}
                                         className={erroPassword ? 'input-erro' : ''}
                                     />
-                                    <button
+                                    <ButtonComponent
                                         type="button"
                                         className="btn-toggle-password"
                                         onClick={() => setMostrarPassword(!mostrarPassword)}
                                         title={mostrarPassword ? 'Ocultar password' : 'Mostrar password'}
                                     >
                                         <i className={`fa-solid ${mostrarPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                                    </button>
+                                    </ButtonComponent>
                                 </div>
                             </div>
 
@@ -1360,10 +1414,10 @@ export function Utilizadores() {
                         </div>
 
                         <div className="modal-footer">
-                            <button className="btn-secundario" onClick={fecharModal}>
+                            <ButtonComponent className="btn-secundario" onClick={fecharModal}>
                                 Fechar
-                            </button>
-                            <button
+                            </ButtonComponent>
+                            <ButtonComponent
                                 className="btn-primario"
                                 onClick={handleGuardarTudo}
                                 disabled={loadingSaveDados}
@@ -1372,7 +1426,7 @@ export function Utilizadores() {
                                     ? <><i className="fa-solid fa-spinner fa-spin"></i> A guardar...</>
                                     : <><i className="fa-solid fa-floppy-disk"></i> Guardar Alterações</>
                                 }
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>
@@ -1393,9 +1447,9 @@ export function Utilizadores() {
                                     <span className="tag-estado small aviso">A criar</span>
                                 </div>
                             </div>
-                            <button className="btn-fechar" onClick={fecharModalCriar}>
+                            <ButtonComponent className="btn-fechar" onClick={fecharModalCriar}>
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="modal-body">
@@ -1487,19 +1541,21 @@ export function Utilizadores() {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label>Cargo *</label>
-                                    <select
-                                        className={`input-campo ${errosCriar.cargo ? 'input-erro' : ''}`}
-                                        value={formNovo.cargo}
-                                        onChange={(e) => handleFormNovo('cargo', e.target.value)}
-                                    >
-                                        <option value="">Seleciona um cargo...</option>
+                                    <label>Cargos *</label>
+                                    <div className={`checkbox-list ${errosCriar.cargos ? 'input-erro' : ''}`}>
                                         {CARGOS_DISPONIVEIS.map(c => (
-                                            <option key={c} value={c}>{c}</option>
+                                            <label key={c} className="checkbox-option">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formNovo.cargos.includes(c)}
+                                                    onChange={() => toggleCargoNovo(c)}
+                                                />
+                                                <span>{c}</span>
+                                            </label>
                                         ))}
-                                    </select>
-                                    {errosCriar.cargo && (
-                                        <span className="campo-erro">{errosCriar.cargo}</span>
+                                    </div>
+                                    {errosCriar.cargos && (
+                                        <span className="campo-erro">{errosCriar.cargos}</span>
                                     )}
                                 </div>
                             </div>
@@ -1521,14 +1577,14 @@ export function Utilizadores() {
                                         value={formNovo.password}
                                         onChange={(e) => handleFormNovo('password', e.target.value)}
                                     />
-                                    <button
+                                    <ButtonComponent
                                         type="button"
                                         className="btn-toggle-password"
                                         onClick={() => setMostrarPasswordNovo(!mostrarPasswordNovo)}
                                         title={mostrarPasswordNovo ? 'Ocultar password' : 'Mostrar password'}
                                     >
                                         <i className={`fa-solid ${mostrarPasswordNovo ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                                    </button>
+                                    </ButtonComponent>
                                 </div>
                                 {errosCriar.password && (
                                     <span className="campo-erro">{errosCriar.password}</span>
@@ -1554,10 +1610,10 @@ export function Utilizadores() {
                         </div>
 
                         <div className="modal-footer">
-                            <button className="btn-secundario" onClick={fecharModalCriar} disabled={loadingCriar}>
+                            <ButtonComponent className="btn-secundario" onClick={fecharModalCriar} disabled={loadingCriar}>
                                 Cancelar
-                            </button>
-                            <button
+                            </ButtonComponent>
+                            <ButtonComponent
                                 className="btn-primario"
                                 onClick={handleCriarUtilizador}
                                 disabled={loadingCriar}
@@ -1566,7 +1622,7 @@ export function Utilizadores() {
                                     ? <><i className="fa-solid fa-spinner fa-spin"></i> A criar...</>
                                     : <><i className="fa-solid fa-user-plus"></i> Criar Utilizador</>
                                 }
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>
@@ -1591,9 +1647,9 @@ export function Utilizadores() {
                                     <h2><i className="fa-solid fa-upload"></i> Importar Utilizadores</h2>
                                 </div>
                             </div>
-                            <button className="btn-fechar" onClick={() => setModalImportOpen(false)} disabled={loadingImport}>
+                            <ButtonComponent className="btn-fechar" onClick={() => setModalImportOpen(false)} disabled={loadingImport}>
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="modal-body">
@@ -1610,13 +1666,13 @@ export function Utilizadores() {
                                 </div>
 
 
-                                <button
+                                <ButtonComponent
                                     type="button"
                                     onClick={handleDownloadModelo}
                                     className="btn-download-modelo"
                                 >
                                     <i className="fa-solid fa-download"></i> Descarregar
-                                </button>
+                                </ButtonComponent>
 
 
                             </div>
@@ -1630,10 +1686,10 @@ export function Utilizadores() {
                         </div>
 
                         <div className="modal-footer">
-                            <button className="btn-secundario" onClick={() => setModalImportOpen(false)} disabled={loadingImport}>
+                            <ButtonComponent className="btn-secundario" onClick={() => setModalImportOpen(false)} disabled={loadingImport}>
                                 Cancelar
-                            </button>
-                            <button
+                            </ButtonComponent>
+                            <ButtonComponent
                                 className="btn-primario"
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={loadingImport}
@@ -1642,7 +1698,7 @@ export function Utilizadores() {
                                     ? <><i className="fa-solid fa-spinner fa-spin"></i> A importar...</>
                                     : <><i className="fa-solid fa-folder-open"></i> Selecionar Ficheiro</>
                                 }
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>

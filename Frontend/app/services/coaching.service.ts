@@ -14,7 +14,7 @@ export const coachingService = {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
             }
         });
 

@@ -12,17 +12,27 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+
+import { AuthGuard } from '../auth/auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../auth/enums/roles.enum';
+
 import { FaturacaoService } from './faturacao.service';
 import { CreateFaturacaoDto } from './dto/create-faturacao.dto';
 import { UpdateFaturacaoDto } from './dto/update-faturacao.dto';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { AuthGuard } from '../auth/auth.guard';
+import { ApiOperation } from '@nestjs/swagger';
+
+const TODAS_AS_ROLES = [
+    Role.COORDENADOR,
+    Role.PROFESSOR,
+    Role.ENC_EDUCACAO,
+];
+
 /**
  * Controlador responsavel pelos pedidos de Faturacao.
  */
 
-@ApiTags('Faturacao')
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('faturacao')
 export class FaturacaoController {
@@ -32,6 +42,7 @@ export class FaturacaoController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Get('geral')
   @ApiOperation({
     summary: 'Obter a faturação geral de todos os encarregados de educação',
@@ -47,6 +58,7 @@ export class FaturacaoController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(...TODAS_AS_ROLES)
   @Get('Relatorio')
   async getRelatorio(
     @Query('inicio') inicioStr: string,
@@ -103,6 +115,7 @@ export class FaturacaoController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(...TODAS_AS_ROLES)
   @Get('encarregado/:id')
   @ApiOperation({
     summary: 'Obter a faturação de um encarregado de educação específico',
@@ -120,6 +133,7 @@ export class FaturacaoController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Get('pagamentos-coaching')
   @ApiOperation({
     summary: 'Listar pagamentos de coaching para gestao administrativa',
@@ -158,6 +172,7 @@ export class FaturacaoController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Patch('pagar/:idCoaching/:idAluno')
   @ApiOperation({
     summary: 'Registar o pagamento de um aluno numa sessão de coaching',
@@ -183,6 +198,7 @@ export class FaturacaoController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(...TODAS_AS_ROLES)
   @Get('Historico')
   @ApiOperation({
     summary: 'Gera o relatório de histórico para a coordenadora',
@@ -243,6 +259,7 @@ export class FaturacaoController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Get('dashboard-financeiro')
   @ApiOperation({
     summary: 'Obtém os dados aglomerados para o Dashboard de Estatísticas',
@@ -275,6 +292,7 @@ export class FaturacaoController {
    * @returns Resultado da operacao.
    */
 
+  @Roles(Role.COORDENADOR)
   @Get('previsao-financeira')
   @ApiOperation({
     summary: 'Obtém a previsão de receita financeira para os próximos 3 meses',

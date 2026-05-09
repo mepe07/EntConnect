@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { LinhaFaturacaoCoaching } from '../../../models/interfaces/faturacao.interface';
@@ -243,20 +244,20 @@ export default function PagamentosCoachingAdmin() {
                     />
                 </label>
                 <div className="filtro-acoes">
-                    <button type="submit" disabled={aCarregar}>
+                    <ButtonComponent type="submit" disabled={aCarregar}>
                         <i className="fa-solid fa-magnifying-glass" />
                         {aCarregar ? 'A carregar' : 'Pesquisar'}
-                    </button>
-                    <button type="button" className="secundario" onClick={limparFiltros}>
+                    </ButtonComponent>
+                    <ButtonComponent type="button" className="secundario" onClick={limparFiltros}>
                         <i className="fa-solid fa-rotate-left" />
                         Limpar
-                    </button>
+                    </ButtonComponent>
                 </div>
             </form>
 
             <div className="pagamentos-tabs" role="tablist" aria-label="Estados de pagamento">
                 {tabs.map((tab) => (
-                    <button
+                    <ButtonComponent
                         key={tab.id}
                         type="button"
                         className={tabAtiva === tab.id ? 'ativo' : ''}
@@ -264,7 +265,7 @@ export default function PagamentosCoachingAdmin() {
                     >
                         <i className={tab.icon} />
                         {tab.label}
-                    </button>
+                    </ButtonComponent>
                 ))}
             </div>
 
@@ -339,7 +340,7 @@ export default function PagamentosCoachingAdmin() {
                                             </td>
                                             <td>
                                                 {podePagar ? (
-                                                    <button
+                                                    <ButtonComponent
                                                         type="button"
                                                         className="acao-pagamento"
                                                         onClick={() => abrirModalPagamento(pagamento)}
@@ -347,7 +348,7 @@ export default function PagamentosCoachingAdmin() {
                                                     >
                                                         <i className="fa-solid fa-money-bill-wave" />
                                                         Registar
-                                                    </button>
+                                                    </ButtonComponent>
                                                 ) : (
                                                     <span className="sem-acao">Liquidado</span>
                                                 )}
@@ -366,9 +367,9 @@ export default function PagamentosCoachingAdmin() {
                     <div className="pagamento-modal" role="dialog" aria-modal="true" aria-labelledby="pagamento-modal-title">
                         <div className="modal-topo">
                             <h2 id="pagamento-modal-title">Registar pagamento</h2>
-                            <button type="button" onClick={fecharModalPagamento} aria-label="Fechar">
+                            <ButtonComponent type="button" onClick={fecharModalPagamento} aria-label="Fechar">
                                 <i className="fa-solid fa-xmark" />
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="modal-detalhes">
@@ -400,16 +401,16 @@ export default function PagamentosCoachingAdmin() {
                             </label>
 
                             <div className="modal-acoes">
-                                <button
+                                <ButtonComponent
                                     type="button"
                                     className="secundario"
                                     onClick={() => setValorPagamento(String(Number(pagamentoSelecionado.valorEmFalta ?? 0).toFixed(2)))}
                                 >
                                     Pagamento total
-                                </button>
-                                <button type="submit" disabled={aRegistar}>
+                                </ButtonComponent>
+                                <ButtonComponent type="submit" disabled={aRegistar}>
                                     {aRegistar ? 'A registar' : 'Guardar pagamento'}
-                                </button>
+                                </ButtonComponent>
                             </div>
                         </form>
                     </div>

@@ -1,3 +1,4 @@
+import { ButtonComponent } from '~/components/button/button.component';
 import './verAgendamentos.scss'
 import { TableColumnTypesEnum } from "~/components/table/models/enums/table-column-types.enum";
 import { TableComponent } from "~/components/table/table.component";
@@ -12,6 +13,7 @@ import { SizeEnum } from '~/components/models/enums/size.enum';
 import { AdminService } from '~/services/admin.service';
 
 
+import { showToast } from '~/components/toast/toast';
 export default function VerAgendamentos() {
     const userInfo = authService.getUserInfo() as User;
     const isProfessor = userInfo?.role.toLowerCase().includes('professor');
@@ -83,7 +85,7 @@ async function abrirModalAluno(aluno: any) {
             setIsAlunoInfoModalAberto(true);
         } catch (error) {
             console.error(error);
-            alert('Erro ao carregar detalhes do aluno. Verifica se tens permissão.');
+            showToast('Erro ao carregar detalhes do aluno. Verifica se tens permissão.');
         } finally {
             setIsCarregandoAluno(false);
         }
@@ -143,9 +145,9 @@ async function abrirModalAluno(aluno: any) {
                     <div className="modal-conteudo">
                         <div className="modal-cabecalho">
                             <h2>Detalhes do Agendamento</h2>
-                            <button className="btn-fechar-icon" onClick={fecharModal}>
+                            <ButtonComponent className="btn-fechar-icon" onClick={fecharModal}>
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
 
@@ -168,7 +170,7 @@ async function abrirModalAluno(aluno: any) {
                                             </div>
 
 
-                                            <button
+                                            <ButtonComponent
                                                 onClick={() => abrirModalAluno(aluno)}
                                                 disabled={isCarregandoAluno}
                                                 style={{
@@ -178,7 +180,7 @@ async function abrirModalAluno(aluno: any) {
                                                 }}
                                             >
                                                 <i className="fa-solid fa-info-circle"></i> {isCarregandoAluno ? 'A carregar...' : 'Ver Info'}
-                                            </button>
+                                            </ButtonComponent>
 
                                         </div>
                                     ))}
@@ -190,10 +192,10 @@ async function abrirModalAluno(aluno: any) {
                         )}
 
                         <div className="modal-acoes" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
-                            <button className="btn-anularSessao" onClick={handleEliminarSessao}>Anular sessão</button>
-                            <button className="btn-fechar" onClick={fecharModal}>
+                            <ButtonComponent className="btn-anularSessao" onClick={handleEliminarSessao}>Anular sessão</ButtonComponent>
+                            <ButtonComponent className="btn-fechar" onClick={fecharModal}>
                                 Fechar
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>
@@ -210,13 +212,13 @@ async function abrirModalAluno(aluno: any) {
 
                         <div className="modal-cabecalho" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '12px' }}>
                             <h2 style={{ margin: 0 }}>Informação do Aluno</h2>
-                            <button
+                            <ButtonComponent
                                 className="btn-fechar-icon"
                                 onClick={fecharModalAluno}
                                 style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#555' }}
                             >
                                 <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            </ButtonComponent>
                         </div>
 
                         <div className="detalhes-grid" style={{ marginBottom: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
@@ -240,13 +242,13 @@ async function abrirModalAluno(aluno: any) {
                         )}
 
                         <div className="modal-acoes" style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
-                            <button
+                            <ButtonComponent
                                 className="btn-fechar"
                                 onClick={fecharModalAluno}
                                 style={{ padding: '8px 16px', borderRadius: '4px', border: '1px solid #ccc', background: '#f8f9fa', cursor: 'pointer' }}
                             >
                                 Fechar
-                            </button>
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>
