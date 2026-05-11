@@ -71,6 +71,7 @@ const TODAS_AS_ROLES = [
 
 @UseGuards(AuthGuard, RolesGuard)
 @ApiTags('Utilizadores')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('utilizador')
 export class UtilizadorController {
   constructor(

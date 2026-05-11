@@ -40,6 +40,7 @@ const TODAS_AS_ROLES = [
 
 @UseGuards(AuthGuard, RolesGuard)
 @ApiTags('Coaching')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('coaching')
 export class CoachingController {
   constructor(
