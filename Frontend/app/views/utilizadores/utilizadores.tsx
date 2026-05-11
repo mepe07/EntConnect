@@ -328,6 +328,11 @@ export function Utilizadores() {
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formNovo.email)) {
             erros.email = 'Introduz um email válido.';
         }
+        if (!formNovo.nif.trim()) {
+            erros.nif = 'O NIF é obrigatório.';
+        } else if (!/^\d{9}$/.test(formNovo.nif.trim())) {
+            erros.nif = 'O NIF deve ter exatamente 9 dígitos.';
+        }
         if (formNovo.cargos.length === 0) erros.cargos = 'Seleciona pelo menos um cargo.';
         if (!formNovo.dataNascimento) erros.dataNascimento = 'A data de nascimento é obrigatória.';
         if (!formNovo.password) {
@@ -355,7 +360,7 @@ export function Utilizadores() {
                 username: formNovo.username.trim(),
                 email: formNovo.email.trim(),
                 contacto: formNovo.contacto.trim() || undefined,
-                nif: formNovo.nif.trim() || undefined,
+                nif: formNovo.nif.trim(),
                 dataNascimento: formNovo.dataNascimento,
                 cargos: formNovo.cargos,
                 password: formNovo.password,
@@ -1516,14 +1521,17 @@ export function Utilizadores() {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label>NIF</label>
+                                    <label>NIF *</label>
                                     <input
                                         type="text"
-                                        className="input-campo"
+                                        className={`input-campo ${errosCriar.nif ? 'input-erro' : ''}`}
                                         placeholder="Ex: 123456789"
                                         value={formNovo.nif}
                                         onChange={(e) => handleFormNovo('nif', e.target.value)}
                                     />
+                                    {errosCriar.nif && (
+                                        <span className="campo-erro">{errosCriar.nif}</span>
+                                    )}
                                 </div>
                                 <div className="form-group">
                                     <label>Data de Nascimento *</label>
