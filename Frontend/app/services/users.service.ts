@@ -9,7 +9,7 @@ export interface CreateUtilizadorPayload {
     username: string;
     email: string;
     contacto?: string;
-    nif?: string;
+    nif: string;
     dataNascimento: string;
     cargo?: string;
     cargos?: string[];
