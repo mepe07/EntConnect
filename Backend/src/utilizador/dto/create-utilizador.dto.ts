@@ -7,6 +7,8 @@ import {
   IsDateString,
   IsArray,
   ArrayNotEmpty,
+  IsNumberString,
+  Length,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -34,10 +36,11 @@ export class CreateUtilizadorDto {
   @IsString()
   contacto?: string;
 
-  @ApiPropertyOptional({ example: '123456789' })
-  @IsOptional()
+  @ApiProperty({ example: '123456789' })
   @IsString()
-  nif?: string;
+  @Length(9, 9, { message: 'O NIF deve ter exatamente 9 dígitos' })
+  @IsNumberString({}, { message: 'O NIF deve conter apenas números' })
+  nif!: string;
 
   @ApiProperty({
     example: '1995-10-07',
