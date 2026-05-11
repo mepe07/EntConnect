@@ -13,7 +13,6 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateModalidadeDto } from './dto/create-modalidade.dto';
 import { UpdateModalidadeDto } from './dto/update-modalidade.dto';
 import { ModalidadeService } from './modalidade/modalidade.service';
-
 import { AuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -30,6 +29,7 @@ const TODAS_AS_ROLES = [
 
 @UseGuards(AuthGuard, RolesGuard)
 @ApiTags('Modalidades')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('modalidade')
 export class ModalidadeController {
   constructor(private readonly modalidadeService: ModalidadeService) {}

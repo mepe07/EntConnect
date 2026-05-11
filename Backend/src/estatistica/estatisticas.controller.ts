@@ -1,7 +1,6 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { EstatisticasService } from './estatisticas.service';
 import { ApiTags } from '@nestjs/swagger';
-
 import { AuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -18,6 +17,7 @@ const TODAS_AS_ROLES = [
 
 @UseGuards(AuthGuard, RolesGuard)
 @ApiTags('Estatisticas')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('estatisticas')
 export class EstatisticasController {
   constructor(private readonly estatisticasService: EstatisticasService) {}

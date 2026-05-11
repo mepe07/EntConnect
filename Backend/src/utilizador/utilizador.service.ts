@@ -98,18 +98,24 @@ export class UtilizadorService {
     } = createUtilizadorDto;
     this.logger.log(`A criar utilizador username=${username} cargo=${cargo}`);
 
+    const nifNormalizado = nif.trim();
+
     const existente = await this.prisma.utilizador.findFirst({
       where: {
-        OR: [{ Utilizador: username }, { Pessoa: { Email: email } }],
+        OR: [
+          { Utilizador: username },
+          { Pessoa: { Email: email } },
+          { Pessoa: { NIF: nifNormalizado } },
+        ],
       },
     });
 
     if (existente) {
       this.logger.warn(
-        `Criacao de utilizador rejeitada: username/email duplicado username=${username}`,
+        `Criacao de utilizador rejeitada: username/email/nif duplicado username=${username}`,
       );
       throw new ConflictException(
-        'Já existe um utilizador com esse username ou email.',
+        'Já existe um utilizador com esse username, email ou NIF.',
       );
     }
 
@@ -125,7 +131,7 @@ export class UtilizadorService {
             Nome: nome,
             Email: email,
             Contacto: contacto ?? '',
-            NIF: nif ?? '',
+            NIF: nifNormalizado,
             Data_Nascimento: new Date(dataNascimento),
             ...this.criarDadosCargos(this.normalizarCargos(cargos ?? cargo)),
           },

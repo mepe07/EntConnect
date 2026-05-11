@@ -14,7 +14,6 @@ import { HorariosService } from './horarios.service';
 import { CreateAulaFixaDto } from './dto/create-aula-fixa.dto';
 import { CreateExcecaoAulaFixaDto } from './dto/create-excecao-aula-fixa.dto';
 import { UpdateAulaFixaDto } from './dto/update-aula-fixa.dto';
-
 import { AuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -31,6 +30,7 @@ const TODAS_AS_ROLES_MARKETPLACE = [
 
 @UseGuards(AuthGuard, RolesGuard)
 @ApiTags('Horários')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('horarios')
 export class HorariosController {
   constructor(private readonly horariosService: HorariosService) {}
