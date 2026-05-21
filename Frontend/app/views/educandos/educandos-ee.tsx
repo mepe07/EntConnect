@@ -31,6 +31,15 @@ function calcularIdade(data?: string | null) {
     return idade;
 }
 
+function formatarData(data?: string | null) {
+    if (!data) return 'Data não definida';
+
+    const dataFormatada = new Date(data);
+    if (Number.isNaN(dataFormatada.getTime())) return 'Data inválida';
+
+    return dataFormatada.toLocaleDateString('pt-PT');
+}
+
 export function EducandosEE() {
     const [educandos, setEducandos] = useState<Educando[]>([]);
     const [erro, setErro] = useState('');
@@ -80,16 +89,21 @@ export function EducandosEE() {
                             const idade = calcularIdade(educando.Data_Nascimento);
 
                             return (
-                                <article className="educando-item" key={educando.ID_aluno}>
-                                    <div className="educando-principal">
-                                        <strong>{educando.Nome}</strong>
-                                        <span>NIF {educando.NIF}</span>
+                                <article className="educando-card" key={educando.ID_aluno}>
+                                    <div className="educando-card-main">
+                                        <div className="educando-meta">
+                                            <span>{idade === null ? 'Idade por calcular' : `${idade} anos`}</span>
+                                            <span>{formatarData(educando.Data_Nascimento)}</span>
+                                            <span className="estado-badge">{educando.Menor_Idade ? 'Menor de idade' : 'Maior de idade'}</span>
+                                        </div>
+
+                                        <h2>{educando.Nome}</h2>
+                                        <p>NIF {educando.NIF}</p>
                                     </div>
 
-                                    <div className="educando-detalhes">
-                                        <span>{idade === null ? 'Idade por calcular' : `${idade} anos`}</span>
-                                        {educando.Mail && <span>{educando.Mail}</span>}
-                                        {educando.Contato && <span>{educando.Contato}</span>}
+                                    <div className="educando-contactos">
+                                        {educando.Mail ? <span className="info-chip"><i className="fa-solid fa-envelope"></i>{educando.Mail}</span> : <span className="info-chip muted">Sem email</span>}
+                                        {educando.Contato ? <span className="info-chip"><i className="fa-solid fa-phone"></i>{educando.Contato}</span> : <span className="info-chip muted">Sem contacto</span>}
                                     </div>
                                 </article>
                             );

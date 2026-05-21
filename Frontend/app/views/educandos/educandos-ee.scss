@@ -1,13 +1,10 @@
 .pagina-educandos-ee {
     min-height: 100vh;
     padding: 32px;
-    background: #f7f9fc;
+    background: #f8fafc;
     color: #172033;
 
     .cabecalho-educandos {
-        position: static;
-        width: auto;
-        height: auto;
         margin-bottom: 24px;
 
         div {
@@ -19,9 +16,9 @@
 
         h1 {
             margin: 0;
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 800;
-            color: #172033;
+            color: #0f172a;
         }
 
         span {
@@ -30,30 +27,31 @@
             min-height: 34px;
             padding: 0 12px;
             border-radius: 999px;
-            background: #e8f3ef;
-            color: #1f6b4f;
-            font-weight: 700;
+            background: #fffbeb;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            font-weight: 800;
             font-size: 0.9rem;
             white-space: nowrap;
         }
     }
 
     .conteudo-educandos {
-        max-width: 1040px;
+        max-width: 1120px;
     }
 
     .lista-educandos {
         display: grid;
-        gap: 12px;
+        gap: 14px;
     }
 
     .estado-lista,
-    .educando-item,
+    .educando-card,
     .mensagem {
         background: #ffffff;
-        border: 1px solid #dde5ef;
-        border-radius: 8px;
-        box-shadow: 0 10px 28px rgba(23, 32, 51, 0.06);
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.04);
     }
 
     .estado-lista {
@@ -66,34 +64,77 @@
         font-weight: 700;
     }
 
-    .educando-item {
+    .educando-card {
+        padding: 18px;
         display: grid;
-        grid-template-columns: minmax(180px, 1.2fr) minmax(180px, 1fr);
-        gap: 16px;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 18px;
         align-items: center;
-        padding: 16px;
     }
 
-    .educando-principal,
-    .educando-detalhes {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
+    .educando-card-main {
         min-width: 0;
+        display: grid;
+        gap: 8px;
 
-        strong,
-        span {
-            overflow-wrap: anywhere;
+        h2 {
+            margin: 0;
+            color: #0f172a;
+            font-size: 1.24rem;
+            font-weight: 800;
         }
 
-        strong {
-            color: #172033;
-            font-size: 1rem;
+        p {
+            margin: 0;
+            color: #475569;
+            font-weight: 600;
         }
+    }
+
+    .educando-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
 
         span {
-            color: #637083;
-            font-size: 0.92rem;
+            color: #475569;
+            font-size: 0.86rem;
+            font-weight: 700;
+        }
+    }
+
+    .estado-badge {
+        padding: 0.24rem 0.6rem;
+        border-radius: 999px;
+        background: #fef3c7;
+        color: #92400e !important;
+        font-size: 0.78rem !important;
+    }
+
+    .educando-contactos {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+        max-width: 520px;
+    }
+
+    .info-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border-radius: 999px;
+        padding: 0.45rem 0.75rem;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 0.84rem;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+
+        &.muted {
+            background: #f1f5f9;
+            color: #64748b;
         }
     }
 
@@ -113,18 +154,63 @@
 @media (max-width: 980px) {
     .pagina-educandos-ee {
         padding: 20px;
+
+        .educando-card {
+            grid-template-columns: 1fr;
+            align-items: stretch;
+        }
+
+        .educando-contactos {
+            justify-content: flex-start;
+        }
     }
 }
 
 @media (max-width: 680px) {
     .pagina-educandos-ee {
-        .cabecalho-educandos div,
-        .educando-item {
-            grid-template-columns: 1fr;
-        }
-
         .cabecalho-educandos div {
             display: grid;
+        }
+    }
+}
+
+body.entconnect-dark {
+    .pagina-educandos-ee {
+        background: #0f172a;
+        color: #e2e8f0;
+
+        .cabecalho-educandos h1,
+        .educando-card-main h2 {
+            color: #f8fafc !important;
+        }
+
+        .educando-card-main p,
+        .educando-meta span,
+        .estado-lista {
+            color: #94a3b8 !important;
+        }
+
+        .cabecalho-educandos span,
+        .estado-badge {
+            background: rgba(245, 158, 11, 0.14) !important;
+            border-color: #f59e0b !important;
+            color: #fde68a !important;
+        }
+
+        .educando-card,
+        .estado-lista {
+            background: #111827 !important;
+            border-color: #334155 !important;
+        }
+
+        .info-chip {
+            background: rgba(96, 165, 250, 0.18) !important;
+            color: #bfdbfe !important;
+
+            &.muted {
+                background: #1f2937 !important;
+                color: #94a3b8 !important;
+            }
         }
     }
 }
