@@ -235,7 +235,116 @@ export class CoachingService {
       estado: session.Estado_Coaching?.Tipo || 'N/A',
       alunos: session.Coaching_Aluno.map((ca) => ({
         idAluno: ca.ID_Aluno,
-        nome: ca.Aluno.Nome,
+        nome: ca.Aluno?.Nome || 'Aluno não encontrado',
+      })),
+    }));
+  }
+
+  async getSessoesPorValidarAdmin() {
+    const now = new Date();
+    const sessions = await this.prisma.coaching.findMany({
+      where: {
+        Inicio_Coaching: {
+          lt: now,
+        },
+        Estado_Coaching: {
+          Tipo: 'Pendente',
+        },
+      },
+      include: {
+        Professor: {
+          include: {
+            Pessoa: true,
+          },
+        },
+        Disponibilidade: true,
+        Estado_Coaching: true,
+        Coaching_Aluno: {
+          include: {
+            Aluno: true,
+          },
+        },
+      },
+      orderBy: {
+        Inicio_Coaching: 'asc',
+      },
+    });
+
+    return sessions.map((session) => ({
+      idCoaching: session.ID_Coaching,
+      nomeProfessor: session.Professor?.Pessoa?.Nome || 'N/A',
+      data: session.Inicio_Coaching
+        ? session.Inicio_Coaching.toLocaleDateString('pt-PT')
+        : 'N/A',
+      horario:
+        session.Inicio_Coaching && session.Duracao
+          ? `${session.Inicio_Coaching.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} - ${new Date(session.Inicio_Coaching.getTime() + session.Duracao * 60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
+          : 'N/A',
+      modalidade: session.Disponibilidade?.Modalidade || 'N/A',
+      estado: session.Estado_Coaching?.Tipo || 'N/A',
+      alunos: session.Coaching_Aluno.map((ca) => ({
+        idAluno: ca.ID_Aluno,
+        nome: ca.Aluno?.Nome || 'Aluno não encontrado',
+      })),
+    }));
+  }
+
+  async getSessoesRealizadasMesAdmin() {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+    );
+
+    const sessions = await this.prisma.coaching.findMany({
+      where: {
+        Inicio_Coaching: {
+          gte: monthStart,
+          lte: monthEnd,
+        },
+        Estado_Coaching: {
+          Tipo: 'Realizada',
+        },
+      },
+      include: {
+        Professor: {
+          include: {
+            Pessoa: true,
+          },
+        },
+        Disponibilidade: true,
+        Estado_Coaching: true,
+        Coaching_Aluno: {
+          include: {
+            Aluno: true,
+          },
+        },
+      },
+      orderBy: {
+        Inicio_Coaching: 'asc',
+      },
+    });
+
+    return sessions.map((session) => ({
+      idCoaching: session.ID_Coaching,
+      nomeProfessor: session.Professor?.Pessoa?.Nome || 'N/A',
+      data: session.Inicio_Coaching
+        ? session.Inicio_Coaching.toLocaleDateString('pt-PT')
+        : 'N/A',
+      horario:
+        session.Inicio_Coaching && session.Duracao
+          ? `${session.Inicio_Coaching.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} - ${new Date(session.Inicio_Coaching.getTime() + session.Duracao * 60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
+          : 'N/A',
+      modalidade: session.Disponibilidade?.Modalidade || 'N/A',
+      estado: session.Estado_Coaching?.Tipo || 'N/A',
+      alunos: session.Coaching_Aluno.map((ca) => ({
+        idAluno: ca.ID_Aluno,
+        nome: ca.Aluno?.Nome || 'Aluno não encontrado',
       })),
     }));
   }

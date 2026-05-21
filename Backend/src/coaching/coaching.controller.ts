@@ -213,6 +213,28 @@ export class CoachingController {
     return this.coachingService.getSessoesFuturasAdmin();
   }
   /**
+   * Executa a operacao get sessoes por validar admin.
+   * @returns Resultado da operacao.
+   */
+
+  @Roles(Role.COORDENADOR)
+  @Get('admin/sessoes-por-validar')
+  @ApiOperation({ summary: 'Obter sessoes terminadas por validar para gestao do admin' })
+  async getSessoesPorValidarAdmin() {
+    return this.coachingService.getSessoesPorValidarAdmin();
+  }
+  /**
+   * Executa a operacao get sessoes realizadas no mes admin.
+   * @returns Resultado da operacao.
+   */
+
+  @Roles(Role.COORDENADOR)
+  @Get('admin/sessoes-realizadas-mes')
+  @ApiOperation({ summary: 'Obter sessoes realizadas no mes para gestao do admin' })
+  async getSessoesRealizadasMesAdmin() {
+    return this.coachingService.getSessoesRealizadasMesAdmin();
+  }
+  /**
    * Executa a operacao get kpis admin.
    * @returns Resultado da operacao.
    */
