@@ -69,4 +69,28 @@ export class AdminService {
 
         return response.json();
     }
+
+    /**
+     * Exporta as sessões validadas para um ficheiro Excel.
+     * @returns {Promise<Blob>} O ficheiro em formato Blob para download.
+     */
+    async exportarSessoesExcel(): Promise<Blob> {
+        // 1. Usamos o getHeaders() para garantir que usamos o mesmo token de todos os outros pedidos
+        const response = await fetch(`${this._apiUrl}/coaching/exportar-excel`, {
+            method: 'GET',
+            headers: {
+                ...this.getHeaders(), 
+                'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            },
+        });
+
+        // 3. Verifica se deu erro
+        if (!response.ok) {
+            throw new Error('Falha ao exportar as sessões.');
+        }
+
+        // 4. Devolvemos em formato Blob
+        return await response.blob();
+    }
+    
 }

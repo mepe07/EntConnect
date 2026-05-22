@@ -9,8 +9,8 @@ import { ButtonColorEnum } from '~/components/button/models/enums/button-color.e
 import { SizeEnum } from '~/components/models/enums/size.enum';
 import './coachingAdmin.scss';
 
-
 import { showToast } from '~/components/toast/toast';
+
 interface AlunoSessao {
     idAluno: number;
     nome: string;
@@ -49,14 +49,13 @@ export default function CoachingAdmin() {
 
     const adminService = new AdminService();
 
-
     const [sessoes, setSessoes] = useState<SessaoAdmin[]>([]);
     const [isModalAberto, setIsModalAberto] = useState(false);
     const [sessaoSelecionada, setSessaoSelecionada] = useState<SessaoAdmin | null>(null);
     const [isAlunoInfoModalAberto, setIsAlunoInfoModalAberto] = useState(false);
     const [alunoDetalhes, setAlunoDetalhes] = useState<AlunoDetalhes | null>(null);
     const [isCarregandoAluno, setIsCarregandoAluno] = useState(false);
-
+    const [isExportando, setIsExportando] = useState(false); 
 
     const [kpis, setKpis] = useState({
         proximas24h: 0,
@@ -64,7 +63,6 @@ export default function CoachingAdmin() {
         porValidar: 0,
         realizadasMes: 0
     });
-
 
     async function fetchDadosDashboard() {
         try {
@@ -87,12 +85,10 @@ export default function CoachingAdmin() {
         fetchDadosDashboard();
     }, []);
 
-
     const tableData = sessoes.map(sessao => ({
         ...sessao,
         numAlunos: sessao.alunos.length
     }));
-
 
     function abrirModal(sessao: SessaoAdmin) {
         setSessaoSelecionada(sessao);
@@ -104,7 +100,6 @@ export default function CoachingAdmin() {
         setSessaoSelecionada(null);
     }
 
-
     async function handleEliminarSessao() {
         if (!sessaoSelecionada) return;
 
@@ -115,14 +110,12 @@ export default function CoachingAdmin() {
         fetchDadosDashboard();
     }
 
-
     async function handleRemoverAluno(idAluno: number) {
         if (!sessaoSelecionada) return;
 
         if (window.confirm('Tem a certeza que deseja remover este aluno da sessão?')) {
             try {
                 await adminService.removerAluno(idAluno, sessaoSelecionada.idCoaching);
-
 
                 if (sessaoSelecionada.alunos.length === 1) {
                     showToast('Aluno removido. A sessão ficou sem alunos e foi apagada do sistema.');
@@ -132,7 +125,6 @@ export default function CoachingAdmin() {
                     showToast('Aluno removido com sucesso.');
                     const novaListaAlunos = sessaoSelecionada.alunos.filter(a => a.idAluno !== idAluno);
                     setSessaoSelecionada({ ...sessaoSelecionada, alunos: novaListaAlunos });
-
 
                     fetchDadosDashboard();
                 }
@@ -161,17 +153,65 @@ export default function CoachingAdmin() {
         setAlunoDetalhes(null);
     }
 
+    async function handleExportarExcel(e: React.MouseEvent) {
+        // 2. Trava o refresh da página!
+        e.preventDefault(); 
+        
+        setIsExportando(true);
+        try {
+            showToast('A gerar ficheiro Excel...');
+            
+            // Certifica que existe a função 'exportarSessoesExcel' no admin.service.ts
+            const blob = await adminService.exportarSessoesExcel();
+            
+            const url = window.URL.createObjectURL(new Blob([blob]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `sessoes_validadas_${new Date().toISOString().slice(0,7)}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+
+            showToast('Excel exportado com sucesso!');
+
+        } catch (error) {
+            console.error(error);
+            showToast('Erro ao exportar ficheiro.');
+        } finally {
+            setIsExportando(false);
+        }
+    }
+
     return (
         <div className="dashboard-wrapper">
 
-
-            <div className="dashboard-boas-vindas">
+            <div className="dashboard-boas-vindas" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h1>Gestão de Coaching</h1>
                     <p>Controle todas as sessões e inscrições ativas.</p>
                 </div>
+                
+                <ButtonComponent 
+                    onClick={(e) => handleExportarExcel(e)}
+                    disabled={isExportando}
+                    style={{ 
+                        backgroundColor: '#2c4c3b', // Verde do cabeçalho
+                        color: 'white', 
+                        border: 'none', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px',
+                        padding: '10px 16px',
+                        borderRadius: '6px',
+                        fontWeight: '500',
+                        cursor: isExportando ? 'not-allowed' : 'pointer',
+                        opacity: isExportando ? 0.7 : 1
+                    }}
+                >
+                    <i className="fa-solid fa-file-excel"></i> 
+                    {isExportando ? 'A Exportar...' : 'Exportar Excel'}
+                </ButtonComponent>
             </div>
-
 
             <section className="kpi-grid">
                 <div className="kpi-card">
@@ -226,7 +266,6 @@ export default function CoachingAdmin() {
                 }}
                 data={tableData}
             />
-
 
             {isModalAberto && sessaoSelecionada && (
                 <div className="modal-overlay">
