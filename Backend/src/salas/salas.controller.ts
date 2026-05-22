@@ -67,7 +67,6 @@ export class SalasController {
    * @param updateSalaDto Dados recebidos para a operacao.
    * @returns Resultado da operacao.
    */
-  
   @Roles(Role.COORDENADOR)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateSalaDto: UpdateSalaDto) {
