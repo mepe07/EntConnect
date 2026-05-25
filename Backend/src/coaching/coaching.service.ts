@@ -6,7 +6,9 @@ import {
 } from '@nestjs/common';
 import { CreateCoachingDto } from './dto/create-coaching.dto';
 import { UpdateCoachingDto } from './dto/update-coaching.dto';
+import { CreatePedidoCoachingDto } from './dto/create-pedido-coaching.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 
 
 /**
@@ -18,6 +20,76 @@ export class CoachingService {
   private readonly logger = new Logger(CoachingService.name);
 
   constructor(private readonly prisma: PrismaService) {}
+
+  private async getEstadoPedidoId(nome: string) {
+    const delegate = (this.prisma as any).estado_Pedido;
+    const estado = await delegate.findFirst({
+      where: { Nome: { equals: nome } },
+    });
+
+    if (estado) return estado.ID_EstadoPedido;
+
+    const novoEstado = await delegate.create({ data: { Nome: nome } });
+    return novoEstado.ID_EstadoPedido;
+  }
+
+  private duracaoToDate(duracaoMinutos: number) {
+    return new Date(Date.UTC(1970, 0, 1, 0, duracaoMinutos, 0));
+  }
+
+  private dateToDuracaoMinutos(value: Date | string | null | undefined) {
+    if (!value) return 60;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 60;
+
+    const base = Date.UTC(1970, 0, 1, 0, 0, 0);
+    const diff = Math.round((date.getTime() - base) / 60000);
+    if (diff > 0 && diff < 24 * 60) return diff;
+
+    return date.getUTCHours() * 60 + date.getUTCMinutes() || 60;
+  }
+
+  private formatPedido(pedido: any) {
+    const inicio = pedido.Hora_Inicio_Proposta
+      ? new Date(pedido.Hora_Inicio_Proposta)
+      : null;
+    const duracao = this.dateToDuracaoMinutos(pedido.Duracao_Proposta);
+    const fim = inicio ? new Date(inicio.getTime() + duracao * 60000) : null;
+    const alunos = pedido.Pedido_Coaching_Aluno?.map((item: any) => ({
+      idAluno: item.ID_Aluno,
+      nome: item.Aluno?.Nome ?? 'Aluno',
+    })) ?? [];
+    const ee = pedido.Utilizador_Pedido_Coaching_ID_EEToUtilizador;
+    const professor = pedido.Utilizador_Pedido_Coaching_ID_ProfessorToUtilizador;
+
+    return {
+      idPedido: pedido.ID_Pedido,
+      idEncEducacao: ee?.ID_Pessoa ?? null,
+      nomeEncEducacao: ee?.Pessoa?.Nome ?? 'Enc. educacao',
+      idProfessor: professor?.ID_Pessoa ?? null,
+      nomeProfessor: professor?.Pessoa?.Nome ?? 'Professor',
+      idModalidade: pedido.ID_Modalidade,
+      modalidade: pedido.Modalidade?.Descricao ?? 'Coaching',
+      data: inicio ? inicio.toLocaleDateString('pt-PT') : 'N/A',
+      horario: inicio && fim
+        ? `${inicio.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} - ${fim.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
+        : 'N/A',
+      inicio: inicio?.toISOString() ?? null,
+      duracaoMinutos: duracao,
+      estado: pedido.Estado_Pedido?.Nome ?? 'Pendente',
+      mensagemEE: pedido.Mensagem_EE ?? null,
+      mensagemProfessor: pedido.Mensagem_Professor ?? null,
+      alunos,
+    };
+  }
+
+  private normalizarTexto(value: string | null | undefined) {
+    return (value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
 
   /**
    * Cria um novo registo.
@@ -256,6 +328,276 @@ export class CoachingService {
         nome: ca.Aluno?.Nome || 'Aluno não encontrado',
       })),
     }));
+  }
+
+  async listarContextoProposta(user: UtilizadorAutenticado) {
+    const modalidades = await this.prisma.modalidade.findMany({
+      orderBy: { Descricao: 'asc' },
+    });
+    const professores = await this.prisma.professor.findMany({
+      include: {
+        Pessoa: true,
+        Professor_Modalidade: { include: { Modalidade: true } },
+      },
+      orderBy: { Pessoa: { Nome: 'asc' } },
+    });
+
+    const resposta: any = {
+      modalidades: modalidades.map((modalidade) => ({
+        idModalidade: modalidade.ID_Modalidade,
+        descricao: modalidade.Descricao,
+      })),
+      professores: professores.map((professor) => ({
+        idProfessor: professor.ID_Pessoa,
+        nome: professor.Pessoa?.Nome ?? 'Professor',
+        modalidades: professor.Professor_Modalidade.map((item) => ({
+          idModalidade: item.ID_Modalidade,
+          descricao: item.Modalidade.Descricao,
+        })),
+      })),
+    };
+
+    if (user.role === 'Enc_Educacao') {
+      const alunos = await this.prisma.aluno.findMany({
+        where: { ID_Enc_Educacao: user.idPessoa },
+        orderBy: { Nome: 'asc' },
+      });
+      resposta.alunos = alunos.map((aluno) => ({
+        idAluno: aluno.ID_aluno,
+        nome: aluno.Nome,
+      }));
+    }
+
+    return resposta;
+  }
+
+  async pesquisarEncarregadosComAlunos(search = '') {
+    const termoNormalizado = this.normalizarTexto(search);
+    const encarregados = await this.prisma.enc_Educacao.findMany({
+      include: {
+        Pessoa: true,
+        Aluno: { orderBy: { Nome: 'asc' } },
+      },
+      orderBy: { Pessoa: { Nome: 'asc' } },
+      take: 100,
+    });
+
+    return encarregados
+      .filter((encarregado) => {
+        if (!termoNormalizado) return true;
+
+        const nome = this.normalizarTexto(encarregado.Pessoa?.Nome);
+        const email = this.normalizarTexto(encarregado.Pessoa?.Email);
+
+        return nome.includes(termoNormalizado) || email.includes(termoNormalizado);
+      })
+      .slice(0, 15)
+      .map((encarregado) => ({
+        idEncEducacao: encarregado.ID_Pessoa,
+        nome: encarregado.Pessoa?.Nome ?? 'Enc. educacao',
+        email: encarregado.Pessoa?.Email ?? null,
+        alunos: encarregado.Aluno.map((aluno) => ({
+          idAluno: aluno.ID_aluno,
+          nome: aluno.Nome,
+        })),
+      }));
+  }
+
+  async criarPedidoCoaching(
+    dto: CreatePedidoCoachingDto,
+    user: UtilizadorAutenticado,
+  ) {
+    if (!['Enc_Educacao', 'Professor'].includes(user.role)) {
+      throw new BadRequestException('Apenas EE ou professor podem propor coaching.');
+    }
+
+    const inicio = new Date(dto.inicio);
+    if (Number.isNaN(inicio.getTime())) {
+      throw new BadRequestException('Data de inicio invalida.');
+    }
+    if (inicio <= new Date()) {
+      throw new BadRequestException('A proposta deve ser para uma data futura.');
+    }
+
+    const alunoIds = [...new Set(dto.alunosIds.map(Number))];
+    if (alunoIds.length === 0) {
+      throw new BadRequestException('Seleciona pelo menos um aluno.');
+    }
+
+    const idEncEducacaoPessoa =
+      user.role === 'Enc_Educacao' ? user.idPessoa : dto.idEncEducacao;
+    const idProfessorPessoa =
+      user.role === 'Professor' ? user.idPessoa : dto.idProfessor;
+
+    if (!idEncEducacaoPessoa || !idProfessorPessoa) {
+      throw new BadRequestException('Seleciona encarregado e professor.');
+    }
+
+    const [eeUser, professorUser, professorModalidade, alunosValidos] =
+      await Promise.all([
+        this.prisma.utilizador.findFirst({
+          where: { ID_Pessoa: idEncEducacaoPessoa, Pessoa: { Enc_Educacao: { is: {} } } },
+        }),
+        this.prisma.utilizador.findFirst({
+          where: { ID_Pessoa: idProfessorPessoa, Pessoa: { Professor: { is: {} } } },
+        }),
+        this.prisma.professor_Modalidade.findUnique({
+          where: {
+            ID_Professor_ID_Modalidade: {
+              ID_Professor: idProfessorPessoa,
+              ID_Modalidade: dto.idModalidade,
+            },
+          },
+        }),
+        this.prisma.aluno.findMany({
+          where: {
+            ID_aluno: { in: alunoIds },
+            ID_Enc_Educacao: idEncEducacaoPessoa,
+          },
+        }),
+      ]);
+
+    if (!eeUser) throw new NotFoundException('Encarregado de educacao nao encontrado.');
+    if (!professorUser) throw new NotFoundException('Professor nao encontrado.');
+    if (!professorModalidade) {
+      throw new BadRequestException('O professor nao leciona a modalidade escolhida.');
+    }
+    if (alunosValidos.length !== alunoIds.length) {
+      throw new BadRequestException('Todos os alunos selecionados devem pertencer ao encarregado escolhido.');
+    }
+
+    const idEstadoPendente = await this.getEstadoPedidoId('Pendente');
+    const agora = new Date();
+    const pedido = await (this.prisma as any).pedido_Coaching.create({
+      data: {
+        ID_EE: eeUser.ID_Utilizador,
+        ID_Professor: professorUser.ID_Utilizador,
+        ID_Modalidade: dto.idModalidade,
+        Data_Proposta: inicio,
+        Hora_Inicio_Proposta: inicio,
+        Duracao_Proposta: this.duracaoToDate(dto.duracaoMinutos),
+        Mensagem_EE: user.role === 'Enc_Educacao' ? dto.mensagem ?? null : null,
+        Mensagem_Professor: user.role === 'Professor' ? dto.mensagem ?? null : null,
+        ID_EstadoPedido: idEstadoPendente,
+        Data_Criacao: agora,
+        Data_Atualizacao: agora,
+        Pedido_Coaching_Aluno: {
+          create: alunoIds.map((idAluno) => ({ ID_Aluno: idAluno })),
+        },
+      },
+      include: {
+        Estado_Pedido: true,
+        Modalidade: true,
+        Utilizador_Pedido_Coaching_ID_EEToUtilizador: { include: { Pessoa: true } },
+        Utilizador_Pedido_Coaching_ID_ProfessorToUtilizador: { include: { Pessoa: true } },
+        Pedido_Coaching_Aluno: { include: { Aluno: true } },
+      },
+    });
+
+    return {
+      message: 'Proposta enviada para aprovacao da coordenacao.',
+      pedido: this.formatPedido(pedido),
+    };
+  }
+
+  async listarPedidosPendentesAdmin() {
+    const idEstadoPendente = await this.getEstadoPedidoId('Pendente');
+    const pedidos = await (this.prisma as any).pedido_Coaching.findMany({
+      where: { ID_EstadoPedido: idEstadoPendente },
+      include: {
+        Estado_Pedido: true,
+        Modalidade: true,
+        Utilizador_Pedido_Coaching_ID_EEToUtilizador: { include: { Pessoa: true } },
+        Utilizador_Pedido_Coaching_ID_ProfessorToUtilizador: { include: { Pessoa: true } },
+        Pedido_Coaching_Aluno: { include: { Aluno: true } },
+      },
+      orderBy: { Hora_Inicio_Proposta: 'asc' },
+    });
+
+    return pedidos.map((pedido: any) => this.formatPedido(pedido));
+  }
+
+  async aprovarPedidoCoaching(idPedido: number, user: UtilizadorAutenticado) {
+    const pedido = await (this.prisma as any).pedido_Coaching.findUnique({
+      where: { ID_Pedido: idPedido },
+      include: {
+        Estado_Pedido: true,
+        Utilizador_Pedido_Coaching_ID_EEToUtilizador: true,
+        Utilizador_Pedido_Coaching_ID_ProfessorToUtilizador: true,
+        Pedido_Coaching_Aluno: true,
+      },
+    });
+
+    if (!pedido) throw new NotFoundException('Proposta nao encontrada.');
+    if ((pedido.Estado_Pedido?.Nome ?? '').toLowerCase() !== 'pendente') {
+      throw new BadRequestException('Esta proposta ja foi tratada.');
+    }
+
+    const alunos = pedido.Pedido_Coaching_Aluno ?? [];
+    if (alunos.length === 0) {
+      throw new BadRequestException('A proposta nao tem alunos associados.');
+    }
+
+    const idEstadoAprovado = await this.getEstadoPedidoId('Aprovado');
+    const coaching = await this.prisma.$transaction(async (tx) => {
+      const sessao = await tx.coaching.create({
+        data: {
+          ID_Professor: pedido.Utilizador_Pedido_Coaching_ID_ProfessorToUtilizador.ID_Pessoa,
+          ID_Estado_Coaching: 7,
+          ID_Coordenador: user.idPessoa,
+          ID_Modalidade: pedido.ID_Modalidade,
+          Inicio_Coaching: pedido.Hora_Inicio_Proposta,
+          Duracao: this.dateToDuracaoMinutos(pedido.Duracao_Proposta),
+        },
+      });
+
+      await tx.coaching_Aluno.createMany({
+        data: alunos.map((item: any) => ({
+          ID_Coaching: sessao.ID_Coaching,
+          ID_Aluno: item.ID_Aluno,
+          ID_Enc_Educacao: pedido.Utilizador_Pedido_Coaching_ID_EEToUtilizador.ID_Pessoa,
+          Data_Inscricao: new Date(),
+        })),
+      });
+
+      await (tx as any).pedido_Coaching.update({
+        where: { ID_Pedido: idPedido },
+        data: {
+          ID_EstadoPedido: idEstadoAprovado,
+          Data_Atualizacao: new Date(),
+        },
+      });
+
+      return sessao;
+    });
+
+    return {
+      message: 'Proposta aprovada e sessao criada.',
+      idCoaching: coaching.ID_Coaching,
+    };
+  }
+
+  async rejeitarPedidoCoaching(idPedido: number) {
+    const pedido = await (this.prisma as any).pedido_Coaching.findUnique({
+      where: { ID_Pedido: idPedido },
+      include: { Estado_Pedido: true },
+    });
+
+    if (!pedido) throw new NotFoundException('Proposta nao encontrada.');
+    if ((pedido.Estado_Pedido?.Nome ?? '').toLowerCase() !== 'pendente') {
+      throw new BadRequestException('Esta proposta ja foi tratada.');
+    }
+
+    const idEstadoRejeitado = await this.getEstadoPedidoId('Rejeitado');
+    await (this.prisma as any).pedido_Coaching.update({
+      where: { ID_Pedido: idPedido },
+      data: {
+        ID_EstadoPedido: idEstadoRejeitado,
+        Data_Atualizacao: new Date(),
+      },
+    });
+
+    return { message: 'Proposta rejeitada.' };
   }
 
   async getSessoesPorValidarAdmin() {

@@ -7,6 +7,7 @@ import { DisponibilidadesService } from '../../../services/disponibilidades.serv
 import { SelectBoxComponent } from '~/components/selectbox/selectbox.component';
 import { EEService } from '~/services/EE.service';
 import { showToast } from '~/components/toast/toast';
+import { coachingPropostasService } from '~/services/coachingPropostas.service';
 
 interface Disponibilidade {
     idDisponibilidade: number;
@@ -43,6 +44,17 @@ interface Aluno {
     Mail?: string;
     Contato?: string;
     Menor_Idade: boolean;
+}
+
+interface AlunoPropostaContexto {
+    idAluno: number;
+    nome: string;
+}
+
+interface ProfessorProposta {
+    idProfessor: number;
+    nome: string;
+    modalidades: { idModalidade: number; descricao: string }[];
 }
 
 type ViewMode = 'month' | 'week' | 'day';
@@ -226,6 +238,35 @@ function expandirDisponibilidadesRecorrentes(disponibilidades: Disponibilidade[]
     return expandidas;
 }
 
+function normalizarAlunos(raw: any[]): Aluno[] {
+    return raw
+        .map((aluno) => {
+            const idAluno = Number(aluno.ID_aluno ?? aluno.idAluno ?? aluno.id_aluno);
+            const nome = aluno.Nome ?? aluno.nome ?? aluno.Nome_Aluno;
+
+            if (!idAluno || !nome) return null;
+
+            return {
+                ID_aluno: idAluno,
+                Nome: String(nome),
+                Data_Nascimento: aluno.Data_Nascimento ?? aluno.dataNascimento ?? '',
+                NIF: aluno.NIF ?? aluno.nif ?? '',
+                Mail: aluno.Mail ?? aluno.mail,
+                Contato: aluno.Contato ?? aluno.contato,
+                Menor_Idade: Boolean(aluno.Menor_Idade ?? aluno.menorIdade ?? false),
+            };
+        })
+        .filter((aluno): aluno is Aluno => Boolean(aluno));
+}
+
+function juntarAlunos(...listas: Aluno[][]) {
+    const map = new Map<number, Aluno>();
+    listas.flat().forEach((aluno) => {
+        map.set(aluno.ID_aluno, aluno);
+    });
+    return Array.from(map.values()).sort((a, b) => a.Nome.localeCompare(b.Nome, 'pt-PT'));
+}
+
 export default function CoachingEE() {
     const userInfo = authService.getUserInfo() as User;
     if (userInfo.role !== 'Enc_Educacao') {
@@ -245,6 +286,16 @@ export default function CoachingEE() {
     const [filtroModalidade, setFiltroModalidade] = useState('');
     const [filtroProfessor, setFiltroProfessor] = useState('');
     const [observacoes, setObservacoes] = useState('');
+    const [propostaModalAberta, setPropostaModalAberta] = useState(false);
+    const [professoresProposta, setProfessoresProposta] = useState<ProfessorProposta[]>([]);
+    const [propostaProfessor, setPropostaProfessor] = useState<number | null>(null);
+    const [propostaModalidade, setPropostaModalidade] = useState<number | null>(null);
+    const [propostaAlunos, setPropostaAlunos] = useState<number[]>([]);
+    const [propostaData, setPropostaData] = useState('');
+    const [propostaHora, setPropostaHora] = useState('16:00');
+    const [propostaDuracao, setPropostaDuracao] = useState(60);
+    const [propostaMensagem, setPropostaMensagem] = useState('');
+    const [isSubmittingProposta, setIsSubmittingProposta] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -311,9 +362,43 @@ export default function CoachingEE() {
     }
 
     async function fetchAlunos() {
-        const idEE = userInfo.idPessoa;
-        const data = await eeService.getAlunosByEE(idEE);
-        setAlunos(data);
+        const pedidos: Promise<any[]>[] = [eeService.getMeusEducandos()];
+
+        if (userInfo.idPessoa) {
+            pedidos.push(eeService.getAlunosByEE(userInfo.idPessoa));
+        }
+
+        const resultados = await Promise.allSettled(pedidos);
+        const alunosCarregados = resultados.flatMap((resultado) =>
+            resultado.status === 'fulfilled' && Array.isArray(resultado.value)
+                ? normalizarAlunos(resultado.value)
+                : []
+        );
+
+        setAlunos((atuais) => juntarAlunos(atuais, alunosCarregados));
+    }
+
+    async function fetchContextoProposta() {
+        try {
+            const contexto = await coachingPropostasService.getContexto();
+            setProfessoresProposta(Array.isArray(contexto.professores) ? contexto.professores : []);
+
+            if (Array.isArray(contexto.alunos) && contexto.alunos.length > 0) {
+                setAlunos((atuais) => {
+                    const alunosContexto = contexto.alunos.map((aluno: AlunoPropostaContexto) => ({
+                        ID_aluno: aluno.idAluno,
+                        Nome: aluno.nome,
+                        Data_Nascimento: '',
+                        NIF: '',
+                        Menor_Idade: false,
+                    }));
+
+                    return juntarAlunos(atuais, alunosContexto);
+                });
+            }
+        } catch (err) {
+            console.error('Erro ao carregar contexto de propostas:', err);
+        }
     }
 
     async function handleInscreverAluno() {
@@ -373,6 +458,53 @@ export default function CoachingEE() {
         setModalidadeSelecionada(null);
     }
 
+    function fecharPropostaModal() {
+        setPropostaModalAberta(false);
+        setPropostaProfessor(null);
+        setPropostaModalidade(null);
+        setPropostaAlunos([]);
+        setPropostaData('');
+        setPropostaHora('16:00');
+        setPropostaDuracao(60);
+        setPropostaMensagem('');
+    }
+
+    function toggleAlunoProposta(idAluno: number) {
+        setPropostaAlunos((atuais) =>
+            atuais.includes(idAluno)
+                ? atuais.filter((id) => id !== idAluno)
+                : [...atuais, idAluno]
+        );
+    }
+
+    async function handleCriarProposta() {
+        if (!propostaProfessor || !propostaModalidade || propostaAlunos.length === 0 || !propostaData || !propostaHora) {
+            showToast('Preenche professor, modalidade, data e pelo menos um educando.');
+            return;
+        }
+
+        setIsSubmittingProposta(true);
+        try {
+            const inicio = new Date(`${propostaData}T${propostaHora}:00`);
+            await coachingPropostasService.criarProposta({
+                idProfessor: propostaProfessor,
+                idModalidade: propostaModalidade,
+                inicio: inicio.toISOString(),
+                duracaoMinutos: propostaDuracao,
+                alunosIds: propostaAlunos,
+                mensagem: propostaMensagem.trim() || undefined,
+            });
+
+            showToast('Proposta enviada para aprovação da coordenação.');
+            fecharPropostaModal();
+        } catch (err) {
+            console.error(err);
+            showToast(err instanceof Error ? err.message : 'Não foi possível enviar a proposta.');
+        } finally {
+            setIsSubmittingProposta(false);
+        }
+    }
+
     function changeDate(amount: number) {
         const nextDate = new Date(selectedDate);
 
@@ -390,6 +522,7 @@ export default function CoachingEE() {
     useEffect(() => {
         fetchDisponibilidades();
         fetchAlunos();
+        fetchContextoProposta();
     }, []);
 
     const professoresUnicos = Array.from(new Set(disponibilidades.map((item) => item.nomeProfessor).filter(Boolean))).sort();
@@ -406,6 +539,7 @@ export default function CoachingEE() {
             value: aluno.ID_aluno.toString(),
             label: aluno.Nome
         }));
+    const professorSelecionadoProposta = professoresProposta.find((professor) => professor.idProfessor === propostaProfessor);
 
     const renderDisponibilidadeCard = (disponibilidade: Disponibilidade, small = false) => (
         <button
@@ -436,6 +570,9 @@ export default function CoachingEE() {
                 </div>
 
                 <div className="calendario-actions">
+                    <ButtonComponent type="button" className="btn-propor-sessao" onClick={() => setPropostaModalAberta(true)}>
+                        <i className="fa-solid fa-plus"></i> Propor sessão
+                    </ButtonComponent>
                     <div className="calendario-buttons">
                         <ButtonComponent type="button" className="tool-button" onClick={() => changeDate(-1)} aria-label="Anterior">
                             <i className="fa-solid fa-arrow-left" />
@@ -635,6 +772,111 @@ export default function CoachingEE() {
                                     disabled={!alunoSelecionado || !modalidadeSelecionada}
                                 >
                                     Inscrever
+                                </ButtonComponent>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {propostaModalAberta && (
+                <div className="modal-overlay" onClick={fecharPropostaModal}>
+                    <div className="modal-conteudo" onClick={(event) => event.stopPropagation()}>
+                        <div className="modal-cabecalho">
+                            <h2>Propor sessão única</h2>
+                            <ButtonComponent className="modal-fechar" onClick={fecharPropostaModal} aria-label="Fechar">
+                                <i className="fa-solid fa-xmark" />
+                            </ButtonComponent>
+                        </div>
+
+                        <div className="modal-corpo">
+                            <div className="form-group">
+                                <label>Professor</label>
+                                <SelectBoxComponent
+                                    id="proposta-professor"
+                                    selectedOption={propostaProfessor?.toString() || ''}
+                                    onChange={(event) => {
+                                        setPropostaProfessor(event.target.value ? Number(event.target.value) : null);
+                                        setPropostaModalidade(null);
+                                    }}
+                                    options={[
+                                        { value: '', label: 'Selecione um professor' },
+                                        ...professoresProposta.map((professor) => ({
+                                            value: professor.idProfessor.toString(),
+                                            label: professor.nome,
+                                        })),
+                                    ]}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Modalidade</label>
+                                <SelectBoxComponent
+                                    id="proposta-modalidade"
+                                    selectedOption={propostaModalidade?.toString() || ''}
+                                    onChange={(event) => setPropostaModalidade(event.target.value ? Number(event.target.value) : null)}
+                                    options={[
+                                        { value: '', label: 'Selecione uma modalidade' },
+                                        ...(professorSelecionadoProposta?.modalidades ?? []).map((modalidade) => ({
+                                            value: modalidade.idModalidade.toString(),
+                                            label: modalidade.descricao,
+                                        })),
+                                    ]}
+                                />
+                            </div>
+
+                            <div className="form-grid-proposta">
+                                <div className="form-group">
+                                    <label>Data</label>
+                                    <input className="input-proposta" type="date" value={propostaData} onChange={(event) => setPropostaData(event.target.value)} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Hora</label>
+                                    <input className="input-proposta" type="time" value={propostaHora} onChange={(event) => setPropostaHora(event.target.value)} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Duração</label>
+                                    <input className="input-proposta" type="number" min={15} step={15} value={propostaDuracao} onChange={(event) => setPropostaDuracao(Number(event.target.value))} />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Educandos</label>
+                                <div className="alunos-check-list">
+                                    {alunos.length === 0 ? (
+                                        <div className="empty-state alunos-empty-state">
+                                            Não foram encontrados educandos associados à tua conta.
+                                        </div>
+                                    ) : (
+                                        alunos.map((aluno) => (
+                                            <label key={aluno.ID_aluno} className="aluno-check-item">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={propostaAlunos.includes(aluno.ID_aluno)}
+                                                    onChange={() => toggleAlunoProposta(aluno.ID_aluno)}
+                                                />
+                                                <span>{aluno.Nome}</span>
+                                            </label>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Mensagem (opcional)</label>
+                                <textarea
+                                    className="input-observacoes"
+                                    rows={3}
+                                    value={propostaMensagem}
+                                    onChange={(event) => setPropostaMensagem(event.target.value)}
+                                    maxLength={255}
+                                />
+                            </div>
+
+                            <div className="modal-acoes">
+                                <ButtonComponent className="btn-cancelar" onClick={fecharPropostaModal}>Cancelar</ButtonComponent>
+                                <ButtonComponent className="btn-confirmar" onClick={handleCriarProposta} disabled={isSubmittingProposta}>
+                                    {isSubmittingProposta ? 'A enviar...' : 'Enviar proposta'}
                                 </ButtonComponent>
                             </div>
                         </div>

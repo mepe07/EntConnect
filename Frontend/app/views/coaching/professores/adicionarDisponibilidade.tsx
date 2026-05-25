@@ -4,6 +4,8 @@ import { authService } from '~/services/auth.service';
 import { RolesService } from '~/services/roles.service';
 import { DisponibilidadesService } from '~/services/disponibilidades.service';
 import { showToast } from '~/components/toast/toast';
+import { SelectBoxComponent } from '~/components/selectbox/selectbox.component';
+import { coachingPropostasService } from '~/services/coachingPropostas.service';
 import './adicionarDisponibilidade.scss';
 
 interface DiaSemana {
@@ -28,6 +30,18 @@ interface DisponibilidadeRecorrente {
     ativa: boolean;
     diasSemana?: DiaSemana | null;
     excecoes?: ExcecaoDisponibilidade[];
+}
+
+interface ModalidadeProposta {
+    idModalidade: number;
+    descricao: string;
+}
+
+interface EncarregadoProposta {
+    idEncEducacao: number;
+    nome: string;
+    email: string | null;
+    alunos: { idAluno: number; nome: string }[];
 }
 
 const DIAS_SEMANA: DiaSemana[] = [
@@ -106,6 +120,20 @@ export default function AdicionarDisponibilidade() {
     const [isExceptionFormOpen, setIsExceptionFormOpen] = useState(false);
     const [exceptionDate, setExceptionDate] = useState('');
     const [form, setForm] = useState(initialForm);
+    const [isPropostaModalOpen, setIsPropostaModalOpen] = useState(false);
+    const [modalidadesProposta, setModalidadesProposta] = useState<ModalidadeProposta[]>([]);
+    const [encarregados, setEncarregados] = useState<EncarregadoProposta[]>([]);
+    const [loadingEncarregados, setLoadingEncarregados] = useState(false);
+    const [erroPesquisaEE, setErroPesquisaEE] = useState<string | null>(null);
+    const [pesquisaEE, setPesquisaEE] = useState('');
+    const [propostaEE, setPropostaEE] = useState<number | null>(null);
+    const [propostaModalidade, setPropostaModalidade] = useState<number | null>(null);
+    const [propostaAlunos, setPropostaAlunos] = useState<number[]>([]);
+    const [propostaData, setPropostaData] = useState('');
+    const [propostaHora, setPropostaHora] = useState('16:00');
+    const [propostaDuracao, setPropostaDuracao] = useState(60);
+    const [propostaMensagem, setPropostaMensagem] = useState('');
+    const [isSubmittingProposta, setIsSubmittingProposta] = useState(false);
 
     async function refreshDisponibilidades(idProfessor = idProfessorAtivo) {
         if (!idProfessor) return;
@@ -143,6 +171,12 @@ export default function AdicionarDisponibilidade() {
                     setIdProfessorAtivo(respostaRoles.idProfessor);
                     await refreshDisponibilidades(respostaRoles.idProfessor);
                 }
+
+                const contexto = await coachingPropostasService.getContexto();
+                const professorContexto = (contexto.professores ?? []).find(
+                    (professor: any) => professor.idProfessor === respostaRoles?.idProfessor,
+                );
+                setModalidadesProposta(professorContexto?.modalidades ?? []);
             } catch (error) {
                 console.error(error);
                 showToast('Nao foi possivel identificar o teu perfil de professor.');
@@ -151,6 +185,28 @@ export default function AdicionarDisponibilidade() {
 
         fetchInitialData();
     }, []);
+
+    useEffect(() => {
+        if (!isPropostaModalOpen) return;
+
+        const timeoutId = window.setTimeout(async () => {
+            setLoadingEncarregados(true);
+            setErroPesquisaEE(null);
+
+            try {
+                const resultados = await coachingPropostasService.pesquisarEncarregados(pesquisaEE);
+                setEncarregados(Array.isArray(resultados) ? resultados : []);
+            } catch (error) {
+                console.error(error);
+                setEncarregados([]);
+                setErroPesquisaEE('Nao foi possivel carregar encarregados.');
+            } finally {
+                setLoadingEncarregados(false);
+            }
+        }, 250);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [pesquisaEE, isPropostaModalOpen]);
 
     function processarDisponibilidadesDoDia(idDia: number) {
         const disponibilidadesDoDia = disponibilidades.filter((item) => item.diaSemana === idDia);
@@ -310,6 +366,64 @@ export default function AdicionarDisponibilidade() {
         }
     }
 
+    function fecharPropostaModal() {
+        setIsPropostaModalOpen(false);
+        setPesquisaEE('');
+        setEncarregados([]);
+        setErroPesquisaEE(null);
+        setPropostaEE(null);
+        setPropostaModalidade(null);
+        setPropostaAlunos([]);
+        setPropostaData('');
+        setPropostaHora('16:00');
+        setPropostaDuracao(60);
+        setPropostaMensagem('');
+    }
+
+    function selecionarEncarregadoProposta(encarregado: EncarregadoProposta) {
+        setPropostaEE(encarregado.idEncEducacao);
+        setPesquisaEE(encarregado.nome);
+        setPropostaAlunos([]);
+    }
+
+    function toggleAlunoProposta(idAluno: number) {
+        setPropostaAlunos((atuais) =>
+            atuais.includes(idAluno)
+                ? atuais.filter((id) => id !== idAluno)
+                : [...atuais, idAluno]
+        );
+    }
+
+    async function handleCriarProposta() {
+        if (!propostaEE || !propostaModalidade || propostaAlunos.length === 0 || !propostaData || !propostaHora) {
+            showToast('Preenche encarregado, modalidade, data e pelo menos um aluno.');
+            return;
+        }
+
+        setIsSubmittingProposta(true);
+        try {
+            const inicio = new Date(`${propostaData}T${propostaHora}:00`);
+            await coachingPropostasService.criarProposta({
+                idEncEducacao: propostaEE,
+                idModalidade: propostaModalidade,
+                inicio: inicio.toISOString(),
+                duracaoMinutos: propostaDuracao,
+                alunosIds: propostaAlunos,
+                mensagem: propostaMensagem.trim() || undefined,
+            });
+
+            showToast('Proposta enviada para aprovação da coordenação.');
+            fecharPropostaModal();
+        } catch (error) {
+            console.error(error);
+            showToast(error instanceof Error ? error.message : 'Não foi possível enviar a proposta.');
+        } finally {
+            setIsSubmittingProposta(false);
+        }
+    }
+
+    const encarregadoSelecionado = encarregados.find((encarregado) => encarregado.idEncEducacao === propostaEE);
+
     if (!idProfessorAtivo) {
         return <div className="pagina-adicionar-disponibilidade">A carregar perfil...</div>;
     }
@@ -323,6 +437,9 @@ export default function AdicionarDisponibilidade() {
                 </div>
                 <ButtonComponent className="btn-primario" onClick={() => setIsCreateModalOpen(true)}>
                     <i className="fa-solid fa-plus"></i> Adicionar disponibilidade
+                </ButtonComponent>
+                <ButtonComponent className="btn-secundario-topo" onClick={() => setIsPropostaModalOpen(true)}>
+                    <i className="fa-solid fa-calendar-plus"></i> Propor sessão
                 </ButtonComponent>
             </div>
 
@@ -602,6 +719,150 @@ export default function AdicionarDisponibilidade() {
                             </ButtonComponent>
                             <ButtonComponent type="button" className="btn-primario" onClick={() => setSelectedDisponibilidade(null)}>
                                 Fechar
+                            </ButtonComponent>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isPropostaModalOpen && (
+                <div className="modal-overlay" onClick={fecharPropostaModal}>
+                    <div className="modal-content form-modal proposta-modal" onClick={(event) => event.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Propor sessão única</h3>
+                            <ButtonComponent className="btn-fechar" onClick={fecharPropostaModal}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </ButtonComponent>
+                        </div>
+
+                        <div className="modal-body">
+                            <div className="form-grid proposta-grid">
+                                <label>
+                                    Pesquisar enc. educação
+                                    <input
+                                        type="search"
+                                        className="input-campo"
+                                        value={pesquisaEE}
+                                        onChange={(event) => {
+                                            setPesquisaEE(event.target.value);
+                                            setPropostaEE(null);
+                                            setPropostaAlunos([]);
+                                        }}
+                                    />
+                                </label>
+
+                                <div className="resultados-ee-proposta">
+                                    {loadingEncarregados && <div className="resultado-ee-status">A procurar...</div>}
+                                    {erroPesquisaEE && <div className="resultado-ee-status erro">{erroPesquisaEE}</div>}
+                                    {!loadingEncarregados && !erroPesquisaEE && pesquisaEE.trim() && encarregados.length === 0 && (
+                                        <div className="resultado-ee-status">Sem resultados para "{pesquisaEE}".</div>
+                                    )}
+                                    {!loadingEncarregados && encarregados.length > 0 && (
+                                        <div className="resultado-ee-lista">
+                                            {encarregados.map((encarregado) => (
+                                                <button
+                                                    key={encarregado.idEncEducacao}
+                                                    type="button"
+                                                    className={`resultado-ee-item ${propostaEE === encarregado.idEncEducacao ? 'selecionado' : ''}`}
+                                                    onClick={() => selecionarEncarregadoProposta(encarregado)}
+                                                >
+                                                    <strong>{encarregado.nome}</strong>
+                                                    <span>
+                                                        {encarregado.email || 'Sem email'} - {encarregado.alunos.length} aluno{encarregado.alunos.length === 1 ? '' : 's'}
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <label>
+                                    Enc. educação
+                                    <select
+                                        className="input-campo"
+                                        value={propostaEE ?? ''}
+                                        onChange={(event) => {
+                                            setPropostaEE(event.target.value ? Number(event.target.value) : null);
+                                            setPropostaAlunos([]);
+                                        }}
+                                    >
+                                        <option value="">Selecione</option>
+                                        {encarregados.map((encarregado) => (
+                                            <option key={encarregado.idEncEducacao} value={encarregado.idEncEducacao}>
+                                                {encarregado.nome}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+
+                                <label>
+                                    Modalidade
+                                    <SelectBoxComponent
+                                        id="proposta-modalidade-prof"
+                                        selectedOption={propostaModalidade?.toString() || ''}
+                                        onChange={(event) => setPropostaModalidade(event.target.value ? Number(event.target.value) : null)}
+                                        options={[
+                                            { value: '', label: 'Selecione' },
+                                            ...modalidadesProposta.map((modalidade) => ({
+                                                value: modalidade.idModalidade.toString(),
+                                                label: modalidade.descricao,
+                                            })),
+                                        ]}
+                                    />
+                                </label>
+
+                                <label>
+                                    Data
+                                    <input className="input-campo" type="date" value={propostaData} onChange={(event) => setPropostaData(event.target.value)} />
+                                </label>
+
+                                <label>
+                                    Hora
+                                    <input className="input-campo" type="time" value={propostaHora} onChange={(event) => setPropostaHora(event.target.value)} />
+                                </label>
+
+                                <label>
+                                    Duração (min)
+                                    <input className="input-campo" type="number" min={15} step={15} value={propostaDuracao} onChange={(event) => setPropostaDuracao(Number(event.target.value))} />
+                                </label>
+                            </div>
+
+                            <div className="alunos-proposta-bloco">
+                                <span>Alunos associados</span>
+                                <div className="alunos-check-list">
+                                    {(encarregadoSelecionado?.alunos ?? []).map((aluno) => (
+                                        <label key={aluno.idAluno} className="aluno-check-item">
+                                            <input
+                                                type="checkbox"
+                                                checked={propostaAlunos.includes(aluno.idAluno)}
+                                                onChange={() => toggleAlunoProposta(aluno.idAluno)}
+                                            />
+                                            <span>{aluno.nome}</span>
+                                        </label>
+                                    ))}
+                                    {!encarregadoSelecionado && <div className="empty-state">Pesquisa e seleciona um encarregado.</div>}
+                                    {encarregadoSelecionado && encarregadoSelecionado.alunos.length === 0 && <div className="empty-state">Sem alunos associados.</div>}
+                                </div>
+                            </div>
+
+                            <label className="mensagem-proposta">
+                                Mensagem (opcional)
+                                <textarea
+                                    className="input-campo"
+                                    rows={3}
+                                    value={propostaMensagem}
+                                    onChange={(event) => setPropostaMensagem(event.target.value)}
+                                    maxLength={255}
+                                />
+                            </label>
+                        </div>
+
+                        <div className="modal-footer">
+                            <ButtonComponent type="button" className="btn-secundario" onClick={fecharPropostaModal}>
+                                Cancelar
+                            </ButtonComponent>
+                            <ButtonComponent type="button" className="btn-primario" onClick={handleCriarProposta} disabled={isSubmittingProposta}>
+                                {isSubmittingProposta ? 'A enviar...' : 'Enviar proposta'}
                             </ButtonComponent>
                         </div>
                     </div>

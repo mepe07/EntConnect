@@ -4,6 +4,7 @@ import { AuthService } from '~/services/auth.service';
 import { AdminService } from '~/services/admin.service';
 import './coachingAdmin.scss';
 import { showToast } from '~/components/toast/toast';
+import { coachingPropostasService } from '~/services/coachingPropostas.service';
 
 interface AlunoSessao {
     idAluno: number;
@@ -34,6 +35,20 @@ interface SessaoAdmin {
     horario: string;
     modalidade: string;
     estado: string;
+    alunos: AlunoSessao[];
+}
+
+interface PropostaCoachingAdmin {
+    idPedido: number;
+    nomeEncEducacao: string;
+    nomeProfessor: string;
+    modalidade: string;
+    data: string;
+    horario: string;
+    duracaoMinutos: number;
+    estado: string;
+    mensagemEE: string | null;
+    mensagemProfessor: string | null;
     alunos: AlunoSessao[];
 }
 
@@ -178,6 +193,9 @@ export default function CoachingAdmin() {
     const [alunoDetalhes, setAlunoDetalhes] = useState<AlunoDetalhes | null>(null);
     const [isCarregandoAluno, setIsCarregandoAluno] = useState(false);
     const [isCarregandoPorValidar, setIsCarregandoPorValidar] = useState(false);
+    const [propostasPendentes, setPropostasPendentes] = useState<PropostaCoachingAdmin[]>([]);
+    const [isCarregandoPropostas, setIsCarregandoPropostas] = useState(false);
+    const [propostaEmTratamento, setPropostaEmTratamento] = useState<number | null>(null);
     const [kpiModalInfo, setKpiModalInfo] = useState<KpiModalInfo>({
         titulo: 'Sessões',
         subtitulo: 'Sessões referenciadas pelo indicador.',
@@ -199,6 +217,7 @@ export default function CoachingAdmin() {
 
             setKpis(dadosKpis);
             setSessoes(Array.isArray(dadosTabela) ? dadosTabela : []);
+            fetchPropostasPendentes();
 
             try {
                 const dadosPorValidar = await adminService.getSessoesPorValidar();
@@ -218,6 +237,19 @@ export default function CoachingAdmin() {
     useEffect(() => {
         fetchDadosDashboard();
     }, []);
+
+    async function fetchPropostasPendentes() {
+        setIsCarregandoPropostas(true);
+        try {
+            const dados = await coachingPropostasService.getPendentesAdmin();
+            setPropostasPendentes(Array.isArray(dados) ? dados : []);
+        } catch (error) {
+            console.error(error);
+            setPropostasPendentes([]);
+        } finally {
+            setIsCarregandoPropostas(false);
+        }
+    }
 
     const sessoesOrdenadas = useMemo(() => {
         return sessoes
@@ -437,6 +469,37 @@ export default function CoachingAdmin() {
         }
     }
 
+    async function handleAprovarProposta(proposta: PropostaCoachingAdmin) {
+        setPropostaEmTratamento(proposta.idPedido);
+        try {
+            await coachingPropostasService.aprovar(proposta.idPedido);
+            showToast('Proposta aprovada e sessão criada.');
+            setPropostasPendentes((atuais) => atuais.filter((item) => item.idPedido !== proposta.idPedido));
+            fetchDadosDashboard();
+        } catch (error) {
+            console.error(error);
+            showToast(error instanceof Error ? error.message : 'Erro ao aprovar proposta.');
+        } finally {
+            setPropostaEmTratamento(null);
+        }
+    }
+
+    async function handleRejeitarProposta(proposta: PropostaCoachingAdmin) {
+        if (!window.confirm('Rejeitar esta proposta de coaching?')) return;
+
+        setPropostaEmTratamento(proposta.idPedido);
+        try {
+            await coachingPropostasService.rejeitar(proposta.idPedido);
+            showToast('Proposta rejeitada.');
+            setPropostasPendentes((atuais) => atuais.filter((item) => item.idPedido !== proposta.idPedido));
+        } catch (error) {
+            console.error(error);
+            showToast(error instanceof Error ? error.message : 'Erro ao rejeitar proposta.');
+        } finally {
+            setPropostaEmTratamento(null);
+        }
+    }
+
     async function abrirModalAluno(aluno: AlunoSessao) {
         setIsCarregandoAluno(true);
 
@@ -540,6 +603,58 @@ export default function CoachingAdmin() {
                         <h3>{kpis.realizadasMes}</h3>
                     </div>
                 </button>
+            </section>
+
+            <section className="propostas-section">
+                <div className="propostas-header">
+                    <div>
+                        <h2>Propostas por aprovar</h2>
+                        <p>{propostasPendentes.length} pedido{propostasPendentes.length === 1 ? '' : 's'} pendente{propostasPendentes.length === 1 ? '' : 's'}</p>
+                    </div>
+                    <ButtonComponent type="button" className="tool-button" onClick={fetchPropostasPendentes} disabled={isCarregandoPropostas}>
+                        <i className="fa-solid fa-rotate"></i> Atualizar
+                    </ButtonComponent>
+                </div>
+
+                {isCarregandoPropostas ? (
+                    <div className="empty-state">A carregar propostas...</div>
+                ) : propostasPendentes.length === 0 ? (
+                    <div className="empty-state">Não existem propostas pendentes.</div>
+                ) : (
+                    <div className="propostas-list">
+                        {propostasPendentes.map((proposta) => (
+                            <article key={proposta.idPedido} className="proposta-card">
+                                <div className="proposta-main">
+                                    <span className="proposta-date">{proposta.data} | {proposta.horario}</span>
+                                    <h3>{proposta.modalidade}</h3>
+                                    <p>Prof. {proposta.nomeProfessor} com {proposta.alunos.map((aluno) => aluno.nome).join(', ')}</p>
+                                    <span>Enc. educação: {proposta.nomeEncEducacao}</span>
+                                    {(proposta.mensagemEE || proposta.mensagemProfessor) && (
+                                        <small>{proposta.mensagemEE || proposta.mensagemProfessor}</small>
+                                    )}
+                                </div>
+                                <div className="proposta-actions">
+                                    <ButtonComponent
+                                        type="button"
+                                        className="btn-aprovar-proposta"
+                                        onClick={() => handleAprovarProposta(proposta)}
+                                        disabled={propostaEmTratamento === proposta.idPedido}
+                                    >
+                                        <i className="fa-solid fa-check"></i> Aprovar
+                                    </ButtonComponent>
+                                    <ButtonComponent
+                                        type="button"
+                                        className="btn-rejeitar-proposta"
+                                        onClick={() => handleRejeitarProposta(proposta)}
+                                        disabled={propostaEmTratamento === proposta.idPedido}
+                                    >
+                                        <i className="fa-solid fa-xmark"></i> Rejeitar
+                                    </ButtonComponent>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                )}
             </section>
 
             <section className="coaching-calendar-section">

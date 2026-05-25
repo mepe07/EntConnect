@@ -40,7 +40,8 @@
     }
 
     .tool-button,
-    .view-button {
+    .view-button,
+    .btn-propor-sessao {
         border: 1px solid #d8dbe2;
         background: #ffffff;
         color: #1f2937;
@@ -53,9 +54,25 @@
     }
 
     .tool-button:hover,
-    .view-button:hover {
+    .view-button:hover,
+    .btn-propor-sessao:hover {
         border-color: #9ca3af;
         background: #f8fafc;
+    }
+
+    .btn-propor-sessao {
+        background: #0f766e;
+        border-color: #0f766e;
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+
+        &:hover {
+            background: #0d9488;
+            border-color: #0d9488;
+        }
     }
 
     .view-button.active {
@@ -421,6 +438,51 @@
         font: inherit;
     }
 
+    .form-grid-proposta {
+        display: grid;
+        grid-template-columns: 1.2fr 0.9fr 0.9fr;
+        gap: 14px;
+    }
+
+    .input-proposta {
+        width: 100%;
+        min-height: 42px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        padding: 9px 11px;
+        font: inherit;
+        color: #1f2937;
+        background: #ffffff;
+    }
+
+    .alunos-check-list {
+        display: grid;
+        gap: 8px;
+        max-height: 180px;
+        overflow: auto;
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #f8fafc;
+    }
+
+    .aluno-check-item {
+        display: flex !important;
+        align-items: center;
+        gap: 10px;
+        margin: 0 !important;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #334155;
+        cursor: pointer;
+
+        input {
+            width: 16px;
+            height: 16px;
+        }
+    }
+
     .modal-acoes {
         display: flex;
         justify-content: flex-end;
@@ -488,7 +550,8 @@
         }
 
         .filtros,
-        .calendario-grid {
+        .calendario-grid,
+        .form-grid-proposta {
             grid-template-columns: 1fr;
         }
     }
@@ -520,10 +583,17 @@ body.entconnect-dark {
         }
 
         .tool-button,
-        .view-button {
+        .view-button,
+        .btn-propor-sessao {
             background: #111827 !important;
             border-color: #334155 !important;
             color: #e2e8f0 !important;
+        }
+
+        .btn-propor-sessao {
+            background: #0f766e !important;
+            border-color: #0f766e !important;
+            color: #ffffff !important;
         }
 
         .view-button.active {
@@ -639,6 +709,14 @@ body.entconnect-dark {
         }
 
         .input-observacoes {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+
+        .input-proposta,
+        .alunos-check-list,
+        .aluno-check-item {
             background-color: #0f172a !important;
             border-color: #334155 !important;
             color: #e2e8f0 !important;

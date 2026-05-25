@@ -122,6 +122,132 @@ table button {
     border: none !important;
 }
 
+.propostas-section {
+    margin-bottom: 32px;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #ffffff;
+    padding: 20px;
+
+    .propostas-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 16px;
+
+        h2 {
+            margin: 0;
+            color: #0f172a;
+            font-size: 1.25rem;
+        }
+
+        p {
+            margin: 4px 0 0;
+            color: #64748b;
+        }
+    }
+
+    .tool-button {
+        border: 1px solid #d8dbe2;
+        background: #ffffff;
+        color: #1f2937;
+        border-radius: 999px;
+        padding: 0.65rem 1rem;
+        font-size: 0.9rem;
+        cursor: pointer;
+        min-height: 40px;
+    }
+
+    .propostas-list {
+        display: grid;
+        gap: 12px;
+    }
+
+    .proposta-card {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 16px;
+        align-items: center;
+        padding: 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #f8fafc;
+    }
+
+    .proposta-main {
+        display: grid;
+        gap: 5px;
+        min-width: 0;
+
+        h3 {
+            margin: 0;
+            color: #111827;
+            font-size: 1.05rem;
+        }
+
+        p,
+        span,
+        small {
+            margin: 0;
+            color: #475569;
+        }
+
+        small {
+            display: inline-flex;
+            width: fit-content;
+            max-width: 100%;
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+        }
+    }
+
+    .proposta-date {
+        color: #0f766e !important;
+        font-weight: 800;
+    }
+
+    .proposta-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .btn-aprovar-proposta,
+    .btn-rejeitar-proposta {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .btn-aprovar-proposta {
+        background: #dcfce7;
+        border: 1px solid #86efac;
+        color: #166534;
+    }
+
+    .btn-rejeitar-proposta {
+        background: #fee2e2;
+        border: 1px solid #fca5a5;
+        color: #991b1b;
+    }
+
+    .empty-state {
+        padding: 22px;
+        border-radius: 12px;
+        background: #f8fafc;
+        color: #475569;
+        border: 1px dashed #cbd5e1;
+    }
+}
+
 .coaching-calendar-section {
     .calendario-header {
         display: flex;
@@ -726,6 +852,12 @@ table button {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
+
+    .propostas-section {
+        .proposta-card {
+            grid-template-columns: 1fr;
+        }
+    }
 }
 
 @media (max-width: 640px) {
@@ -842,6 +974,8 @@ body.entconnect-dark {
     }
 
     .kpi-grid .kpi-card,
+    .propostas-section,
+    .propostas-section .proposta-card,
     .coaching-calendar-section .calendario-list,
     .coaching-calendar-section .calendar-weekday,
     .coaching-calendar-section .calendar-day,
@@ -854,6 +988,10 @@ body.entconnect-dark {
     }
 
     .kpi-grid .kpi-card .info span,
+    .propostas-section .propostas-header p,
+    .propostas-section .proposta-main p,
+    .propostas-section .proposta-main span,
+    .propostas-section .proposta-main small,
     .coaching-calendar-section .calendario-range,
     .coaching-calendar-section .day-summary-label,
     .coaching-calendar-section .calendar-more,
@@ -865,6 +1003,8 @@ body.entconnect-dark {
     }
 
     .kpi-grid .kpi-card .info h3,
+    .propostas-section .propostas-header h2,
+    .propostas-section .proposta-main h3,
     .coaching-calendar-section .calendario-header h2,
     .coaching-calendar-section .day-summary strong,
     .coaching-calendar-section .item-copy strong,
@@ -952,6 +1092,19 @@ body.entconnect-dark {
         .calendar-more {
             background: rgba(96, 165, 250, 0.12) !important;
             border-color: rgba(96, 165, 250, 0.38) !important;
+        }
+    }
+
+    .propostas-section {
+        .tool-button,
+        .proposta-main small {
+            background: #1f2937 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+
+        .proposta-date {
+            color: #5eead4 !important;
         }
     }
 

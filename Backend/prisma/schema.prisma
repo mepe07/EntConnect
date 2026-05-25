@@ -31,6 +31,7 @@ model Aluno {
   Enc_Educacao    Enc_Educacao?    @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Aluno_EncEducacao")
   Aula_Aluno      Aula_Aluno[]
   Coaching_Aluno  Coaching_Aluno[]
+  Pedido_Coaching_Aluno Pedido_Coaching_Aluno[]
 }
 
 model Artigo {
@@ -299,6 +300,16 @@ model Pedido_Coaching {
   Estado_Pedido                                       Estado_Pedido @relation(fields: [ID_EstadoPedido], references: [ID_EstadoPedido], onUpdate: NoAction, map: "FK_Pedido_Estado")
   Modalidade                                          Modalidade    @relation(fields: [ID_Modalidade], references: [ID_Modalidade], onUpdate: NoAction, map: "FK_Pedido_Modalidade")
   Utilizador_Pedido_Coaching_ID_ProfessorToUtilizador Utilizador    @relation("Pedido_Coaching_ID_ProfessorToUtilizador", fields: [ID_Professor], references: [ID_Utilizador], onUpdate: NoAction, map: "FK_Pedido_Professor")
+  Pedido_Coaching_Aluno                               Pedido_Coaching_Aluno[]
+}
+
+model Pedido_Coaching_Aluno {
+  ID_Pedido Int
+  ID_Aluno  Int
+  Aluno     Aluno           @relation(fields: [ID_Aluno], references: [ID_aluno], onDelete: Cascade, onUpdate: NoAction, map: "FK_PedidoCoachingAluno_Aluno")
+  Pedido    Pedido_Coaching @relation(fields: [ID_Pedido], references: [ID_Pedido], onDelete: Cascade, onUpdate: NoAction, map: "FK_PedidoCoachingAluno_Pedido")
+
+  @@id([ID_Pedido, ID_Aluno], map: "PK_Pedido_Coaching_Aluno")
 }
 
 model Pessoa {

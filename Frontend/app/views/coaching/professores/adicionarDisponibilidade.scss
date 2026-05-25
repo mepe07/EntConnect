@@ -537,6 +537,140 @@
   }
 }
 
+.pagina-adicionar-disponibilidade {
+  .btn-secundario-topo {
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid colors.$gray-4;
+    color: colors.$gray-7;
+
+    &:hover {
+      background: colors.$gray-2;
+    }
+  }
+
+  .proposta-modal {
+    max-width: 780px !important;
+  }
+
+  .proposta-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .resultados-ee-proposta {
+    grid-column: 1 / -1;
+    margin-top: -0.5rem;
+  }
+
+  .resultado-ee-status {
+    padding: 10px 12px;
+    border: 1px dashed colors.$gray-3;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 13px;
+    font-style: italic;
+
+    &.erro {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #b91c1c;
+    }
+  }
+
+  .resultado-ee-lista {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 8px;
+  }
+
+  .resultado-ee-item {
+    display: grid;
+    gap: 3px;
+    text-align: left;
+    padding: 10px 12px;
+    border: 1px solid colors.$gray-3;
+    border-radius: 8px;
+    background: #ffffff;
+    cursor: pointer;
+    font: inherit;
+
+    strong {
+      color: colors.$gray-8;
+      font-size: 14px;
+    }
+
+    span {
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    &:hover,
+    &.selecionado {
+      border-color: colors.$theme-80;
+      box-shadow: 0 0 0 3px rgba(colors.$theme-100, 0.08);
+    }
+  }
+
+  .alunos-proposta-bloco,
+  .mensagem-proposta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    font-size: 12px;
+    font-weight: 600;
+    color: colors.$gray-7;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .alunos-check-list {
+    display: grid;
+    gap: 8px;
+    max-height: 180px;
+    overflow: auto;
+    padding: 10px;
+    border: 1px solid colors.$gray-3;
+    border-radius: 10px;
+    background: #f8fafc;
+  }
+
+  .aluno-check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #ffffff;
+    color: colors.$gray-8;
+    text-transform: none;
+    letter-spacing: 0;
+    cursor: pointer;
+
+    input {
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
+@media (max-width: 760px) {
+  .pagina-adicionar-disponibilidade {
+    .proposta-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
 body.entconnect-dark {
   .pagina-adicionar-disponibilidade {
     color: #e2e8f0;
@@ -657,6 +791,29 @@ body.entconnect-dark {
         color: #86efac !important;
         border-color: rgba(134, 239, 172, 0.45) !important;
       }
+    }
+
+    .btn-secundario-topo,
+    .alunos-check-list,
+    .aluno-check-item,
+    .resultado-ee-status,
+    .resultado-ee-item {
+      background: #1f2937 !important;
+      border-color: #475569 !important;
+      color: #e2e8f0 !important;
+    }
+
+    .resultado-ee-item strong {
+      color: #f8fafc !important;
+    }
+
+    .resultado-ee-item span {
+      color: #94a3b8 !important;
+    }
+
+    .alunos-proposta-bloco,
+    .mensagem-proposta {
+      color: #cbd5e1 !important;
     }
 
     .modal-header,
