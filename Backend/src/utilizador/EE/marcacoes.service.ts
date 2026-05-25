@@ -33,6 +33,7 @@ export class MarcacoesService {
                 Modalidade: true,
               },
             },
+            Modalidade: true,
             Estado_Coaching: true,
             Sala: true,
           },
@@ -71,6 +72,7 @@ export class MarcacoesService {
               },
             },
             Disponibilidade: true,
+            Modalidade: true,
             Estado_Coaching: true,
             Coaching_Aluno: {
               include: {
@@ -103,7 +105,10 @@ export class MarcacoesService {
         idCoaching: coaching.ID_Coaching,
         data,
         horario,
-        modalidade: coaching.Disponibilidade?.Modalidade || 'N/A',
+        modalidade:
+          coaching.Modalidade?.Descricao ||
+          coaching.Disponibilidade?.Modalidade ||
+          'N/A',
         estado: coaching.Estado_Coaching?.Tipo || 'N/A',
         professor: coaching.Professor?.Pessoa?.Nome || 'N/A',
         alunos: [] as Array<{ idAluno: number; nome: string }>,

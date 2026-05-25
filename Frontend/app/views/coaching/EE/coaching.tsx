@@ -1,26 +1,21 @@
 import { ButtonComponent } from '~/components/button/button.component';
 import './coaching.scss';
-import { useEffect, useState } from 'react';
-import { TableComponent } from '~/components/table/table.component';
-import { TableColumnTypesEnum } from '~/components/table/models/enums/table-column-types.enum';
-import { ButtonTypeEnum } from '~/components/button/models/enums/button-type.enum';
-import { ButtonColorEnum } from '~/components/button/models/enums/button-color.enum';
-import { SizeEnum } from '~/components/models/enums/size.enum';
-import { InfoTypesEnum } from '~/components/models/enums/info-types.enum';
+import { useEffect, useMemo, useState } from 'react';
 import { authService } from '~/services/auth.service';
 import type { User } from '../../../models/interfaces/user.interface';
 import { DisponibilidadesService } from '../../../services/disponibilidades.service';
-import { InputComponent } from '~/components/input/input.component';
 import { SelectBoxComponent } from '~/components/selectbox/selectbox.component';
 import { EEService } from '~/services/EE.service';
-
 import { showToast } from '~/components/toast/toast';
+import { coachingPropostasService } from '~/services/coachingPropostas.service';
+
 interface Disponibilidade {
     idDisponibilidade: number;
     nomeProfessor: string;
     data: string;
     horario: string;
     modalidade: string;
+    modalidadesProfessor: { idModalidade: number; descricao: string }[];
     estado: string;
     valorPorAluno: number;
     maxAlunos: number;
@@ -28,6 +23,16 @@ interface Disponibilidade {
     idEstudio: number;
     duracao: number;
     idCoordenador: number;
+    horaInicio?: string;
+    diaSemana?: number | null;
+    ativa?: boolean;
+    excecoes?: { ID_Excecao: number; Data_Cancelada: string }[];
+    sessoes?: {
+        idCoaching: number;
+        inicioCoaching: string;
+        idModalidade?: number | null;
+        alunosInscritosIds: number[];
+    }[];
     alunosInscritosIds: number[];
 }
 
@@ -41,81 +46,369 @@ interface Aluno {
     Menor_Idade: boolean;
 }
 
+interface AlunoPropostaContexto {
+    idAluno: number;
+    nome: string;
+}
+
+interface ProfessorProposta {
+    idProfessor: number;
+    nome: string;
+    modalidades: { idModalidade: number; descricao: string }[];
+}
+
+type ViewMode = 'month' | 'week' | 'day';
+
+function pad(value: number) {
+    return String(value).padStart(2, '0');
+}
+
+function formatDateKey(date: Date) {
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function formatPtDate(date: Date) {
+    return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
+}
+
+function parseDataDisponibilidade(data: string) {
+    const [dia, mes, ano] = data.split('/');
+    return new Date(Number(ano), Number(mes) - 1, Number(dia));
+}
+
+function getDisponibilidadeDateTime(disponibilidade: Disponibilidade) {
+    const date = parseDataDisponibilidade(disponibilidade.data);
+    const [horaInicio] = disponibilidade.horario.split(' - ');
+    const [horas = '0', minutos = '0'] = horaInicio.split(':');
+    date.setHours(Number(horas), Number(minutos), 0, 0);
+    return date;
+}
+
+function formatMonthLabel(date: Date) {
+    return date.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
+}
+
+const portugueseHolidays: Record<string, string> = {
+    '01-01': 'Ano Novo',
+    '25-04': 'Dia da Liberdade',
+    '01-05': 'Dia do Trabalhador',
+    '10-06': 'Dia de Portugal',
+    '15-08': 'Assunção de Maria',
+    '05-10': 'Implantação da República',
+    '01-11': 'Todos os Santos',
+    '01-12': 'Restauração da Independência',
+    '08-12': 'Imaculada Conceição',
+    '25-12': 'Natal',
+};
+
+function getEasterSunday(year: number) {
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31);
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(year, month - 1, day);
+}
+
+function addDays(date: Date, days: number) {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+}
+
+function getMovableHolidayName(date: Date) {
+    const year = date.getFullYear();
+    const easter = getEasterSunday(year);
+    const movableHolidays: Record<string, string> = {
+        [`${pad(addDays(easter, -47).getDate())}-${pad(addDays(easter, -47).getMonth() + 1)}`]: 'Carnaval',
+        [`${pad(addDays(easter, -2).getDate())}-${pad(addDays(easter, -2).getMonth() + 1)}`]: 'Sexta-feira Santa',
+        [`${pad(easter.getDate())}-${pad(easter.getMonth() + 1)}`]: 'Páscoa',
+        [`${pad(addDays(easter, 60).getDate())}-${pad(addDays(easter, 60).getMonth() + 1)}`]: 'Corpo de Cristo',
+    };
+
+    const key = `${pad(date.getDate())}-${pad(date.getMonth() + 1)}`;
+    return movableHolidays[key] ?? null;
+}
+
+function getHolidayName(date: Date) {
+    const key = `${pad(date.getDate())}-${pad(date.getMonth() + 1)}`;
+    return portugueseHolidays[key] ?? getMovableHolidayName(date);
+}
+
+function isWeekend(date: Date) {
+    const day = date.getDay();
+    return day === 0 || day === 6;
+}
+
+function getWeekRange(date: Date) {
+    const copy = new Date(date);
+    const weekday = copy.getDay();
+    const offset = (weekday + 6) % 7;
+    copy.setHours(0, 0, 0, 0);
+    copy.setDate(copy.getDate() - offset);
+
+    const end = new Date(copy);
+    end.setDate(end.getDate() + 6);
+
+    return { start: copy, end };
+}
+
+function getWeekDates(date: Date): Date[] {
+    const { start } = getWeekRange(date);
+    return Array.from({ length: 7 }, (_, index) => {
+        const day = new Date(start);
+        day.setDate(start.getDate() + index);
+        return day;
+    });
+}
+
+function getMonthGrid(date: Date): Date[] {
+    const firstOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const firstDayOfWeek = firstOfMonth.getDay();
+    const startOffset = (firstDayOfWeek + 6) % 7;
+
+    const start = new Date(firstOfMonth);
+    start.setDate(start.getDate() - startOffset);
+
+    return Array.from({ length: 42 }, (_, index) => {
+        const day = new Date(start);
+        day.setDate(start.getDate() + index);
+        return day;
+    });
+}
+
+function getIsoDateKey(value: string) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value.slice(0, 10);
+    return formatDateKey(date);
+}
+
+function expandirDisponibilidadesRecorrentes(disponibilidades: Disponibilidade[]) {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const fim = new Date(hoje);
+    fim.setMonth(fim.getMonth() + 6);
+
+    const expandidas: Disponibilidade[] = [];
+
+    disponibilidades.forEach((disponibilidade) => {
+        if (!disponibilidade.diaSemana) {
+            expandidas.push(disponibilidade);
+            return;
+        }
+
+        if (disponibilidade.ativa === false) return;
+
+        const excecoes = new Set(
+            (disponibilidade.excecoes ?? []).map((excecao) => getIsoDateKey(excecao.Data_Cancelada)),
+        );
+
+        for (let cursor = new Date(hoje); cursor <= fim; cursor.setDate(cursor.getDate() + 1)) {
+            const diaSemanaPt = cursor.getDay() === 0 ? 7 : cursor.getDay();
+            if (diaSemanaPt !== disponibilidade.diaSemana) continue;
+
+            const dataKey = formatDateKey(cursor);
+            if (excecoes.has(dataKey)) continue;
+
+            const sessoesDaOcorrencia = (disponibilidade.sessoes ?? []).filter(
+                (sessao) => getIsoDateKey(sessao.inicioCoaching) === dataKey,
+            );
+            const alunosInscritosIds = sessoesDaOcorrencia.flatMap((sessao) => sessao.alunosInscritosIds ?? []);
+            const maxAlunosBase = disponibilidade.maxAlunos ?? 0;
+
+            expandidas.push({
+                ...disponibilidade,
+                data: formatPtDate(cursor),
+                maxAlunos: Math.max(maxAlunosBase - alunosInscritosIds.length, 0),
+                alunosInscritosIds,
+            });
+        }
+    });
+
+    return expandidas;
+}
+
+function normalizarAlunos(raw: any[]): Aluno[] {
+    return raw
+        .map((aluno) => {
+            const idAluno = Number(aluno.ID_aluno ?? aluno.idAluno ?? aluno.id_aluno);
+            const nome = aluno.Nome ?? aluno.nome ?? aluno.Nome_Aluno;
+
+            if (!idAluno || !nome) return null;
+
+            return {
+                ID_aluno: idAluno,
+                Nome: String(nome),
+                Data_Nascimento: aluno.Data_Nascimento ?? aluno.dataNascimento ?? '',
+                NIF: aluno.NIF ?? aluno.nif ?? '',
+                Mail: aluno.Mail ?? aluno.mail,
+                Contato: aluno.Contato ?? aluno.contato,
+                Menor_Idade: Boolean(aluno.Menor_Idade ?? aluno.menorIdade ?? false),
+            };
+        })
+        .filter((aluno): aluno is Aluno => Boolean(aluno));
+}
+
+function juntarAlunos(...listas: Aluno[][]) {
+    const map = new Map<number, Aluno>();
+    listas.flat().forEach((aluno) => {
+        map.set(aluno.ID_aluno, aluno);
+    });
+    return Array.from(map.values()).sort((a, b) => a.Nome.localeCompare(b.Nome, 'pt-PT'));
+}
+
 export default function CoachingEE() {
-
-
     const userInfo = authService.getUserInfo() as User;
     if (userInfo.role !== 'Enc_Educacao') {
         return null;
     }
-    console.log(userInfo);
 
     const disponibilidadesService = new DisponibilidadesService();
     const eeService = new EEService();
+    const [viewMode, setViewMode] = useState<ViewMode>('month');
+    const [selectedDate, setSelectedDate] = useState(new Date());
     const [disponibilidades, setDisponibilidades] = useState<Disponibilidade[]>([]);
     const [alunos, setAlunos] = useState<Aluno[]>([]);
     const [modalAberto, setModalAberto] = useState(false);
     const [disponibilidadeSelecionada, setDisponibilidadeSelecionada] = useState<Disponibilidade | null>(null);
     const [alunoSelecionado, setAlunoSelecionado] = useState<number | null>(null);
+    const [modalidadeSelecionada, setModalidadeSelecionada] = useState<number | null>(null);
     const [filtroModalidade, setFiltroModalidade] = useState('');
     const [filtroProfessor, setFiltroProfessor] = useState('');
     const [observacoes, setObservacoes] = useState('');
+    const [propostaModalAberta, setPropostaModalAberta] = useState(false);
+    const [professoresProposta, setProfessoresProposta] = useState<ProfessorProposta[]>([]);
+    const [propostaProfessor, setPropostaProfessor] = useState<number | null>(null);
+    const [propostaModalidade, setPropostaModalidade] = useState<number | null>(null);
+    const [propostaAlunos, setPropostaAlunos] = useState<number[]>([]);
+    const [propostaData, setPropostaData] = useState('');
+    const [propostaHora, setPropostaHora] = useState('16:00');
+    const [propostaDuracao, setPropostaDuracao] = useState(60);
+    const [propostaMensagem, setPropostaMensagem] = useState('');
+    const [isSubmittingProposta, setIsSubmittingProposta] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const tableData = disponibilidades
-    .filter((disp) => disp.maxAlunos > 0)
-    .map((disp) => ({ ...disp }))
-    .sort((a, b) => {
+    const disponibilidadesOrdenadas = useMemo(() => {
+        return disponibilidades
+            .filter((disp) => disp.maxAlunos > 0)
+            .filter((disp) => (disp.modalidadesProfessor?.length ?? 0) > 0)
+            .filter((disp) => (filtroProfessor ? disp.nomeProfessor === filtroProfessor : true))
+            .filter((disp) => filtroModalidade
+                ? disp.modalidadesProfessor?.some((modalidade) => modalidade.descricao === filtroModalidade)
+                : true)
+            .sort((a, b) => getDisponibilidadeDateTime(a).getTime() - getDisponibilidadeDateTime(b).getTime());
+    }, [disponibilidades, filtroProfessor, filtroModalidade]);
 
+    const dayItemsMap = useMemo(() => {
+        const map = new Map<string, Disponibilidade[]>();
 
-        const [diaA, mesA, anoA] = a.data.split('/');
-        const [diaB, mesB, anoB] = b.data.split('/');
+        disponibilidadesOrdenadas.forEach((disponibilidade) => {
+            const key = formatDateKey(parseDataDisponibilidade(disponibilidade.data));
+            const entry = map.get(key) ?? [];
+            entry.push(disponibilidade);
+            map.set(key, entry);
+        });
 
+        map.forEach((items) => {
+            items.sort((a, b) => getDisponibilidadeDateTime(a).getTime() - getDisponibilidadeDateTime(b).getTime());
+        });
 
-        const dataA = new Date(`${anoA}-${mesA}-${diaA}`);
-        const dataB = new Date(`${anoB}-${mesB}-${diaB}`);
+        return map;
+    }, [disponibilidadesOrdenadas]);
 
+    const monthGrid = useMemo(() => getMonthGrid(selectedDate), [selectedDate]);
+    const weekGrid = useMemo(() => getWeekDates(selectedDate), [selectedDate]);
+    const selectedHolidayName = getHolidayName(selectedDate);
 
-        if (dataA < dataB) return -1;
-        if (dataA > dataB) return 1;
+    const activeRangeLabel = useMemo(() => {
+        if (viewMode === 'week') {
+            const range = getWeekRange(selectedDate);
+            return `${range.start.toLocaleDateString('pt-PT')} - ${range.end.toLocaleDateString('pt-PT')}`;
+        }
 
+        if (viewMode === 'day') {
+            const label = selectedDate.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            return selectedHolidayName ? `${label} - ${selectedHolidayName}` : label;
+        }
 
-        return a.modalidade.localeCompare(b.modalidade);
-    });
+        return formatMonthLabel(selectedDate);
+    }, [selectedDate, selectedHolidayName, viewMode]);
 
     async function fetchDisponibilidades() {
+        setIsLoading(true);
+        setError(null);
+
         try {
             const data = await disponibilidadesService.getAvailability();
-
             const approved = data.filter((disp: Disponibilidade) => disp.estado === 'Aprovado');
-
-            console.log('Disponibilidades aprovadas:', approved);
-
-            setDisponibilidades(approved);
-        } catch (error) {
-            console.error('Erro ao buscar disponibilidades:', error);
+            setDisponibilidades(expandirDisponibilidadesRecorrentes(approved));
+        } catch (err) {
+            console.error('Erro ao buscar disponibilidades:', err);
+            setError(err instanceof Error ? err.message : 'Erro desconhecido ao carregar disponibilidades.');
+        } finally {
+            setIsLoading(false);
         }
     }
 
     async function fetchAlunos() {
-            const userInfo = authService.getUserInfo() as User;
-            const idEE = userInfo.idPessoa;
-            const data = await eeService.getAlunosByEE(idEE);
-            setAlunos(data);
+        const pedidos: Promise<any[]>[] = [eeService.getMeusEducandos()];
+
+        if (userInfo.idPessoa) {
+            pedidos.push(eeService.getAlunosByEE(userInfo.idPessoa));
+        }
+
+        const resultados = await Promise.allSettled(pedidos);
+        const alunosCarregados = resultados.flatMap((resultado) =>
+            resultado.status === 'fulfilled' && Array.isArray(resultado.value)
+                ? normalizarAlunos(resultado.value)
+                : []
+        );
+
+        setAlunos((atuais) => juntarAlunos(atuais, alunosCarregados));
+    }
+
+    async function fetchContextoProposta() {
+        try {
+            const contexto = await coachingPropostasService.getContexto();
+            setProfessoresProposta(Array.isArray(contexto.professores) ? contexto.professores : []);
+
+            if (Array.isArray(contexto.alunos) && contexto.alunos.length > 0) {
+                setAlunos((atuais) => {
+                    const alunosContexto = contexto.alunos.map((aluno: AlunoPropostaContexto) => ({
+                        ID_aluno: aluno.idAluno,
+                        Nome: aluno.nome,
+                        Data_Nascimento: '',
+                        NIF: '',
+                        Menor_Idade: false,
+                    }));
+
+                    return juntarAlunos(atuais, alunosContexto);
+                });
+            }
+        } catch (err) {
+            console.error('Erro ao carregar contexto de propostas:', err);
+        }
     }
 
     async function handleInscreverAluno() {
-        if (!disponibilidadeSelecionada || !alunoSelecionado) {
+        if (!disponibilidadeSelecionada || !alunoSelecionado || !modalidadeSelecionada) {
             showToast('Por favor selecione uma sessão e um aluno.');
             return;
         }
 
         try {
-
-
-            const [dia, mes, ano] = disponibilidadeSelecionada.data.split('/');
-            const [horaInicioStr] = disponibilidadeSelecionada.horario.split(' - ');
-            const inicioCoachingFormatado = new Date(`${ano}-${mes}-${dia}T${horaInicioStr}:00`).toISOString();
-
+            const inicioCoachingFormatado = getDisponibilidadeDateTime(disponibilidadeSelecionada).toISOString();
 
             const payload = {
                 idAluno: alunoSelecionado,
@@ -124,13 +417,13 @@ export default function CoachingEE() {
                 idEstadoCoaching: 7,
                 idSala: disponibilidadeSelecionada.idEstudio,
                 valorPorAluno: disponibilidadeSelecionada.valorPorAluno,
+                idModalidade: modalidadeSelecionada,
                 inicio_Coaching: inicioCoachingFormatado,
                 duracao: disponibilidadeSelecionada.duracao,
                 idCoordenador: disponibilidadeSelecionada.idCoordenador,
                 valorEmFalta: disponibilidadeSelecionada.valorPorAluno,
                 obs: observacoes
             };
-
 
             await eeService.inscreverAlunoCoaching(
                 disponibilidadeSelecionada.idDisponibilidade,
@@ -139,19 +432,21 @@ export default function CoachingEE() {
 
             showToast('Aluno inscrito com sucesso!');
             fecharModal();
-
-
             fetchDisponibilidades();
-
-        } catch (error: any) {
-            console.error('Erro ao inscrever aluno:', error);
-            showToast(error.message || 'Não foi possível inscrever o aluno.');
+        } catch (err: any) {
+            console.error('Erro ao inscrever aluno:', err);
+            showToast(err.message || 'Não foi possível inscrever o aluno.');
         }
     }
 
-    function abrirModal(row: Disponibilidade) {
-        setDisponibilidadeSelecionada(row);
+    function abrirModal(disponibilidade: Disponibilidade) {
+        setDisponibilidadeSelecionada(disponibilidade);
         setAlunoSelecionado(null);
+        setModalidadeSelecionada(
+            disponibilidade.modalidadesProfessor?.length === 1
+                ? disponibilidade.modalidadesProfessor[0].idModalidade
+                : null
+        );
         setModalAberto(true);
     }
 
@@ -160,35 +455,148 @@ export default function CoachingEE() {
         setModalAberto(false);
         setDisponibilidadeSelecionada(null);
         setAlunoSelecionado(null);
+        setModalidadeSelecionada(null);
+    }
+
+    function fecharPropostaModal() {
+        setPropostaModalAberta(false);
+        setPropostaProfessor(null);
+        setPropostaModalidade(null);
+        setPropostaAlunos([]);
+        setPropostaData('');
+        setPropostaHora('16:00');
+        setPropostaDuracao(60);
+        setPropostaMensagem('');
+    }
+
+    function toggleAlunoProposta(idAluno: number) {
+        setPropostaAlunos((atuais) =>
+            atuais.includes(idAluno)
+                ? atuais.filter((id) => id !== idAluno)
+                : [...atuais, idAluno]
+        );
+    }
+
+    async function handleCriarProposta() {
+        if (!propostaProfessor || !propostaModalidade || propostaAlunos.length === 0 || !propostaData || !propostaHora) {
+            showToast('Preenche professor, modalidade, data e pelo menos um educando.');
+            return;
+        }
+
+        setIsSubmittingProposta(true);
+        try {
+            const inicio = new Date(`${propostaData}T${propostaHora}:00`);
+            await coachingPropostasService.criarProposta({
+                idProfessor: propostaProfessor,
+                idModalidade: propostaModalidade,
+                inicio: inicio.toISOString(),
+                duracaoMinutos: propostaDuracao,
+                alunosIds: propostaAlunos,
+                mensagem: propostaMensagem.trim() || undefined,
+            });
+
+            showToast('Proposta enviada para aprovação da coordenação.');
+            fecharPropostaModal();
+        } catch (err) {
+            console.error(err);
+            showToast(err instanceof Error ? err.message : 'Não foi possível enviar a proposta.');
+        } finally {
+            setIsSubmittingProposta(false);
+        }
+    }
+
+    function changeDate(amount: number) {
+        const nextDate = new Date(selectedDate);
+
+        if (viewMode === 'month') {
+            nextDate.setMonth(nextDate.getMonth() + amount);
+        } else if (viewMode === 'week') {
+            nextDate.setDate(nextDate.getDate() + amount * 7);
+        } else {
+            nextDate.setDate(nextDate.getDate() + amount);
+        }
+
+        setSelectedDate(nextDate);
     }
 
     useEffect(() => {
         fetchDisponibilidades();
         fetchAlunos();
+        fetchContextoProposta();
     }, []);
 
-    const professoresUnicos = Array.from(new Set(tableData.map((item) => item.nomeProfessor).filter(Boolean)));
-    const modalidadesUnicas = Array.from(new Set(tableData.map((item) => item.modalidade).filter(Boolean)));
+    const professoresUnicos = Array.from(new Set(disponibilidades.map((item) => item.nomeProfessor).filter(Boolean))).sort();
+    const modalidadesUnicas = Array.from(new Set(
+        disponibilidades.flatMap((item) => item.modalidadesProfessor?.map((modalidade) => modalidade.descricao) ?? [])
+    )).sort();
 
     const alunosOptions = alunos
-        .filter(aluno => {
-
+        .filter((aluno) => {
             if (!disponibilidadeSelecionada) return true;
-
-
             return !disponibilidadeSelecionada.alunosInscritosIds.includes(aluno.ID_aluno);
         })
-        .map(aluno => ({
+        .map((aluno) => ({
             value: aluno.ID_aluno.toString(),
             label: aluno.Nome
         }));
+    const professorSelecionadoProposta = professoresProposta.find((professor) => professor.idProfessor === propostaProfessor);
+
+    const renderDisponibilidadeCard = (disponibilidade: Disponibilidade, small = false) => (
+        <button
+            key={`${disponibilidade.idDisponibilidade}-${disponibilidade.data}`}
+            type="button"
+            className={`calendar-item disponibilidade-item ${small ? 'calendar-item-small' : ''}`}
+            onClick={(event) => {
+                event.stopPropagation();
+                abrirModal(disponibilidade);
+            }}
+        >
+            <span className="item-badge">C</span>
+            <span className="item-copy">
+                <strong>Coaching</strong>
+                <span>Prof. {disponibilidade.nomeProfessor || 'Professor não definido'}</span>
+                <span>{disponibilidade.modalidadesProfessor?.map((modalidade) => modalidade.descricao).join(', ') || 'Sem modalidades associadas'}</span>
+                <span>{disponibilidade.horario}</span>
+            </span>
+        </button>
+    );
 
     return (
         <div className="pagina-coaching-ee">
-            <div className="cabecalho">
+            <div className="calendario-header">
                 <div>
                     <h1>Oferta de Coaching</h1>
-                    <p>Consulte as sessões de coaching disponíveis e inscreva os seus educandos.</p>
+                    <p className="calendario-range">{activeRangeLabel}</p>
+                </div>
+
+                <div className="calendario-actions">
+                    <ButtonComponent type="button" className="btn-propor-sessao" onClick={() => setPropostaModalAberta(true)}>
+                        <i className="fa-solid fa-plus"></i> Propor sessão
+                    </ButtonComponent>
+                    <div className="calendario-buttons">
+                        <ButtonComponent type="button" className="tool-button" onClick={() => changeDate(-1)} aria-label="Anterior">
+                            <i className="fa-solid fa-arrow-left" />
+                        </ButtonComponent>
+                        <ButtonComponent type="button" className="tool-button" onClick={() => setSelectedDate(new Date())}>
+                            Hoje
+                        </ButtonComponent>
+                        <ButtonComponent type="button" className="tool-button" onClick={() => changeDate(1)} aria-label="Próximo">
+                            <i className="fa-solid fa-arrow-right" />
+                        </ButtonComponent>
+                    </div>
+
+                    <div className="view-mode-buttons">
+                        {(['month', 'week', 'day'] as ViewMode[]).map((mode) => (
+                            <ButtonComponent
+                                key={mode}
+                                type="button"
+                                className={`view-button ${viewMode === mode ? 'active' : ''}`}
+                                onClick={() => setViewMode(mode)}
+                            >
+                                {mode === 'month' ? 'Mensal' : mode === 'week' ? 'Semanal' : 'Diário'}
+                            </ButtonComponent>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -214,54 +622,123 @@ export default function CoachingEE() {
                 </div>
             </div>
 
-            <TableComponent
-                config={{
-                    columns: [
-                        { key: 'nomeProfessor', value: 'Professor', type: TableColumnTypesEnum.Default },
-                        { key: 'data', value: 'Data', type: TableColumnTypesEnum.Default },
-                        { key: 'horario', value: 'Horário', type: TableColumnTypesEnum.Default },
-                        { key: 'modalidade', value: 'Modalidade', type: TableColumnTypesEnum.Default },
-                        { key: 'valorPorAluno', value: 'Valor p/ Aluno', type: TableColumnTypesEnum.Default },
-                        { key: 'maxAlunos', value: 'Vagas Disp.', type: TableColumnTypesEnum.Default }
-                    ],
-                    searchSettings: {
-                        placeholder: 'Procurar por professor ou modalidade...',
-                        label: 'Pesquisa',
-                        value: ''
-                    },
-                    actions: [
-                        {
-                            icon: 'fa-solid fa-user-plus',
-                            tooltip: 'Adicionar Aluno',
-                            config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Theme, size: SizeEnum.Regular },
-                            onClick: (row: any) => abrirModal(row)
-                        }
-                    ]
-                }}
-                data={tableData.filter((item) =>
-                    (filtroProfessor ? item.nomeProfessor === filtroProfessor : true) &&
-                    (filtroModalidade ? item.modalidade === filtroModalidade : true)
-                )}
-            />
+            {isLoading && <div className="calendario-status">A carregar disponibilidades...</div>}
+            {error && <div className="calendario-error">{error}</div>}
+
+            {viewMode === 'day' ? (
+                <div className="calendario-list">
+                    <div className="day-summary">
+                        <div>
+                            <span className="day-summary-label">Dia selecionado</span>
+                            <strong>{selectedDate.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong>
+                        </div>
+                        {selectedHolidayName && <span className="day-holiday">Feriado: {selectedHolidayName}</span>}
+                    </div>
+                    <div className="day-items">
+                        {(() => {
+                            const items = dayItemsMap.get(formatDateKey(selectedDate)) ?? [];
+
+                            if (items.length === 0) {
+                                return <div className="empty-state">Não há disponibilidades neste dia.</div>;
+                            }
+
+                            return items.map((disponibilidade) => renderDisponibilidadeCard(disponibilidade));
+                        })()}
+                    </div>
+                </div>
+            ) : (
+                <div className="calendario-grid">
+                    <div className="calendar-weekday">Seg</div>
+                    <div className="calendar-weekday">Ter</div>
+                    <div className="calendar-weekday">Qua</div>
+                    <div className="calendar-weekday">Qui</div>
+                    <div className="calendar-weekday">Sex</div>
+                    <div className="calendar-weekday">Sab</div>
+                    <div className="calendar-weekday">Dom</div>
+
+                    {(viewMode === 'week' ? weekGrid : monthGrid).map((day) => {
+                        const dayKey = formatDateKey(day);
+                        const dayItems = dayItemsMap.get(dayKey) ?? [];
+                        const isCurrentMonth = day.getMonth() === selectedDate.getMonth();
+                        const isToday = dayKey === formatDateKey(new Date());
+                        const holidayName = getHolidayName(day);
+                        const weekend = isWeekend(day);
+                        const previewItems = dayItems.slice(0, 2);
+                        const extraItems = dayItems.length - previewItems.length;
+
+                        return (
+                            <div
+                                key={dayKey}
+                                role="button"
+                                tabIndex={0}
+                                className={`calendar-day ${viewMode === 'month' && !isCurrentMonth ? 'calendar-day--muted' : ''} ${isToday ? 'calendar-day--today' : ''} ${weekend ? 'calendar-day--weekend' : ''} ${holidayName ? 'calendar-day--holiday' : ''}`}
+                                onClick={() => {
+                                    setSelectedDate(day);
+                                    setViewMode('day');
+                                }}
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Enter' || event.key === ' ') {
+                                        event.preventDefault();
+                                        setSelectedDate(day);
+                                        setViewMode('day');
+                                    }
+                                }}
+                            >
+                                <div className="calendar-day-header">
+                                    <span>{day.getDate()}</span>
+                                    {holidayName && <span className="calendar-day-holiday">{holidayName}</span>}
+                                </div>
+                                <div className="calendar-day-items">
+                                    {previewItems.map((disponibilidade) => renderDisponibilidadeCard(disponibilidade, true))}
+                                    {extraItems > 0 && (
+                                        <span className="calendar-more">
+                                            +{extraItems} registo{extraItems > 1 ? 's' : ''} escondido{extraItems > 1 ? 's' : ''}
+                                            <small>Clique no dia para ver todos</small>
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
 
             {modalAberto && disponibilidadeSelecionada && (
-                <div className="modal-overlay">
-                    <div className="modal-conteudo">
+                <div className="modal-overlay" onClick={fecharModal}>
+                    <div className="modal-conteudo" onClick={(event) => event.stopPropagation()}>
                         <div className="modal-cabecalho">
-                            <h2>Adicionar aluno à sessão</h2>
-                            <ButtonComponent className="modal-fechar" onClick={fecharModal}>
+                            <h2>Inscrever aluno</h2>
+                            <ButtonComponent className="modal-fechar" onClick={fecharModal} aria-label="Fechar">
                                 <i className="fa-solid fa-xmark" />
                             </ButtonComponent>
                         </div>
 
                         <div className="modal-corpo">
                             <div className="session-info">
-                                <h3>Detalhes da sessão</h3>
+                                <h3>Detalhes da disponibilidade</h3>
                                 <p><strong>Professor:</strong> {disponibilidadeSelecionada.nomeProfessor}</p>
                                 <p><strong>Data:</strong> {disponibilidadeSelecionada.data}</p>
                                 <p><strong>Horário:</strong> {disponibilidadeSelecionada.horario}</p>
-                                <p><strong>Modalidade:</strong> {disponibilidadeSelecionada.modalidade}</p>
+                                <p><strong>Modalidades:</strong> {disponibilidadeSelecionada.modalidadesProfessor?.map((modalidade) => modalidade.descricao).join(', ') || 'Sem modalidades associadas'}</p>
+                                <p><strong>Duração:</strong> {disponibilidadeSelecionada.duracao} minutos</p>
+                                <p><strong>Vagas disponíveis:</strong> {disponibilidadeSelecionada.maxAlunos}</p>
                                 <p><strong>Valor a pagar:</strong> {disponibilidadeSelecionada.valorPorAluno.toFixed(2)}€</p>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Modalidade</label>
+                                <SelectBoxComponent
+                                    id="modalidade-select"
+                                    selectedOption={modalidadeSelecionada?.toString() || ''}
+                                    onChange={(e) => setModalidadeSelecionada(e.target.value ? Number(e.target.value) : null)}
+                                    options={[
+                                        { value: '', label: 'Selecione uma modalidade' },
+                                        ...(disponibilidadeSelecionada.modalidadesProfessor ?? []).map((modalidade) => ({
+                                            value: modalidade.idModalidade.toString(),
+                                            label: modalidade.descricao,
+                                        })),
+                                    ]}
+                                />
                             </div>
 
                             <div className="form-group">
@@ -282,7 +759,6 @@ export default function CoachingEE() {
                                     placeholder="Escreva aqui alguma observação que ache relevante"
                                     value={observacoes}
                                     onChange={(e) => setObservacoes(e.target.value)}
-                                    style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', resize: 'vertical', color: '#333' }}
                                 />
                             </div>
 
@@ -293,9 +769,114 @@ export default function CoachingEE() {
                                 <ButtonComponent
                                     className="btn-confirmar"
                                     onClick={handleInscreverAluno}
-                                    disabled={!alunoSelecionado}
+                                    disabled={!alunoSelecionado || !modalidadeSelecionada}
                                 >
                                     Inscrever
+                                </ButtonComponent>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {propostaModalAberta && (
+                <div className="modal-overlay" onClick={fecharPropostaModal}>
+                    <div className="modal-conteudo" onClick={(event) => event.stopPropagation()}>
+                        <div className="modal-cabecalho">
+                            <h2>Propor sessão única</h2>
+                            <ButtonComponent className="modal-fechar" onClick={fecharPropostaModal} aria-label="Fechar">
+                                <i className="fa-solid fa-xmark" />
+                            </ButtonComponent>
+                        </div>
+
+                        <div className="modal-corpo">
+                            <div className="form-group">
+                                <label>Professor</label>
+                                <SelectBoxComponent
+                                    id="proposta-professor"
+                                    selectedOption={propostaProfessor?.toString() || ''}
+                                    onChange={(event) => {
+                                        setPropostaProfessor(event.target.value ? Number(event.target.value) : null);
+                                        setPropostaModalidade(null);
+                                    }}
+                                    options={[
+                                        { value: '', label: 'Selecione um professor' },
+                                        ...professoresProposta.map((professor) => ({
+                                            value: professor.idProfessor.toString(),
+                                            label: professor.nome,
+                                        })),
+                                    ]}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Modalidade</label>
+                                <SelectBoxComponent
+                                    id="proposta-modalidade"
+                                    selectedOption={propostaModalidade?.toString() || ''}
+                                    onChange={(event) => setPropostaModalidade(event.target.value ? Number(event.target.value) : null)}
+                                    options={[
+                                        { value: '', label: 'Selecione uma modalidade' },
+                                        ...(professorSelecionadoProposta?.modalidades ?? []).map((modalidade) => ({
+                                            value: modalidade.idModalidade.toString(),
+                                            label: modalidade.descricao,
+                                        })),
+                                    ]}
+                                />
+                            </div>
+
+                            <div className="form-grid-proposta">
+                                <div className="form-group">
+                                    <label>Data</label>
+                                    <input className="input-proposta" type="date" value={propostaData} onChange={(event) => setPropostaData(event.target.value)} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Hora</label>
+                                    <input className="input-proposta" type="time" value={propostaHora} onChange={(event) => setPropostaHora(event.target.value)} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Duração</label>
+                                    <input className="input-proposta" type="number" min={15} step={15} value={propostaDuracao} onChange={(event) => setPropostaDuracao(Number(event.target.value))} />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Educandos</label>
+                                <div className="alunos-check-list">
+                                    {alunos.length === 0 ? (
+                                        <div className="empty-state alunos-empty-state">
+                                            Não foram encontrados educandos associados à tua conta.
+                                        </div>
+                                    ) : (
+                                        alunos.map((aluno) => (
+                                            <label key={aluno.ID_aluno} className="aluno-check-item">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={propostaAlunos.includes(aluno.ID_aluno)}
+                                                    onChange={() => toggleAlunoProposta(aluno.ID_aluno)}
+                                                />
+                                                <span>{aluno.Nome}</span>
+                                            </label>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Mensagem (opcional)</label>
+                                <textarea
+                                    className="input-observacoes"
+                                    rows={3}
+                                    value={propostaMensagem}
+                                    onChange={(event) => setPropostaMensagem(event.target.value)}
+                                    maxLength={255}
+                                />
+                            </div>
+
+                            <div className="modal-acoes">
+                                <ButtonComponent className="btn-cancelar" onClick={fecharPropostaModal}>Cancelar</ButtonComponent>
+                                <ButtonComponent className="btn-confirmar" onClick={handleCriarProposta} disabled={isSubmittingProposta}>
+                                    {isSubmittingProposta ? 'A enviar...' : 'Enviar proposta'}
                                 </ButtonComponent>
                             </div>
                         </div>

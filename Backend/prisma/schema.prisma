@@ -31,6 +31,7 @@ model Aluno {
   Enc_Educacao    Enc_Educacao?    @relation(fields: [ID_Enc_Educacao], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Aluno_EncEducacao")
   Aula_Aluno      Aula_Aluno[]
   Coaching_Aluno  Coaching_Aluno[]
+  Pedido_Coaching_Aluno Pedido_Coaching_Aluno[]
 }
 
 model Artigo {
@@ -103,6 +104,7 @@ model Coaching {
   ID_Estado_Coaching Int?
   ID_Sala            Int?
   ID_Coordenador     Int?
+  ID_Modalidade      Int?
   ValorPorAluno      Decimal?         @db.Decimal(10, 2)
   Inicio_Coaching    DateTime?        @db.DateTime
   Duracao            Int              @default(0, map: "DF__Coaching__Duraca__42E1EEFE")
@@ -112,6 +114,7 @@ model Coaching {
   Coordenador        Coordenador?     @relation(fields: [ID_Coordenador], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Coordenador")
   Disponibilidade    Disponibilidade? @relation(fields: [ID_Disponibilidade], references: [ID_Disponibilidade], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Disponibilidade")
   Estado_Coaching    Estado_Coaching? @relation(fields: [ID_Estado_Coaching], references: [ID_Estado_Coaching], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Estado_Coaching")
+  Modalidade         Modalidade?      @relation(fields: [ID_Modalidade], references: [ID_Modalidade], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Modalidade")
   Professor          Professor?       @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Professor")
   Sala               Sala?            @relation(fields: [ID_Sala], references: [ID_Sala], onDelete: NoAction, onUpdate: NoAction, map: "FK_Coaching_Sala")
   Coaching_Aluno     Coaching_Aluno[]
@@ -145,9 +148,10 @@ model Cor {
 }
 
 model Dias_Semana {
-  ID_Dia    Int         @id(map: "PK__Dias_Sem__2BBFA152ECAD1678")
-  Nome_Dia  String      @db.VarChar(20)
-  Aula_Fixa Aula_Fixa[]
+  ID_Dia          Int               @id(map: "PK__Dias_Sem__2BBFA152ECAD1678")
+  Nome_Dia        String            @db.VarChar(20)
+  Aula_Fixa       Aula_Fixa[]
+  Disponibilidade Disponibilidade[]
 }
 
 model Direcao {
@@ -163,13 +167,17 @@ model Disponibilidade {
   DataAtualizacao         DateTime               @db.Date
   AlteradoPorUtilizadorID Int
   Duracao                 Int
-  Modalidade              String                 @db.VarChar(100)
+  Modalidade              String?                @db.VarChar(100)
   IdEstudio               Int?
   MaxAlunos               Int?                   @db.TinyInt
   ValorPorAluno           Decimal?               @db.Decimal(10, 2)
+  Dia_Semana              Int?
+  Ativa                   Boolean?
+  Excecao_Disponibilidade Excecao_Disponibilidade[]
   Coaching                Coaching[]
   Estado_Disponibilidade  Estado_Disponibilidade @relation(fields: [EstadoDisponibilidadeID], references: [ID], onUpdate: NoAction, map: "FK__Disponibi__Estad__45BE5BA9")
   Utilizador              Utilizador             @relation(fields: [AlteradoPorUtilizadorID], references: [ID_Utilizador], onUpdate: NoAction, map: "FK_Alterado_Utilizador")
+  Dias_Semana             Dias_Semana?           @relation(fields: [Dia_Semana], references: [ID_Dia], onDelete: NoAction, onUpdate: NoAction, map: "FK_Disponibilidade_Dias_Semana")
   Professor               Professor?             @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Disponibilidade_Professor")
 }
 
@@ -243,6 +251,15 @@ model Excecao_Aula_Fixa {
   Aula_Fixa      Aula_Fixa @relation(fields: [ID_AulaFixa], references: [ID_AulaFixa], onDelete: Cascade, onUpdate: NoAction, map: "FK_Excecao_AulaFixa")
 }
 
+model Excecao_Disponibilidade {
+  ID_Excecao          Int             @id @default(autoincrement())
+  ID_Disponibilidade  Int
+  Data_Cancelada      DateTime        @db.Date
+  Disponibilidade     Disponibilidade @relation(fields: [ID_Disponibilidade], references: [ID_Disponibilidade], onDelete: Cascade, onUpdate: NoAction, map: "FK_Excecao_Disponibilidade")
+
+  @@unique([ID_Disponibilidade, Data_Cancelada], map: "UQ_Excecao_Disponibilidade_Data")
+}
+
 model Interesse_Artigo {
   ID_Interesse          Int           @id @default(autoincrement())
   ID_Utilizador         Int
@@ -257,11 +274,13 @@ model Interesse_Artigo {
 }
 
 model Modalidade {
-  ID_Modalidade   Int               @id(map: "PK__Modalida__E0DE2E832A5F0486") @default(autoincrement())
-  Descricao       String            @db.VarChar(100)
-  Aula_Fixa       Aula_Fixa[]
-  Pedido_Coaching Pedido_Coaching[]
-  Sala            Sala[]
+  ID_Modalidade       Int                    @id(map: "PK__Modalida__E0DE2E832A5F0486") @default(autoincrement())
+  Descricao           String                 @db.VarChar(100)
+  Aula_Fixa           Aula_Fixa[]
+  Coaching            Coaching[]
+  Pedido_Coaching     Pedido_Coaching[]
+  Professor_Modalidade Professor_Modalidade[]
+  Sala                Sala[]
 }
 
 model Pedido_Coaching {
@@ -281,6 +300,16 @@ model Pedido_Coaching {
   Estado_Pedido                                       Estado_Pedido @relation(fields: [ID_EstadoPedido], references: [ID_EstadoPedido], onUpdate: NoAction, map: "FK_Pedido_Estado")
   Modalidade                                          Modalidade    @relation(fields: [ID_Modalidade], references: [ID_Modalidade], onUpdate: NoAction, map: "FK_Pedido_Modalidade")
   Utilizador_Pedido_Coaching_ID_ProfessorToUtilizador Utilizador    @relation("Pedido_Coaching_ID_ProfessorToUtilizador", fields: [ID_Professor], references: [ID_Utilizador], onUpdate: NoAction, map: "FK_Pedido_Professor")
+  Pedido_Coaching_Aluno                               Pedido_Coaching_Aluno[]
+}
+
+model Pedido_Coaching_Aluno {
+  ID_Pedido Int
+  ID_Aluno  Int
+  Aluno     Aluno           @relation(fields: [ID_Aluno], references: [ID_aluno], onDelete: Cascade, onUpdate: NoAction, map: "FK_PedidoCoachingAluno_Aluno")
+  Pedido    Pedido_Coaching @relation(fields: [ID_Pedido], references: [ID_Pedido], onDelete: Cascade, onUpdate: NoAction, map: "FK_PedidoCoachingAluno_Pedido")
+
+  @@id([ID_Pedido, ID_Aluno], map: "PK_Pedido_Coaching_Aluno")
 }
 
 model Pessoa {
@@ -299,10 +328,20 @@ model Pessoa {
 }
 
 model Professor {
-  ID_Pessoa       Int               @id(map: "PK__Professo__81E8E179C3CD56EA")
-  Coaching        Coaching[]
-  Disponibilidade Disponibilidade[]
-  Pessoa          Pessoa            @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK__Professor__ID_Pe__2739D489")
+  ID_Pessoa            Int                    @id(map: "PK__Professo__81E8E179C3CD56EA")
+  Coaching             Coaching[]
+  Disponibilidade      Disponibilidade[]
+  Professor_Modalidade Professor_Modalidade[]
+  Pessoa               Pessoa                 @relation(fields: [ID_Pessoa], references: [ID_Pessoa], onUpdate: NoAction, map: "FK__Professor__ID_Pe__2739D489")
+}
+
+model Professor_Modalidade {
+  ID_Professor  Int
+  ID_Modalidade Int
+  Modalidade    Modalidade @relation(fields: [ID_Modalidade], references: [ID_Modalidade], onDelete: Cascade, onUpdate: NoAction, map: "FK_ProfessorModalidade_Modalidade")
+  Professor     Professor  @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: Cascade, onUpdate: NoAction, map: "FK_ProfessorModalidade_Professor")
+
+  @@id([ID_Professor, ID_Modalidade], map: "PK_Professor_Modalidade")
 }
 
 model Registo_Moderacao_Marketplace {

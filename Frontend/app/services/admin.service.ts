@@ -31,6 +31,34 @@ export class AdminService {
         return response.json();
     }
 
+    async getSessoesPorValidar(): Promise<any[]> {
+        const response = await fetch(`${this._apiUrl}/coaching/admin/sessoes-por-validar`, {
+            method: 'GET',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Erro ao buscar sessoes por validar (${response.status})`);
+        }
+
+        return response.json();
+    }
+
+    async getSessoesRealizadasMes(): Promise<any[]> {
+        const response = await fetch(`${this._apiUrl}/coaching/admin/sessoes-realizadas-mes`, {
+            method: 'GET',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Erro ao buscar sessoes realizadas no mes (${response.status})`);
+        }
+
+        return response.json();
+    }
+
     async getKpis(): Promise<{ proximas24h: number; marcadas: number; porValidar: number; realizadasMes: number }> {
         const response = await fetch(`${this._apiUrl}/coaching/admin/kpis`, {
             method: 'GET',

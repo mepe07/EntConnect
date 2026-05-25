@@ -347,7 +347,7 @@ export function Marketplace() {
                     <div className="marketplace-barra">
                         <div>
                             <h2>Área do Marketplace</h2>
-                            <p>Mesmo tom visual do inventário: mais simples, direto e próximo da realidade da escola.</p>
+                            <p>.</p>
                         </div>
                         <div className="tabs">
                             <ButtonComponent className={vista === 'montra' ? 'ativo' : ''} onClick={() => abrirVista('montra')}>Montra</ButtonComponent>
