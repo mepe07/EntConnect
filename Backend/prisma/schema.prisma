@@ -145,9 +145,10 @@ model Cor {
 }
 
 model Dias_Semana {
-  ID_Dia    Int         @id(map: "PK__Dias_Sem__2BBFA152ECAD1678")
-  Nome_Dia  String      @db.VarChar(20)
-  Aula_Fixa Aula_Fixa[]
+  ID_Dia          Int               @id(map: "PK__Dias_Sem__2BBFA152ECAD1678")
+  Nome_Dia        String            @db.VarChar(20)
+  Aula_Fixa       Aula_Fixa[]
+  Disponibilidade Disponibilidade[]
 }
 
 model Direcao {
@@ -163,13 +164,17 @@ model Disponibilidade {
   DataAtualizacao         DateTime               @db.Date
   AlteradoPorUtilizadorID Int
   Duracao                 Int
-  Modalidade              String                 @db.VarChar(100)
+  Modalidade              String?                @db.VarChar(100)
   IdEstudio               Int?
   MaxAlunos               Int?                   @db.TinyInt
   ValorPorAluno           Decimal?               @db.Decimal(10, 2)
+  Dia_Semana              Int?
+  Ativa                   Boolean?
+  Excecao_Disponibilidade Excecao_Disponibilidade[]
   Coaching                Coaching[]
   Estado_Disponibilidade  Estado_Disponibilidade @relation(fields: [EstadoDisponibilidadeID], references: [ID], onUpdate: NoAction, map: "FK__Disponibi__Estad__45BE5BA9")
   Utilizador              Utilizador             @relation(fields: [AlteradoPorUtilizadorID], references: [ID_Utilizador], onUpdate: NoAction, map: "FK_Alterado_Utilizador")
+  Dias_Semana             Dias_Semana?           @relation(fields: [Dia_Semana], references: [ID_Dia], onDelete: NoAction, onUpdate: NoAction, map: "FK_Disponibilidade_Dias_Semana")
   Professor               Professor?             @relation(fields: [ID_Professor], references: [ID_Pessoa], onDelete: NoAction, onUpdate: NoAction, map: "FK_Disponibilidade_Professor")
 }
 
@@ -241,6 +246,15 @@ model Excecao_Aula_Fixa {
   ID_AulaFixa    Int
   Data_Cancelada DateTime  @db.Date
   Aula_Fixa      Aula_Fixa @relation(fields: [ID_AulaFixa], references: [ID_AulaFixa], onDelete: Cascade, onUpdate: NoAction, map: "FK_Excecao_AulaFixa")
+}
+
+model Excecao_Disponibilidade {
+  ID_Excecao          Int             @id @default(autoincrement())
+  ID_Disponibilidade  Int
+  Data_Cancelada      DateTime        @db.Date
+  Disponibilidade     Disponibilidade @relation(fields: [ID_Disponibilidade], references: [ID_Disponibilidade], onDelete: Cascade, onUpdate: NoAction, map: "FK_Excecao_Disponibilidade")
+
+  @@unique([ID_Disponibilidade, Data_Cancelada], map: "UQ_Excecao_Disponibilidade_Data")
 }
 
 model Interesse_Artigo {

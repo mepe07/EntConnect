@@ -934,6 +934,32 @@ export class UtilizadorController {
       updateDisponibilidadeDto,
     );
   }
+
+  @Roles(Role.PROFESSOR, Role.COORDENADOR)
+  @Delete('professor/disponibilidade/:id')
+  @ApiOperation({ summary: 'Eliminar uma disponibilidade do professor' })
+  async deleteDisponibilidade(@Param('id', ParseIntPipe) id: number) {
+    return this.dispobilidadeService.deleteAvailability(id);
+  }
+
+  @Roles(Role.PROFESSOR, Role.COORDENADOR)
+  @Post('professor/disponibilidade/:id/excecoes')
+  @ApiOperation({ summary: 'Criar excecao para uma disponibilidade recorrente' })
+  async createExcecaoDisponibilidade(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('dataCancelada') dataCancelada: string,
+  ) {
+    return this.dispobilidadeService.createExcecao(id, dataCancelada);
+  }
+
+  @Roles(Role.PROFESSOR, Role.COORDENADOR)
+  @Delete('professor/disponibilidade/excecoes/:idExcecao')
+  @ApiOperation({ summary: 'Eliminar excecao de uma disponibilidade recorrente' })
+  async deleteExcecaoDisponibilidade(
+    @Param('idExcecao', ParseIntPipe) idExcecao: number,
+  ) {
+    return this.dispobilidadeService.deleteExcecao(idExcecao);
+  }
 }
 /**
  * Controlador responsavel pelos pedidos de Professor.

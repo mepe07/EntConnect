@@ -77,4 +77,62 @@ export class DisponibilidadesService {
 
         return await response.json();
     }
+
+    async atualizarDisponibilidade(idDisponibilidade: number, dados: any) {
+        const response = await fetch(`${this._apiUrl}/utilizador/professor/disponibilidade/${idDisponibilidade}/atualizar-disponibilidade`, {
+            method: 'PATCH',
+            headers: this.getHeaders(),
+            body: JSON.stringify(dados),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || 'Erro ao atualizar disponibilidade.');
+        }
+
+        return await response.json();
+    }
+
+    async eliminarDisponibilidade(idDisponibilidade: number) {
+        const response = await fetch(`${this._apiUrl}/utilizador/professor/disponibilidade/${idDisponibilidade}`, {
+            method: 'DELETE',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || 'Erro ao eliminar disponibilidade.');
+        }
+
+        return await response.json();
+    }
+
+    async criarExcecao(idDisponibilidade: number, dataCancelada: string) {
+        const response = await fetch(`${this._apiUrl}/utilizador/professor/disponibilidade/${idDisponibilidade}/excecoes`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({ dataCancelada }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || 'Erro ao criar excecao.');
+        }
+
+        return await response.json();
+    }
+
+    async eliminarExcecao(idExcecao: number) {
+        const response = await fetch(`${this._apiUrl}/utilizador/professor/disponibilidade/excecoes/${idExcecao}`, {
+            method: 'DELETE',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || 'Erro ao eliminar excecao.');
+        }
+
+        return await response.json();
+    }
 }
