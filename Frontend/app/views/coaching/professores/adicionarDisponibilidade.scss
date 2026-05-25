@@ -194,6 +194,33 @@
       font-weight: 600;
     }
 
+    .estado-mini {
+      margin-top: 2px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    &.pendente {
+      background-color: #fffbeb;
+      border-left-color: #f59e0b;
+
+      &:hover { background-color: #fff; }
+
+      .disponibilidade-titulo {
+        color: #92400e;
+      }
+
+      .disponibilidade-info,
+      .disponibilidade-meta {
+        color: #b45309;
+      }
+    }
+
     &.inativa {
       background-color: #f1f5f9;
       border-left-color: #94a3b8;
@@ -401,6 +428,7 @@
 
   .estado-ativo { color: #16a34a !important; }
   .estado-inativo { color: #dc2626 !important; }
+  .estado-pendente { color: #b45309 !important; }
 
   .modal-divider {
     border-top: 1px dashed colors.$gray-3;
@@ -579,6 +607,22 @@ body.entconnect-dark {
         .disponibilidade-info,
         .disponibilidade-meta {
           color: #94a3b8 !important;
+        }
+      }
+
+      &.pendente {
+        background: rgba(245, 158, 11, 0.16) !important;
+        border-left-color: #fbbf24 !important;
+
+        .disponibilidade-titulo,
+        .disponibilidade-info,
+        .disponibilidade-meta {
+          color: #fde68a !important;
+        }
+
+        .estado-mini {
+          background: rgba(251, 191, 36, 0.2) !important;
+          color: #fef3c7 !important;
         }
       }
     }

@@ -27,7 +27,12 @@ export class DispobilidadeService {
     const disponibilidadesRaw = await this.prisma.disponibilidade.findMany({
       orderBy: [{ Dia_Semana: 'asc' }, { Hora_Inicio: 'asc' }],
       include: {
-        Professor: { include: { Pessoa: true } },
+        Professor: {
+          include: {
+            Pessoa: true,
+            Professor_Modalidade: { include: { Modalidade: true } },
+          },
+        },
         Estado_Disponibilidade: true,
         Utilizador: { include: { Pessoa: true } },
         Dias_Semana: true,
@@ -75,6 +80,15 @@ export class DispobilidadeService {
           coaching.Coaching_Aluno.map((ca) => ca.ID_Aluno),
         );
 
+        const sessoes = disp.Coaching.map((coaching) => ({
+          idCoaching: coaching.ID_Coaching,
+          inicioCoaching: coaching.Inicio_Coaching,
+          idModalidade: coaching.ID_Modalidade,
+          alunosInscritosIds: coaching.Coaching_Aluno.map(
+            (ca) => ca.ID_Aluno,
+          ),
+        }));
+
         return {
           idDisponibilidade: disp.ID_Disponibilidade,
           nomeProfessor:
@@ -82,6 +96,11 @@ export class DispobilidadeService {
           data: strindData,
           horario: stringHorario,
           modalidade: disp.Modalidade,
+          modalidadesProfessor:
+            disp.Professor?.Professor_Modalidade.map((item) => ({
+              idModalidade: item.ID_Modalidade,
+              descricao: item.Modalidade.Descricao,
+            })) ?? [],
           alteradoPor: disp.Utilizador?.Pessoa?.Nome || 'Sistema',
           estado: disp.Estado_Disponibilidade?.Tipo || 'Desconhecido',
           duracao: disp.Duracao,
@@ -95,6 +114,7 @@ export class DispobilidadeService {
           ativa: disp.Ativa ?? true,
           diasSemana: disp.Dias_Semana,
           excecoes: disp.Excecao_Disponibilidade,
+          sessoes,
           alunosInscritosIds: alunosJaInscritos,
         };
       })
@@ -131,9 +151,9 @@ export class DispobilidadeService {
         DataAtualizacao: now,
         AlteradoPorUtilizadorID: dto.AlteradoPorUtilizadorID,
         Duracao: dto.Duracao,
-        Modalidade: dto.Modalidade,
+        Modalidade: null,
         IdEstudio: null,
-        MaxAlunos: dto.MaxAlunos,
+        MaxAlunos: null,
         ValorPorAluno: null,
         Dia_Semana: dto.Dia_Semana ?? null,
         Ativa: dto.Ativa ?? true,

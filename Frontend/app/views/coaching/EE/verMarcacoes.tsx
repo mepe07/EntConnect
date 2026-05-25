@@ -187,7 +187,10 @@ export default function VerMarcacoes() {
                     idAluno: marcacao.ID_Aluno,
                     nomeAluno: marcacao.Aluno?.Nome || 'Desconhecido',
                     nomeProfessor: marcacao.Coaching?.Professor?.Pessoa?.Nome || 'Não atribuído',
-                    modalidade: marcacao.Coaching?.Disponibilidade?.Modalidade || 'N/A',
+                    modalidade:
+                        marcacao.Coaching?.Modalidade?.Descricao ||
+                        marcacao.Coaching?.Disponibilidade?.Modalidade ||
+                        'N/A',
                     data: Number.isNaN(inicio.getTime()) ? 'Data inválida' : inicio.toLocaleDateString('pt-PT'),
                     horario: Number.isNaN(inicio.getTime()) ? 'Horário inválido' : `${formatHora(inicio)} - ${formatHora(fim)}`,
                     valor: marcacao.ValorEmFalta ? `${marcacao.ValorEmFalta} €` : '0 €',
@@ -243,7 +246,11 @@ export default function VerMarcacoes() {
 
     const modalidadesUnicas = Array.from(new Set(
         marcacoes
-            .map((marcacao) => marcacao.Coaching?.Disponibilidade?.Modalidade || 'N/A')
+            .map((marcacao) =>
+                marcacao.Coaching?.Modalidade?.Descricao ||
+                marcacao.Coaching?.Disponibilidade?.Modalidade ||
+                'N/A'
+            )
             .filter(Boolean)
     )).sort();
 

@@ -1,11 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsNotEmpty,
-  IsString,
+  IsBoolean,
   IsDateString,
   IsInt,
+  IsNotEmpty,
   IsOptional,
-  IsBoolean,
 } from 'class-validator';
 
 /**
@@ -20,7 +19,7 @@ export class CreateDisponibilidadeDto {
 
   @ApiProperty({
     example: 1,
-    description: 'ID do Utilizador que está a criar/alterar',
+    description: 'ID do Utilizador que esta a criar/alterar',
   })
   @IsNotEmpty()
   @IsInt()
@@ -28,7 +27,7 @@ export class CreateDisponibilidadeDto {
 
   @ApiProperty({
     example: '2026-05-10T09:00:00Z',
-    description: 'Hora de início',
+    description: 'Hora de inicio',
   })
   @IsNotEmpty()
   @IsDateString()
@@ -36,27 +35,11 @@ export class CreateDisponibilidadeDto {
 
   @ApiProperty({
     example: 60,
-    description: 'Duração da disponibilidade em minutos',
+    description: 'Duracao da disponibilidade em minutos',
   })
   @IsNotEmpty()
   @IsInt()
   Duracao: number;
-
-  @ApiProperty({
-    example: 4,
-    description: 'Número máximo de alunos permitidos',
-  })
-  @IsNotEmpty()
-  @IsInt()
-  MaxAlunos: number;
-
-  @ApiProperty({
-    example: 'Ballet',
-    description: 'Modalidade da disponibilidade',
-  })
-  @IsNotEmpty()
-  @IsString()
-  Modalidade: string;
 
   @ApiPropertyOptional({
     example: 1,

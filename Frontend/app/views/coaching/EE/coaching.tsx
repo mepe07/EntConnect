@@ -14,6 +14,7 @@ interface Disponibilidade {
     data: string;
     horario: string;
     modalidade: string;
+    modalidadesProfessor: { idModalidade: number; descricao: string }[];
     estado: string;
     valorPorAluno: number;
     maxAlunos: number;
@@ -21,6 +22,16 @@ interface Disponibilidade {
     idEstudio: number;
     duracao: number;
     idCoordenador: number;
+    horaInicio?: string;
+    diaSemana?: number | null;
+    ativa?: boolean;
+    excecoes?: { ID_Excecao: number; Data_Cancelada: string }[];
+    sessoes?: {
+        idCoaching: number;
+        inicioCoaching: string;
+        idModalidade?: number | null;
+        alunosInscritosIds: number[];
+    }[];
     alunosInscritosIds: number[];
 }
 
@@ -42,6 +53,10 @@ function pad(value: number) {
 
 function formatDateKey(date: Date) {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function formatPtDate(date: Date) {
+    return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
 }
 
 function parseDataDisponibilidade(data: string) {
@@ -159,6 +174,58 @@ function getMonthGrid(date: Date): Date[] {
     });
 }
 
+function getIsoDateKey(value: string) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value.slice(0, 10);
+    return formatDateKey(date);
+}
+
+function expandirDisponibilidadesRecorrentes(disponibilidades: Disponibilidade[]) {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const fim = new Date(hoje);
+    fim.setMonth(fim.getMonth() + 6);
+
+    const expandidas: Disponibilidade[] = [];
+
+    disponibilidades.forEach((disponibilidade) => {
+        if (!disponibilidade.diaSemana) {
+            expandidas.push(disponibilidade);
+            return;
+        }
+
+        if (disponibilidade.ativa === false) return;
+
+        const excecoes = new Set(
+            (disponibilidade.excecoes ?? []).map((excecao) => getIsoDateKey(excecao.Data_Cancelada)),
+        );
+
+        for (let cursor = new Date(hoje); cursor <= fim; cursor.setDate(cursor.getDate() + 1)) {
+            const diaSemanaPt = cursor.getDay() === 0 ? 7 : cursor.getDay();
+            if (diaSemanaPt !== disponibilidade.diaSemana) continue;
+
+            const dataKey = formatDateKey(cursor);
+            if (excecoes.has(dataKey)) continue;
+
+            const sessoesDaOcorrencia = (disponibilidade.sessoes ?? []).filter(
+                (sessao) => getIsoDateKey(sessao.inicioCoaching) === dataKey,
+            );
+            const alunosInscritosIds = sessoesDaOcorrencia.flatMap((sessao) => sessao.alunosInscritosIds ?? []);
+            const maxAlunosBase = disponibilidade.maxAlunos ?? 0;
+
+            expandidas.push({
+                ...disponibilidade,
+                data: formatPtDate(cursor),
+                maxAlunos: Math.max(maxAlunosBase - alunosInscritosIds.length, 0),
+                alunosInscritosIds,
+            });
+        }
+    });
+
+    return expandidas;
+}
+
 export default function CoachingEE() {
     const userInfo = authService.getUserInfo() as User;
     if (userInfo.role !== 'Enc_Educacao') {
@@ -174,6 +241,7 @@ export default function CoachingEE() {
     const [modalAberto, setModalAberto] = useState(false);
     const [disponibilidadeSelecionada, setDisponibilidadeSelecionada] = useState<Disponibilidade | null>(null);
     const [alunoSelecionado, setAlunoSelecionado] = useState<number | null>(null);
+    const [modalidadeSelecionada, setModalidadeSelecionada] = useState<number | null>(null);
     const [filtroModalidade, setFiltroModalidade] = useState('');
     const [filtroProfessor, setFiltroProfessor] = useState('');
     const [observacoes, setObservacoes] = useState('');
@@ -183,8 +251,11 @@ export default function CoachingEE() {
     const disponibilidadesOrdenadas = useMemo(() => {
         return disponibilidades
             .filter((disp) => disp.maxAlunos > 0)
+            .filter((disp) => (disp.modalidadesProfessor?.length ?? 0) > 0)
             .filter((disp) => (filtroProfessor ? disp.nomeProfessor === filtroProfessor : true))
-            .filter((disp) => (filtroModalidade ? disp.modalidade === filtroModalidade : true))
+            .filter((disp) => filtroModalidade
+                ? disp.modalidadesProfessor?.some((modalidade) => modalidade.descricao === filtroModalidade)
+                : true)
             .sort((a, b) => getDisponibilidadeDateTime(a).getTime() - getDisponibilidadeDateTime(b).getTime());
     }, [disponibilidades, filtroProfessor, filtroModalidade]);
 
@@ -230,7 +301,7 @@ export default function CoachingEE() {
         try {
             const data = await disponibilidadesService.getAvailability();
             const approved = data.filter((disp: Disponibilidade) => disp.estado === 'Aprovado');
-            setDisponibilidades(approved);
+            setDisponibilidades(expandirDisponibilidadesRecorrentes(approved));
         } catch (err) {
             console.error('Erro ao buscar disponibilidades:', err);
             setError(err instanceof Error ? err.message : 'Erro desconhecido ao carregar disponibilidades.');
@@ -246,7 +317,7 @@ export default function CoachingEE() {
     }
 
     async function handleInscreverAluno() {
-        if (!disponibilidadeSelecionada || !alunoSelecionado) {
+        if (!disponibilidadeSelecionada || !alunoSelecionado || !modalidadeSelecionada) {
             showToast('Por favor selecione uma sessão e um aluno.');
             return;
         }
@@ -261,6 +332,7 @@ export default function CoachingEE() {
                 idEstadoCoaching: 7,
                 idSala: disponibilidadeSelecionada.idEstudio,
                 valorPorAluno: disponibilidadeSelecionada.valorPorAluno,
+                idModalidade: modalidadeSelecionada,
                 inicio_Coaching: inicioCoachingFormatado,
                 duracao: disponibilidadeSelecionada.duracao,
                 idCoordenador: disponibilidadeSelecionada.idCoordenador,
@@ -285,6 +357,11 @@ export default function CoachingEE() {
     function abrirModal(disponibilidade: Disponibilidade) {
         setDisponibilidadeSelecionada(disponibilidade);
         setAlunoSelecionado(null);
+        setModalidadeSelecionada(
+            disponibilidade.modalidadesProfessor?.length === 1
+                ? disponibilidade.modalidadesProfessor[0].idModalidade
+                : null
+        );
         setModalAberto(true);
     }
 
@@ -293,6 +370,7 @@ export default function CoachingEE() {
         setModalAberto(false);
         setDisponibilidadeSelecionada(null);
         setAlunoSelecionado(null);
+        setModalidadeSelecionada(null);
     }
 
     function changeDate(amount: number) {
@@ -315,7 +393,9 @@ export default function CoachingEE() {
     }, []);
 
     const professoresUnicos = Array.from(new Set(disponibilidades.map((item) => item.nomeProfessor).filter(Boolean))).sort();
-    const modalidadesUnicas = Array.from(new Set(disponibilidades.map((item) => item.modalidade).filter(Boolean))).sort();
+    const modalidadesUnicas = Array.from(new Set(
+        disponibilidades.flatMap((item) => item.modalidadesProfessor?.map((modalidade) => modalidade.descricao) ?? [])
+    )).sort();
 
     const alunosOptions = alunos
         .filter((aluno) => {
@@ -329,7 +409,7 @@ export default function CoachingEE() {
 
     const renderDisponibilidadeCard = (disponibilidade: Disponibilidade, small = false) => (
         <button
-            key={disponibilidade.idDisponibilidade}
+            key={`${disponibilidade.idDisponibilidade}-${disponibilidade.data}`}
             type="button"
             className={`calendar-item disponibilidade-item ${small ? 'calendar-item-small' : ''}`}
             onClick={(event) => {
@@ -339,8 +419,9 @@ export default function CoachingEE() {
         >
             <span className="item-badge">C</span>
             <span className="item-copy">
-                <strong>{disponibilidade.modalidade || 'Coaching'}</strong>
+                <strong>Coaching</strong>
                 <span>Prof. {disponibilidade.nomeProfessor || 'Professor não definido'}</span>
+                <span>{disponibilidade.modalidadesProfessor?.map((modalidade) => modalidade.descricao).join(', ') || 'Sem modalidades associadas'}</span>
                 <span>{disponibilidade.horario}</span>
             </span>
         </button>
@@ -501,10 +582,26 @@ export default function CoachingEE() {
                                 <p><strong>Professor:</strong> {disponibilidadeSelecionada.nomeProfessor}</p>
                                 <p><strong>Data:</strong> {disponibilidadeSelecionada.data}</p>
                                 <p><strong>Horário:</strong> {disponibilidadeSelecionada.horario}</p>
-                                <p><strong>Modalidade:</strong> {disponibilidadeSelecionada.modalidade}</p>
+                                <p><strong>Modalidades:</strong> {disponibilidadeSelecionada.modalidadesProfessor?.map((modalidade) => modalidade.descricao).join(', ') || 'Sem modalidades associadas'}</p>
                                 <p><strong>Duração:</strong> {disponibilidadeSelecionada.duracao} minutos</p>
                                 <p><strong>Vagas disponíveis:</strong> {disponibilidadeSelecionada.maxAlunos}</p>
                                 <p><strong>Valor a pagar:</strong> {disponibilidadeSelecionada.valorPorAluno.toFixed(2)}€</p>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Modalidade</label>
+                                <SelectBoxComponent
+                                    id="modalidade-select"
+                                    selectedOption={modalidadeSelecionada?.toString() || ''}
+                                    onChange={(e) => setModalidadeSelecionada(e.target.value ? Number(e.target.value) : null)}
+                                    options={[
+                                        { value: '', label: 'Selecione uma modalidade' },
+                                        ...(disponibilidadeSelecionada.modalidadesProfessor ?? []).map((modalidade) => ({
+                                            value: modalidade.idModalidade.toString(),
+                                            label: modalidade.descricao,
+                                        })),
+                                    ]}
+                                />
                             </div>
 
                             <div className="form-group">
@@ -535,7 +632,7 @@ export default function CoachingEE() {
                                 <ButtonComponent
                                     className="btn-confirmar"
                                     onClick={handleInscreverAluno}
-                                    disabled={!alunoSelecionado}
+                                    disabled={!alunoSelecionado || !modalidadeSelecionada}
                                 >
                                     Inscrever
                                 </ButtonComponent>

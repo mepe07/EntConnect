@@ -22,7 +22,7 @@ interface DisponibilidadeRecorrente {
     horario: string;
     duracao: number;
     maxAlunos: number;
-    modalidade: string;
+    estado: string;
     idProfessor: number;
     diaSemana?: number | null;
     ativa: boolean;
@@ -46,8 +46,6 @@ const initialForm = {
     diaSemana: 1,
     hora: '16:00',
     duracao: 60,
-    maxAlunos: 4,
-    modalidade: '',
 };
 
 function getDataAtualInput() {
@@ -79,6 +77,19 @@ function calcularPosicaoY(horaInicio: string) {
     const date = new Date(horaInicio);
     if (Number.isNaN(date.getTime())) return 0;
     return date.getHours() * 60 + date.getMinutes();
+}
+
+function normalizarEstado(estado?: string) {
+    return (estado ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+}
+
+function getEstadoClass(disponibilidade: DisponibilidadeRecorrente) {
+    if (!disponibilidade.ativa) return 'inativa';
+    if (normalizarEstado(disponibilidade.estado) === 'pendente') return 'pendente';
+    return '';
 }
 
 export default function AdicionarDisponibilidade() {
@@ -198,8 +209,6 @@ export default function AdicionarDisponibilidade() {
             AlteradoPorUtilizadorID: Number(userInfo?.sub),
             Hora_Inicio: horaParaDataIso(form.hora),
             Duracao: Number(form.duracao),
-            MaxAlunos: Number(form.maxAlunos),
-            Modalidade: form.modalidade,
             Dia_Semana: Number(form.diaSemana),
             Ativa: true,
         };
@@ -356,7 +365,7 @@ export default function AdicionarDisponibilidade() {
                                             <button
                                                 key={disponibilidade.idDisponibilidade}
                                                 type="button"
-                                                className={`disponibilidade-card ${!disponibilidade.ativa ? 'inativa' : ''}`}
+                                                className={`disponibilidade-card ${getEstadoClass(disponibilidade)}`}
                                                 style={{
                                                     top: `${disponibilidade.top}px`,
                                                     height: `${Math.max(disponibilidade.duracao, 34)}px`,
@@ -369,14 +378,17 @@ export default function AdicionarDisponibilidade() {
                                                     setExceptionDate('');
                                                 }}
                                             >
-                                                <span className="disponibilidade-titulo">{disponibilidade.modalidade}</span>
+                                                <span className="disponibilidade-titulo">Disponivel</span>
                                                 <span className="disponibilidade-info">{disponibilidade.horario}</span>
                                                 <span className="disponibilidade-meta">
-                                                    {disponibilidade.maxAlunos} alunos
+                                                    {disponibilidade.estado}
                                                     {(disponibilidade.excecoes?.length ?? 0) > 0 && (
                                                         <> - {disponibilidade.excecoes?.length} excecao</>
                                                     )}
                                                 </span>
+                                                {normalizarEstado(disponibilidade.estado) === 'pendente' && (
+                                                    <span className="estado-mini">Pendente</span>
+                                                )}
                                             </button>
                                         ))}
                                     </div>
@@ -439,29 +451,6 @@ export default function AdicionarDisponibilidade() {
                                         />
                                     </label>
 
-                                    <label>
-                                        Maximo de alunos
-                                        <input
-                                            type="number"
-                                            className="input-campo"
-                                            min={1}
-                                            value={form.maxAlunos}
-                                            onChange={(event) => setForm({ ...form, maxAlunos: Number(event.target.value) })}
-                                            required
-                                        />
-                                    </label>
-
-                                    <label className="full-width">
-                                        Modalidade
-                                        <input
-                                            type="text"
-                                            className="input-campo"
-                                            placeholder="Ex: Salsa, Kizomba..."
-                                            value={form.modalidade}
-                                            onChange={(event) => setForm({ ...form, modalidade: event.target.value })}
-                                            required
-                                        />
-                                    </label>
                                 </div>
                             </form>
                         </div>
@@ -500,10 +489,6 @@ export default function AdicionarDisponibilidade() {
 
                         <div className="modal-body">
                             <div className="modal-row">
-                                <span>Modalidade</span>
-                                <strong>{selectedDisponibilidade.modalidade}</strong>
-                            </div>
-                            <div className="modal-row">
                                 <span>Horario</span>
                                 <strong>{selectedDisponibilidade.horario}</strong>
                             </div>
@@ -512,13 +497,21 @@ export default function AdicionarDisponibilidade() {
                                 <strong>{selectedDisponibilidade.duracao} minutos</strong>
                             </div>
                             <div className="modal-row">
-                                <span>Maximo de alunos</span>
-                                <strong>{selectedDisponibilidade.maxAlunos}</strong>
-                            </div>
-                            <div className="modal-row">
-                                <span>Estado</span>
+                                <span>Disponibilidade</span>
                                 <strong className={selectedDisponibilidade.ativa ? 'estado-ativo' : 'estado-inativo'}>
                                     {selectedDisponibilidade.ativa ? 'Ativa' : 'Suspensa'}
+                                </strong>
+                            </div>
+                            <div className="modal-row">
+                                <span>Aprovacao</span>
+                                <strong
+                                    className={
+                                        normalizarEstado(selectedDisponibilidade.estado) === 'pendente'
+                                            ? 'estado-pendente'
+                                            : 'estado-ativo'
+                                    }
+                                >
+                                    {selectedDisponibilidade.estado || 'Sem estado'}
                                 </strong>
                             </div>
 

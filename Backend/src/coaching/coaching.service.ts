@@ -52,7 +52,14 @@ export class CoachingService {
 
     const disponibilidadeInfo = await this.prisma.disponibilidade.findUnique({
       where: { ID_Disponibilidade: idDisponibilidade },
-      select: { MaxAlunos: true },
+      select: {
+        MaxAlunos: true,
+        Professor: {
+          include: {
+            Professor_Modalidade: true,
+          },
+        },
+      },
     });
 
     if (!disponibilidadeInfo || (disponibilidadeInfo.MaxAlunos ?? 0) < 1) {
@@ -62,9 +69,40 @@ export class CoachingService {
       throw new Error('Não existem vagas disponíveis para esta sessão.');
     }
 
+    const professorPodeLecionar =
+      disponibilidadeInfo.Professor?.Professor_Modalidade.some(
+        (item) => item.ID_Modalidade === body.idModalidade,
+      ) ?? false;
+
+    if (!professorPodeLecionar) {
+      this.logger.warn(
+        `Inscricao rejeitada por modalidade invalida idDisponibilidade=${idDisponibilidade} idModalidade=${body.idModalidade}`,
+      );
+      throw new Error('O professor nao leciona a modalidade escolhida.');
+    }
+
+    const inicioCoaching = new Date(body.inicio_Coaching);
+
     let coaching = await this.prisma.coaching.findFirst({
-      where: { ID_Disponibilidade: idDisponibilidade },
+      where: {
+        ID_Disponibilidade: idDisponibilidade,
+        ID_Modalidade: body.idModalidade,
+        Inicio_Coaching: inicioCoaching,
+      },
+      include: {
+        Coaching_Aluno: true,
+      },
     });
+
+    if (
+      coaching &&
+      coaching.Coaching_Aluno.length >= (disponibilidadeInfo.MaxAlunos ?? 0)
+    ) {
+      this.logger.warn(
+        `Inscricao rejeitada por lotacao cheia idDisponibilidade=${idDisponibilidade} idCoaching=${coaching.ID_Coaching}`,
+      );
+      throw new Error('NÃ£o existem vagas disponÃ­veis para esta sessÃ£o.');
+    }
 
     if (!coaching) {
       coaching = await this.prisma.coaching.create({
@@ -73,10 +111,14 @@ export class CoachingService {
           ID_Estado_Coaching: body.idEstadoCoaching,
           ID_Sala: body.idSala,
           ID_Coordenador: body.idCoordenador,
+          ID_Modalidade: body.idModalidade,
           ValorPorAluno: body.valorPorAluno,
-          Inicio_Coaching: new Date(body.inicio_Coaching),
+          Inicio_Coaching: inicioCoaching,
           Duracao: body.duracao,
           ID_Disponibilidade: idDisponibilidade,
+        },
+        include: {
+          Coaching_Aluno: true,
         },
       });
       this.logger.log(
@@ -95,16 +137,6 @@ export class CoachingService {
       },
     });
 
-    await this.prisma.disponibilidade.update({
-      where: {
-        ID_Disponibilidade: idDisponibilidade,
-      },
-      data: {
-        MaxAlunos: {
-          decrement: 1,
-        },
-      },
-    });
     this.logger.log(
       `Aluno inscrito com sucesso idCoaching=${coaching.ID_Coaching} idAluno=${body.idAluno} idDisponibilidade=${idDisponibilidade}`,
     );
@@ -141,11 +173,6 @@ export class CoachingService {
       throw new Error('Inscrição não encontrada!');
     }
 
-    const coaching = await this.prisma.coaching.findUnique({
-      where: { ID_Coaching: idCoaching },
-      select: { ID_Disponibilidade: true },
-    });
-
     const totalInscritos = await this.prisma.coaching_Aluno.count({
       where: {
         ID_Coaching: idCoaching,
@@ -160,19 +187,6 @@ export class CoachingService {
         },
       },
     });
-
-    if (coaching && coaching.ID_Disponibilidade) {
-      await this.prisma.disponibilidade.update({
-        where: {
-          ID_Disponibilidade: coaching.ID_Disponibilidade,
-        },
-        data: {
-          MaxAlunos: {
-            increment: 1,
-          },
-        },
-      });
-    }
 
     if (totalInscritos == 1) {
       await this.prisma.coaching.delete({
@@ -209,6 +223,7 @@ export class CoachingService {
           },
         },
         Disponibilidade: true,
+        Modalidade: true,
         Estado_Coaching: true,
         Coaching_Aluno: {
           include: {
@@ -231,7 +246,10 @@ export class CoachingService {
         session.Inicio_Coaching && session.Duracao
           ? `${session.Inicio_Coaching.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} - ${new Date(session.Inicio_Coaching.getTime() + session.Duracao * 60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
           : 'N/A',
-      modalidade: session.Disponibilidade?.Modalidade || 'N/A',
+      modalidade:
+        session.Modalidade?.Descricao ||
+        session.Disponibilidade?.Modalidade ||
+        'N/A',
       estado: session.Estado_Coaching?.Tipo || 'N/A',
       alunos: session.Coaching_Aluno.map((ca) => ({
         idAluno: ca.ID_Aluno,
@@ -258,6 +276,7 @@ export class CoachingService {
           },
         },
         Disponibilidade: true,
+        Modalidade: true,
         Estado_Coaching: true,
         Coaching_Aluno: {
           include: {
@@ -280,7 +299,10 @@ export class CoachingService {
         session.Inicio_Coaching && session.Duracao
           ? `${session.Inicio_Coaching.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} - ${new Date(session.Inicio_Coaching.getTime() + session.Duracao * 60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
           : 'N/A',
-      modalidade: session.Disponibilidade?.Modalidade || 'N/A',
+      modalidade:
+        session.Modalidade?.Descricao ||
+        session.Disponibilidade?.Modalidade ||
+        'N/A',
       estado: session.Estado_Coaching?.Tipo || 'N/A',
       alunos: session.Coaching_Aluno.map((ca) => ({
         idAluno: ca.ID_Aluno,
@@ -318,6 +340,7 @@ export class CoachingService {
           },
         },
         Disponibilidade: true,
+        Modalidade: true,
         Estado_Coaching: true,
         Coaching_Aluno: {
           include: {
@@ -340,7 +363,10 @@ export class CoachingService {
         session.Inicio_Coaching && session.Duracao
           ? `${session.Inicio_Coaching.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} - ${new Date(session.Inicio_Coaching.getTime() + session.Duracao * 60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
           : 'N/A',
-      modalidade: session.Disponibilidade?.Modalidade || 'N/A',
+      modalidade:
+        session.Modalidade?.Descricao ||
+        session.Disponibilidade?.Modalidade ||
+        'N/A',
       estado: session.Estado_Coaching?.Tipo || 'N/A',
       alunos: session.Coaching_Aluno.map((ca) => ({
         idAluno: ca.ID_Aluno,
@@ -484,6 +510,7 @@ export class CoachingService {
         Sala: true,
         Estado_Coaching: true,
         Disponibilidade: true,
+        Modalidade: true,
         Coaching_Aluno: {
           include: { Aluno: true },
         },
@@ -502,7 +529,10 @@ export class CoachingService {
         dataInicio: aula.Inicio_Coaching,
         duracaoMinutos: aula.Duracao,
         sala: aula.Sala?.Nome || 'Sem sala atribuída',
-        modalidade: aula.Disponibilidade?.Modalidade || 'Sem modalidade',
+        modalidade:
+          aula.Modalidade?.Descricao ||
+          aula.Disponibilidade?.Modalidade ||
+          'Sem modalidade',
         alunos: nomesAlunos,
         totalAlunos: nomesAlunos.length,
         estado: aula.Estado_Coaching?.Tipo || 'Pendente',

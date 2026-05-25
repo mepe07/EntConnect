@@ -6,8 +6,10 @@ import {
   IsDateString,
   IsOptional,
   IsNumberString,
-  Length,
+  IsArray,
+  IsInt,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 /**
  * DTO usado para transportar os dados de Create Professor.
@@ -60,4 +62,14 @@ export class CreateProfessorDto {
   @IsString()
   @IsOptional()
   Foto?: string;
+
+  @ApiPropertyOptional({
+    example: [1, 2],
+    description: 'IDs das modalidades que o professor pode lecionar',
+  })
+  @IsOptional()
+  @IsArray()
+  @Type(() => Number)
+  @IsInt({ each: true })
+  modalidadesIds?: number[];
 }

@@ -33,4 +33,12 @@ export class UpdateDisponibilidadeDto extends PartialType(
   @IsOptional()
   @IsNumber()
   ValorPorAluno?: number;
+
+  @ApiPropertyOptional({
+    example: 4,
+    description: 'Numero maximo de alunos definido pela coordenacao',
+  })
+  @IsOptional()
+  @IsInt()
+  MaxAlunos?: number;
 }

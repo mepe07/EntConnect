@@ -39,6 +39,7 @@ export class DisponibilidadesService {
         alteradoPor: number,
         idEstudio?: number,
         valorPorAluno?: number,
+        maxAlunos?: number,
     ) {
         const bodyRequest = {
             Hora_Inicio: horaInicio,
@@ -47,6 +48,7 @@ export class DisponibilidadesService {
             EstadoDisponibilidadeID: novoEstado,
             IdEstudio: idEstudio,
             ValorPorAluno: valorPorAluno,
+            MaxAlunos: maxAlunos,
         };
 
         const response = await fetch(`${this._apiUrl}/utilizador/professor/disponibilidade/${idDisponibilidade}/atualizar-disponibilidade`, {
