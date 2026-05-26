@@ -1,5 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsDateString, IsInt } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsBoolean,
+  IsDateString,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+} from 'class-validator';
 
 /**
  * DTO usado para transportar os dados de Create Disponibilidade.
@@ -13,7 +19,7 @@ export class CreateDisponibilidadeDto {
 
   @ApiProperty({
     example: 1,
-    description: 'ID do Utilizador que está a criar/alterar',
+    description: 'ID do Utilizador que esta a criar/alterar',
   })
   @IsNotEmpty()
   @IsInt()
@@ -21,7 +27,7 @@ export class CreateDisponibilidadeDto {
 
   @ApiProperty({
     example: '2026-05-10T09:00:00Z',
-    description: 'Hora de início',
+    description: 'Hora de inicio',
   })
   @IsNotEmpty()
   @IsDateString()
@@ -29,25 +35,25 @@ export class CreateDisponibilidadeDto {
 
   @ApiProperty({
     example: 60,
-    description: 'Duração da disponibilidade em minutos',
+    description: 'Duracao da disponibilidade em minutos',
   })
   @IsNotEmpty()
   @IsInt()
   Duracao: number;
 
-  @ApiProperty({
-    example: 4,
-    description: 'Número máximo de alunos permitidos',
+  @ApiPropertyOptional({
+    example: 1,
+    description: 'Dia da semana para disponibilidades recorrentes',
   })
-  @IsNotEmpty()
+  @IsOptional()
   @IsInt()
-  MaxAlunos: number;
+  Dia_Semana?: number;
 
-  @ApiProperty({
-    example: 'Ballet',
-    description: 'Modalidade da disponibilidade',
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Indica se a disponibilidade recorrente esta ativa',
   })
-  @IsNotEmpty()
-  @IsString()
-  Modalidade: string;
+  @IsOptional()
+  @IsBoolean()
+  Ativa?: boolean;
 }

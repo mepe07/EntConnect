@@ -168,6 +168,7 @@ export default function ApproveAvailability() {
     const [linhaSelecionada, setLinhaSelecionada] = useState<any>(null);
     const [estudioSelecionado, setEstudioSelecionado] = useState<string>('');
     const [valorPorAluno, setValorPorAluno] = useState<string>('');
+    const [maxAlunosSelecionado, setMaxAlunosSelecionado] = useState<string>('1');
 
 
     async function fetchDisponibilidades() {
@@ -245,6 +246,7 @@ export default function ApproveAvailability() {
         setLinhaSelecionada(row);
         setEstudioSelecionado('');
         setValorPorAluno('');
+        setMaxAlunosSelecionado('1');
         setModalAberto(true);
     }
 
@@ -256,17 +258,17 @@ export default function ApproveAvailability() {
 
 
     async function confirmarAprovacao() {
-        if (!estudioSelecionado || !valorPorAluno) {
+        if (!estudioSelecionado || !valorPorAluno || !maxAlunosSelecionado) {
             showToast('Por favor, selecione um estúdio e insira o valor por aluno.');
             return;
         }
 
-        await handleAtualizarEstado(linhaSelecionada, 1, Number(estudioSelecionado), Number(valorPorAluno));
+        await handleAtualizarEstado(linhaSelecionada, 1, Number(estudioSelecionado), Number(valorPorAluno), Number(maxAlunosSelecionado));
         fecharModal();
     }
 
 
-    async function handleAtualizarEstado(row: any, novoEstado: number, idEstudio?: number, valorPorAluno?: number) {
+    async function handleAtualizarEstado(row: any, novoEstado: number, idEstudio?: number, valorPorAluno?: number, maxAlunos?: number) {
         const alteradoPor = userInfo.idUtilizador;
 
         const [horaInicioStr, horaFimStr] = row.horario.split(' - ');
@@ -289,7 +291,8 @@ export default function ApproveAvailability() {
                 duracaoMinutos,
                 alteradoPor,
                 idEstudio,
-                valorPorAluno
+                valorPorAluno,
+                maxAlunos
             );
 
             fetchDisponibilidades();
@@ -315,7 +318,6 @@ export default function ApproveAvailability() {
                         { key: "nomeProfessor", value: "Professor", type: TableColumnTypesEnum.Default },
                         { key: "data", value: "Data", type: TableColumnTypesEnum.Default },
                         { key: "horario", value: "Horário", type: TableColumnTypesEnum.Default },
-                        { key: "modalidade", value: "Modalidade", type: TableColumnTypesEnum.Default },
                         { key: "maxAlunos", value: "Máx. Alunos", type: TableColumnTypesEnum.Default },
                         { key: "alteradoPor", value: "Alterado Por", type: TableColumnTypesEnum.Default },
                         { key: "estadoChip", value: "Estado", type: TableColumnTypesEnum.Chip }
@@ -404,6 +406,18 @@ export default function ApproveAvailability() {
                             </div>
 
                             <div className="form-group">
+                                <label>Maximo de alunos</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    style={{ width: '100%', padding: '8px', marginBottom: '15px' }}
+                                    placeholder="Ex: 4"
+                                    value={maxAlunosSelecionado}
+                                    onChange={(e) => setMaxAlunosSelecionado(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="form-group">
                                 <label>Valor por aluno (€)</label>
                                 <input
                                     type="number"
@@ -421,7 +435,7 @@ export default function ApproveAvailability() {
                                 <ButtonComponent
                                     className="btn-confirmar"
                                     onClick={confirmarAprovacao}
-                                    disabled={!estudioSelecionado || !valorPorAluno || estudiosLivres.length === 0}
+                                    disabled={!estudioSelecionado || !valorPorAluno || !maxAlunosSelecionado || estudiosLivres.length === 0}
                                 >
                                     Confirmar Aprovação
                                 </ButtonComponent>

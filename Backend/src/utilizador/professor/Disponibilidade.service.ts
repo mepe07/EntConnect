@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDisponibilidadeDto } from '../dto/create-disponibilidade.dto';
 import { UpdateDisponibilidadeDto } from '../dto/update-disponibilidade.dto';
@@ -20,10 +25,18 @@ export class DispobilidadeService {
 
   async getAvailabilities() {
     const disponibilidadesRaw = await this.prisma.disponibilidade.findMany({
+      orderBy: [{ Dia_Semana: 'asc' }, { Hora_Inicio: 'asc' }],
       include: {
-        Professor: { include: { Pessoa: true } },
+        Professor: {
+          include: {
+            Pessoa: true,
+            Professor_Modalidade: { include: { Modalidade: true } },
+          },
+        },
         Estado_Disponibilidade: true,
         Utilizador: { include: { Pessoa: true } },
+        Dias_Semana: true,
+        Excecao_Disponibilidade: true,
 
         Coaching: {
           include: {
@@ -67,6 +80,15 @@ export class DispobilidadeService {
           coaching.Coaching_Aluno.map((ca) => ca.ID_Aluno),
         );
 
+        const sessoes = disp.Coaching.map((coaching) => ({
+          idCoaching: coaching.ID_Coaching,
+          inicioCoaching: coaching.Inicio_Coaching,
+          idModalidade: coaching.ID_Modalidade,
+          alunosInscritosIds: coaching.Coaching_Aluno.map(
+            (ca) => ca.ID_Aluno,
+          ),
+        }));
+
         return {
           idDisponibilidade: disp.ID_Disponibilidade,
           nomeProfessor:
@@ -74,6 +96,11 @@ export class DispobilidadeService {
           data: strindData,
           horario: stringHorario,
           modalidade: disp.Modalidade,
+          modalidadesProfessor:
+            disp.Professor?.Professor_Modalidade.map((item) => ({
+              idModalidade: item.ID_Modalidade,
+              descricao: item.Modalidade.Descricao,
+            })) ?? [],
           alteradoPor: disp.Utilizador?.Pessoa?.Nome || 'Sistema',
           estado: disp.Estado_Disponibilidade?.Tipo || 'Desconhecido',
           duracao: disp.Duracao,
@@ -82,6 +109,12 @@ export class DispobilidadeService {
           idEstudio: disp.IdEstudio,
           valorPorAluno: disp.ValorPorAluno ? Number(disp.ValorPorAluno) : 0,
           idCoordenador: disp.AlteradoPorUtilizadorID,
+          horaInicio: disp.Hora_Inicio,
+          diaSemana: disp.Dia_Semana,
+          ativa: disp.Ativa ?? true,
+          diasSemana: disp.Dias_Semana,
+          excecoes: disp.Excecao_Disponibilidade,
+          sessoes,
           alunosInscritosIds: alunosJaInscritos,
         };
       })
@@ -99,8 +132,9 @@ export class DispobilidadeService {
 
     const now = new Date();
     const horaInicio = new Date(dto.Hora_Inicio);
+    const isRecorrente = dto.Dia_Semana !== undefined && dto.Dia_Semana !== null;
 
-    if (horaInicio < now) {
+    if (!isRecorrente && horaInicio < now) {
       this.logger.warn(
         `Criacao de disponibilidade rejeitada: data no passado idProfessor=${dto.ID_Professor} horaInicio=${dto.Hora_Inicio}`,
       );
@@ -117,10 +151,12 @@ export class DispobilidadeService {
         DataAtualizacao: now,
         AlteradoPorUtilizadorID: dto.AlteradoPorUtilizadorID,
         Duracao: dto.Duracao,
-        Modalidade: dto.Modalidade,
+        Modalidade: null,
         IdEstudio: null,
-        MaxAlunos: dto.MaxAlunos,
+        MaxAlunos: null,
         ValorPorAluno: null,
+        Dia_Semana: dto.Dia_Semana ?? null,
+        Ativa: dto.Ativa ?? true,
       },
     });
     this.logger.log(
@@ -183,6 +219,87 @@ export class DispobilidadeService {
     return {
       message: 'Disponibiliade atualizada com sucesso.',
       disponibilidade: atualizaDisponibilidade,
+    };
+  }
+
+  async deleteAvailability(idDisponibilidade: number) {
+    this.logger.log(
+      `A eliminar disponibilidade idDisponibilidade=${idDisponibilidade}`,
+    );
+
+    const disponibilidade = await this.prisma.disponibilidade.findUnique({
+      where: { ID_Disponibilidade: idDisponibilidade },
+    });
+
+    if (!disponibilidade) {
+      throw new NotFoundException('Disponibilidade nao encontrada.');
+    }
+
+    const removida = await this.prisma.disponibilidade.delete({
+      where: { ID_Disponibilidade: idDisponibilidade },
+    });
+
+    return {
+      message: 'Disponibilidade eliminada com sucesso.',
+      disponibilidade: removida,
+    };
+  }
+
+  async createExcecao(idDisponibilidade: number, dataCanceladaRaw: string) {
+    const disponibilidade = await this.prisma.disponibilidade.findUnique({
+      where: { ID_Disponibilidade: idDisponibilidade },
+    });
+
+    if (!disponibilidade) {
+      throw new NotFoundException('Disponibilidade nao encontrada.');
+    }
+
+    const dataCancelada = new Date(dataCanceladaRaw);
+    if (Number.isNaN(dataCancelada.getTime())) {
+      throw new BadRequestException('Data invalida. Utilize o formato YYYY-MM-DD.');
+    }
+    dataCancelada.setHours(0, 0, 0, 0);
+
+    const existente = await this.prisma.excecao_Disponibilidade.findFirst({
+      where: {
+        ID_Disponibilidade: idDisponibilidade,
+        Data_Cancelada: dataCancelada,
+      },
+    });
+
+    if (existente) {
+      throw new BadRequestException('Ja existe uma excecao para essa data.');
+    }
+
+    const excecao = await this.prisma.excecao_Disponibilidade.create({
+      data: {
+        ID_Disponibilidade: idDisponibilidade,
+        Data_Cancelada: dataCancelada,
+      },
+    });
+
+    return {
+      message: 'Excecao criada com sucesso.',
+      excecao,
+    };
+  }
+
+  async deleteExcecao(idExcecao: number) {
+    const excecao = await this.prisma.excecao_Disponibilidade.findUnique({
+      where: { ID_Excecao: idExcecao },
+    });
+
+    if (!excecao) {
+      throw new NotFoundException('Excecao nao encontrada.');
+    }
+
+    const removida = await this.prisma.excecao_Disponibilidade.delete({
+      where: { ID_Excecao: idExcecao },
+    });
+
+    return {
+      message: 'Excecao removida com sucesso.',
+      excecao: removida,
     };
   }
 }

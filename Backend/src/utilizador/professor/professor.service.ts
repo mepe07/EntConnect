@@ -14,6 +14,16 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class ProfessorService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private buildModalidadesData(modalidadesIds?: number[]) {
+    const ids = Array.from(new Set((modalidadesIds ?? []).map(Number))).filter(
+      (id) => Number.isInteger(id) && id > 0,
+    );
+
+    return ids.map((idModalidade) => ({
+      ID_Modalidade: idModalidade,
+    }));
+  }
+
   /**
    * Cria um novo registo.
    * @param createProfessorDto Dados recebidos para a operacao.
@@ -34,9 +44,13 @@ export class ProfessorService {
               Foto: createProfessorDto.Foto,
             },
           },
+          Professor_Modalidade: {
+            create: this.buildModalidadesData(createProfessorDto.modalidadesIds),
+          },
         },
         include: {
           Pessoa: true,
+          Professor_Modalidade: { include: { Modalidade: true } },
         },
       });
     } catch (error: any) {
@@ -65,6 +79,7 @@ export class ProfessorService {
         skip: skip,
         include: {
           Pessoa: true,
+          Professor_Modalidade: { include: { Modalidade: true } },
         },
         orderBy: {
           ID_Pessoa: 'asc',
@@ -110,9 +125,20 @@ export class ProfessorService {
               Foto: updateProfessorDto.Foto,
             },
           },
+          ...(updateProfessorDto.modalidadesIds
+            ? {
+                Professor_Modalidade: {
+                  deleteMany: {},
+                  create: this.buildModalidadesData(
+                    updateProfessorDto.modalidadesIds,
+                  ),
+                },
+              }
+            : {}),
         },
         include: {
           Pessoa: true,
+          Professor_Modalidade: { include: { Modalidade: true } },
         },
       });
     } catch (error: any) {

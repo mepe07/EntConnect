@@ -102,11 +102,451 @@
                 color: #0f172a;
             }
         }
+
+        &.kpi-card-button {
+            width: 100%;
+            border: 1px solid #f1f5f9;
+            cursor: pointer;
+            text-align: left;
+            font: inherit;
+
+            &:focus-visible {
+                outline: 3px solid rgba(217, 119, 6, 0.35);
+                outline-offset: 3px;
+            }
+        }
     }
 }
 
 table button {
     border: none !important;
+}
+
+.propostas-section {
+    margin-bottom: 32px;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #ffffff;
+    padding: 20px;
+
+    .propostas-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 16px;
+
+        h2 {
+            margin: 0;
+            color: #0f172a;
+            font-size: 1.25rem;
+        }
+
+        p {
+            margin: 4px 0 0;
+            color: #64748b;
+        }
+    }
+
+    .tool-button {
+        border: 1px solid #d8dbe2;
+        background: #ffffff;
+        color: #1f2937;
+        border-radius: 999px;
+        padding: 0.65rem 1rem;
+        font-size: 0.9rem;
+        cursor: pointer;
+        min-height: 40px;
+    }
+
+    .propostas-list {
+        display: grid;
+        gap: 12px;
+    }
+
+    .proposta-card {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 16px;
+        align-items: center;
+        padding: 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #f8fafc;
+    }
+
+    .proposta-main {
+        display: grid;
+        gap: 5px;
+        min-width: 0;
+
+        h3 {
+            margin: 0;
+            color: #111827;
+            font-size: 1.05rem;
+        }
+
+        p,
+        span,
+        small {
+            margin: 0;
+            color: #475569;
+        }
+
+        small {
+            display: inline-flex;
+            width: fit-content;
+            max-width: 100%;
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+        }
+    }
+
+    .proposta-date {
+        color: #0f766e !important;
+        font-weight: 800;
+    }
+
+    .proposta-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .btn-aprovar-proposta,
+    .btn-rejeitar-proposta {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .btn-aprovar-proposta {
+        background: #dcfce7;
+        border: 1px solid #86efac;
+        color: #166534;
+    }
+
+    .btn-rejeitar-proposta {
+        background: #fee2e2;
+        border: 1px solid #fca5a5;
+        color: #991b1b;
+    }
+
+    .empty-state {
+        padding: 22px;
+        border-radius: 12px;
+        background: #f8fafc;
+        color: #475569;
+        border: 1px dashed #cbd5e1;
+    }
+}
+
+.coaching-calendar-section {
+    .calendario-header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 1.25rem;
+        margin-bottom: 20px;
+
+        h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #0f172a;
+            font-weight: 800;
+        }
+    }
+
+    .calendario-range {
+        margin: 8px 0 0;
+        color: #5f6777;
+        text-transform: capitalize;
+    }
+
+    .calendario-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .calendario-buttons,
+    .view-mode-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .tool-button,
+    .view-button {
+        border: 1px solid #d8dbe2;
+        background: #ffffff;
+        color: #1f2937;
+        border-radius: 999px;
+        padding: 0.65rem 1rem;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.18s ease-in-out;
+        min-height: 40px;
+    }
+
+    .tool-button:hover,
+    .view-button:hover {
+        border-color: #9ca3af;
+        background: #f8fafc;
+    }
+
+    .view-button.active {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #ffffff;
+    }
+
+    .calendario-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .calendar-weekday {
+        padding: 14px 12px;
+        background: #f8fafc;
+        color: #475569;
+        text-align: center;
+        font-weight: 700;
+        border-radius: 12px;
+    }
+
+    .calendar-day {
+        min-height: 190px;
+        padding: 12px;
+        border-radius: 18px;
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        cursor: pointer;
+        text-align: left;
+        color: inherit;
+    }
+
+    .calendar-day:hover {
+        transform: translateY(-1px);
+        border-color: #cbd5e1;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+    }
+
+    .calendar-day--muted {
+        background: #f9fafb;
+        opacity: 0.75;
+    }
+
+    .calendar-day--today {
+        background: #eef6ff;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+    }
+
+    .calendar-day--weekend {
+        background: #f3f4f6;
+    }
+
+    .calendar-day--holiday,
+    .calendar-day--weekend.calendar-day--holiday {
+        background: #fef3c7;
+        border-color: #f59e0b;
+    }
+
+    .calendar-day-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .calendar-day-holiday {
+        padding: 0.2rem 0.55rem;
+        background: rgba(245, 158, 11, 0.12);
+        color: #92400e;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        line-height: 1.2;
+        text-align: right;
+    }
+
+    .calendar-day-items {
+        display: grid;
+        gap: 6px;
+        overflow: hidden;
+        max-height: 222px;
+    }
+
+    .calendar-item {
+        width: 100%;
+        border-radius: 12px;
+        padding: 8px 10px;
+        display: flex;
+        gap: 8px;
+        min-height: 52px;
+        border: 1px solid #bfdbfe;
+        align-items: flex-start;
+        background: #eff6ff;
+        cursor: pointer;
+        text-align: left;
+        font: inherit;
+        color: inherit;
+    }
+
+    .calendar-item:hover {
+        filter: brightness(0.98);
+    }
+
+    .calendar-item-warning {
+        background: #fef3c7;
+        border-color: #f59e0b;
+
+        .item-badge {
+            background: rgba(217, 119, 6, 0.18);
+            color: #92400e;
+        }
+
+        .item-copy strong {
+            color: #78350f;
+        }
+
+        .item-copy span {
+            color: #92400e;
+        }
+    }
+
+    .calendar-item-small {
+        padding: 6px 8px;
+        min-height: 48px;
+    }
+
+    .item-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        background: rgba(37, 99, 235, 0.16);
+        color: #1d4ed8;
+        font-size: 0.7rem;
+        font-weight: 800;
+    }
+
+    .item-copy {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+
+        strong,
+        span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        strong {
+            font-size: 0.86rem;
+            line-height: 1.2;
+            color: #111827;
+        }
+
+        span {
+            color: #4b5563;
+            font-size: 0.76rem;
+            line-height: 1.25;
+        }
+    }
+
+    .calendar-more {
+        margin-top: 4px;
+        padding: 7px 9px;
+        border-radius: 10px;
+        background: rgba(37, 99, 235, 0.08);
+        border: 1px dashed rgba(37, 99, 235, 0.28);
+        color: #475569;
+        font-size: 0.78rem;
+        font-weight: 700;
+        display: grid;
+        gap: 2px;
+
+        small {
+            color: #64748b;
+            font-size: 0.7rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+    }
+
+    .calendario-list {
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        padding: 18px;
+        background: #ffffff;
+    }
+
+    .day-summary {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 18px;
+
+        strong {
+            color: #111827;
+            text-transform: capitalize;
+        }
+    }
+
+    .day-summary-label {
+        display: block;
+        color: #6b7280;
+        margin-bottom: 4px;
+    }
+
+    .day-holiday {
+        display: inline-flex;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        background: #fef3c7;
+        color: #92400e;
+        font-size: 0.88rem;
+        font-weight: 700;
+    }
+
+    .day-items {
+        display: grid;
+        gap: 14px;
+
+        .calendar-item {
+            min-height: 64px;
+        }
+    }
+
+    .empty-state {
+        padding: 26px;
+        border-radius: 16px;
+        background: #f8fafc;
+        color: #475569;
+        border: 1px dashed #cbd5e1;
+    }
 }
 
 
@@ -165,6 +605,91 @@ table button {
 
         }
 
+        .modal-subtitle {
+            margin: 6px 0 0;
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+
+        .empty-state {
+            padding: 22px;
+            border-radius: 12px;
+            background: #f8fafc;
+            color: #475569;
+            border: 1px dashed #cbd5e1;
+        }
+
+        &.modal-conteudo-validacao {
+            max-width: 760px;
+        }
+
+        .validacao-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .validacao-card {
+            width: 100%;
+            display: grid;
+            grid-template-columns: minmax(95px, 0.7fr) minmax(150px, 1.2fr) minmax(160px, 1fr) 18px;
+            gap: 14px;
+            align-items: center;
+            padding: 14px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #0f172a;
+            cursor: pointer;
+            text-align: left;
+            font: inherit;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+
+            &:hover {
+                border-color: #f59e0b;
+                box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+                transform: translateY(-1px);
+            }
+
+            i {
+                color: #94a3b8;
+            }
+        }
+
+        .validacao-date {
+            font-weight: 800;
+            color: #92400e;
+        }
+
+        .validacao-main,
+        .validacao-meta {
+            display: grid;
+            gap: 4px;
+            min-width: 0;
+
+            strong,
+            span {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+
+        .validacao-main {
+            strong {
+                color: #111827;
+            }
+
+            span {
+                color: #475569;
+                font-weight: 700;
+            }
+        }
+
+        .validacao-meta span {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
         .detalhes-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -200,6 +725,11 @@ table button {
         }
 
         .lista-alunos-modal {
+            margin-top: 12px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 8px;
+
             >div {
                 transition: background-color 0.2s;
                 border-radius: 6px;
@@ -223,6 +753,51 @@ table button {
                     }
                 }
             }
+        }
+
+        .aluno-modal-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .aluno-modal-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-info-aluno {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+
+        .btn-remover-aluno {
+            background: transparent;
+            border: none;
+            color: #d9534f;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+        }
+
+        .empty-modal-list {
+            padding: 12px;
+            color: #777;
+            margin: 0;
         }
 
         .modal-acoes {
@@ -271,6 +846,72 @@ table button {
 
 }
 
+@media (max-width: 1100px) {
+    .coaching-calendar-section {
+        .calendario-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    .propostas-section {
+        .proposta-card {
+            grid-template-columns: 1fr;
+        }
+    }
+}
+
+@media (max-width: 640px) {
+    .dashboard-wrapper {
+        padding: 20px;
+    }
+
+    .coaching-calendar-section {
+        .calendario-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .calendario-actions {
+            justify-content: flex-start;
+        }
+
+        .calendario-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .modal-overlay {
+        padding: 16px;
+
+        .modal-conteudo {
+            padding: 20px;
+        }
+
+        .detalhes-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .validacao-card {
+            grid-template-columns: 1fr;
+            gap: 8px;
+
+            i {
+                display: none;
+            }
+        }
+
+        .aluno-modal-row,
+        .modal-acoes {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .modal-acoes .btn-anularSessao {
+            margin-right: 0;
+        }
+    }
+}
+
 body.entconnect-dark {
     .dashboard-wrapper {
         background-color: transparent !important;
@@ -285,9 +926,59 @@ body.entconnect-dark {
                 color: #cbd5e1 !important;
             }
         }
+
+        .aluno-modal-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .aluno-modal-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-info-aluno {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+
+        .btn-remover-aluno {
+            background: transparent;
+            border: none;
+            color: #d9534f;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+        }
+
+        .empty-modal-list {
+            padding: 12px;
+            color: #777;
+            margin: 0;
+        }
     }
 
     .kpi-grid .kpi-card,
+    .propostas-section,
+    .propostas-section .proposta-card,
+    .coaching-calendar-section .calendario-list,
+    .coaching-calendar-section .calendar-weekday,
+    .coaching-calendar-section .calendar-day,
     .modal-overlay .modal-conteudo,
     .modal-overlay .modal-conteudo .detalhes-grid {
         background-color: #111827 !important;
@@ -297,16 +988,124 @@ body.entconnect-dark {
     }
 
     .kpi-grid .kpi-card .info span,
+    .propostas-section .propostas-header p,
+    .propostas-section .proposta-main p,
+    .propostas-section .proposta-main span,
+    .propostas-section .proposta-main small,
+    .coaching-calendar-section .calendario-range,
+    .coaching-calendar-section .day-summary-label,
+    .coaching-calendar-section .calendar-more,
+    .coaching-calendar-section .calendar-more small,
+    .coaching-calendar-section .item-copy span,
     .modal-overlay .modal-conteudo .detalhes-grid .detalhe-item span,
     .modal-overlay .modal-conteudo .lista-alunos-modal > div span {
         color: #94a3b8 !important;
     }
 
     .kpi-grid .kpi-card .info h3,
+    .propostas-section .propostas-header h2,
+    .propostas-section .proposta-main h3,
+    .coaching-calendar-section .calendario-header h2,
+    .coaching-calendar-section .day-summary strong,
+    .coaching-calendar-section .item-copy strong,
     .modal-overlay .modal-conteudo .modal-cabecalho h2,
     .modal-overlay .modal-conteudo .detalhes-grid .detalhe-item strong,
     .modal-overlay .modal-conteudo h3 {
         color: #f8fafc !important;
+    }
+
+    .coaching-calendar-section {
+        .tool-button,
+        .view-button {
+            background: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+
+        .view-button.active {
+            background: #2563eb !important;
+            border-color: #2563eb !important;
+            color: #ffffff !important;
+        }
+
+        .calendar-weekday,
+        .empty-state {
+            background: #1f2937 !important;
+            color: #cbd5e1 !important;
+        }
+
+        .calendar-day--muted {
+            background: #1f2937 !important;
+            opacity: 0.72;
+        }
+
+        .calendar-day--weekend {
+            background: #172033 !important;
+        }
+
+        .calendar-day--today {
+            background: #172554 !important;
+            border-color: #60a5fa !important;
+        }
+
+        .calendar-day--holiday,
+        .calendar-day--weekend.calendar-day--holiday {
+            background: #3b2f12 !important;
+            border-color: #f59e0b !important;
+        }
+
+        .calendar-day-header {
+            color: #e2e8f0 !important;
+        }
+
+        .calendar-day-holiday,
+        .day-holiday {
+            background: rgba(245, 158, 11, 0.18) !important;
+            color: #fde68a !important;
+        }
+
+        .calendar-item {
+            background: rgba(37, 99, 235, 0.18) !important;
+            border-color: rgba(96, 165, 250, 0.55) !important;
+        }
+
+        .calendar-item-warning {
+            background: rgba(245, 158, 11, 0.18) !important;
+            border-color: rgba(245, 158, 11, 0.72) !important;
+
+            .item-badge {
+                background: rgba(245, 158, 11, 0.2) !important;
+                color: #fde68a !important;
+            }
+
+            .item-copy strong,
+            .item-copy span {
+                color: #fde68a !important;
+            }
+        }
+
+        .item-badge {
+            background: rgba(96, 165, 250, 0.18) !important;
+            color: #bfdbfe !important;
+        }
+
+        .calendar-more {
+            background: rgba(96, 165, 250, 0.12) !important;
+            border-color: rgba(96, 165, 250, 0.38) !important;
+        }
+    }
+
+    .propostas-section {
+        .tool-button,
+        .proposta-main small {
+            background: #1f2937 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+
+        .proposta-date {
+            color: #5eead4 !important;
+        }
     }
 
     .modal-overlay .modal-conteudo .modal-cabecalho,
@@ -321,5 +1120,32 @@ body.entconnect-dark {
     .modal-overlay .modal-conteudo .modal-acoes .btn-fechar {
         background-color: #1f2937 !important;
         color: #e2e8f0 !important;
+    }
+
+    .modal-overlay .modal-conteudo .lista-alunos-modal,
+    .modal-overlay .modal-conteudo .aluno-modal-row,
+    .modal-overlay .modal-conteudo .validacao-card,
+    .modal-overlay .modal-conteudo .empty-state {
+        border-color: #334155 !important;
+    }
+
+    .modal-overlay .modal-conteudo .modal-subtitle,
+    .modal-overlay .modal-conteudo .validacao-main span,
+    .modal-overlay .modal-conteudo .validacao-meta span {
+        color: #94a3b8 !important;
+    }
+
+    .modal-overlay .modal-conteudo .validacao-card,
+    .modal-overlay .modal-conteudo .empty-state {
+        background: #1f2937 !important;
+        color: #e2e8f0 !important;
+    }
+
+    .modal-overlay .modal-conteudo .validacao-main strong {
+        color: #f8fafc !important;
+    }
+
+    .modal-overlay .modal-conteudo .validacao-date {
+        color: #fde68a !important;
     }
 }

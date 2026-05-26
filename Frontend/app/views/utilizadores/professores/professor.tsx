@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { InputComponent } from "~/components/input/input.component";
 import './professor.scss';
 import { professoresService } from '~/services/professor.service';
+import { modalidadesService } from '~/services/modalidades.service';
 
 
 import { showToast } from '~/components/toast/toast';
@@ -16,10 +17,23 @@ interface Professor {
         Contacto: string;
         Foto?: string;
     };
+    Professor_Modalidade?: {
+        ID_Modalidade: number;
+        Modalidade: {
+            ID_Modalidade: number;
+            Descricao: string;
+        };
+    }[];
+}
+
+interface Modalidade {
+    ID_Modalidade: number;
+    Descricao: string;
 }
 
 export function Professores() {
     const [professores, setProfessores] = useState<Professor[]>([]);
+    const [modalidades, setModalidades] = useState<Modalidade[]>([]);
     const [termoPesquisa, setTermoPesquisa] = useState('');
     const [paginaAtual, setPaginaAtual] = useState(1);
     const [ultimaPagina, setUltimaPagina] = useState(1);
@@ -35,11 +49,22 @@ export function Professores() {
     const [dataNascimento, setDataNascimento] = useState('');
     const [nif, setNif] = useState('');
     const [contacto, setContacto] = useState('');
+    const [modalidadesSelecionadas, setModalidadesSelecionadas] = useState<number[]>([]);
 
 
     useEffect(() => {
         carregarProfessores();
+        carregarModalidades();
     }, [paginaAtual]);
+
+    const carregarModalidades = async () => {
+        try {
+            const data = await modalidadesService.getModalidades();
+            setModalidades(data);
+        } catch (erro) {
+            showToast("Erro ao carregar modalidades.");
+        }
+    };
 
     const carregarProfessores = async () => {
         try {
@@ -62,6 +87,7 @@ export function Professores() {
         setDataNascimento('');
         setNif('');
         setContacto('');
+        setModalidadesSelecionadas([]);
         setModalAberto(true);
     };
 
@@ -76,6 +102,7 @@ export function Professores() {
 
         setNif(prof.Pessoa.NIF);
         setContacto(prof.Pessoa.Contacto);
+        setModalidadesSelecionadas(prof.Professor_Modalidade?.map((item) => item.ID_Modalidade) ?? []);
         setModalAberto(true);
     };
 
@@ -94,7 +121,8 @@ export function Professores() {
             Email: email,
             Data_Nascimento: dataNascimento,
             NIF: nif,
-            Contacto: contacto
+            Contacto: contacto,
+            modalidadesIds: modalidadesSelecionadas,
         };
 
         try {
@@ -141,6 +169,14 @@ export function Professores() {
         if (pagina >= 1 && pagina <= ultimaPagina) setPaginaAtual(pagina);
     };
 
+    const toggleModalidade = (idModalidade: number) => {
+        setModalidadesSelecionadas((atuais) =>
+            atuais.includes(idModalidade)
+                ? atuais.filter((id) => id !== idModalidade)
+                : [...atuais, idModalidade]
+        );
+    };
+
     return (
         <div className="crud-container">
             <div className="crud-header">
@@ -174,13 +210,14 @@ export function Professores() {
                             <th>Email</th>
                             <th>NIF</th>
                             <th>Contacto</th>
+                            <th>Modalidades</th>
                             <th style={{ textAlign: 'right' }}>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {professoresFiltrados.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="tabela-vazia">Nenhum professor encontrado.</td>
+                                <td colSpan={7} className="tabela-vazia">Nenhum professor encontrado.</td>
                             </tr>
                         ) : (
                             professoresFiltrados.map((prof) => (
@@ -190,6 +227,7 @@ export function Professores() {
                                     <td><span className="text-gray">{prof.Pessoa.Email}</span></td>
                                     <td>{prof.Pessoa.NIF}</td>
                                     <td>{prof.Pessoa.Contacto}</td>
+                                    <td>{prof.Professor_Modalidade?.map((item) => item.Modalidade.Descricao).join(', ') || 'Sem modalidades'}</td>
                                     <td className="acoes-coluna">
                                         <ButtonComponent className="btn-icone editar" onClick={() => abrirModalEdicao(prof)}>
                                             <i className="fa-solid fa-pen"></i>
@@ -343,6 +381,22 @@ export function Professores() {
                                             setContacto(apenasNumeros);
                                         }}
                                     />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Modalidades que pode lecionar</label>
+                                <div className="modalidades-checkboxes">
+                                    {modalidades.map((modalidade) => (
+                                        <label key={modalidade.ID_Modalidade} className="modalidade-checkbox">
+                                            <input
+                                                type="checkbox"
+                                                checked={modalidadesSelecionadas.includes(modalidade.ID_Modalidade)}
+                                                onChange={() => toggleModalidade(modalidade.ID_Modalidade)}
+                                            />
+                                            <span>{modalidade.Descricao}</span>
+                                        </label>
+                                    ))}
                                 </div>
                             </div>
                         </div>

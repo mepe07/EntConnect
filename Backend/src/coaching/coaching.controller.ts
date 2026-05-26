@@ -11,6 +11,8 @@ import {
   Headers,
   UseGuards,
   Res,
+  Query,
+  Request,
 } from '@nestjs/common';
 import { CoachingService } from './coaching.service';
 import { CreateCoachingDto } from './dto/create-coaching.dto';
@@ -24,11 +26,13 @@ import { CreateModalidadeDto } from './dto/create-modalidade.dto';
 import { UpdateModalidadeDto } from './dto/update-modalidade.dto';
 import { InscreverAlunoDto } from './dto/inscrever-aluno.dto';
 import type { Response } from 'express';
+import { CreatePedidoCoachingDto } from './dto/create-pedido-coaching.dto';
 
 import { AuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/roles.enum';
+import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 
 const TODAS_AS_ROLES = [
     Role.COORDENADOR,
@@ -81,6 +85,54 @@ export class CoachingController {
   })
   create(@Body() createCoachingDto: CreateCoachingDto) {
     return this.coachingService.create(createCoachingDto);
+  }
+
+  @Roles(Role.ENC_EDUCACAO, Role.PROFESSOR)
+  @Get('propostas/contexto')
+  @ApiOperation({ summary: 'Obter dados auxiliares para criar proposta de coaching' })
+  async getContextoProposta(@Request() req: { user: UtilizadorAutenticado }) {
+    return this.coachingService.listarContextoProposta(req.user);
+  }
+
+  @Roles(Role.PROFESSOR)
+  @Get('propostas/encarregados')
+  @ApiOperation({ summary: 'Pesquisar encarregados e educandos para proposta do professor' })
+  async pesquisarEncarregados(@Query('search') search = '') {
+    return this.coachingService.pesquisarEncarregadosComAlunos(search);
+  }
+
+  @Roles(Role.ENC_EDUCACAO, Role.PROFESSOR)
+  @Post('propostas')
+  @ApiOperation({ summary: 'Criar proposta de sessao unica de coaching' })
+  async criarPedidoCoaching(
+    @Body() dto: CreatePedidoCoachingDto,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.coachingService.criarPedidoCoaching(dto, req.user);
+  }
+
+  @Roles(Role.COORDENADOR)
+  @Get('admin/propostas-pendentes')
+  @ApiOperation({ summary: 'Listar propostas de coaching pendentes de aprovacao' })
+  async listarPedidosPendentes() {
+    return this.coachingService.listarPedidosPendentesAdmin();
+  }
+
+  @Roles(Role.COORDENADOR)
+  @Patch('admin/propostas/:id/aprovar')
+  @ApiOperation({ summary: 'Aprovar proposta e criar sessao efetiva de coaching' })
+  async aprovarPedido(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.coachingService.aprovarPedidoCoaching(id, req.user);
+  }
+
+  @Roles(Role.COORDENADOR)
+  @Patch('admin/propostas/:id/rejeitar')
+  @ApiOperation({ summary: 'Rejeitar proposta de coaching' })
+  async rejeitarPedido(@Param('id', ParseIntPipe) id: number) {
+    return this.coachingService.rejeitarPedidoCoaching(id);
   }
   /**
    * Executa a operacao remover aluno.
@@ -213,6 +265,28 @@ export class CoachingController {
   @ApiOperation({ summary: 'Obter sessões futuras para gestão do admin' })
   async getSessoesFuturasAdmin() {
     return this.coachingService.getSessoesFuturasAdmin();
+  }
+  /**
+   * Executa a operacao get sessoes por validar admin.
+   * @returns Resultado da operacao.
+   */
+
+  @Roles(Role.COORDENADOR)
+  @Get('admin/sessoes-por-validar')
+  @ApiOperation({ summary: 'Obter sessoes terminadas por validar para gestao do admin' })
+  async getSessoesPorValidarAdmin() {
+    return this.coachingService.getSessoesPorValidarAdmin();
+  }
+  /**
+   * Executa a operacao get sessoes realizadas no mes admin.
+   * @returns Resultado da operacao.
+   */
+
+  @Roles(Role.COORDENADOR)
+  @Get('admin/sessoes-realizadas-mes')
+  @ApiOperation({ summary: 'Obter sessoes realizadas no mes para gestao do admin' })
+  async getSessoesRealizadasMesAdmin() {
+    return this.coachingService.getSessoesRealizadasMesAdmin();
   }
   /**
    * Executa a operacao get kpis admin.

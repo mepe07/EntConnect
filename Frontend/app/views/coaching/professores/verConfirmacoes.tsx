@@ -1,27 +1,50 @@
 import { ButtonComponent } from '~/components/button/button.component';
 import './verAgendamentos.scss';
-import { TableColumnTypesEnum } from '~/components/table/models/enums/table-column-types.enum';
-import { TableComponent } from '~/components/table/table.component';
 import type { User } from '~/models/interfaces/user.interface';
 import { authService } from '~/services/auth.service';
 import { AgendamentosService } from '~/services/agendamentos.service';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { RolesService } from '~/services/roles.service';
-import { ButtonTypeEnum } from '~/components/button/models/enums/button-type.enum';
-import { ButtonColorEnum } from '~/components/button/models/enums/button-color.enum';
-import { SizeEnum } from '~/components/models/enums/size.enum';
-
 import { showToast } from '~/components/toast/toast';
+
+interface SessaoConfirmacaoProfessor {
+    idCoaching: number;
+    data: string;
+    horario: string;
+    modalidade: string;
+    estado: string;
+    alunos?: Array<{
+        idAluno: number;
+        nome: string;
+    }>;
+}
+
+function normalizarTexto(valor: string) {
+    return valor
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+}
+
+function parseDataHora(data: string, horario: string) {
+    const [dia, mes, ano] = data.split('/').map(Number);
+    const [horaInicio = '00:00'] = horario.split(' - ');
+    const [hora, minuto] = horaInicio.split(':').map(Number);
+    return new Date(ano, mes - 1, dia, hora || 0, minuto || 0);
+}
+
 export default function VerConfirmacoes() {
     const userInfo = authService.getUserInfo() as User;
     const isProfessor = userInfo?.role?.toLowerCase().includes('professor');
     const agendamentosService = new AgendamentosService();
     const rolesService = new RolesService();
-    const [confirmacoes, setConfirmacoes] = useState<any[]>([]);
+
+    const [confirmacoes, setConfirmacoes] = useState<SessaoConfirmacaoProfessor[]>([]);
     const [idProfessor, setIdProfessor] = useState<number | null>(null);
-    const [sessaoSelecionada, setSessaoSelecionada] = useState<any | null>(null);
+    const [sessaoSelecionada, setSessaoSelecionada] = useState<SessaoConfirmacaoProfessor | null>(null);
     const [isModalAberto, setIsModalAberto] = useState(false);
     const [isAguardar, setIsAguardar] = useState(false);
+    const [pesquisa, setPesquisa] = useState('');
 
     async function fetchConfirmacoes() {
         try {
@@ -46,14 +69,14 @@ export default function VerConfirmacoes() {
 
     if (!isProfessor) {
         return (
-            <div className="pagina-agendamentos" style={{ padding: '50px', textAlign: 'center' }}>
-                <h1>Acesso Negado 🚫</h1>
+            <div className="pagina-agendamentos pagina-agendamentos-acesso">
+                <h1>Acesso Negado</h1>
                 <p>Esta área é apenas para professores.</p>
             </div>
         );
     }
 
-    function abrirModal(sessao: any) {
+    function abrirModal(sessao: SessaoConfirmacaoProfessor) {
         setSessaoSelecionada(sessao);
         setIsModalAberto(true);
     }
@@ -63,21 +86,20 @@ export default function VerConfirmacoes() {
         setSessaoSelecionada(null);
     }
 
-    async function handleConfirmacao(sessao: any, idEstadoCoaching: number) {
+    async function handleConfirmacao(sessao: SessaoConfirmacaoProfessor, idEstadoCoaching: number) {
         if (!idProfessor) return;
 
         const mensagem = idEstadoCoaching === 13
             ? 'Confirmar que a sessão foi realizada?'
             : 'Marcar esta sessão como não realizada?';
 
-        if (!window.confirm(mensagem)) {
-            return;
-        }
+        if (!window.confirm(mensagem)) return;
 
         setIsAguardar(true);
         try {
             await agendamentosService.confirmarSessao(idProfessor, sessao.idCoaching, idEstadoCoaching);
             showToast('Estado atualizado com sucesso.');
+            fecharModal();
             fetchConfirmacoes();
         } catch (error) {
             console.error(error);
@@ -87,85 +109,172 @@ export default function VerConfirmacoes() {
         }
     }
 
-    return (
-        <div className="pagina-ver-agendamentos" style={{ padding: '32px' }}>
-            <h1>Confirmações de Coaching</h1>
-            <p>Estas são as sessões já passadas que ainda precisam de confirmação.</p>
+    const sessoesFiltradas = useMemo(() => {
+        const termo = normalizarTexto(pesquisa.trim());
 
-            <TableComponent
-                config={{
-                    columns: [
-                        { key: 'data', value: 'Data', type: TableColumnTypesEnum.Default },
-                        { key: 'horario', value: 'Horário', type: TableColumnTypesEnum.Default },
-                        { key: 'modalidade', value: 'Modalidade', type: TableColumnTypesEnum.Default },
-                        { key: 'estado', value: 'Estado', type: TableColumnTypesEnum.Default },
-                    ],
-                    filters: [],
-                    searchSettings: {
-                        placeholder: 'Procurar por palavra-chave',
-                        label: 'Pesquisa',
-                        value: ''
-                    },
-                    actions: [
-                        {
-                            icon: 'fa-solid fa-eye',
-                            tooltip: 'Ver detalhes da sessão',
-                            config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Theme, size: SizeEnum.Regular },
-                            onClick: (row: any) => abrirModal(row),
-                        },
-                        {
-                            icon: 'fa-solid fa-check',
-                            tooltip: 'Confirmar que a sessão foi realizada',
-                            config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Theme, size: SizeEnum.Regular },
-                            onClick: (row: any) => handleConfirmacao(row, 13),
-                        },
-                        {
-                            icon: 'fa-solid fa-xmark',
-                            tooltip: 'Indicar que a sessão não aconteceu',
-                            config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Error, size: SizeEnum.Regular },
-                            onClick: (row: any) => handleConfirmacao(row, 14),
-                        },
-                    ]
-                }}
-                data={Array.isArray(confirmacoes) ? confirmacoes : []}
-            />
+        return confirmacoes
+            .filter((sessao) => {
+                if (!termo) return true;
+                const alunos = (sessao.alunos ?? []).map((aluno) => aluno.nome).join(' ');
+
+                return normalizarTexto([
+                    sessao.data,
+                    sessao.horario,
+                    sessao.modalidade,
+                    sessao.estado,
+                    alunos,
+                ].join(' ')).includes(termo);
+            })
+            .sort((a, b) => parseDataHora(a.data, a.horario).getTime() - parseDataHora(b.data, b.horario).getTime());
+    }, [confirmacoes, pesquisa]);
+
+    const sessoesPorData = useMemo(() => {
+        const grupos = new Map<string, SessaoConfirmacaoProfessor[]>();
+
+        sessoesFiltradas.forEach((sessao) => {
+            const entrada = grupos.get(sessao.data) ?? [];
+            entrada.push(sessao);
+            grupos.set(sessao.data, entrada);
+        });
+
+        return Array.from(grupos.entries()).map(([data, items]) => ({ data, items }));
+    }, [sessoesFiltradas]);
+
+    function renderAlunos(sessao: SessaoConfirmacaoProfessor) {
+        const alunos = sessao.alunos ?? [];
+
+        if (alunos.length === 0) {
+            return <span className="aluno-chip muted">Sem alunos</span>;
+        }
+
+        return alunos.map((aluno) => (
+            <span key={aluno.idAluno} className="aluno-chip">{aluno.nome}</span>
+        ));
+    }
+
+    return (
+        <div className="pagina-ver-agendamentos">
+            <div className="confirmacoes-header">
+                <div>
+                    <h1>Confirmações de Coaching</h1>
+                    <p>Estas são as sessões já passadas que ainda precisam de confirmação.</p>
+                </div>
+            </div>
+
+            <div className="confirmacoes-toolbar">
+                <div className="confirmacoes-search">
+                    <label htmlFor="pesquisa-confirmacoes-professor">Pesquisa</label>
+                    <input
+                        id="pesquisa-confirmacoes-professor"
+                        type="search"
+                        value={pesquisa}
+                        onChange={(event) => setPesquisa(event.target.value)}
+                        placeholder="Procurar por aluno, modalidade, estado..."
+                    />
+                </div>
+
+                <div className="confirmacoes-summary">
+                    <strong>{sessoesFiltradas.length}</strong>
+                    <span>{sessoesFiltradas.length === 1 ? 'sessão pendente' : 'sessões pendentes'}</span>
+                </div>
+            </div>
+
+            <div className="confirmacoes-list">
+                {sessoesPorData.length === 0 ? (
+                    <div className="empty-state">Não existem sessões pendentes de confirmação.</div>
+                ) : (
+                    sessoesPorData.map((grupo) => (
+                        <section key={grupo.data} className="confirmacoes-day-group">
+                            <h2>{grupo.data}</h2>
+                            <div className="confirmacoes-cards">
+                                {grupo.items.map((sessao) => (
+                                    <article key={sessao.idCoaching} className="confirmacao-card">
+                                        <div className="confirmacao-card-main">
+                                            <div className="confirmacao-meta">
+                                                <span>{sessao.data}</span>
+                                                <span>{sessao.horario}</span>
+                                                <span className="estado-badge">{sessao.estado}</span>
+                                            </div>
+                                            <h3>{sessao.modalidade}</h3>
+                                            <div className="alunos-list" aria-label="Alunos">
+                                                {renderAlunos(sessao)}
+                                            </div>
+                                        </div>
+
+                                        <div className="confirmacao-actions">
+                                            <ButtonComponent
+                                                type="button"
+                                                className="btn-card-icon"
+                                                tooltip="Ver detalhes da sessão"
+                                                onClick={() => abrirModal(sessao)}
+                                            >
+                                                <i className="fa-solid fa-eye" />
+                                            </ButtonComponent>
+                                            <ButtonComponent
+                                                type="button"
+                                                className="btn-card-confirmar"
+                                                onClick={() => handleConfirmacao(sessao, 13)}
+                                                disabled={isAguardar}
+                                            >
+                                                <i className="fa-solid fa-check" />
+                                                Realizada
+                                            </ButtonComponent>
+                                            <ButtonComponent
+                                                type="button"
+                                                className="btn-card-rejeitar"
+                                                onClick={() => handleConfirmacao(sessao, 14)}
+                                                disabled={isAguardar}
+                                            >
+                                                <i className="fa-solid fa-xmark" />
+                                                Não aconteceu
+                                            </ButtonComponent>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        </section>
+                    ))
+                )}
+            </div>
 
             {isModalAberto && sessaoSelecionada && (
-                <div className="modal-overlay" style={{ zIndex: 1000 }}>
-                    <div className="modal-conteudo">
+                <div className="modal-overlay" onClick={fecharModal}>
+                    <div className="modal-conteudo" onClick={(event) => event.stopPropagation()}>
                         <div className="modal-cabecalho">
                             <h2>Detalhes da Sessão</h2>
-                            <ButtonComponent className="btn-fechar-icon" onClick={fecharModal}>
+                            <ButtonComponent className="btn-fechar-icon" onClick={fecharModal} aria-label="Fechar">
                                 <i className="fa-solid fa-xmark"></i>
                             </ButtonComponent>
                         </div>
 
-                        <div className="detalhes-grid" style={{ marginBottom: '24px' }}>
+                        <div className="detalhes-grid">
                             <div className="detalhe-item"><span>Data e Horário</span><strong>{sessaoSelecionada.data} | {sessaoSelecionada.horario}</strong></div>
                             <div className="detalhe-item"><span>Modalidade</span><strong>{sessaoSelecionada.modalidade}</strong></div>
                             <div className="detalhe-item"><span>Estado</span><strong>{sessaoSelecionada.estado}</strong></div>
                         </div>
 
-                        {sessaoSelecionada.alunos && (
-                            <>
-                                <h3>Alunos Inscritos ({sessaoSelecionada.alunos.length})</h3>
-                                <div className="lista-alunos-modal" style={{ border: '1px solid #eee', borderRadius: '8px', padding: '8px' }}>
-                                    {sessaoSelecionada.alunos.map((aluno: any, index: number) => (
-                                        <div key={aluno.idAluno || index} style={{ padding: '12px', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                <i className="fa-solid fa-user" style={{ marginRight: '12px', color: '#007bff' }}></i>
-                                                <span style={{ fontWeight: '500' }}>{aluno.nome}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {sessaoSelecionada.alunos.length === 0 && (
-                                        <p style={{ padding: '12px', color: '#777', margin: 0 }}>Sem alunos inscritos.</p>
-                                    )}
+                        <h3>Alunos Inscritos ({sessaoSelecionada.alunos?.length ?? 0})</h3>
+                        <div className="lista-alunos-modal">
+                            {(sessaoSelecionada.alunos ?? []).map((aluno, index) => (
+                                <div key={aluno.idAluno || index} className="aluno-modal-row">
+                                    <div className="aluno-modal-info">
+                                        <i className="fa-solid fa-user"></i>
+                                        <span>{aluno.nome}</span>
+                                    </div>
                                 </div>
-                            </>
-                        )}
+                            ))}
+                            {(sessaoSelecionada.alunos?.length ?? 0) === 0 && (
+                                <p className="empty-modal-list">Sem alunos inscritos.</p>
+                            )}
+                        </div>
 
-                        <div className="modal-acoes" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
+                        <div className="modal-acoes">
+                            <ButtonComponent className="btn-card-confirmar" onClick={() => handleConfirmacao(sessaoSelecionada, 13)} disabled={isAguardar}>
+                                Realizada
+                            </ButtonComponent>
+                            <ButtonComponent className="btn-card-rejeitar" onClick={() => handleConfirmacao(sessaoSelecionada, 14)} disabled={isAguardar}>
+                                Não aconteceu
+                            </ButtonComponent>
                             <ButtonComponent className="btn-fechar" onClick={fecharModal}>
                                 Fechar
                             </ButtonComponent>
@@ -175,7 +284,7 @@ export default function VerConfirmacoes() {
             )}
 
             {isAguardar && (
-                <div style={{ marginTop: '16px', color: '#555' }}>
+                <div className="confirmacoes-loading">
                     A atualizar a confirmação...
                 </div>
             )}
