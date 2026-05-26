@@ -8,4 +8,5 @@ export interface UtilizadorAutenticado {
   roles?: Role[];
   idPessoa: number;
   Acoes_Rapidas?: unknown;
+  Quadros_Visualizacao?: unknown;
 }

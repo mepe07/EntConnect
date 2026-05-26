@@ -297,6 +297,7 @@ export class AuthService {
       roles,
       idPessoa: user.ID_Pessoa,
       Acoes_Rapidas: user.Acoes_Rapidas,
+      Quadros_Visualizacao: user.Quadros_Visualizacao,
     };
   }
 

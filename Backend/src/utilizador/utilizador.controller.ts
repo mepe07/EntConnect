@@ -810,6 +810,41 @@ export class UtilizadorController {
 
     return this.utilizadorService.updatePreferenciasAcoes(id, acoesIds);
   }
+
+  @Roles(...TODAS_AS_ROLES)
+  @Put(':id/preferencias-quadros')
+  @ApiOperation({
+    summary: 'Atualizar as preferências de quadros visíveis do utilizador',
+    description:
+      'Guarda um array de IDs dos quadros ativos que o utilizador escolheu ver na Dashboard.',
+  })
+  @ApiParam({ name: 'id', description: 'ID do Utilizador', example: 1 })
+  @ApiBody({
+    description: 'Array de IDs numéricos dos quadros visíveis (ex: [1, 2, 3])',
+    schema: {
+      type: 'array',
+      items: { type: 'number' },
+      example: [1, 2, 3],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Preferências de quadros atualizadas com sucesso.',
+  })
+  @ApiResponse({ status: 404, description: 'Utilizador não encontrado.' })
+  async updatePreferenciasQuadros(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() quadrosIds: number[],
+  ) {
+    if (!Array.isArray(quadrosIds)) {
+      throw new BadRequestException(
+        'O corpo da requisição deve ser um array de números.',
+      );
+    }
+
+    return this.utilizadorService.updatePreferenciasQuadros(id, quadrosIds);
+  }
+
   /**
    * Executa a operacao get agendamentos professor.
    * @param idProfessor Dados recebidos para a operacao.

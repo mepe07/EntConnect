@@ -495,6 +495,32 @@ export class AuthService {
 
         return await response.json();
     }
-}
 
+  /**
+   * Atualiza as preferências de quadros visíveis do utilizador.
+   */
+  async updateQuadrosPreferences(userId: number, quadrosIds: number[]) {
+    const token = this.getToken(); 
+    if (!token) {
+      throw new Error('Utilizador não autenticado.');
+    }
+
+    const apiUrl = `${this._apiUrl}/utilizador/${userId}/preferencias-quadros`;
+
+    const response = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify(quadrosIds) 
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erro ao atualizar as preferências de quadros: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+}
 export const authService = new AuthService();
