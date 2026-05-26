@@ -528,17 +528,12 @@ export default function CoachingAdmin() {
         setAlunoDetalhes(null);
     }
 
-    async function handleExportarExcel(e: React.MouseEvent) {
-        // 2. Trava o refresh da página!
-        e.preventDefault(); 
-        
+    async function handleExportarExcel(e: React.MouseEvent<HTMLButtonElement>) {
+        e.preventDefault();
         setIsExportando(true);
         try {
             showToast('A gerar ficheiro Excel...');
-            
-            // Certifica que existe a função 'exportarSessoesExcel' no admin.service.ts
             const blob = await adminService.exportarSessoesExcel();
-            
             const url = window.URL.createObjectURL(new Blob([blob]));
             const link = document.createElement('a');
             link.href = url;
@@ -546,9 +541,7 @@ export default function CoachingAdmin() {
             document.body.appendChild(link);
             link.click();
             link.parentNode?.removeChild(link);
-
             showToast('Excel exportado com sucesso!');
-
         } catch (error) {
             console.error(error);
             showToast('Erro ao exportar ficheiro.');
@@ -557,10 +550,6 @@ export default function CoachingAdmin() {
         }
     }
 
-    return (
-        <div className="dashboard-wrapper">
-
-            <div className="dashboard-boas-vindas" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
     function changeDate(amount: number) {
         const nextDate = new Date(selectedDate);
 
@@ -678,9 +667,6 @@ export default function CoachingAdmin() {
                     </ButtonComponent>
                 </div>
 
-            {isModalAberto && sessaoSelecionada && (
-                <div className="modal-overlay">
-                    <div className="modal-conteudo">
                 {isCarregandoPropostas ? (
                     <div className="empty-state">A carregar propostas...</div>
                 ) : propostasPendentes.length === 0 ? (

@@ -267,7 +267,7 @@ export function Dashboard() {
                 </div>
                 <div className="info">
                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000' }}>
-                        Ocupação Estúdios
+                        Ocupação Estúdios (Hoje)
                         <i className="fa-solid fa-circle-info" title="Percentagem global de ocupação dos estúdios para o dia de hoje." style={{ color: '#94a3b8', cursor: 'default', fontSize: '0.85rem' }}></i>
                     </span>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
@@ -283,7 +283,7 @@ export function Dashboard() {
                 </div>
                 <div className="info">
                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000' }}>
-                        Faturação Prevista
+                        Faturação Prevista (Hoje)
                         <i className="fa-solid fa-circle-info" title="Valor estimado a receber no dia de hoje." style={{ color: '#94a3b8', cursor: 'default', fontSize: '0.85rem' }}></i>
                     </span>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
