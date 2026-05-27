@@ -12,6 +12,28 @@ import { UpdateDisponibilidadeDto } from '../dto/update-disponibilidade.dto';
  * Servico responsavel pela logica de Dispobilidade.
  */
 
+function parseDateOnlyToUtcNoon(dateString: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
+  if (!match) {
+    throw new BadRequestException('Data invalida. Utilize o formato YYYY-MM-DD.');
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    throw new BadRequestException('Data invalida. Utilize o formato YYYY-MM-DD.');
+  }
+
+  return date;
+}
+
 @Injectable()
 export class DispobilidadeService {
   constructor(private prisma: PrismaService) {}
@@ -254,11 +276,7 @@ export class DispobilidadeService {
       throw new NotFoundException('Disponibilidade nao encontrada.');
     }
 
-    const dataCancelada = new Date(dataCanceladaRaw);
-    if (Number.isNaN(dataCancelada.getTime())) {
-      throw new BadRequestException('Data invalida. Utilize o formato YYYY-MM-DD.');
-    }
-    dataCancelada.setHours(0, 0, 0, 0);
+    const dataCancelada = parseDateOnlyToUtcNoon(dataCanceladaRaw);
 
     const existente = await this.prisma.excecao_Disponibilidade.findFirst({
       where: {

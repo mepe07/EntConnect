@@ -5,6 +5,8 @@ import { AdminService } from '~/services/admin.service';
 import './coachingAdmin.scss';
 import { showToast } from '~/components/toast/toast';
 import { coachingPropostasService } from '~/services/coachingPropostas.service';
+import { SalasService } from '~/services/salas.service';
+import { horariosService } from '~/services/horarios.service';
 
 interface AlunoSessao {
     idAluno: number;
@@ -50,6 +52,29 @@ interface PropostaCoachingAdmin {
     mensagemEE: string | null;
     mensagemProfessor: string | null;
     alunos: AlunoSessao[];
+}
+
+interface Estudio {
+    ID_Sala: number;
+    Nome: string;
+    Disponivel: boolean;
+}
+
+interface ExcecaoAulaFixa {
+    Data_Cancelada: string;
+}
+
+interface AulaFixa {
+    ID_AulaFixa: number;
+    Dia_Semana: number;
+    Hora_Inicio: string;
+    Duracao: number;
+    ID_Estudio: number;
+    Ativa: boolean;
+    Dias_Semana?: {
+        Nome_Dia: string;
+    };
+    Excecao_Aula_Fixa?: ExcecaoAulaFixa[];
 }
 
 type ViewMode = 'month' | 'week' | 'day';
@@ -139,6 +164,97 @@ function isWeekend(date: Date) {
     return day === 0 || day === 6;
 }
 
+const DIAS_SEMANA_PT: Record<number, string[]> = {
+    0: ['domingo'],
+    1: ['segunda', 'segunda-feira'],
+    2: ['terca', 'terca-feira', 'terça', 'terça-feira'],
+    3: ['quarta', 'quarta-feira'],
+    4: ['quinta', 'quinta-feira'],
+    5: ['sexta', 'sexta-feira'],
+    6: ['sabado', 'sábado'],
+};
+
+function normalizarTexto(valor: string) {
+    return valor
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+}
+
+function dataIsoDeValor(valor: string) {
+    const isoMatch = valor.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (isoMatch) return isoMatch[1];
+
+    const data = new Date(valor);
+    if (Number.isNaN(data.getTime())) return valor.slice(0, 10);
+
+    return formatDateKey(data);
+}
+
+function minutosDeHora(valor: string) {
+    const data = new Date(valor);
+    if (!Number.isNaN(data.getTime())) {
+        return data.getHours() * 60 + data.getMinutes();
+    }
+
+    const match = valor.match(/(\d{1,2}):(\d{2})/);
+    if (!match) return 0;
+
+    return Number(match[1]) * 60 + Number(match[2]);
+}
+
+function intervalosSobrepostos(inicioA: number, fimA: number, inicioB: number, fimB: number) {
+    return inicioA < fimB && inicioB < fimA;
+}
+
+function aulaFixaAconteceNoDia(aula: AulaFixa, dataProposta: Date) {
+    const nomeDia = aula.Dias_Semana?.Nome_Dia;
+
+    if (nomeDia) {
+        const nomeNormalizado = normalizarTexto(nomeDia);
+        return DIAS_SEMANA_PT[dataProposta.getDay()].some((dia) =>
+            nomeNormalizado.includes(normalizarTexto(dia)),
+        );
+    }
+
+    const diaSemanaPt = dataProposta.getDay() === 0 ? 7 : dataProposta.getDay();
+    return aula.Dia_Semana === diaSemanaPt;
+}
+
+function aulaFixaTemExcecaoNestaData(aula: AulaFixa, dataProposta: Date) {
+    const dataIso = formatDateKey(dataProposta);
+
+    return aula.Excecao_Aula_Fixa?.some((excecao) => dataIsoDeValor(excecao.Data_Cancelada) === dataIso) ?? false;
+}
+
+function calcularEstudiosLivresProposta(proposta: PropostaCoachingAdmin | null, estudios: Estudio[], aulasFixas: AulaFixa[]) {
+    if (!proposta) return estudios;
+
+    const dataProposta = parseDataHora(proposta.data, proposta.horario);
+    const [horaInicioStr, horaFimStr] = proposta.horario.split(' - ');
+    const inicioProposta = minutosDeHora(horaInicioStr);
+    const fimProposta = minutosDeHora(horaFimStr);
+
+    const estudiosOcupados = new Set(
+        aulasFixas
+            .filter((aula) => aula.Ativa !== false)
+            .filter((aula) => aulaFixaAconteceNoDia(aula, dataProposta))
+            .filter((aula) => !aulaFixaTemExcecaoNestaData(aula, dataProposta))
+            .filter((aula) => {
+                const inicioAula = minutosDeHora(aula.Hora_Inicio);
+                return intervalosSobrepostos(
+                    inicioProposta,
+                    fimProposta,
+                    inicioAula,
+                    inicioAula + aula.Duracao,
+                );
+            })
+            .map((aula) => aula.ID_Estudio),
+    );
+
+    return estudios.filter((estudio) => !estudiosOcupados.has(estudio.ID_Sala));
+}
+
 function getWeekRange(date: Date) {
     const copy = new Date(date);
     const weekday = copy.getDay();
@@ -180,6 +296,7 @@ export default function CoachingAdmin() {
     const authService = new AuthService();
     const userInfo = authService.getUserInfo();
     const adminService = new AdminService();
+    const salasService = new SalasService();
 
     const [sessoes, setSessoes] = useState<SessaoAdmin[]>([]);
     const [sessoesPorValidar, setSessoesPorValidar] = useState<SessaoAdmin[]>([]);
@@ -198,6 +315,10 @@ export default function CoachingAdmin() {
     const [propostasPendentes, setPropostasPendentes] = useState<PropostaCoachingAdmin[]>([]);
     const [isCarregandoPropostas, setIsCarregandoPropostas] = useState(false);
     const [propostaEmTratamento, setPropostaEmTratamento] = useState<number | null>(null);
+    const [propostaSelecionada, setPropostaSelecionada] = useState<PropostaCoachingAdmin | null>(null);
+    const [estudioPropostaSelecionado, setEstudioPropostaSelecionado] = useState('');
+    const [listaEstudios, setListaEstudios] = useState<Estudio[]>([]);
+    const [aulasFixas, setAulasFixas] = useState<AulaFixa[]>([]);
     const [kpiModalInfo, setKpiModalInfo] = useState<KpiModalInfo>({
         titulo: 'Sessões',
         subtitulo: 'Sessões referenciadas pelo indicador.',
@@ -238,6 +359,7 @@ export default function CoachingAdmin() {
 
     useEffect(() => {
         fetchDadosDashboard();
+        fetchRecursosAprovacaoPropostas();
     }, []);
 
     const tableData = sessoes.map(sessao => ({
@@ -255,6 +377,22 @@ export default function CoachingAdmin() {
             setPropostasPendentes([]);
         } finally {
             setIsCarregandoPropostas(false);
+        }
+    }
+
+    async function fetchRecursosAprovacaoPropostas() {
+        try {
+            const [salas, horarios] = await Promise.all([
+                salasService.getSalas(),
+                horariosService.getHorarios(),
+            ]);
+
+            setListaEstudios(Array.isArray(salas) ? salas.filter((sala: Estudio) => sala.Disponivel === true) : []);
+            setAulasFixas(Array.isArray(horarios) ? horarios : []);
+        } catch (error) {
+            console.error('Erro ao carregar estúdios para aprovação de propostas:', error);
+            setListaEstudios([]);
+            setAulasFixas([]);
         }
     }
 
@@ -477,12 +615,34 @@ export default function CoachingAdmin() {
         }
     }
 
-    async function handleAprovarProposta(proposta: PropostaCoachingAdmin) {
+    function abrirModalAprovacaoProposta(proposta: PropostaCoachingAdmin) {
+        setPropostaSelecionada(proposta);
+        setEstudioPropostaSelecionado('');
+    }
+
+    function fecharModalAprovacaoProposta() {
+        setPropostaSelecionada(null);
+        setEstudioPropostaSelecionado('');
+    }
+
+    async function confirmarAprovacaoProposta() {
+        if (!propostaSelecionada) return;
+
+        if (!estudioPropostaSelecionado) {
+            showToast('Selecione um estúdio para aprovar a proposta.');
+            return;
+        }
+
+        await handleAprovarProposta(propostaSelecionada, Number(estudioPropostaSelecionado));
+    }
+
+    async function handleAprovarProposta(proposta: PropostaCoachingAdmin, idEstudio: number) {
         setPropostaEmTratamento(proposta.idPedido);
         try {
-            await coachingPropostasService.aprovar(proposta.idPedido);
+            await coachingPropostasService.aprovar(proposta.idPedido, idEstudio);
             showToast('Proposta aprovada e sessão criada.');
             setPropostasPendentes((atuais) => atuais.filter((item) => item.idPedido !== proposta.idPedido));
+            fecharModalAprovacaoProposta();
             fetchDadosDashboard();
         } catch (error) {
             console.error(error);
@@ -593,6 +753,8 @@ export default function CoachingAdmin() {
         </button>
     );
 
+    const estudiosLivresProposta = calcularEstudiosLivresProposta(propostaSelecionada, listaEstudios, aulasFixas);
+
     return (
         <div className="dashboard-wrapper">
             <div className="dashboard-boas-vindas">
@@ -688,7 +850,7 @@ export default function CoachingAdmin() {
                                     <ButtonComponent
                                         type="button"
                                         className="btn-aprovar-proposta"
-                                        onClick={() => handleAprovarProposta(proposta)}
+                                        onClick={() => abrirModalAprovacaoProposta(proposta)}
                                         disabled={propostaEmTratamento === proposta.idPedido}
                                     >
                                         <i className="fa-solid fa-check"></i> Aprovar
@@ -707,6 +869,77 @@ export default function CoachingAdmin() {
                     </div>
                 )}
             </section>
+
+            {propostaSelecionada && (
+                <div className="modal-overlay">
+                    <div className="modal-conteudo modal-conteudo-proposta">
+                        <div className="modal-cabecalho">
+                            <div>
+                                <h2>Aprovar proposta</h2>
+                                <p className="modal-subtitle">Selecione o estúdio para criar a sessão.</p>
+                            </div>
+                            <ButtonComponent type="button" className="btn-fechar-icon" onClick={fecharModalAprovacaoProposta}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </ButtonComponent>
+                        </div>
+
+                        <div className="proposta-aprovacao-info">
+                            <div>
+                                <span>Data</span>
+                                <strong>{propostaSelecionada.data} | {propostaSelecionada.horario}</strong>
+                            </div>
+                            <div>
+                                <span>Modalidade</span>
+                                <strong>{propostaSelecionada.modalidade}</strong>
+                            </div>
+                            <div>
+                                <span>Professor</span>
+                                <strong>{propostaSelecionada.nomeProfessor}</strong>
+                            </div>
+                            <div>
+                                <span>Alunos</span>
+                                <strong>{propostaSelecionada.alunos.map((aluno) => aluno.nome).join(', ')}</strong>
+                            </div>
+                        </div>
+
+                        <label className="proposta-estudio-field">
+                            Estúdio
+                            <select
+                                className="select-box"
+                                value={estudioPropostaSelecionado}
+                                onChange={(event) => setEstudioPropostaSelecionado(event.target.value)}
+                            >
+                                <option value="">Selecione um estúdio...</option>
+                                {estudiosLivresProposta.map((estudio) => (
+                                    <option key={estudio.ID_Sala} value={estudio.ID_Sala}>
+                                        {estudio.Nome}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+
+                        {estudiosLivresProposta.length === 0 && (
+                            <p className="proposta-estudio-alerta">
+                                Nenhum estúdio livre para este dia e horário.
+                            </p>
+                        )}
+
+                        <div className="modal-acoes">
+                            <ButtonComponent type="button" className="btn-fechar" onClick={fecharModalAprovacaoProposta}>
+                                Cancelar
+                            </ButtonComponent>
+                            <ButtonComponent
+                                type="button"
+                                className="btn-confirmar-proposta"
+                                onClick={confirmarAprovacaoProposta}
+                                disabled={!estudioPropostaSelecionado || estudiosLivresProposta.length === 0 || propostaEmTratamento === propostaSelecionada.idPedido}
+                            >
+                                Confirmar aprovação
+                            </ButtonComponent>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <section className="coaching-calendar-section">
                 <div className="calendario-header">

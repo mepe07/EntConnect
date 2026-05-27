@@ -192,6 +192,33 @@ function getIsoDateKey(value: string) {
     return formatDateKey(date);
 }
 
+function getDateKeyCandidates(value: string) {
+    const candidates = new Set<string>();
+    const rawIsoDate = value.match(/^(\d{4}-\d{2}-\d{2})/)?.[1];
+
+    if (rawIsoDate) {
+        candidates.add(rawIsoDate);
+    }
+
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) {
+        candidates.add(formatDateKey(date));
+        candidates.add(`${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`);
+    }
+
+    if (candidates.size === 0) {
+        candidates.add(value.slice(0, 10));
+    }
+
+    return candidates;
+}
+
+function temExcecaoNaData(disponibilidade: Disponibilidade, dataKey: string) {
+    return (disponibilidade.excecoes ?? []).some((excecao) =>
+        getDateKeyCandidates(excecao.Data_Cancelada).has(dataKey),
+    );
+}
+
 function expandirDisponibilidadesRecorrentes(disponibilidades: Disponibilidade[]) {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
@@ -209,16 +236,12 @@ function expandirDisponibilidadesRecorrentes(disponibilidades: Disponibilidade[]
 
         if (disponibilidade.ativa === false) return;
 
-        const excecoes = new Set(
-            (disponibilidade.excecoes ?? []).map((excecao) => getIsoDateKey(excecao.Data_Cancelada)),
-        );
-
         for (let cursor = new Date(hoje); cursor <= fim; cursor.setDate(cursor.getDate() + 1)) {
             const diaSemanaPt = cursor.getDay() === 0 ? 7 : cursor.getDay();
             if (diaSemanaPt !== disponibilidade.diaSemana) continue;
 
             const dataKey = formatDateKey(cursor);
-            if (excecoes.has(dataKey)) continue;
+            if (temExcecaoNaData(disponibilidade, dataKey)) continue;
 
             const sessoesDaOcorrencia = (disponibilidade.sessoes ?? []).filter(
                 (sessao) => getIsoDateKey(sessao.inicioCoaching) === dataKey,
@@ -303,6 +326,7 @@ export default function CoachingEE() {
         return disponibilidades
             .filter((disp) => disp.maxAlunos > 0)
             .filter((disp) => (disp.modalidadesProfessor?.length ?? 0) > 0)
+            .filter((disp) => !temExcecaoNaData(disp, formatDateKey(parseDataDisponibilidade(disp.data))))
             .filter((disp) => (filtroProfessor ? disp.nomeProfessor === filtroProfessor : true))
             .filter((disp) => filtroModalidade
                 ? disp.modalidadesProfessor?.some((modalidade) => modalidade.descricao === filtroModalidade)

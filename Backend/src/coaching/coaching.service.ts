@@ -518,7 +518,15 @@ export class CoachingService {
     return pedidos.map((pedido: any) => this.formatPedido(pedido));
   }
 
-  async aprovarPedidoCoaching(idPedido: number, user: UtilizadorAutenticado) {
+  async aprovarPedidoCoaching(
+    idPedido: number,
+    user: UtilizadorAutenticado,
+    idEstudio: number,
+  ) {
+    if (!Number.isInteger(idEstudio) || idEstudio <= 0) {
+      throw new BadRequestException('Selecione um estudio para aprovar a proposta.');
+    }
+
     const pedido = await (this.prisma as any).pedido_Coaching.findUnique({
       where: { ID_Pedido: idPedido },
       include: {
@@ -539,6 +547,14 @@ export class CoachingService {
       throw new BadRequestException('A proposta nao tem alunos associados.');
     }
 
+    const estudio = await this.prisma.sala.findUnique({
+      where: { ID_Sala: idEstudio },
+    });
+
+    if (!estudio || estudio.Disponivel === false) {
+      throw new BadRequestException('O estudio selecionado nao esta disponivel.');
+    }
+
     const idEstadoAprovado = await this.getEstadoPedidoId('Aprovado');
     const coaching = await this.prisma.$transaction(async (tx) => {
       const sessao = await tx.coaching.create({
@@ -547,6 +563,7 @@ export class CoachingService {
           ID_Estado_Coaching: 7,
           ID_Coordenador: user.idPessoa,
           ID_Modalidade: pedido.ID_Modalidade,
+          ID_Sala: idEstudio,
           Inicio_Coaching: pedido.Hora_Inicio_Proposta,
           Duracao: this.dateToDuracaoMinutos(pedido.Duracao_Proposta),
         },

@@ -78,6 +78,12 @@ function formatTime(value: string) {
 }
 
 function formatDate(value: string) {
+    const isoDate = value.match(/^(\d{4})-(\d{2})-(\d{2})/)?.slice(1);
+    if (isoDate) {
+        const [ano, mes, dia] = isoDate;
+        return `${dia}/${mes}/${ano}`;
+    }
+
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
     return date.toLocaleDateString('pt-PT');
