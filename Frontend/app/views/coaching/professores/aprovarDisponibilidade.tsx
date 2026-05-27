@@ -1,31 +1,47 @@
 import { ButtonComponent } from '~/components/button/button.component';
 import './aprovarDisponibilidade.scss';
-import { useEffect, useState } from 'react';
-import { TableComponent } from '~/components/table/table.component';
-import { TableColumnTypesEnum } from '~/components/table/models/enums/table-column-types.enum';
-import { ButtonTypeEnum } from '~/components/button/models/enums/button-type.enum';
-import { ButtonColorEnum } from '~/components/button/models/enums/button-color.enum';
-import { SizeEnum } from '~/components/models/enums/size.enum';
-import { InfoTypesEnum } from '~/components/models/enums/info-types.enum';
+import { useEffect, useMemo, useState } from 'react';
 import { DisponibilidadesService } from '../../../services/disponibilidades.service';
 import { authService } from '~/services/auth.service';
 import type { User } from '../../../models/interfaces/user.interface';
 import { SalasService } from '../../../services/salas.service';
 import { horariosService } from '~/services/horarios.service';
-
-
 import { showToast } from '~/components/toast/toast';
+
+interface DiaSemana {
+    ID_Dia: number;
+    Nome_Dia: string;
+}
+
+interface ExcecaoDisponibilidade {
+    ID_Excecao: number;
+    Data_Cancelada: string;
+}
+
 export interface Disponibilidade {
     idDisponibilidade: number;
     nomeProfessor: string;
     data: string;
     horario: string;
-    modalidade: string;
     alteradoPor: string;
     estado: string;
     maxAlunos: number;
+    idEstudio?: number | null;
+    valorPorAluno?: number;
+    duracao: number;
+    horaInicio: string;
+    diaSemana?: number | null;
+    ativa?: boolean;
+    diasSemana?: DiaSemana | null;
+    excecoes?: ExcecaoDisponibilidade[];
 }
 
+interface DisponibilidadeCalendario {
+    base: Disponibilidade;
+    data: string;
+    dataKey: string;
+    sortTime: number;
+}
 
 export interface Estudio {
     ID_Sala: number;
@@ -50,21 +66,24 @@ interface AulaFixa {
     Excecao_Aula_Fixa?: ExcecaoAulaFixa[];
 }
 
+type ViewMode = 'month' | 'week' | 'day';
+
 const DIAS_SEMANA_PT: Record<number, string[]> = {
     0: ['domingo'],
     1: ['segunda', 'segunda-feira'],
-    2: ['terca', 'terca-feira', 'terça', 'terça-feira'],
+    2: ['terca', 'terca-feira', 'terca-feira'],
     3: ['quarta', 'quarta-feira'],
     4: ['quinta', 'quinta-feira'],
     5: ['sexta', 'sexta-feira'],
-    6: ['sabado', 'sábado'],
+    6: ['sabado', 'sabado'],
 };
 
-function normalizarTexto(valor: string) {
-    return valor
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase();
+function pad(value: number) {
+    return String(value).padStart(2, '0');
+}
+
+function formatDateKey(date: Date) {
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 function parseDataDisponibilidade(data: string) {
@@ -72,12 +91,74 @@ function parseDataDisponibilidade(data: string) {
     return new Date(ano, mes - 1, dia);
 }
 
-function dataLocalIso(data: Date) {
-    const ano = data.getFullYear();
-    const mes = String(data.getMonth() + 1).padStart(2, '0');
-    const dia = String(data.getDate()).padStart(2, '0');
+function parseHorarioInicio(horario: string) {
+    const [horaInicio = '00:00'] = horario.split(' - ');
+    return horaInicio;
+}
 
-    return `${ano}-${mes}-${dia}`;
+function combineDateAndTime(date: Date, timeValue: string) {
+    const [hora, minuto] = timeValue.split(':').map(Number);
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hora || 0, minuto || 0);
+}
+
+function formatMonthLabel(date: Date) {
+    return date.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
+}
+
+function getWeekRange(date: Date) {
+    const copy = new Date(date);
+    const weekday = copy.getDay();
+    const offset = (weekday + 6) % 7;
+    copy.setHours(0, 0, 0, 0);
+    copy.setDate(copy.getDate() - offset);
+
+    const end = new Date(copy);
+    end.setDate(end.getDate() + 6);
+
+    return { start: copy, end };
+}
+
+function getWeekDates(date: Date): Date[] {
+    const { start } = getWeekRange(date);
+    return Array.from({ length: 7 }, (_, index) => {
+        const day = new Date(start);
+        day.setDate(start.getDate() + index);
+        return day;
+    });
+}
+
+function getMonthGrid(date: Date): Date[] {
+    const firstOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const firstDayOfWeek = firstOfMonth.getDay();
+    const startOffset = (firstDayOfWeek + 6) % 7;
+
+    const start = new Date(firstOfMonth);
+    start.setDate(start.getDate() - startOffset);
+
+    return Array.from({ length: 42 }, (_, index) => {
+        const day = new Date(start);
+        day.setDate(start.getDate() + index);
+        return day;
+    });
+}
+
+function reorderMonthGridToStartWithWeek(monthGrid: Date[], referenceDate: Date) {
+    if (monthGrid.length !== 42) return monthGrid;
+
+    const chunkedWeeks: Date[][] = [];
+    for (let i = 0; i < monthGrid.length; i += 7) {
+        chunkedWeeks.push(monthGrid.slice(i, i + 7));
+    }
+
+    const targetKey = formatDateKey(referenceDate);
+    const weekIndex = chunkedWeeks.findIndex((week) => week.some((day) => formatDateKey(day) === targetKey));
+    if (weekIndex <= 0) return monthGrid;
+
+    return [...chunkedWeeks.slice(weekIndex), ...chunkedWeeks.slice(0, weekIndex)].flat();
+}
+
+function dataLocalIso(data: Date) {
+    return formatDateKey(data);
 }
 
 function dataIsoDeValor(valor: string) {
@@ -106,12 +187,19 @@ function intervalosSobrepostos(inicioA: number, fimA: number, inicioB: number, f
     return inicioA < fimB && inicioB < fimA;
 }
 
+function normalizarTexto(valor: string) {
+    return valor
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+}
+
 function aulaFixaAconteceNoDia(aula: AulaFixa, dataDisponibilidade: Date) {
     const nomeDia = aula.Dias_Semana?.Nome_Dia;
 
     if (nomeDia) {
         const nomeNormalizado = normalizarTexto(nomeDia);
-        return DIAS_SEMANA_PT[dataDisponibilidade.getDay()].some(dia => nomeNormalizado.includes(normalizarTexto(dia)));
+        return DIAS_SEMANA_PT[dataDisponibilidade.getDay()].some((dia) => nomeNormalizado.includes(normalizarTexto(dia)));
     }
 
     const diaSemanaPt = dataDisponibilidade.getDay() === 0 ? 7 : dataDisponibilidade.getDay();
@@ -121,37 +209,115 @@ function aulaFixaAconteceNoDia(aula: AulaFixa, dataDisponibilidade: Date) {
 function aulaFixaTemExcecaoNestaData(aula: AulaFixa, dataDisponibilidade: Date) {
     const dataIso = dataLocalIso(dataDisponibilidade);
 
-    return aula.Excecao_Aula_Fixa?.some(excecao => dataIsoDeValor(excecao.Data_Cancelada) === dataIso) ?? false;
+    return aula.Excecao_Aula_Fixa?.some((excecao) => dataIsoDeValor(excecao.Data_Cancelada) === dataIso) ?? false;
 }
 
-function calcularEstudiosLivres(disponibilidade: Disponibilidade | null, estudios: Estudio[], aulasFixas: AulaFixa[]) {
+function calcularEstudiosLivres(disponibilidade: Disponibilidade | null, dataReferencia: string | null, estudios: Estudio[], aulasFixas: AulaFixa[]) {
     if (!disponibilidade) return estudios;
 
-    const dataDisponibilidade = parseDataDisponibilidade(disponibilidade.data);
+    const dataDisponibilidade = dataReferencia ? parseDataDisponibilidade(dataReferencia) : parseDataDisponibilidade(disponibilidade.data);
     const [horaInicioStr, horaFimStr] = disponibilidade.horario.split(' - ');
     const inicioDisponibilidade = minutosDeHora(horaInicioStr);
     const fimDisponibilidade = minutosDeHora(horaFimStr);
 
     const estudiosOcupados = new Set(
         aulasFixas
-            .filter(aula => aula.Ativa !== false)
-            .filter(aula => aulaFixaAconteceNoDia(aula, dataDisponibilidade))
-            .filter(aula => !aulaFixaTemExcecaoNestaData(aula, dataDisponibilidade))
-            .filter(aula => {
+            .filter((aula) => aula.Ativa !== false)
+            .filter((aula) => aulaFixaAconteceNoDia(aula, dataDisponibilidade))
+            .filter((aula) => !aulaFixaTemExcecaoNestaData(aula, dataDisponibilidade))
+            .filter((aula) => {
                 const inicioAula = minutosDeHora(aula.Hora_Inicio);
                 return intervalosSobrepostos(
                     inicioDisponibilidade,
                     fimDisponibilidade,
                     inicioAula,
-                    inicioAula + aula.Duracao
+                    inicioAula + aula.Duracao,
                 );
             })
-            .map(aula => aula.ID_Estudio)
+            .map((aula) => aula.ID_Estudio),
     );
 
-    return estudios.filter(estudio => !estudiosOcupados.has(estudio.ID_Sala));
+    return estudios.filter((estudio) => !estudiosOcupados.has(estudio.ID_Sala));
 }
 
+function normalizarEstado(estado?: string) {
+    return (estado ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+}
+
+function disponibilidadeTemExcecao(disponibilidade: Disponibilidade, dateKey: string) {
+    return disponibilidade.excecoes?.some((excecao) => dataIsoDeValor(excecao.Data_Cancelada) === dateKey) ?? false;
+}
+
+function expandirDisponibilidadesParaCalendario(disponibilidades: Disponibilidade[], start: Date, end: Date) {
+    const items: DisponibilidadeCalendario[] = [];
+
+    disponibilidades.forEach((disponibilidade) => {
+        if (disponibilidade.ativa === false) return;
+
+        if (disponibilidade.diaSemana) {
+            for (let cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
+                const diaSemanaPt = cursor.getDay() === 0 ? 7 : cursor.getDay();
+                if (diaSemanaPt !== disponibilidade.diaSemana) continue;
+
+                const dateKey = formatDateKey(cursor);
+                if (disponibilidadeTemExcecao(disponibilidade, dateKey)) continue;
+
+                const date = new Date(cursor);
+                const horarioInicio = parseHorarioInicio(disponibilidade.horario);
+                const sortDate = combineDateAndTime(date, horarioInicio);
+
+                items.push({
+                    base: disponibilidade,
+                    data: date.toLocaleDateString('pt-PT'),
+                    dataKey: dateKey,
+                    sortTime: sortDate.getTime(),
+                });
+            }
+            return;
+        }
+
+        const dataReal = new Date(disponibilidade.horaInicio);
+        if (Number.isNaN(dataReal.getTime())) return;
+
+        const dateKey = formatDateKey(dataReal);
+        if (dataReal < start || dataReal > end) return;
+        if (disponibilidadeTemExcecao(disponibilidade, dateKey)) return;
+
+        items.push({
+            base: disponibilidade,
+            data: dataReal.toLocaleDateString('pt-PT'),
+            dataKey: dateKey,
+            sortTime: dataReal.getTime(),
+        });
+    });
+
+    return items.sort((a, b) => a.sortTime - b.sortTime);
+}
+
+function getNextOccurrence(disponibilidade: Disponibilidade) {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    if (!disponibilidade.diaSemana) {
+        const data = new Date(disponibilidade.horaInicio);
+        if (Number.isNaN(data.getTime())) return null;
+        return data;
+    }
+
+    for (let i = 0; i < 365; i++) {
+        const candidate = new Date(hoje);
+        candidate.setDate(hoje.getDate() + i);
+        const diaSemanaPt = candidate.getDay() === 0 ? 7 : candidate.getDay();
+        if (diaSemanaPt !== disponibilidade.diaSemana) continue;
+        if (disponibilidadeTemExcecao(disponibilidade, formatDateKey(candidate))) continue;
+        return candidate;
+    }
+
+    return null;
+}
 
 export default function ApproveAvailability() {
     const userInfo = authService.getUserInfo() as User;
@@ -162,40 +328,33 @@ export default function ApproveAvailability() {
 
     const [disponibilidades, setDisponibilidades] = useState<Disponibilidade[]>([]);
     const [listaEstudios, setListaEstudios] = useState<Estudio[]>([]);
+    const [todosEstudios, setTodosEstudios] = useState<Estudio[]>([]);
     const [aulasFixas, setAulasFixas] = useState<AulaFixa[]>([]);
-
-    const [modalAberto, setModalAberto] = useState<boolean>(false);
-    const [linhaSelecionada, setLinhaSelecionada] = useState<any>(null);
-    const [estudioSelecionado, setEstudioSelecionado] = useState<string>('');
-    const [valorPorAluno, setValorPorAluno] = useState<string>('');
-    const [maxAlunosSelecionado, setMaxAlunosSelecionado] = useState<string>('1');
-
+    const [modalAberto, setModalAberto] = useState(false);
+    const [linhaSelecionada, setLinhaSelecionada] = useState<Disponibilidade | null>(null);
+    const [dataReferenciaSelecionada, setDataReferenciaSelecionada] = useState<string | null>(null);
+    const [estudioSelecionado, setEstudioSelecionado] = useState('');
+    const [valorPorAluno, setValorPorAluno] = useState('');
+    const [maxAlunosSelecionado, setMaxAlunosSelecionado] = useState('1');
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [viewMode, setViewMode] = useState<ViewMode>('month');
+    const [loading, setLoading] = useState(false);
+    const [pendentesColapsados, setPendentesColapsados] = useState(true);
 
     async function fetchDisponibilidades() {
         try {
             const data = await disponibilidadesService.getAvailability() as Disponibilidade[];
-
-
-            const dadosOrdenados = data.sort((a, b) => {
-                const [diaA, mesA, anoA] = a.data.split('/').map(Number);
-                const [diaB, mesB, anoB] = b.data.split('/').map(Number);
-
-                const dateA = new Date(`${anoA}-${mesA}-${diaA}`).getTime();
-                const dateB = new Date(`${anoB}-${mesB}-${diaB}`).getTime();
-
-                return dateA - dateB;
-            });
-
-            setDisponibilidades(dadosOrdenados);
+            setDisponibilidades(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Erro ao carregar disponibilidades:', error);
+            setDisponibilidades([]);
         }
     }
-
 
     async function fetchEstudios() {
         try {
             const data = await salasService.getSalas();
+            setTodosEstudios(Array.isArray(data) ? data : []);
             const salasDisponiveis = data.filter((sala: Estudio) => sala.Disponivel === true);
             setListaEstudios(salasDisponiveis);
         } catch (error) {
@@ -213,53 +372,119 @@ export default function ApproveAvailability() {
     }
 
     useEffect(() => {
-        if (isCoordenador) {
-            fetchDisponibilidades();
-            fetchEstudios();
-            fetchAulasFixas();
-        }
+        if (!isCoordenador) return;
+
+        fetchDisponibilidades();
+        fetchEstudios();
+        fetchAulasFixas();
     }, [isCoordenador]);
 
-    if (!isCoordenador) {
-        return (
-            <div className="pagina-aprovacoes" style={{ padding: '50px', textAlign: 'center' }}>
-                <h1>Acesso Negado 🚫</h1>
-            </div>
-        );
-    }
+    const weekGrid = useMemo(() => getWeekDates(selectedDate), [selectedDate]);
+    const monthGrid = useMemo(() => getMonthGrid(selectedDate), [selectedDate]);
+    const displayedMonthGrid = useMemo(() => {
+        const hoje = new Date();
+        const isCurrentMonth =
+            selectedDate.getFullYear() === hoje.getFullYear() &&
+            selectedDate.getMonth() === hoje.getMonth();
 
+        return isCurrentMonth ? reorderMonthGridToStartWithWeek(monthGrid, hoje) : monthGrid;
+    }, [monthGrid, selectedDate]);
 
-    const tableData = disponibilidades.map(disp => {
-        let infoType = InfoTypesEnum.Info;
-        if (disp.estado === 'Aprovado') infoType = InfoTypesEnum.Success;
-        if (disp.estado === 'Rejeitado') infoType = InfoTypesEnum.Error;
-        if (disp.estado === 'Pendente') infoType = InfoTypesEnum.Warning;
+    const currentRange = useMemo(() => {
+        if (viewMode === 'day') {
+            const start = new Date(selectedDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(start);
+            end.setHours(23, 59, 59, 999);
+            return { start, end };
+        }
 
-        return {
-            ...disp,
-            estadoChip: { value: disp.estado || "Desconhecido", infoType: infoType }
-        };
-    });
+        if (viewMode === 'week') {
+            const { start, end } = getWeekRange(selectedDate);
+            end.setHours(23, 59, 59, 999);
+            return { start, end };
+        }
 
+        const start = new Date(monthGrid[0]);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(monthGrid[monthGrid.length - 1]);
+        end.setHours(23, 59, 59, 999);
+        return { start, end };
+    }, [monthGrid, selectedDate, viewMode]);
 
-    function abrirModalAprovacao(row: any) {
-        setLinhaSelecionada(row);
+    const disponibilidadesCalendario = useMemo(
+        () => expandirDisponibilidadesParaCalendario(disponibilidades, currentRange.start, currentRange.end),
+        [currentRange.end, currentRange.start, disponibilidades],
+    );
+
+    const dayItemsMap = useMemo(() => {
+        const map = new Map<string, DisponibilidadeCalendario[]>();
+
+        disponibilidadesCalendario.forEach((item) => {
+            const entry = map.get(item.dataKey) ?? [];
+            entry.push(item);
+            map.set(item.dataKey, entry);
+        });
+
+        map.forEach((items) => {
+            items.sort((a, b) => a.sortTime - b.sortTime);
+        });
+
+        return map;
+    }, [disponibilidadesCalendario]);
+
+    const pendentes = useMemo(() => {
+        return disponibilidades
+            .filter((item) => normalizarEstado(item.estado) === 'pendente')
+            .map((item) => ({
+                disponibilidade: item,
+                proximaOcorrencia: getNextOccurrence(item),
+            }))
+            .sort((a, b) => {
+                const timeA = a.proximaOcorrencia?.getTime() ?? Number.MAX_SAFE_INTEGER;
+                const timeB = b.proximaOcorrencia?.getTime() ?? Number.MAX_SAFE_INTEGER;
+                return timeA - timeB;
+            });
+    }, [disponibilidades]);
+
+    const activeRangeLabel = useMemo(() => {
+        if (viewMode === 'week') {
+            const range = getWeekRange(selectedDate);
+            return `${range.start.toLocaleDateString('pt-PT')} - ${range.end.toLocaleDateString('pt-PT')}`;
+        }
+
+        if (viewMode === 'day') {
+            return selectedDate.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        return formatMonthLabel(selectedDate);
+    }, [selectedDate, viewMode]);
+
+    function abrirModalAprovacao(disponibilidade: Disponibilidade, dataReferencia?: string) {
+        setLinhaSelecionada(disponibilidade);
+        setDataReferenciaSelecionada(dataReferencia ?? null);
         setEstudioSelecionado('');
         setValorPorAluno('');
         setMaxAlunosSelecionado('1');
         setModalAberto(true);
     }
 
-
     function fecharModal() {
         setModalAberto(false);
         setLinhaSelecionada(null);
+        setDataReferenciaSelecionada(null);
     }
 
+    function getNomeEstudio(idEstudio?: number | null) {
+        if (!idEstudio) return 'Sem estúdio definido';
+        return todosEstudios.find((estudio) => estudio.ID_Sala === idEstudio)?.Nome ?? `Estúdio #${idEstudio}`;
+    }
 
     async function confirmarAprovacao() {
+        if (!linhaSelecionada) return;
+
         if (!estudioSelecionado || !valorPorAluno || !maxAlunosSelecionado) {
-            showToast('Por favor, selecione um estúdio e insira o valor por aluno.');
+            showToast('Seleciona um estúdio e preenche os dados de aprovação.');
             return;
         }
 
@@ -267,178 +492,335 @@ export default function ApproveAvailability() {
         fecharModal();
     }
 
-
-    async function handleAtualizarEstado(row: any, novoEstado: number, idEstudio?: number, valorPorAluno?: number, maxAlunos?: number) {
+    async function handleAtualizarEstado(disponibilidade: Disponibilidade, novoEstado: number, idEstudio?: number, valorPorAluno?: number, maxAlunos?: number) {
         const alteradoPor = userInfo.idUtilizador;
+        const horaInicioIso = disponibilidade.horaInicio;
 
-        const [horaInicioStr, horaFimStr] = row.horario.split(' - ');
-        const [dia, mes, ano] = row.data.split('/');
-
-        const dataInicio = new Date(`${ano}-${mes}-${dia}T${horaInicioStr}:00`);
-        const dataFim = new Date(`${ano}-${mes}-${dia}T${horaFimStr}:00`);
-        const duracaoMinutos = (dataFim.getTime() - dataInicio.getTime()) / 60000;
-        const horaInicioIso = dataInicio.toISOString();
-
-        if (novoEstado === 3) {
-            if (!window.confirm('Tem a certeza que deseja rejeitar este horário?')) return;
+        if (novoEstado === 3 && !window.confirm('Tem a certeza que deseja rejeitar esta disponibilidade?')) {
+            return;
         }
 
+        setLoading(true);
         try {
             await disponibilidadesService.atualizarEstado(
-                row.idDisponibilidade,
+                disponibilidade.idDisponibilidade,
                 novoEstado,
                 horaInicioIso,
-                duracaoMinutos,
+                disponibilidade.duracao,
                 alteradoPor,
                 idEstudio,
                 valorPorAluno,
-                maxAlunos
+                maxAlunos,
             );
 
-            fetchDisponibilidades();
+            await fetchDisponibilidades();
+            showToast(novoEstado === 1 ? 'Disponibilidade aprovada.' : 'Disponibilidade rejeitada.');
         } catch (error) {
+            console.error(error);
             showToast('Erro ao atualizar a disponibilidade.');
+        } finally {
+            setLoading(false);
         }
     }
 
-    const professoresUnicos = Array.from(new Set(tableData.map(d => d.nomeProfessor).filter(Boolean)));
-    const opcoesProfessor = [
-        { value: "", label: "Todos" },
-        ...professoresUnicos.map(nome => ({ value: nome, label: nome }))
-    ];
-    const estudiosLivres = calcularEstudiosLivres(linhaSelecionada, listaEstudios, aulasFixas);
+    function changeDate(amount: number) {
+        const nextDate = new Date(selectedDate);
+
+        if (viewMode === 'month') {
+            nextDate.setMonth(nextDate.getMonth() + amount);
+        } else if (viewMode === 'week') {
+            nextDate.setDate(nextDate.getDate() + amount * 7);
+        } else {
+            nextDate.setDate(nextDate.getDate() + amount);
+        }
+
+        setSelectedDate(nextDate);
+    }
+
+    const estudiosLivres = calcularEstudiosLivres(linhaSelecionada, dataReferenciaSelecionada, listaEstudios, aulasFixas);
+    const disponibilidadeAprovada = normalizarEstado(linhaSelecionada?.estado) === 'aprovado';
+
+    if (!isCoordenador) {
+        return (
+            <div className="pagina-aprovacoes acesso-negado">
+                <h1>Acesso negado</h1>
+            </div>
+        );
+    }
 
     return (
         <div className="pagina-aprovacoes">
-            <h1>Aprovação de Disponibilidades</h1>
+            <div className="page-header">
+                <div>
+                    <h1>Disponibilidades dos professores</h1>
+                    <p>Aprova rapidamente os pedidos pendentes e consulta a grelha completa no calendário.</p>
+                </div>
+            </div>
 
-            <TableComponent
-                config={{
-                    columns: [
-                        { key: "nomeProfessor", value: "Professor", type: TableColumnTypesEnum.Default },
-                        { key: "data", value: "Data", type: TableColumnTypesEnum.Default },
-                        { key: "horario", value: "Horário", type: TableColumnTypesEnum.Default },
-                        { key: "maxAlunos", value: "Máx. Alunos", type: TableColumnTypesEnum.Default },
-                        { key: "alteradoPor", value: "Alterado Por", type: TableColumnTypesEnum.Default },
-                        { key: "estadoChip", value: "Estado", type: TableColumnTypesEnum.Chip }
-                    ],
-                    filters: [
-                        {
-                            key: "nomeProfessor",
-                            label: "Professor",
-                            value: "",
-                            options: opcoesProfessor
-                        },
-                        {
-                            key: "estadoChip",
-                            label: "Estado",
-                            value: "Pendente",
-                            options: [
-                                { value: "", label: "Todos" },
-                                { value: "Pendente", label: "Pendentes" },
-                                { value: "Aprovado", label: "Aprovados" },
-                                { value: "Rejeitado", label: "Rejeitados" }
-                            ]
-                        }
-                    ],
-                    searchSettings: {
-                        placeholder: "Procurar por professor ou dia...",
-                        label: "Pesquisa",
-                        value: ""
-                    },
-                    actions: [
-                        {
-                            icon: "fa-solid fa-check",
-                            tooltip: "Aprovar Horário",
-                            config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Gray, size: SizeEnum.Large },
-                            show: (row: any) => row.estado === 'Pendente',
-                            onClick: (row: any) => abrirModalAprovacao(row)
-                        },
-                        {
-                            icon: "fa-solid fa-xmark",
-                            tooltip: "Rejeitar Horário",
-                            config: { type: ButtonTypeEnum.Tertiary, color: ButtonColorEnum.Error, size: SizeEnum.Large },
-                            show: (row: any) => row.estado !== 'Rejeitado',
-                            onClick: (row: any) => handleAtualizarEstado(row, 3)
-                        }
-                    ]
-                }}
-                data={tableData}
-            />
+            <section className={`pendentes-section ${pendentesColapsados ? 'is-collapsed' : ''}`}>
+                <div className="section-header">
+                    <button type="button" className="section-toggle" onClick={() => setPendentesColapsados((atual) => !atual)}>
+                        <h2>Por aprovar</h2>
+                        <p>{pendentes.length} disponibilidade{pendentes.length === 1 ? '' : 's'} pendente{pendentes.length === 1 ? '' : 's'}</p>
+                        <span className="section-toggle-icon">
+                            <i className={`fa-solid ${pendentesColapsados ? 'fa-chevron-down' : 'fa-chevron-up'}`}></i>
+                        </span>
+                    </button>
+                    <div className="section-tools">
+                        <ButtonComponent type="button" className="tool-button" onClick={fetchDisponibilidades} disabled={loading}>
+                            <i className="fa-solid fa-rotate"></i> Atualizar
+                        </ButtonComponent>
+                    </div>
+                </div>
+
+                {pendentesColapsados ? null : pendentes.length === 0 ? (
+                    <div className="empty-state">Não existem disponibilidades pendentes.</div>
+                ) : (
+                    <div className="pendentes-list">
+                        {pendentes.map(({ disponibilidade, proximaOcorrencia }) => (
+                            <article key={disponibilidade.idDisponibilidade} className="pendente-card">
+                                <div className="pendente-main">
+                                    <span className="pendente-date">
+                                        {proximaOcorrencia
+                                            ? proximaOcorrencia.toLocaleDateString('pt-PT')
+                                            : disponibilidade.diasSemana?.Nome_Dia ?? disponibilidade.data}
+                                    </span>
+                                    <h3>{disponibilidade.nomeProfessor}</h3>
+                                    <p>{disponibilidade.horario}</p>
+                                    <small>{disponibilidade.diaSemana ? 'Disponibilidade semanal' : 'Disponibilidade única'}</small>
+                                </div>
+                                <div className="pendente-actions">
+                                    <ButtonComponent
+                                        type="button"
+                                        className="btn-aprovar"
+                                        onClick={() => abrirModalAprovacao(disponibilidade, proximaOcorrencia ? proximaOcorrencia.toLocaleDateString('pt-PT') : disponibilidade.data)}
+                                        disabled={loading}
+                                    >
+                                        <i className="fa-solid fa-check"></i> Aprovar
+                                    </ButtonComponent>
+                                    <ButtonComponent
+                                        type="button"
+                                        className="btn-rejeitar"
+                                        onClick={() => handleAtualizarEstado(disponibilidade, 3)}
+                                        disabled={loading}
+                                    >
+                                        <i className="fa-solid fa-xmark"></i> Rejeitar
+                                    </ButtonComponent>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            <section className="calendar-section">
+                <div className="calendar-header">
+                    <div>
+                        <h2>Calendário de disponibilidades</h2>
+                        <p className="calendar-range">{activeRangeLabel}</p>
+                    </div>
+
+                    <div className="calendar-actions">
+                        <div className="calendar-buttons">
+                            <ButtonComponent type="button" className="tool-button" onClick={() => changeDate(-1)} aria-label="Anterior">
+                                <i className="fa-solid fa-arrow-left" />
+                            </ButtonComponent>
+                            <ButtonComponent type="button" className="tool-button" onClick={() => setSelectedDate(new Date())}>
+                                Hoje
+                            </ButtonComponent>
+                            <ButtonComponent type="button" className="tool-button" onClick={() => changeDate(1)} aria-label="Seguinte">
+                                <i className="fa-solid fa-arrow-right" />
+                            </ButtonComponent>
+                        </div>
+
+                        <div className="view-mode-buttons">
+                            {(['month', 'week', 'day'] as ViewMode[]).map((mode) => (
+                                <ButtonComponent
+                                    key={mode}
+                                    type="button"
+                                    className={`view-button ${viewMode === mode ? 'active' : ''}`}
+                                    onClick={() => setViewMode(mode)}
+                                >
+                                    {mode === 'month' ? 'Mensal' : mode === 'week' ? 'Semanal' : 'Diário'}
+                                </ButtonComponent>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {viewMode === 'day' ? (
+                    <div className="calendar-list">
+                        <div className="calendar-weekday">
+                            <span>{selectedDate.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                        </div>
+                        <div className="calendar-day calendar-day--single">
+                            {(dayItemsMap.get(formatDateKey(selectedDate)) ?? []).length === 0 ? (
+                                <div className="day-empty">Sem disponibilidades neste dia.</div>
+                            ) : (
+                                (dayItemsMap.get(formatDateKey(selectedDate)) ?? []).map((item) => (
+                                    <button
+                                        key={`${item.base.idDisponibilidade}-${item.dataKey}`}
+                                        type="button"
+                                        className={`calendar-item ${normalizarEstado(item.base.estado) === 'pendente' ? 'calendar-item-pending' : ''}`}
+                                        onClick={() => abrirModalAprovacao(item.base, item.data)}
+                                    >
+                                        <span className="item-copy">
+                                            <strong>{item.base.nomeProfessor}</strong>
+                                            <span>{item.base.horario}</span>
+                                            <span>{item.base.diaSemana ? 'Semanal' : item.data}</span>
+                                        </span>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    <div className={`calendar-grid calendar-grid--${viewMode}`}>
+                        {(viewMode === 'week' ? weekGrid : displayedMonthGrid).map((day) => {
+                            const dayKey = formatDateKey(day);
+                            const dayItems = dayItemsMap.get(dayKey) ?? [];
+                            const isToday = dayKey === formatDateKey(new Date());
+                            const isCurrentMonth = day.getMonth() === selectedDate.getMonth();
+                            const previewItems = viewMode === 'month' ? dayItems.slice(0, 3) : dayItems;
+
+                            return (
+                                <button
+                                    key={dayKey}
+                                    type="button"
+                                    className={`calendar-day ${viewMode === 'month' && !isCurrentMonth ? 'calendar-day--muted' : ''} ${isToday ? 'calendar-day--today' : ''}`}
+                                    onClick={() => {
+                                        setSelectedDate(day);
+                                        if (viewMode === 'month') setViewMode('day');
+                                    }}
+                                >
+                                    <div className="day-header">
+                                        <span className="day-number">{day.getDate()}</span>
+                                        <small className="day-summary">{dayItems.length} disp.</small>
+                                    </div>
+
+                                    <div className="day-items">
+                                        {previewItems.length === 0 ? (
+                                            <div className="day-empty">{viewMode === 'week' ? 'Sem registos' : ''}</div>
+                                        ) : (
+                                            previewItems.map((item) => (
+                                                <div
+                                                    key={`${item.base.idDisponibilidade}-${item.dataKey}`}
+                                                    className={`calendar-item ${normalizarEstado(item.base.estado) === 'pendente' ? 'calendar-item-pending' : ''}`}
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        abrirModalAprovacao(item.base, item.data);
+                                                    }}
+                                                >
+                                                    <span className="item-copy">
+                                                        <strong>{item.base.nomeProfessor}</strong>
+                                                        <span>{item.base.horario}</span>
+                                                    </span>
+                                                </div>
+                                            ))
+                                        )}
+                                        {viewMode === 'month' && dayItems.length > 3 && (
+                                            <div className="calendar-more">+{dayItems.length - 3} adicionais</div>
+                                        )}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
+            </section>
 
             {modalAberto && linhaSelecionada && (
                 <div className="modal-overlay">
                     <div className="modal-conteudo">
                         <div className="modal-cabecalho">
-                            <h2>Aprovar Horário</h2>
+                            <div>
+                                <h2>{disponibilidadeAprovada ? 'Detalhes da disponibilidade' : 'Aprovar disponibilidade'}</h2>
+                                <p>{linhaSelecionada.nomeProfessor} • {dataReferenciaSelecionada ?? linhaSelecionada.data} • {linhaSelecionada.horario}</p>
+                            </div>
                             <ButtonComponent className="modal-fechar" onClick={fecharModal}>
                                 <i className="fa-solid fa-xmark" />
                             </ButtonComponent>
                         </div>
 
                         <div className="modal-corpo">
-                            <div className="session-info">
-                                <h3>Detalhes do Pedido</h3>
-                                <p><strong>Professor:</strong> {linhaSelecionada.nomeProfessor}</p>
-                                <p><strong>Data:</strong> {linhaSelecionada.data} ({linhaSelecionada.horario})</p>
-                            </div>
+                            {disponibilidadeAprovada ? (
+                                <div className="detalhes-grid">
+                                    <div className="detalhe-item">
+                                        <span>Estado</span>
+                                        <strong>{linhaSelecionada.estado}</strong>
+                                    </div>
+                                    <div className="detalhe-item">
+                                        <span>Estúdio</span>
+                                        <strong>{getNomeEstudio(linhaSelecionada.idEstudio)}</strong>
+                                    </div>
+                                    <div className="detalhe-item">
+                                        <span>Máximo de alunos</span>
+                                        <strong>{linhaSelecionada.maxAlunos ?? 'N/D'}</strong>
+                                    </div>
+                                    <div className="detalhe-item">
+                                        <span>Valor por aluno</span>
+                                        <strong>{linhaSelecionada.valorPorAluno ? `${linhaSelecionada.valorPorAluno} €` : 'N/D'}</strong>
+                                    </div>
+                                    <div className="detalhe-item">
+                                        <span>Alterado por</span>
+                                        <strong>{linhaSelecionada.alteradoPor}</strong>
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="form-group">
+                                        <label>Atribuir estúdio</label>
+                                        <select
+                                            className="select-box"
+                                            value={estudioSelecionado}
+                                            onChange={(e) => setEstudioSelecionado(e.target.value)}
+                                        >
+                                            <option value="">Selecione um estúdio...</option>
+                                            {estudiosLivres.map((estudio) => (
+                                                <option key={estudio.ID_Sala} value={estudio.ID_Sala}>
+                                                    {estudio.Nome}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {estudiosLivres.length === 0 && (
+                                            <p className="field-alert">Nenhum estúdio livre para este dia e horário.</p>
+                                        )}
+                                    </div>
 
-                            <div className="form-group" style={{ marginTop: '20px' }}>
-                                <label>Atribuir Estúdio</label>
-                                <select
-                                    className="select-box"
-                                    style={{ width: '100%', padding: '8px', marginBottom: '15px' }}
-                                    value={estudioSelecionado}
-                                    onChange={(e) => setEstudioSelecionado(e.target.value)}
-                                >
-                                    <option value="">Selecione um estúdio...</option>
-                                    {estudiosLivres.map(estudio => (
-                                        <option key={estudio.ID_Sala} value={estudio.ID_Sala}>
-                                            {estudio.Nome}
-                                        </option>
-                                    ))}
-                                </select>
-                                {estudiosLivres.length === 0 && (
-                                    <p style={{ margin: '0 0 15px', color: '#dc2626', fontSize: '13px' }}>
-                                        Nenhum estÃºdio livre para este dia e horÃ¡rio.
-                                    </p>
-                                )}
-                            </div>
+                                    <div className="form-group">
+                                        <label>Máximo de alunos</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={maxAlunosSelecionado}
+                                            onChange={(e) => setMaxAlunosSelecionado(e.target.value)}
+                                        />
+                                    </div>
 
-                            <div className="form-group">
-                                <label>Maximo de alunos</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    style={{ width: '100%', padding: '8px', marginBottom: '15px' }}
-                                    placeholder="Ex: 4"
-                                    value={maxAlunosSelecionado}
-                                    onChange={(e) => setMaxAlunosSelecionado(e.target.value)}
-                                />
-                            </div>
+                                    <div className="form-group">
+                                        <label>Valor por aluno (€)</label>
+                                        <input
+                                            type="number"
+                                            value={valorPorAluno}
+                                            onChange={(e) => setValorPorAluno(e.target.value)}
+                                        />
+                                    </div>
+                                </>
+                            )}
 
-                            <div className="form-group">
-                                <label>Valor por aluno (€)</label>
-                                <input
-                                    type="number"
-                                    style={{ width: '100%', padding: '8px' }}
-                                    placeholder="Ex: 25.50"
-                                    value={valorPorAluno}
-                                    onChange={(e) => setValorPorAluno(e.target.value)}
-                                />
-                            </div>
-
-                            <div className="modal-acoes" style={{ marginTop: '30px' }}>
+                            <div className="modal-acoes">
                                 <ButtonComponent className="btn-cancelar" onClick={fecharModal}>
-                                    Cancelar
+                                    {disponibilidadeAprovada ? 'Fechar' : 'Cancelar'}
                                 </ButtonComponent>
-                                <ButtonComponent
-                                    className="btn-confirmar"
-                                    onClick={confirmarAprovacao}
-                                    disabled={!estudioSelecionado || !valorPorAluno || !maxAlunosSelecionado || estudiosLivres.length === 0}
-                                >
-                                    Confirmar Aprovação
-                                </ButtonComponent>
+                                {!disponibilidadeAprovada && (
+                                    <ButtonComponent
+                                        className="btn-confirmar"
+                                        onClick={confirmarAprovacao}
+                                        disabled={!estudioSelecionado || !valorPorAluno || !maxAlunosSelecionado || estudiosLivres.length === 0 || loading}
+                                    >
+                                        Confirmar aprovação
+                                    </ButtonComponent>
+                                )}
                             </div>
                         </div>
                     </div>
