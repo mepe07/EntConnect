@@ -1,5 +1,5 @@
 import { ButtonComponent } from '~/components/button/button.component';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { InputComponent } from "~/components/input/input.component";
 import './professor.scss';
 import { professoresService } from '~/services/professor.service';
@@ -50,12 +50,28 @@ export function Professores() {
     const [nif, setNif] = useState('');
     const [contacto, setContacto] = useState('');
     const [modalidadesSelecionadas, setModalidadesSelecionadas] = useState<number[]>([]);
+    const [dropdownModalidadesAberta, setDropdownModalidadesAberta] = useState(false);
+    const [pesquisaModalidades, setPesquisaModalidades] = useState('');
+    const dropdownModalidadesRef = useRef<HTMLDivElement | null>(null);
 
 
     useEffect(() => {
         carregarProfessores();
         carregarModalidades();
     }, [paginaAtual]);
+
+    useEffect(() => {
+        if (!dropdownModalidadesAberta) return;
+
+        function handleClickOutside(event: MouseEvent) {
+            if (!dropdownModalidadesRef.current?.contains(event.target as Node)) {
+                setDropdownModalidadesAberta(false);
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [dropdownModalidadesAberta]);
 
     const carregarModalidades = async () => {
         try {
@@ -88,6 +104,8 @@ export function Professores() {
         setNif('');
         setContacto('');
         setModalidadesSelecionadas([]);
+        setDropdownModalidadesAberta(false);
+        setPesquisaModalidades('');
         setModalAberto(true);
     };
 
@@ -103,6 +121,8 @@ export function Professores() {
         setNif(prof.Pessoa.NIF);
         setContacto(prof.Pessoa.Contacto);
         setModalidadesSelecionadas(prof.Professor_Modalidade?.map((item) => item.ID_Modalidade) ?? []);
+        setDropdownModalidadesAberta(false);
+        setPesquisaModalidades('');
         setModalAberto(true);
     };
 
@@ -175,6 +195,44 @@ export function Professores() {
                 ? atuais.filter((id) => id !== idModalidade)
                 : [...atuais, idModalidade]
         );
+    };
+
+    const modalidadesOrdenadas = useMemo(
+        () => [...modalidades].sort((a, b) => a.Descricao.localeCompare(b.Descricao, 'pt-PT')),
+        [modalidades],
+    );
+
+    const modalidadesFiltradas = useMemo(() => {
+        const termoNormalizado = pesquisaModalidades.trim().toLowerCase();
+        if (!termoNormalizado) return modalidadesOrdenadas;
+
+        return modalidadesOrdenadas.filter((modalidade) =>
+            modalidade.Descricao.toLowerCase().includes(termoNormalizado),
+        );
+    }, [modalidadesOrdenadas, pesquisaModalidades]);
+
+    const modalidadesSelecionadasInfo = useMemo(() => {
+        const mapa = new Map(modalidades.map((modalidade) => [modalidade.ID_Modalidade, modalidade.Descricao]));
+        return modalidadesSelecionadas
+            .map((id) => ({ id, descricao: mapa.get(id) ?? `Modalidade ${id}` }))
+            .sort((a, b) => a.descricao.localeCompare(b.descricao, 'pt-PT'));
+    }, [modalidades, modalidadesSelecionadas]);
+
+    const resumoModalidadesSelecionadas = useMemo(() => {
+        if (modalidadesSelecionadasInfo.length === 0) return 'Selecionar modalidades';
+        if (modalidadesSelecionadasInfo.length <= 2) {
+            return modalidadesSelecionadasInfo.map((item) => item.descricao).join(', ');
+        }
+
+        return `${modalidadesSelecionadasInfo.length} modalidades selecionadas`;
+    }, [modalidadesSelecionadasInfo]);
+
+    const selecionarTodasModalidades = () => {
+        setModalidadesSelecionadas(modalidadesOrdenadas.map((modalidade) => modalidade.ID_Modalidade));
+    };
+
+    const limparModalidades = () => {
+        setModalidadesSelecionadas([]);
     };
 
     return (
@@ -386,17 +444,82 @@ export function Professores() {
 
                             <div className="form-group">
                                 <label>Modalidades que pode lecionar</label>
-                                <div className="modalidades-checkboxes">
-                                    {modalidades.map((modalidade) => (
-                                        <label key={modalidade.ID_Modalidade} className="modalidade-checkbox">
-                                            <input
-                                                type="checkbox"
-                                                checked={modalidadesSelecionadas.includes(modalidade.ID_Modalidade)}
-                                                onChange={() => toggleModalidade(modalidade.ID_Modalidade)}
-                                            />
-                                            <span>{modalidade.Descricao}</span>
-                                        </label>
-                                    ))}
+                                <p className="modalidades-helper">
+                                    Seleciona todas as modalidades que este professor pode lecionar.
+                                </p>
+                                <div className="modalidades-select" ref={dropdownModalidadesRef}>
+                                    <button
+                                        type="button"
+                                        className={`modalidades-select-trigger ${dropdownModalidadesAberta ? 'aberta' : ''}`}
+                                        onClick={() => setDropdownModalidadesAberta((estadoAtual) => !estadoAtual)}
+                                    >
+                                        <span className={`modalidades-select-value ${modalidadesSelecionadasInfo.length === 0 ? 'placeholder' : ''}`}>
+                                            {resumoModalidadesSelecionadas}
+                                        </span>
+                                        <span className="modalidades-select-meta">
+                                            {modalidadesSelecionadasInfo.length > 0 && (
+                                                <span className="modalidades-count">{modalidadesSelecionadasInfo.length}</span>
+                                            )}
+                                            <i className={`fa-solid ${dropdownModalidadesAberta ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+                                        </span>
+                                    </button>
+
+                                    {modalidadesSelecionadasInfo.length > 0 && (
+                                        <div className="modalidades-tags">
+                                            {modalidadesSelecionadasInfo.map((modalidade) => (
+                                                <button
+                                                    key={modalidade.id}
+                                                    type="button"
+                                                    className="modalidade-tag"
+                                                    onClick={() => toggleModalidade(modalidade.id)}
+                                                    title={`Remover ${modalidade.descricao}`}
+                                                >
+                                                    <span>{modalidade.descricao}</span>
+                                                    <i className="fa-solid fa-xmark"></i>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {dropdownModalidadesAberta && (
+                                        <div className="modalidades-dropdown">
+                                            <div className="modalidades-dropdown-top">
+                                                <input
+                                                    type="text"
+                                                    className="modalidades-search"
+                                                    placeholder="Pesquisar modalidade..."
+                                                    value={pesquisaModalidades}
+                                                    onChange={(e) => setPesquisaModalidades(e.target.value)}
+                                                />
+                                                <div className="modalidades-actions">
+                                                    <button type="button" onClick={selecionarTodasModalidades}>Selecionar todas</button>
+                                                    <button type="button" onClick={limparModalidades}>Limpar</button>
+                                                </div>
+                                            </div>
+
+                                            <div className="modalidades-options">
+                                                {modalidadesFiltradas.length === 0 ? (
+                                                    <div className="modalidades-empty">Sem resultados.</div>
+                                                ) : (
+                                                    modalidadesFiltradas.map((modalidade) => (
+                                                        <label
+                                                            key={modalidade.ID_Modalidade}
+                                                            className={`modalidade-option ${
+                                                                modalidadesSelecionadas.includes(modalidade.ID_Modalidade) ? 'selecionada' : ''
+                                                            }`}
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={modalidadesSelecionadas.includes(modalidade.ID_Modalidade)}
+                                                                onChange={() => toggleModalidade(modalidade.ID_Modalidade)}
+                                                            />
+                                                            <span>{modalidade.Descricao}</span>
+                                                        </label>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

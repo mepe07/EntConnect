@@ -9,9 +9,9 @@ import { ThemeToggle } from '~/components/theme-toggle/theme-toggle';
 import { useTheme } from '~/utils/theme';
 
 const CITACOES = [
-    "«O EntConnect reduziu a nossa burocracia em 60%.»",
-    "«A gestão das turmas nunca foi tão fácil.»",
-    "«Uma obra de arte na gestão escolar.»"
+    "Utilizadores, turmas, eventos e coaching reunidos numa unica plataforma.",
+    "Coordenação, professores e encarregados de educação ligados pelo mesmo fluxo digital.",
+    "Agendamentos, marketplace e relatórios acessíveis no mesmo ambiente de trabalho."
 ];
 
 const SUBTITULO_COMPLETO = "A plataforma inteligente para a gestão escolar do futuro.";
