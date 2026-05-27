@@ -380,7 +380,6 @@ export class CoachingService {
         Aluno: { orderBy: { Nome: 'asc' } },
       },
       orderBy: { Pessoa: { Nome: 'asc' } },
-      take: 100,
     });
 
     return encarregados
@@ -392,7 +391,6 @@ export class CoachingService {
 
         return nome.includes(termoNormalizado) || email.includes(termoNormalizado);
       })
-      .slice(0, 15)
       .map((encarregado) => ({
         idEncEducacao: encarregado.ID_Pessoa,
         nome: encarregado.Pessoa?.Nome ?? 'Enc. educacao',
