@@ -123,9 +123,10 @@ export class CoachingController {
   @ApiOperation({ summary: 'Aprovar proposta e criar sessao efetiva de coaching' })
   async aprovarPedido(
     @Param('id', ParseIntPipe) id: number,
+    @Body('idEstudio') idEstudio: number,
     @Request() req: { user: UtilizadorAutenticado },
   ) {
-    return this.coachingService.aprovarPedidoCoaching(id, req.user);
+    return this.coachingService.aprovarPedidoCoaching(id, req.user, Number(idEstudio));
   }
 
   @Roles(Role.COORDENADOR)

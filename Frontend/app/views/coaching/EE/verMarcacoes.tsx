@@ -133,6 +133,21 @@ function getMonthGrid(date: Date): Date[] {
     });
 }
 
+function reorderMonthGridToStartWithWeek(monthGrid: Date[], referenceDate: Date) {
+    if (monthGrid.length !== 42) return monthGrid;
+
+    const chunkedWeeks: Date[][] = [];
+    for (let i = 0; i < monthGrid.length; i += 7) {
+        chunkedWeeks.push(monthGrid.slice(i, i + 7));
+    }
+
+    const targetKey = formatDateKey(referenceDate);
+    const weekIndex = chunkedWeeks.findIndex((week) => week.some((day) => formatDateKey(day) === targetKey));
+    if (weekIndex <= 0) return monthGrid;
+
+    return [...chunkedWeeks.slice(weekIndex), ...chunkedWeeks.slice(0, weekIndex)].flat();
+}
+
 function formatHora(data: Date) {
     return data.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 }
@@ -228,6 +243,14 @@ export default function VerMarcacoes() {
 
     const monthGrid = useMemo(() => getMonthGrid(selectedDate), [selectedDate]);
     const weekGrid = useMemo(() => getWeekDates(selectedDate), [selectedDate]);
+    const displayedMonthGrid = useMemo(() => {
+        const hoje = new Date();
+        const isCurrentMonth =
+            selectedDate.getFullYear() === hoje.getFullYear() &&
+            selectedDate.getMonth() === hoje.getMonth();
+
+        return isCurrentMonth ? reorderMonthGridToStartWithWeek(monthGrid, hoje) : monthGrid;
+    }, [monthGrid, selectedDate]);
     const selectedHolidayName = getHolidayName(selectedDate);
 
     const activeRangeLabel = useMemo(() => {
@@ -426,7 +449,7 @@ export default function VerMarcacoes() {
                     <div className="calendar-weekday">Sáb</div>
                     <div className="calendar-weekday">Dom</div>
 
-                    {(viewMode === 'week' ? weekGrid : monthGrid).map((day) => {
+                    {(viewMode === 'week' ? weekGrid : displayedMonthGrid).map((day) => {
                         const dayKey = formatDateKey(day);
                         const dayItems = dayItemsMap.get(dayKey) ?? [];
                         const isCurrentMonth = day.getMonth() === selectedDate.getMonth();

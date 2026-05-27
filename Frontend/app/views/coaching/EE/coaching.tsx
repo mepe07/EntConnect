@@ -186,10 +186,52 @@ function getMonthGrid(date: Date): Date[] {
     });
 }
 
+function reorderMonthGridToStartWithWeek(monthGrid: Date[], referenceDate: Date) {
+    if (monthGrid.length !== 42) return monthGrid;
+
+    const chunkedWeeks: Date[][] = [];
+    for (let i = 0; i < monthGrid.length; i += 7) {
+        chunkedWeeks.push(monthGrid.slice(i, i + 7));
+    }
+
+    const targetKey = formatDateKey(referenceDate);
+    const weekIndex = chunkedWeeks.findIndex((week) => week.some((day) => formatDateKey(day) === targetKey));
+    if (weekIndex <= 0) return monthGrid;
+
+    return [...chunkedWeeks.slice(weekIndex), ...chunkedWeeks.slice(0, weekIndex)].flat();
+}
+
 function getIsoDateKey(value: string) {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value.slice(0, 10);
     return formatDateKey(date);
+}
+
+function getDateKeyCandidates(value: string) {
+    const candidates = new Set<string>();
+    const rawIsoDate = value.match(/^(\d{4}-\d{2}-\d{2})/)?.[1];
+
+    if (rawIsoDate) {
+        candidates.add(rawIsoDate);
+    }
+
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) {
+        candidates.add(formatDateKey(date));
+        candidates.add(`${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`);
+    }
+
+    if (candidates.size === 0) {
+        candidates.add(value.slice(0, 10));
+    }
+
+    return candidates;
+}
+
+function temExcecaoNaData(disponibilidade: Disponibilidade, dataKey: string) {
+    return (disponibilidade.excecoes ?? []).some((excecao) =>
+        getDateKeyCandidates(excecao.Data_Cancelada).has(dataKey),
+    );
 }
 
 function expandirDisponibilidadesRecorrentes(disponibilidades: Disponibilidade[]) {
@@ -209,16 +251,12 @@ function expandirDisponibilidadesRecorrentes(disponibilidades: Disponibilidade[]
 
         if (disponibilidade.ativa === false) return;
 
-        const excecoes = new Set(
-            (disponibilidade.excecoes ?? []).map((excecao) => getIsoDateKey(excecao.Data_Cancelada)),
-        );
-
         for (let cursor = new Date(hoje); cursor <= fim; cursor.setDate(cursor.getDate() + 1)) {
             const diaSemanaPt = cursor.getDay() === 0 ? 7 : cursor.getDay();
             if (diaSemanaPt !== disponibilidade.diaSemana) continue;
 
             const dataKey = formatDateKey(cursor);
-            if (excecoes.has(dataKey)) continue;
+            if (temExcecaoNaData(disponibilidade, dataKey)) continue;
 
             const sessoesDaOcorrencia = (disponibilidade.sessoes ?? []).filter(
                 (sessao) => getIsoDateKey(sessao.inicioCoaching) === dataKey,
@@ -303,6 +341,7 @@ export default function CoachingEE() {
         return disponibilidades
             .filter((disp) => disp.maxAlunos > 0)
             .filter((disp) => (disp.modalidadesProfessor?.length ?? 0) > 0)
+            .filter((disp) => !temExcecaoNaData(disp, formatDateKey(parseDataDisponibilidade(disp.data))))
             .filter((disp) => (filtroProfessor ? disp.nomeProfessor === filtroProfessor : true))
             .filter((disp) => filtroModalidade
                 ? disp.modalidadesProfessor?.some((modalidade) => modalidade.descricao === filtroModalidade)
@@ -329,6 +368,14 @@ export default function CoachingEE() {
 
     const monthGrid = useMemo(() => getMonthGrid(selectedDate), [selectedDate]);
     const weekGrid = useMemo(() => getWeekDates(selectedDate), [selectedDate]);
+    const displayedMonthGrid = useMemo(() => {
+        const hoje = new Date();
+        const isCurrentMonth =
+            selectedDate.getFullYear() === hoje.getFullYear() &&
+            selectedDate.getMonth() === hoje.getMonth();
+
+        return isCurrentMonth ? reorderMonthGridToStartWithWeek(monthGrid, hoje) : monthGrid;
+    }, [monthGrid, selectedDate]);
     const selectedHolidayName = getHolidayName(selectedDate);
 
     const activeRangeLabel = useMemo(() => {
@@ -656,7 +703,7 @@ export default function CoachingEE() {
                     <div className="calendar-weekday">Sab</div>
                     <div className="calendar-weekday">Dom</div>
 
-                    {(viewMode === 'week' ? weekGrid : monthGrid).map((day) => {
+                    {(viewMode === 'week' ? weekGrid : displayedMonthGrid).map((day) => {
                         const dayKey = formatDateKey(day);
                         const dayItems = dayItemsMap.get(dayKey) ?? [];
                         const isCurrentMonth = day.getMonth() === selectedDate.getMonth();

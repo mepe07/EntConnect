@@ -18,6 +18,13 @@ interface ExcecaoDisponibilidade {
     Data_Cancelada: string;
 }
 
+interface SessaoDisponibilidade {
+    idCoaching: number;
+    inicioCoaching: string;
+    idModalidade?: number | null;
+    alunosInscritosIds: number[];
+}
+
 interface DisponibilidadeRecorrente {
     idDisponibilidade: number;
     horaInicio: string;
@@ -30,6 +37,7 @@ interface DisponibilidadeRecorrente {
     ativa: boolean;
     diasSemana?: DiaSemana | null;
     excecoes?: ExcecaoDisponibilidade[];
+    sessoes?: SessaoDisponibilidade[];
 }
 
 interface ModalidadeProposta {
@@ -57,7 +65,9 @@ const DIAS_SEMANA: DiaSemana[] = [
 const HORAS_DIA = Array.from({ length: 24 }, (_, i) => i);
 
 const initialForm = {
+    tipo: 'recorrente' as 'recorrente' | 'unica',
     diaSemana: 1,
+    dataUnica: '',
     hora: '16:00',
     duracao: 60,
 };
@@ -78,9 +88,28 @@ function formatTime(value: string) {
 }
 
 function formatDate(value: string) {
+    const isoDate = value.match(/^(\d{4})-(\d{2})-(\d{2})/)?.slice(1);
+    if (isoDate) {
+        const [ano, mes, dia] = isoDate;
+        return `${dia}/${mes}/${ano}`;
+    }
+
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
     return date.toLocaleDateString('pt-PT');
+}
+
+function getDateKey(value: string) {
+    const isoDate = value.match(/^(\d{4})-(\d{2})-(\d{2})/)?.[0];
+    if (isoDate) return isoDate;
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value.slice(0, 10);
+
+    const ano = date.getFullYear();
+    const mes = String(date.getMonth() + 1).padStart(2, '0');
+    const dia = String(date.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
 }
 
 function horaParaDataIso(hora: string) {
@@ -106,6 +135,19 @@ function getEstadoClass(disponibilidade: DisponibilidadeRecorrente) {
     return '';
 }
 
+function getDiaSemanaDaDisponibilidade(disponibilidade: DisponibilidadeRecorrente) {
+    if (disponibilidade.diaSemana) return disponibilidade.diaSemana;
+
+    const data = new Date(disponibilidade.horaInicio);
+    if (Number.isNaN(data.getTime())) return null;
+
+    return data.getDay() === 0 ? 7 : data.getDay();
+}
+
+function isDisponibilidadeUnica(disponibilidade: DisponibilidadeRecorrente) {
+    return !disponibilidade.diaSemana;
+}
+
 export default function AdicionarDisponibilidade() {
     const userInfo = authService.getUserInfo();
     const rolesService = new RolesService();
@@ -119,13 +161,17 @@ export default function AdicionarDisponibilidade() {
     const [selectedDisponibilidade, setSelectedDisponibilidade] = useState<DisponibilidadeRecorrente | null>(null);
     const [isExceptionFormOpen, setIsExceptionFormOpen] = useState(false);
     const [exceptionDate, setExceptionDate] = useState('');
+    const [suspensaoBloqueadaInfo, setSuspensaoBloqueadaInfo] = useState<{
+        data: string;
+        horario: string;
+        alunosCount: number;
+    } | null>(null);
     const [form, setForm] = useState(initialForm);
     const [isPropostaModalOpen, setIsPropostaModalOpen] = useState(false);
     const [modalidadesProposta, setModalidadesProposta] = useState<ModalidadeProposta[]>([]);
     const [encarregados, setEncarregados] = useState<EncarregadoProposta[]>([]);
     const [loadingEncarregados, setLoadingEncarregados] = useState(false);
     const [erroPesquisaEE, setErroPesquisaEE] = useState<string | null>(null);
-    const [pesquisaEE, setPesquisaEE] = useState('');
     const [propostaEE, setPropostaEE] = useState<number | null>(null);
     const [propostaModalidade, setPropostaModalidade] = useState<number | null>(null);
     const [propostaAlunos, setPropostaAlunos] = useState<number[]>([]);
@@ -142,7 +188,15 @@ export default function AdicionarDisponibilidade() {
         try {
             const data = await disponibilidadesService.getAvailability();
             const recorrentes = (data as DisponibilidadeRecorrente[])
-                .filter((item) => item.idProfessor === idProfessor && item.diaSemana)
+                .filter((item) => item.idProfessor === idProfessor)
+                .filter((item) => {
+                    if (item.diaSemana) return true;
+
+                    const inicio = new Date(item.horaInicio);
+                    if (Number.isNaN(inicio.getTime())) return false;
+
+                    return inicio >= new Date();
+                })
                 .map((item) => ({ ...item, ativa: item.ativa ?? true }));
 
             setDisponibilidades(recorrentes);
@@ -194,7 +248,7 @@ export default function AdicionarDisponibilidade() {
             setErroPesquisaEE(null);
 
             try {
-                const resultados = await coachingPropostasService.pesquisarEncarregados(pesquisaEE);
+                const resultados = await coachingPropostasService.pesquisarEncarregados('');
                 setEncarregados(Array.isArray(resultados) ? resultados : []);
             } catch (error) {
                 console.error(error);
@@ -206,10 +260,10 @@ export default function AdicionarDisponibilidade() {
         }, 250);
 
         return () => window.clearTimeout(timeoutId);
-    }, [pesquisaEE, isPropostaModalOpen]);
+    }, [isPropostaModalOpen]);
 
     function processarDisponibilidadesDoDia(idDia: number) {
-        const disponibilidadesDoDia = disponibilidades.filter((item) => item.diaSemana === idDia);
+        const disponibilidadesDoDia = disponibilidades.filter((item) => getDiaSemanaDaDisponibilidade(item) === idDia);
 
         const formatadas = disponibilidadesDoDia
             .map((item) => ({
@@ -258,14 +312,23 @@ export default function AdicionarDisponibilidade() {
             return;
         }
 
+        if (form.tipo === 'unica' && !form.dataUnica) {
+            showToast('Escolhe a data da disponibilidade unica.');
+            return;
+        }
+
         setLoading(true);
+
+        const horaInicio = form.tipo === 'unica'
+            ? new Date(`${form.dataUnica}T${form.hora}:00`).toISOString()
+            : horaParaDataIso(form.hora);
 
         const payload = {
             ID_Professor: idProfessorAtivo,
             AlteradoPorUtilizadorID: Number(userInfo?.sub),
-            Hora_Inicio: horaParaDataIso(form.hora),
+            Hora_Inicio: horaInicio,
             Duracao: Number(form.duracao),
-            Dia_Semana: Number(form.diaSemana),
+            Dia_Semana: form.tipo === 'recorrente' ? Number(form.diaSemana) : undefined,
             Ativa: true,
         };
 
@@ -331,6 +394,21 @@ export default function AdicionarDisponibilidade() {
             return;
         }
 
+        const sessaoExistente = (selectedDisponibilidade.sessoes ?? []).find(
+            (sessao) =>
+                getDateKey(sessao.inicioCoaching) === exceptionDate &&
+                (sessao.alunosInscritosIds?.length ?? 0) > 0,
+        );
+
+        if (sessaoExistente) {
+            setSuspensaoBloqueadaInfo({
+                data: exceptionDate,
+                horario: selectedDisponibilidade.horario,
+                alunosCount: sessaoExistente.alunosInscritosIds.length,
+            });
+            return;
+        }
+
         setLoading(true);
         try {
             await disponibilidadesService.criarExcecao(
@@ -368,7 +446,6 @@ export default function AdicionarDisponibilidade() {
 
     function fecharPropostaModal() {
         setIsPropostaModalOpen(false);
-        setPesquisaEE('');
         setEncarregados([]);
         setErroPesquisaEE(null);
         setPropostaEE(null);
@@ -378,12 +455,6 @@ export default function AdicionarDisponibilidade() {
         setPropostaHora('16:00');
         setPropostaDuracao(60);
         setPropostaMensagem('');
-    }
-
-    function selecionarEncarregadoProposta(encarregado: EncarregadoProposta) {
-        setPropostaEE(encarregado.idEncEducacao);
-        setPesquisaEE(encarregado.nome);
-        setPropostaAlunos([]);
     }
 
     function toggleAlunoProposta(idAluno: number) {
@@ -482,7 +553,7 @@ export default function AdicionarDisponibilidade() {
                                             <button
                                                 key={disponibilidade.idDisponibilidade}
                                                 type="button"
-                                                className={`disponibilidade-card ${getEstadoClass(disponibilidade)}`}
+                                                className={`disponibilidade-card ${getEstadoClass(disponibilidade)} ${disponibilidade.duracao < 45 ? 'ultracompacto' : disponibilidade.duracao < 75 ? 'compacto' : ''}`}
                                                 style={{
                                                     top: `${disponibilidade.top}px`,
                                                     height: `${Math.max(disponibilidade.duracao, 34)}px`,
@@ -495,10 +566,16 @@ export default function AdicionarDisponibilidade() {
                                                     setExceptionDate('');
                                                 }}
                                             >
-                                                <span className="disponibilidade-titulo">Disponivel</span>
+                                                <span className="disponibilidade-titulo">
+                                                    {isDisponibilidadeUnica(disponibilidade) ? 'Disponibilidade unica' : 'Disponivel'}
+                                                </span>
                                                 <span className="disponibilidade-info">{disponibilidade.horario}</span>
                                                 <span className="disponibilidade-meta">
-                                                    {disponibilidade.estado}
+                                                    {isDisponibilidadeUnica(disponibilidade)
+                                                        ? formatDate(disponibilidade.horaInicio)
+                                                        : normalizarEstado(disponibilidade.estado) === 'pendente'
+                                                            ? ''
+                                                            : disponibilidade.estado}
                                                     {(disponibilidade.excecoes?.length ?? 0) > 0 && (
                                                         <> - {disponibilidade.excecoes?.length} excecao</>
                                                     )}
@@ -529,6 +606,27 @@ export default function AdicionarDisponibilidade() {
                         <div className="modal-body">
                             <form id="form-criar-disponibilidade" onSubmit={handleSubmit}>
                                 <div className="form-grid">
+                                    <label className="full-width">
+                                        Tipo de disponibilidade
+                                        <div className="tipo-disponibilidade-toggle">
+                                            <button
+                                                type="button"
+                                                className={form.tipo === 'recorrente' ? 'ativo' : ''}
+                                                onClick={() => setForm({ ...form, tipo: 'recorrente' })}
+                                            >
+                                                Recorrente
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={form.tipo === 'unica' ? 'ativo' : ''}
+                                                onClick={() => setForm({ ...form, tipo: 'unica' })}
+                                            >
+                                                Unica
+                                            </button>
+                                        </div>
+                                    </label>
+
+                                    {form.tipo === 'recorrente' ? (
                                     <label>
                                         Dia da semana
                                         <select
@@ -543,6 +641,19 @@ export default function AdicionarDisponibilidade() {
                                             ))}
                                         </select>
                                     </label>
+                                    ) : (
+                                    <label>
+                                        Data
+                                        <input
+                                            type="date"
+                                            className="input-campo"
+                                            min={hoje}
+                                            value={form.dataUnica}
+                                            onChange={(event) => setForm({ ...form, dataUnica: event.target.value })}
+                                            required={form.tipo === 'unica'}
+                                        />
+                                    </label>
+                                    )}
 
                                     <label>
                                         Hora de inicio
@@ -567,7 +678,6 @@ export default function AdicionarDisponibilidade() {
                                             required
                                         />
                                     </label>
-
                                 </div>
                             </form>
                         </div>
@@ -594,9 +704,10 @@ export default function AdicionarDisponibilidade() {
                             <div>
                                 <h3>Detalhes da disponibilidade</h3>
                                 <span>
-                                    {selectedDisponibilidade.diasSemana?.Nome_Dia
-                                        ?? DIAS_SEMANA.find((dia) => dia.ID_Dia === selectedDisponibilidade.diaSemana)?.Nome_Dia}
-                                    {' '}as {formatTime(selectedDisponibilidade.horaInicio)}
+                                    {isDisponibilidadeUnica(selectedDisponibilidade)
+                                        ? `${formatDate(selectedDisponibilidade.horaInicio)} as ${formatTime(selectedDisponibilidade.horaInicio)}`
+                                        : `${selectedDisponibilidade.diasSemana?.Nome_Dia
+                                            ?? DIAS_SEMANA.find((dia) => dia.ID_Dia === selectedDisponibilidade.diaSemana)?.Nome_Dia} as ${formatTime(selectedDisponibilidade.horaInicio)}`}
                                 </span>
                             </div>
                             <ButtonComponent className="btn-fechar" onClick={() => setSelectedDisponibilidade(null)}>
@@ -605,6 +716,10 @@ export default function AdicionarDisponibilidade() {
                         </div>
 
                         <div className="modal-body">
+                            <div className="modal-row">
+                                <span>Tipo</span>
+                                <strong>{isDisponibilidadeUnica(selectedDisponibilidade) ? 'Unica' : 'Semanal'}</strong>
+                            </div>
                             <div className="modal-row">
                                 <span>Horario</span>
                                 <strong>{selectedDisponibilidade.horario}</strong>
@@ -738,45 +853,6 @@ export default function AdicionarDisponibilidade() {
                         <div className="modal-body">
                             <div className="form-grid proposta-grid">
                                 <label>
-                                    Pesquisar enc. educação
-                                    <input
-                                        type="search"
-                                        className="input-campo"
-                                        value={pesquisaEE}
-                                        onChange={(event) => {
-                                            setPesquisaEE(event.target.value);
-                                            setPropostaEE(null);
-                                            setPropostaAlunos([]);
-                                        }}
-                                    />
-                                </label>
-
-                                <div className="resultados-ee-proposta">
-                                    {loadingEncarregados && <div className="resultado-ee-status">A procurar...</div>}
-                                    {erroPesquisaEE && <div className="resultado-ee-status erro">{erroPesquisaEE}</div>}
-                                    {!loadingEncarregados && !erroPesquisaEE && pesquisaEE.trim() && encarregados.length === 0 && (
-                                        <div className="resultado-ee-status">Sem resultados para "{pesquisaEE}".</div>
-                                    )}
-                                    {!loadingEncarregados && encarregados.length > 0 && (
-                                        <div className="resultado-ee-lista">
-                                            {encarregados.map((encarregado) => (
-                                                <button
-                                                    key={encarregado.idEncEducacao}
-                                                    type="button"
-                                                    className={`resultado-ee-item ${propostaEE === encarregado.idEncEducacao ? 'selecionado' : ''}`}
-                                                    onClick={() => selecionarEncarregadoProposta(encarregado)}
-                                                >
-                                                    <strong>{encarregado.nome}</strong>
-                                                    <span>
-                                                        {encarregado.email || 'Sem email'} - {encarregado.alunos.length} aluno{encarregado.alunos.length === 1 ? '' : 's'}
-                                                    </span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <label>
                                     Enc. educação
                                     <select
                                         className="input-campo"
@@ -785,14 +861,18 @@ export default function AdicionarDisponibilidade() {
                                             setPropostaEE(event.target.value ? Number(event.target.value) : null);
                                             setPropostaAlunos([]);
                                         }}
+                                        disabled={loadingEncarregados || !!erroPesquisaEE}
                                     >
-                                        <option value="">Selecione</option>
+                                        <option value="">
+                                            {loadingEncarregados ? 'A carregar encarregados...' : 'Selecione'}
+                                        </option>
                                         {encarregados.map((encarregado) => (
                                             <option key={encarregado.idEncEducacao} value={encarregado.idEncEducacao}>
-                                                {encarregado.nome}
+                                                {encarregado.nome} ({encarregado.alunos.length} aluno{encarregado.alunos.length === 1 ? '' : 's'})
                                             </option>
                                         ))}
                                     </select>
+                                    {erroPesquisaEE && <span className="resultado-ee-status erro">{erroPesquisaEE}</span>}
                                 </label>
 
                                 <label>
@@ -863,6 +943,39 @@ export default function AdicionarDisponibilidade() {
                             </ButtonComponent>
                             <ButtonComponent type="button" className="btn-primario" onClick={handleCriarProposta} disabled={isSubmittingProposta}>
                                 {isSubmittingProposta ? 'A enviar...' : 'Enviar proposta'}
+                            </ButtonComponent>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {suspensaoBloqueadaInfo && (
+                <div className="modal-overlay" onClick={() => setSuspensaoBloqueadaInfo(null)}>
+                    <div className="modal-content detalhes-modal" onClick={(event) => event.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Nao e possivel suspender</h3>
+                            <ButtonComponent className="btn-fechar" onClick={() => setSuspensaoBloqueadaInfo(null)}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </ButtonComponent>
+                        </div>
+
+                        <div className="modal-body">
+                            <div className="suspensao-alerta">
+                                <i className="fa-solid fa-triangle-exclamation"></i>
+                                <div>
+                                    <strong>Ja existe uma marcacao neste dia.</strong>
+                                    <p>
+                                        A disponibilidade de {formatDate(suspensaoBloqueadaInfo.data)} no horario {suspensaoBloqueadaInfo.horario}
+                                        {' '}tem {suspensaoBloqueadaInfo.alunosCount} aluno{suspensaoBloqueadaInfo.alunosCount === 1 ? '' : 's'} inscrito{suspensaoBloqueadaInfo.alunosCount === 1 ? '' : 's'}.
+                                    </p>
+                                    <p>Remove os alunos dessa sessao antes de suspender este dia.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="modal-footer">
+                            <ButtonComponent type="button" className="btn-primario" onClick={() => setSuspensaoBloqueadaInfo(null)}>
+                                Fechar
                             </ButtonComponent>
                         </div>
                     </div>

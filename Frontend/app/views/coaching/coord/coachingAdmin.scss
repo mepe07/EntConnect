@@ -623,6 +623,64 @@ table button {
             max-width: 760px;
         }
 
+        &.modal-conteudo-proposta {
+            max-width: 620px;
+        }
+
+        .proposta-aprovacao-info {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            padding: 16px;
+            margin-bottom: 18px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            background: #f8fafc;
+
+            div {
+                display: grid;
+                gap: 4px;
+                min-width: 0;
+            }
+
+            span {
+                color: #64748b;
+                font-size: 0.82rem;
+                font-weight: 700;
+                text-transform: uppercase;
+            }
+
+            strong {
+                color: #0f172a;
+                overflow-wrap: anywhere;
+            }
+        }
+
+        .proposta-estudio-field {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 12px;
+            color: #334155;
+            font-weight: 700;
+
+            .select-box {
+                width: 100%;
+                min-height: 42px;
+                padding: 8px 10px;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                background: #ffffff;
+                color: #0f172a;
+            }
+        }
+
+        .proposta-estudio-alerta {
+            margin: 0 0 16px;
+            color: #dc2626;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
         .validacao-list {
             display: grid;
             gap: 12px;
@@ -836,6 +894,21 @@ table button {
 
                 &:hover {
                     background-color: #e2e8f0;
+                }
+            }
+
+            .btn-confirmar-proposta {
+                padding: 10px 24px;
+                background-color: #154c3b;
+                color: #ffffff;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 700;
+
+                &:disabled {
+                    cursor: not-allowed;
+                    opacity: 0.6;
                 }
             }
 

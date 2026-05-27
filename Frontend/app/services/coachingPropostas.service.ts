@@ -82,10 +82,11 @@ class CoachingPropostasService {
         return response.json();
     }
 
-    async aprovar(idPedido: number) {
+    async aprovar(idPedido: number, idEstudio: number) {
         const response = await fetch(`${API_URL}/admin/propostas/${idPedido}/aprovar`, {
             method: 'PATCH',
             headers: this.getHeaders(),
+            body: JSON.stringify({ idEstudio }),
         });
 
         if (!response.ok) {
