@@ -44,6 +44,7 @@ model Artigo {
   Origem_Registo                                        String                          @default("utilizador") @db.VarChar(30)
   Tipo_Anuncio                                          String                          @default("venda") @db.VarChar(20)
   Estado_Anuncio                                        String                          @default("ativo") @db.VarChar(30)
+  Aluguer_Continuo                                      Boolean                         @default(false)
   Motivo_Moderacao                                      String?                         @db.VarChar(500)
   Publicado_No_Marketplace                              Boolean                         @default(false)
   Descricao                                             String?                         @db.VarChar(1000)
@@ -267,6 +268,8 @@ model Interesse_Artigo {
   Mensagem              String?       @db.VarChar(500)
   Estado                String        @default("Pendente") @db.VarChar(20)
   Data_Registo          DateTime      @default(now())
+  Data_Inicio_Pretendida DateTime?
+  Data_Fim_Pretendida    DateTime?
   Data_Recolha_Prevista DateTime?
   Tipo                  String        @default("Compra")
   Stock_Armazem         Stock_Armazem @relation(fields: [ID_Stock], references: [ID_Stock], onDelete: Cascade)

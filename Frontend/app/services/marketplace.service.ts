@@ -2,7 +2,9 @@
 
 import type {
     FiltrosAnuncios,
+    CalendarioAnuncioItem,
     CriarAnuncioPayload,
+    CriarPedidoAluguerPayload,
     PublicarInventarioEscolaPayload,
     RegistarInteressePayload,
     EstadoAnuncio,
@@ -18,13 +20,13 @@ import { authService } from './auth.service';
 
 const API_URL = `${API_BASE_URL}/marketplace`;
 
-const getAuthHeader = () => {
+const getAuthHeader = (): Record<string, string> => {
     const token = authService.getToken();
 
     return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-const getHeaders = () => ({
+const getHeaders = (): Record<string, string> => ({
     'Content-Type': 'application/json',
     ...getAuthHeader(),
 });
@@ -108,6 +110,16 @@ export const marketplaceService = {
         return response.json();
     },
 
+    async obterCalendarioAnuncio(idArtigo: number): Promise<CalendarioAnuncioItem[]> {
+        const response = await fetch(`${API_URL}/anuncios/${idArtigo}/calendario`, {
+            method: 'GET',
+            headers: getHeaders(),
+        });
+
+        if (!response.ok) return parseError(response, 'Erro ao carregar a disponibilidade do anúncio.');
+        return response.json();
+    },
+
     async listarInventarioDaEscola(): Promise<Anuncio[]> {
         const response = await fetch(`${API_URL}/inventario-escola`, {
             method: 'GET',
@@ -146,6 +158,10 @@ export const marketplaceService = {
 
         if (dados.quantidadeAluguer !== undefined) {
             formData.append('quantidadeAluguer', String(dados.quantidadeAluguer));
+        }
+
+        if (dados.aluguerContinuo !== undefined) {
+            formData.append('aluguerContinuo', String(dados.aluguerContinuo));
         }
 
         if (dados.descricao) formData.append('descricao', dados.descricao);
@@ -262,6 +278,27 @@ export const marketplaceService = {
         return response.json();
     },
 
+
+    async criarPedidoAluguer(idArtigo: number, dados: CriarPedidoAluguerPayload): Promise<unknown> {
+        const response = await fetch(`${API_URL}/anuncios/${idArtigo}/pedidos-aluguer`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(dados),
+        });
+
+        if (!response.ok) return parseError(response, 'Não foi possível submeter o pedido de aluguer.');
+        return response.json();
+    },
+
+    async confirmarDevolucaoAluguer(idAluguer: number): Promise<unknown> {
+        const response = await fetch(`${API_URL}/alugueres/${idAluguer}/confirmar-devolucao`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+        });
+
+        if (!response.ok) return parseError(response, 'Não foi possível confirmar a devolução.');
+        return response.json();
+    },
 
     async criarItemInventario(dados: CriarItemInventarioPayload): Promise<Anuncio> {
 

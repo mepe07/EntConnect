@@ -1,0 +1,29 @@
+61de1b0d0c86f9594ca973c8d6b5faf9
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PrismaService = void 0;
+const common_1 = require("@nestjs/common");
+const client_1 = require("@prisma/client");
+/**
+ * Servico responsavel pela logica de Prisma.
+ */
+let PrismaService = class PrismaService extends client_1.PrismaClient {
+    /**
+     * Executa a inicializacao do modulo.
+     * @returns Resultado da operacao.
+     */
+    async onModuleInit() {
+        await this.$connect();
+    }
+};
+exports.PrismaService = PrismaService;
+exports.PrismaService = PrismaService = __decorate([
+    (0, common_1.Injectable)()
+], PrismaService);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiQzpcXFVzZXJzXFxVdGlsaXphZG9yXFxzb3VyY2VcXHJlcG9zXFxFbnRDb25uZWN0XFxCYWNrZW5kXFxzcmNcXHByaXNtYVxccHJpc21hLnNlcnZpY2UudHMiLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBQUEsMkNBQTBEO0FBQzFELDJDQUE4QztBQUM5Qzs7R0FFRztBQUdJLElBQU0sYUFBYSxHQUFuQixNQUFNLGFBQWMsU0FBUSxxQkFBWTtJQUM3Qzs7O09BR0c7SUFFSCxLQUFLLENBQUMsWUFBWTtRQUNoQixNQUFNLElBQUksQ0FBQyxRQUFRLEVBQUUsQ0FBQztJQUN4QixDQUFDO0NBQ0YsQ0FBQTtBQVRZLHNDQUFhO3dCQUFiLGFBQWE7SUFEekIsSUFBQSxtQkFBVSxHQUFFO0dBQ0EsYUFBYSxDQVN6QiIsIm5hbWVzIjpbXSwic291cmNlcyI6WyJDOlxcVXNlcnNcXFV0aWxpemFkb3JcXHNvdXJjZVxccmVwb3NcXEVudENvbm5lY3RcXEJhY2tlbmRcXHNyY1xccHJpc21hXFxwcmlzbWEuc2VydmljZS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBJbmplY3RhYmxlLCBPbk1vZHVsZUluaXQgfSBmcm9tICdAbmVzdGpzL2NvbW1vbic7XHJcbmltcG9ydCB7IFByaXNtYUNsaWVudCB9IGZyb20gJ0BwcmlzbWEvY2xpZW50JztcclxuLyoqXHJcbiAqIFNlcnZpY28gcmVzcG9uc2F2ZWwgcGVsYSBsb2dpY2EgZGUgUHJpc21hLlxyXG4gKi9cclxuXHJcbkBJbmplY3RhYmxlKClcclxuZXhwb3J0IGNsYXNzIFByaXNtYVNlcnZpY2UgZXh0ZW5kcyBQcmlzbWFDbGllbnQgaW1wbGVtZW50cyBPbk1vZHVsZUluaXQge1xyXG4gIC8qKlxyXG4gICAqIEV4ZWN1dGEgYSBpbmljaWFsaXphY2FvIGRvIG1vZHVsby5cclxuICAgKiBAcmV0dXJucyBSZXN1bHRhZG8gZGEgb3BlcmFjYW8uXHJcbiAgICovXHJcblxyXG4gIGFzeW5jIG9uTW9kdWxlSW5pdCgpIHtcclxuICAgIGF3YWl0IHRoaXMuJGNvbm5lY3QoKTtcclxuICB9XHJcbn1cclxuIl0sInZlcnNpb24iOjN9

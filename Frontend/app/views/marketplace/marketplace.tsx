@@ -5,19 +5,23 @@ import { marketplaceService } from '../../services/marketplace.service';
 import type { User } from '../../models/interfaces/user.interface';
 import {
     type Anuncio,
+    type CalendarioAnuncioItem,
     type CriarAnuncioPayload,
+    type CriarPedidoAluguerPayload,
     EstadoAnuncio,
     OrigemRegisto,
     TipoAnuncio,
     TipoInteresse,
 } from '../../types/marketplace.types';
 import { ModalCriarAnuncio } from './partials/modalCriarAnuncio';
+import { AnuncioDisponibilidade } from './partials/anuncioDisponibilidade';
 import './marketplace.scss';
 
 import { showToast } from '~/components/toast/toast';
 type Vista = 'montra' | 'detalhe' | 'meus' | 'moderacao';
 type VistaLista = Exclude<Vista, 'detalhe'>;
 type AcaoModeracao = 'remover' | 'reativar' | 'arquivar';
+type TabDetalhe = 'detalhe' | 'disponibilidade' | 'moderacao';
 
 const ESTADO_LABEL: Record<string, string> = {
     [EstadoAnuncio.ATIVO]: 'Ativo',
@@ -35,7 +39,7 @@ const ORIGEM_LABEL: Record<string, string> = {
 const TIPO_LABEL: Record<string, string> = {
     [TipoAnuncio.VENDA]: 'Venda',
     [TipoAnuncio.ALUGUER]: 'Aluguer',
-    [TipoAnuncio.AMBOS]: 'Ambos',
+    ambos: 'Legado',
 };
 
 function getStockPrincipal(anuncio: Anuncio) {
@@ -93,6 +97,11 @@ export function Marketplace() {
     const [filtroOrigem, setFiltroOrigem] = useState('todas');
     const [filtroTipo, setFiltroTipo] = useState('todos');
     const [mensagemFluxo, setMensagemFluxo] = useState('Nenhuma ação executada ainda.');
+
+    const [tabDetalhe, setTabDetalhe] = useState<TabDetalhe>('detalhe');
+    const [calendarioAnuncio, setCalendarioAnuncio] = useState<CalendarioAnuncioItem[]>([]);
+    const [calendarioLoading, setCalendarioLoading] = useState(false);
+    const [calendarioErro, setCalendarioErro] = useState('');
 
     const [mostrarModalCriar, setMostrarModalCriar] = useState(false);
     const [mostrarModalModeracao, setMostrarModalModeracao] = useState(false);
@@ -168,6 +177,16 @@ export function Marketplace() {
         }
     }, [vista]);
 
+    useEffect(() => {
+        if (
+            vista === 'detalhe' &&
+            tabDetalhe === 'disponibilidade' &&
+            isAnuncioAluguer(anuncioSelecionado)
+        ) {
+            carregarCalendarioAnuncio(anuncioSelecionado?.ID_Artigo);
+        }
+    }, [vista, tabDetalhe, anuncioSelecionado?.ID_Artigo, anuncioSelecionado?.Tipo_Anuncio]);
+
     const anunciosFiltrados = useMemo(() => {
         return anuncios.filter((anuncio) => {
             const texto = [anuncio.Nome, anuncio.Descricao, getNomeCriador(anuncio), getCor(anuncio), getTamanho(anuncio)]
@@ -189,6 +208,24 @@ export function Marketplace() {
         return anuncio.ID_Utilizador_Criador === utilizador.sub;
     };
 
+    const isAnuncioAluguer = (anuncio?: Anuncio | null) => anuncio?.Tipo_Anuncio === TipoAnuncio.ALUGUER;
+
+    const carregarCalendarioAnuncio = async (idArtigo = anuncioSelecionado?.ID_Artigo) => {
+        if (!idArtigo) return;
+
+        setCalendarioLoading(true);
+        setCalendarioErro('');
+
+        try {
+            const dados = await marketplaceService.obterCalendarioAnuncio(idArtigo);
+            setCalendarioAnuncio(dados);
+        } catch (error: any) {
+            setCalendarioErro(error.message || 'Não foi possível carregar a disponibilidade deste anúncio.');
+        } finally {
+            setCalendarioLoading(false);
+        }
+    };
+
     const abrirVista = (novaVista: VistaLista) => {
         setVistaAnterior(novaVista);
         setVista(novaVista);
@@ -199,6 +236,9 @@ export function Marketplace() {
             setVistaAnterior(vista as VistaLista);
         }
         setAnuncioSelecionado(anuncio);
+        setTabDetalhe('detalhe');
+        setCalendarioAnuncio([]);
+        setCalendarioErro('');
         setVista('detalhe');
     };
 
@@ -245,6 +285,34 @@ export function Marketplace() {
             showToast('Interesse registado com sucesso.');
         } catch (error: any) {
             showToast(error.message || 'Não foi possível registar o interesse.');
+        }
+    };
+
+    const criarPedidoAluguer = async (payload: CriarPedidoAluguerPayload) => {
+        if (!anuncioSelecionado) return;
+
+        try {
+            await marketplaceService.criarPedidoAluguer(anuncioSelecionado.ID_Artigo, payload);
+            setMensagemFluxo(`Submeteste um pedido de aluguer para '${anuncioSelecionado.Nome}'.`);
+            showToast('Pedido de aluguer submetido com sucesso.');
+            await carregarCalendarioAnuncio(anuncioSelecionado.ID_Artigo);
+        } catch (error: any) {
+            showToast(error.message || 'Não foi possível submeter o pedido de aluguer.');
+            throw error;
+        }
+    };
+
+    const confirmarDevolucaoAluguer = async (idAluguer: number) => {
+        if (!anuncioSelecionado) return;
+
+        try {
+            await marketplaceService.confirmarDevolucaoAluguer(idAluguer);
+            setMensagemFluxo(`Confirmaste a devolução de um aluguer em '${anuncioSelecionado.Nome}'.`);
+            showToast('Devolução confirmada com sucesso.');
+            await carregarCalendarioAnuncio(anuncioSelecionado.ID_Artigo);
+        } catch (error: any) {
+            showToast(error.message || 'Não foi possível confirmar a devolução.');
+            throw error;
         }
     };
 
@@ -299,6 +367,7 @@ export function Marketplace() {
 
     const podeRegistarInteresse = Boolean(
         anuncioSelecionado &&
+        anuncioSelecionado.Tipo_Anuncio === TipoAnuncio.VENDA &&
         !isDono(anuncioSelecionado) &&
         anuncioSelecionado.Estado_Anuncio === EstadoAnuncio.ATIVO,
     );
@@ -320,6 +389,12 @@ export function Marketplace() {
         anuncioSelecionado &&
         anuncioSelecionado.Estado_Anuncio !== EstadoAnuncio.ARQUIVADO,
     );
+
+    const tabsDetalheDisponiveis: TabDetalhe[] = [
+        'detalhe',
+        ...(isAnuncioAluguer(anuncioSelecionado) ? ['disponibilidade' as const] : []),
+        ...(isCoordenadora ? ['moderacao' as const] : []),
+    ];
 
     return (
         <div className="marketplace-page">
@@ -351,9 +426,8 @@ export function Marketplace() {
                         </div>
                         <div className="tabs">
                             <ButtonComponent className={vista === 'montra' ? 'ativo' : ''} onClick={() => abrirVista('montra')}>Montra</ButtonComponent>
-                            <ButtonComponent className={vista === 'detalhe' ? 'ativo' : ''} onClick={() => setVista('detalhe')}>Detalhe</ButtonComponent>
                             <ButtonComponent className={vista === 'meus' ? 'ativo' : ''} onClick={() => abrirVista('meus')}>Meus anúncios</ButtonComponent>
-                            {isCoordenadora ? <ButtonComponent className={vista === 'moderacao' ? 'ativo' : ''} onClick={() => abrirVista('moderacao')}>Moderação</ButtonComponent> : null}
+                            {isCoordenadora ? <ButtonComponent className={vista === 'moderacao' ? 'ativo' : ''} onClick={() => abrirVista('moderacao')}>Registo</ButtonComponent> : null}
                         </div>
                     </div>
 
@@ -376,7 +450,6 @@ export function Marketplace() {
                             <option value="todos">Todos os tipos</option>
                             <option value={TipoAnuncio.VENDA}>Venda</option>
                             <option value={TipoAnuncio.ALUGUER}>Aluguer</option>
-                            <option value={TipoAnuncio.AMBOS}>Ambos</option>
                         </select>
                     </div>
 
@@ -410,7 +483,7 @@ export function Marketplace() {
 
                     {!loading && vista === 'detalhe' && anuncioSelecionado && (
                         <div className="detalhe-anuncio">
-                            <ButtonComponent className="btn-link" onClick={() => setVista(vistaAnterior)}>← Voltar</ButtonComponent>
+                            <ButtonComponent className="btn-link" onClick={() => setVista(vistaAnterior)}>Voltar</ButtonComponent>
                             <div className="detalhe-grid">
                                 <div className="detalhe-principal">
                                     <img className="detalhe-imagem" src={anuncioSelecionado.Foto || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1200&auto=format&fit=crop'} alt={anuncioSelecionado.Nome} />
@@ -421,6 +494,12 @@ export function Marketplace() {
                                     </div>
                                     <h2>{anuncioSelecionado.Nome}</h2>
                                     <p>{anuncioSelecionado.Descricao || 'Sem descrição.'}</p>
+                                    {anuncioSelecionado.Tipo_Anuncio === TipoAnuncio.ALUGUER && anuncioSelecionado.Aluguer_Continuo ? (
+                                        <div className="bloco-nota-moderacao">
+                                            <span>Modalidade de aluguer</span>
+                                            <strong>Aluguer contínuo ativo</strong>
+                                        </div>
+                                    ) : null}
                                     <div className="detalhe-resumo">
                                         <div><span>Categoria</span><strong>{anuncioSelecionado.Notas || '--'}</strong></div>
                                         <div><span>Tamanho</span><strong>{getTamanho(anuncioSelecionado)}</strong></div>
@@ -434,43 +513,94 @@ export function Marketplace() {
                                         </div>
                                     ) : null}
                                 </div>
-                                <div className="detalhe-lateral">
-                                    <div className="bloco-lateral">
-                                        <h3>Contexto do anúncio</h3>
-                                        <div className="linhas-info">
-                                            <div><span>Publicado por</span><strong>{getNomeCriador(anuncioSelecionado)}</strong></div>
-                                            <div><span>Origem</span><strong>{ORIGEM_LABEL[anuncioSelecionado.Origem_Registo]}</strong></div>
-                                            <div><span>Publicado em</span><strong>{formatarData(anuncioSelecionado.Data_Criacao || anuncioSelecionado.Data_Atualizacao)}</strong></div>
-                                        </div>
+                                <div className="detalhe-painel">
+                                    <div className="detalhe-tabs">
+                                        {tabsDetalheDisponiveis.map((tab) => (
+                                            <button
+                                                key={tab}
+                                                type="button"
+                                                className={tabDetalhe === tab ? 'ativo' : ''}
+                                                onClick={() => setTabDetalhe(tab)}
+                                            >
+                                                {tab === 'detalhe' ? 'Detalhe' : tab === 'disponibilidade' ? 'Disponibilidade' : 'Ações'}
+                                            </button>
+                                        ))}
                                     </div>
-                                    <div className="bloco-lateral">
-                                        <h3>Ações</h3>
-                                        <div className="acoes-lateral">
-                                            {podeRegistarInteresse ? <ButtonComponent className="btn-principal" onClick={registarInteresse}>Tenho interesse</ButtonComponent> : null}
 
-                                            {isDono(anuncioSelecionado) && anuncioSelecionado.Estado_Anuncio === EstadoAnuncio.ATIVO ? (
-                                                <ButtonComponent className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.RESERVADO)}>Marcar como reservado</ButtonComponent>
-                                            ) : null}
-                                            {isDono(anuncioSelecionado) && anuncioSelecionado.Estado_Anuncio === EstadoAnuncio.RESERVADO ? (
-                                                <ButtonComponent className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.ATIVO)}>Reativar anúncio</ButtonComponent>
-                                            ) : null}
-                                            {isDono(anuncioSelecionado) && (anuncioSelecionado.Estado_Anuncio === EstadoAnuncio.ATIVO || anuncioSelecionado.Estado_Anuncio === EstadoAnuncio.RESERVADO) ? (
-                                                <ButtonComponent className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.CONCLUIDO)}>Marcar como concluído</ButtonComponent>
-                                            ) : null}
-                                            {isDono(anuncioSelecionado) && anuncioSelecionado.Estado_Anuncio !== EstadoAnuncio.ARQUIVADO && anuncioSelecionado.Estado_Anuncio !== EstadoAnuncio.REMOVIDO ? (
-                                                <ButtonComponent className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.ARQUIVADO)}>Arquivar anúncio</ButtonComponent>
-                                            ) : null}
+                                    <div className="detalhe-painel-conteudo">
+                                        {tabDetalhe === 'detalhe' ? (
+                                            <div className="detalhe-tab detalhe-conteudo-tab">
+                                                <div className="bloco-lateral">
+                                                    <h3>Contexto do anúncio</h3>
+                                                    <div className="linhas-info">
+                                                        <div><span>Publicado por</span><strong>{getNomeCriador(anuncioSelecionado)}</strong></div>
+                                                        <div><span>Origem</span><strong>{ORIGEM_LABEL[anuncioSelecionado.Origem_Registo]}</strong></div>
+                                                        <div><span>Publicado em</span><strong>{formatarData(anuncioSelecionado.Data_Criacao || anuncioSelecionado.Data_Atualizacao)}</strong></div>
+                                                    </div>
+                                                </div>
 
-                                            {podeRemoverPorModeracao ? (
-                                                <ButtonComponent className="btn-perigo" onClick={() => abrirModalModeracao(anuncioSelecionado, 'remover')}>Remover por moderação</ButtonComponent>
-                                            ) : null}
-                                            {podeReativarPorModeracao ? (
-                                                <ButtonComponent className="btn-secundario" onClick={() => abrirModalModeracao(anuncioSelecionado, 'reativar')}>Reativar anúncio</ButtonComponent>
-                                            ) : null}
-                                            {podeArquivarPorModeracao ? (
-                                                <ButtonComponent className="btn-secundario" onClick={() => abrirModalModeracao(anuncioSelecionado, 'arquivar')}>Arquivar por moderação</ButtonComponent>
-                                            ) : null}
-                                        </div>
+                                                <div className="bloco-lateral">
+                                                    <h3>Ações</h3>
+                                                    <div className="acoes-lateral">
+                                                        {podeRegistarInteresse ? <ButtonComponent className="btn-principal" onClick={registarInteresse}>Tenho interesse</ButtonComponent> : null}
+
+                                                        {isDono(anuncioSelecionado) && anuncioSelecionado.Estado_Anuncio === EstadoAnuncio.ATIVO ? (
+                                                            <ButtonComponent className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.RESERVADO)}>Marcar como reservado</ButtonComponent>
+                                                        ) : null}
+                                                        {isDono(anuncioSelecionado) && anuncioSelecionado.Estado_Anuncio === EstadoAnuncio.RESERVADO ? (
+                                                            <ButtonComponent className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.ATIVO)}>Reativar anúncio</ButtonComponent>
+                                                        ) : null}
+                                                        {isDono(anuncioSelecionado) && (anuncioSelecionado.Estado_Anuncio === EstadoAnuncio.ATIVO || anuncioSelecionado.Estado_Anuncio === EstadoAnuncio.RESERVADO) ? (
+                                                            <ButtonComponent className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.CONCLUIDO)}>Marcar como concluído</ButtonComponent>
+                                                        ) : null}
+                                                        {isDono(anuncioSelecionado) && anuncioSelecionado.Estado_Anuncio !== EstadoAnuncio.ARQUIVADO && anuncioSelecionado.Estado_Anuncio !== EstadoAnuncio.REMOVIDO ? (
+                                                            <ButtonComponent className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.ARQUIVADO)}>Arquivar anúncio</ButtonComponent>
+                                                        ) : null}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : null}
+
+                                        {tabDetalhe === 'disponibilidade' && isAnuncioAluguer(anuncioSelecionado) ? (
+                                            <AnuncioDisponibilidade
+                                                anuncio={anuncioSelecionado}
+                                                calendario={calendarioAnuncio}
+                                                loading={calendarioLoading}
+                                                erro={calendarioErro}
+                                                isDono={isDono(anuncioSelecionado)}
+                                                onCriarPedido={criarPedidoAluguer}
+                                                onConfirmarDevolucao={confirmarDevolucaoAluguer}
+                                            />
+                                        ) : null}
+
+                                        {tabDetalhe === 'moderacao' && isCoordenadora ? (
+                                            <div className="detalhe-tab detalhe-moderacao-tab">
+                                                <div className="bloco-lateral">
+                                                    <h3>Ações de moderação</h3>
+                                                    <p>
+                                                        A coordenação pode moderar o conteúdo do anúncio, mas não deve consultar nomes, contactos ou o tracking operacional dos empréstimos nesta área.
+                                                    </p>
+                                                    <div className="acoes-lateral">
+                                                        {podeRemoverPorModeracao ? (
+                                                            <ButtonComponent className="btn-perigo" onClick={() => abrirModalModeracao(anuncioSelecionado, 'remover')}>Remover por moderação</ButtonComponent>
+                                                        ) : null}
+                                                        {podeReativarPorModeracao ? (
+                                                            <ButtonComponent className="btn-secundario" onClick={() => abrirModalModeracao(anuncioSelecionado, 'reativar')}>Reativar anúncio</ButtonComponent>
+                                                        ) : null}
+                                                        {podeArquivarPorModeracao ? (
+                                                            <ButtonComponent className="btn-secundario" onClick={() => abrirModalModeracao(anuncioSelecionado, 'arquivar')}>Arquivar por moderação</ButtonComponent>
+                                                        ) : null}
+                                                    </div>
+                                                </div>
+
+                                                <div className="bloco-lateral">
+                                                    <h3>Regra de privacidade</h3>
+                                                    <div className="caixa-lateral">
+                                                        A coordenação consegue consultar o anúncio, pedir aluguer como qualquer utilizador e moderar conteúdo. Não deve ver a quem o artigo está alugado nem o tracking operacional do dono.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : null}
                                     </div>
                                 </div>
                             </div>

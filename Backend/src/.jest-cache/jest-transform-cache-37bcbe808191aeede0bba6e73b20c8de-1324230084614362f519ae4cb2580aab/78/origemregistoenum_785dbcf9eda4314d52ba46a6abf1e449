@@ -1,0 +1,10 @@
+8f9cd636345b76ef722c4f59863b8ccc
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OrigemRegisto = void 0;
+var OrigemRegisto;
+(function (OrigemRegisto) {
+    OrigemRegisto["UTILIZADOR"] = "utilizador";
+    OrigemRegisto["INVENTARIO_ESCOLA"] = "inventario_escola";
+})(OrigemRegisto || (exports.OrigemRegisto = OrigemRegisto = {}));
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiQzpcXFVzZXJzXFxVdGlsaXphZG9yXFxzb3VyY2VcXHJlcG9zXFxFbnRDb25uZWN0XFxCYWNrZW5kXFxzcmNcXG1hcmtldHBsYWNlXFxlbnVtc1xcb3JpZ2VtLXJlZ2lzdG8uZW51bS50cyIsIm1hcHBpbmdzIjoiOzs7QUFBQSxJQUFZLGFBR1g7QUFIRCxXQUFZLGFBQWE7SUFDdkIsMENBQXlCLENBQUE7SUFDekIsd0RBQXVDLENBQUE7QUFDekMsQ0FBQyxFQUhXLGFBQWEsNkJBQWIsYUFBYSxRQUd4QiIsIm5hbWVzIjpbXSwic291cmNlcyI6WyJDOlxcVXNlcnNcXFV0aWxpemFkb3JcXHNvdXJjZVxccmVwb3NcXEVudENvbm5lY3RcXEJhY2tlbmRcXHNyY1xcbWFya2V0cGxhY2VcXGVudW1zXFxvcmlnZW0tcmVnaXN0by5lbnVtLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCBlbnVtIE9yaWdlbVJlZ2lzdG8ge1xyXG4gIFVUSUxJWkFET1IgPSAndXRpbGl6YWRvcicsXHJcbiAgSU5WRU5UQVJJT19FU0NPTEEgPSAnaW52ZW50YXJpb19lc2NvbGEnLFxyXG59XHJcbiJdLCJ2ZXJzaW9uIjozfQ==
