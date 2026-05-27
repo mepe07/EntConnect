@@ -13,4 +13,6 @@ export interface User {
   nif: string;
   ativo: boolean;
   idPessoa: number;
+  Acoes_Rapidas?: string | number[];
+  Quadros_Visualizacao?: string | string[];
 }

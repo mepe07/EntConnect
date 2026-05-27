@@ -10,6 +10,7 @@ import {
   UnauthorizedException,
   Headers,
   UseGuards,
+  Res,
   Query,
   Request,
 } from '@nestjs/common';
@@ -24,6 +25,7 @@ import { ModalidadeService } from './modalidade/modalidade.service';
 import { CreateModalidadeDto } from './dto/create-modalidade.dto';
 import { UpdateModalidadeDto } from './dto/update-modalidade.dto';
 import { InscreverAlunoDto } from './dto/inscrever-aluno.dto';
+import type { Response } from 'express';
 import { CreatePedidoCoachingDto } from './dto/create-pedido-coaching.dto';
 
 import { AuthGuard } from '../auth/auth.guard';
@@ -374,4 +376,25 @@ export class CoachingController {
   async confirmarProfessor(@Param('id', ParseIntPipe) id: number) {
     return this.coachingService.confirmarSessaoProfessor(id);
   }
+
+  @Roles(Role.COORDENADOR)
+  @Get('exportar-excel')
+  @ApiOperation({
+    summary: 'Exportar sessões validadas para Excel',
+  })
+  async exportarSessoesExcel(@Res() res: Response) {
+    // 1. Pede ao serviço para gerar o ficheiro em memória (Buffer)
+    const excelBuffer = await this.coachingService.gerarExcelSessoesValidadas();
+
+    // 2. Prepara os cabeçalhos HTTP para enganar o browser a fazer download
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': 'attachment; filename="sessoes_validadas.xlsx"',
+      'Content-Length': excelBuffer.length,
+    });
+
+    // 3. Envia o ficheiro para o React!
+    res.end(excelBuffer);
+  }
+
 }

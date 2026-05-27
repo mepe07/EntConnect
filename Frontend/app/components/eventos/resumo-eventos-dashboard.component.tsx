@@ -125,7 +125,6 @@ export function ResumoEventosDashboard() {
         <section className={styles.section}>
             <div className={styles.titleBlock}>
                 <h2>Próximos Eventos</h2>
-                <p>Eventos públicos publicados pela coordenação.</p>
             </div>
 
             {loading && (

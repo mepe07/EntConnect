@@ -33,7 +33,7 @@
 
 .contentGrid {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+    grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.3fr);
     gap: 18px;
 }
 
@@ -60,7 +60,7 @@
     }
 
 .featuredImage {
-    min-height: 280px;
+    min-height: 190px;
     overflow: hidden;
     background: #101820;
 }
@@ -79,7 +79,7 @@
 
 .fallbackImage {
     height: 100%;
-    min-height: 280px;
+    min-height: 190px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -98,7 +98,7 @@
     }
 
 .featuredBody {
-    padding: 26px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -109,7 +109,7 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 7px;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
 .badge,
@@ -146,41 +146,41 @@
 .featuredBody h3 {
     margin: 0;
     color: #111827;
-    font-size: 2rem;
+    font-size: 1.65rem;
     font-weight: 900;
     line-height: 1.05;
     letter-spacing: -0.055em;
 }
 
 .featuredBody p {
-    margin: 12px 0 0;
+    margin: 8px 0 0;
     color: #6b7280;
-    font-size: 0.95rem;
-    line-height: 1.55;
+    font-size: 0.92rem;
+    line-height: 1.45;
 }
 
 .infoRow {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-top: 20px;
+    margin-top: 10px;
 }
 
     .infoRow span {
         display: inline-flex;
         align-items: center;
         gap: 7px;
-        padding: 9px 11px;
+        padding: 8px 10px;
         border-radius: 12px;
         color: #475569;
         background: #ffffff;
         border: 1px solid #e5e7eb;
-        font-size: 0.82rem;
+        font-size: 0.8rem;
         font-weight: 800;
     }
 
 .cardLink {
-    margin-top: 22px;
+    margin-top: 10px;
     color: #0f7a50;
     font-size: 0.9rem;
 }
@@ -194,9 +194,9 @@
 
 .compactCard {
     display: grid;
-    grid-template-columns: 66px minmax(0, 1fr);
-    gap: 14px;
-    padding: 14px;
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
     border: 1px solid #e5e7eb;
     border-radius: 18px;
     background: #ffffff;
@@ -210,8 +210,8 @@
     }
 
 .dateBox {
-    width: 66px;
-    height: 66px;
+    width: 58px;
+    height: 58px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -241,7 +241,7 @@
     .compactBody h4 {
         margin: 0;
         color: #111827;
-        font-size: 1rem;
+        font-size: 0.95rem;
         font-weight: 900;
         line-height: 1.25;
     }
@@ -250,7 +250,7 @@
     display: flex;
     flex-direction: column;
     gap: 5px;
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
     .compactInfo span {

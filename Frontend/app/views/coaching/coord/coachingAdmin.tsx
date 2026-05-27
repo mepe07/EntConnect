@@ -192,6 +192,8 @@ export default function CoachingAdmin() {
     const [isAlunoInfoModalAberto, setIsAlunoInfoModalAberto] = useState(false);
     const [alunoDetalhes, setAlunoDetalhes] = useState<AlunoDetalhes | null>(null);
     const [isCarregandoAluno, setIsCarregandoAluno] = useState(false);
+    const [isExportando, setIsExportando] = useState(false); 
+
     const [isCarregandoPorValidar, setIsCarregandoPorValidar] = useState(false);
     const [propostasPendentes, setPropostasPendentes] = useState<PropostaCoachingAdmin[]>([]);
     const [isCarregandoPropostas, setIsCarregandoPropostas] = useState(false);
@@ -237,6 +239,11 @@ export default function CoachingAdmin() {
     useEffect(() => {
         fetchDadosDashboard();
     }, []);
+
+    const tableData = sessoes.map(sessao => ({
+        ...sessao,
+        numAlunos: sessao.alunos.length
+    }));
 
     async function fetchPropostasPendentes() {
         setIsCarregandoPropostas(true);
@@ -447,6 +454,7 @@ export default function CoachingAdmin() {
                     showToast('Aluno removido com sucesso.');
                     const novaListaAlunos = sessaoSelecionada.alunos.filter((aluno) => aluno.idAluno !== idAluno);
                     setSessaoSelecionada({ ...sessaoSelecionada, alunos: novaListaAlunos });
+
                     setSessoesPorValidar((atuais) =>
                         atuais.map((sessao) =>
                             sessao.idCoaching === sessaoSelecionada.idCoaching
@@ -520,6 +528,28 @@ export default function CoachingAdmin() {
         setAlunoDetalhes(null);
     }
 
+    async function handleExportarExcel(e: React.MouseEvent<HTMLButtonElement>) {
+        e.preventDefault();
+        setIsExportando(true);
+        try {
+            showToast('A gerar ficheiro Excel...');
+            const blob = await adminService.exportarSessoesExcel();
+            const url = window.URL.createObjectURL(new Blob([blob]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `sessoes_validadas_${new Date().toISOString().slice(0,7)}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+            showToast('Excel exportado com sucesso!');
+        } catch (error) {
+            console.error(error);
+            showToast('Erro ao exportar ficheiro.');
+        } finally {
+            setIsExportando(false);
+        }
+    }
+
     function changeDate(amount: number) {
         const nextDate = new Date(selectedDate);
 
@@ -570,6 +600,27 @@ export default function CoachingAdmin() {
                     <h1>Gestão de Coaching</h1>
                     <p>Controle todas as sessões e inscrições ativas.</p>
                 </div>
+                
+                <ButtonComponent 
+                    onClick={(e) => handleExportarExcel(e)}
+                    disabled={isExportando}
+                    style={{ 
+                        backgroundColor: '#2c4c3b', // Verde do cabeçalho
+                        color: 'white', 
+                        border: 'none', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px',
+                        padding: '10px 16px',
+                        borderRadius: '6px',
+                        fontWeight: '500',
+                        cursor: isExportando ? 'not-allowed' : 'pointer',
+                        opacity: isExportando ? 0.7 : 1
+                    }}
+                >
+                    <i className="fa-solid fa-file-excel"></i> 
+                    {isExportando ? 'A Exportar...' : 'Exportar Excel'}
+                </ButtonComponent>
             </div>
 
             <section className="kpi-grid">

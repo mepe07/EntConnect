@@ -86,7 +86,6 @@ export class AuthService {
    * @param role Role a ativar.
    * @returns Novo token com a role selecionada.
    */
-
   async trocarRole(utilizador: UtilizadorAutenticado, role: Role) {
     const user = await this.obterUtilizadorPorId(utilizador.sub);
 
@@ -263,7 +262,6 @@ export class AuthService {
    * @param username Dados recebidos para a operacao.
    * @returns Resultado da operacao.
    */
-
   private async obterUtilizadorPorUsername(username: string) {
     return this.prisma.utilizador.findUnique({
       where: { Utilizador: username },
@@ -299,6 +297,7 @@ export class AuthService {
       roles,
       idPessoa: user.ID_Pessoa,
       Acoes_Rapidas: user.Acoes_Rapidas,
+      Quadros_Visualizacao: user.Quadros_Visualizacao,
     };
   }
 

@@ -70,7 +70,7 @@ export class SalasService {
   findOne(id: number) {
     return `This action returns a #${id} sala`;
   }
-
+                                                                  
   /**
    * Atualiza um registo existente.
    * @param id Dados recebidos para a operacao.

@@ -968,6 +968,34 @@ export class UtilizadorService {
     return atualizado;
   }
 
+  async updatePreferenciasQuadros(id: number, quadrosIds: number[]) {
+    this.logger.log(
+      `A atualizar preferencias de quadros idUtilizador=${id} totalQuadros=${quadrosIds.length}`,
+    );
+
+    const utilizador = await this.prisma.utilizador.findUnique({
+      where: { ID_Utilizador: id },
+    });
+
+    if (!utilizador) {
+      this.logger.warn(
+        `Atualizacao de preferencias de quadros rejeitada: utilizador inexistente idUtilizador=${id}`,
+      );
+      throw new NotFoundException(`Utilizador com ID ${id} não encontrado.`);
+    }
+
+    const preferenciasJson = JSON.stringify(quadrosIds);
+
+    const atualizado = await this.prisma.utilizador.update({
+      where: { ID_Utilizador: id },
+      data: {
+        Quadros_Visualizacao: preferenciasJson,
+      },
+    });
+    this.logger.log(`Preferencias de quadros atualizadas idUtilizador=${id}`);
+    return atualizado;
+  }
+
   /**
    * Executa a operacao delete user.
    * @param idUtilizador Dados recebidos para a operacao.

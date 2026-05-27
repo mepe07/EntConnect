@@ -43,6 +43,13 @@
         flex-shrink: 0;
     }
 
+    .acoes-rapidas-topo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
     .botoes-acoes-topo {
         display: flex;
         align-items: center;
@@ -391,5 +398,26 @@ body.entconnect-dark {
                 color: #e2e8f0;
             }
         }
+
+
+
     }
+    
+    .resumo-eventos-compacto {
+        .card-evento { // Ajusta o seletor conforme a classe real do teu componente
+            padding: 10px !important;
+            margin-bottom: 8px !important;
+        }
+        
+        h2 { // Título "Próximos Eventos"
+            font-size: 1.2rem !important;
+            margin-bottom: 10px !important;
+        }
+
+        img { // Se a imagem for muito alta
+            max-height: 150px !important;
+        }
+    }
+
+
 }

@@ -8,6 +8,7 @@ import { CreateCoachingDto } from './dto/create-coaching.dto';
 import { UpdateCoachingDto } from './dto/update-coaching.dto';
 import { CreatePedidoCoachingDto } from './dto/create-pedido-coaching.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import * as ExcelJS from 'exceljs';
 import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 
 
@@ -943,4 +944,48 @@ export class CoachingService {
     );
     return sessaoAtualizada;
   }
+
+  async gerarExcelSessoesValidadas(): Promise<Buffer> {
+    // 1. Vai buscar os dados usando os nomes reais do Prisma
+    const sessoes = await this.prisma.coaching.findMany({
+      // Podes descomentar e ajustar o 'where' para filtrares apenas as validadas
+      // where: { ID_Estado_Coaching: 1 }, 
+      include: {
+        Professor: { include: { Pessoa: true } },
+        Coaching_Aluno: true // Incluímos isto para saber o número de alunos
+      }
+    });
+
+    // 2. Cria o ficheiro Excel em memória
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Sessões');
+
+    // 3. Define as colunas do Excel
+    worksheet.columns = [
+      { header: 'ID', key: 'id', width: 10 },
+      { header: 'Professor', key: 'professor', width: 30 },
+      { header: 'Data de Início', key: 'data', width: 20 },
+      { header: 'Duração (Minutos)', key: 'duracao', width: 20 },
+      { header: 'Nº de Alunos', key: 'alunos', width: 15 },
+    ];
+
+    // Põe o cabeçalho a negrito
+    worksheet.getRow(1).font = { bold: true };
+
+    // 4. Preenche as linhas com um loop
+    sessoes.forEach((sessao) => {
+      worksheet.addRow({
+        id: sessao.ID_Coaching,
+        professor: sessao.Professor?.Pessoa?.Nome || 'Sem Professor',
+        data: sessao.Inicio_Coaching ? sessao.Inicio_Coaching.toLocaleDateString('pt-PT') : 'Data não definida',
+        duracao: sessao.Duracao,
+        alunos: sessao.Coaching_Aluno?.length || 0, // Conta quantos alunos estão neste array
+      });
+    });
+
+    // 5. Converte para um formato binário que possa ser enviado pela internet
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
+  }
+
 }
