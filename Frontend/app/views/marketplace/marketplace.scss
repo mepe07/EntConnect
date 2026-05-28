@@ -276,9 +276,21 @@
 
         .detalhe-grid {
             display: grid;
-            grid-template-columns: minmax(360px, 0.85fr) minmax(560px, 1.35fr);
+            grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
             gap: 18px;
+        }
+
+        .detalhe-grid-disponibilidade {
+            grid-template-columns: minmax(300px, 0.72fr) minmax(0, 1.5fr);
             align-items: start;
+        }
+
+        .detalhe-grid-disponibilidade .detalhe-imagem {
+            height: 300px;
+        }
+
+        .detalhe-grid-disponibilidade .detalhe-resumo {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
         .detalhe-painel,
@@ -429,12 +441,7 @@
         .disponibilidade-lateral {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 14px;
-        }
-
-        .disponibilidade-lateral > .detalhe-emprestimo-grid,
-        .disponibilidade-lateral > .painel-disponibilidade:only-child {
-            grid-column: 1 / -1;
+            gap: 16px;
         }
 
         .disponibilidade-calendario,
@@ -464,7 +471,6 @@
             gap: 16px;
             align-items: flex-start;
             margin-bottom: 18px;
-            flex-wrap: wrap;
 
             h3 {
                 margin: 0 0 8px;
@@ -504,22 +510,21 @@
 
         .grelha-calendario {
             display: grid;
-            grid-template-columns: repeat(7, minmax(74px, 1fr));
-            gap: 8px;
+            grid-template-columns: repeat(7, minmax(80px, 1fr));
+            gap: 10px;
         }
 
         .cabecalho-dia {
             text-transform: uppercase;
-            font-size: 11px;
-            font-weight: 800;
+            font-size: 12px;
+            font-weight: 700;
             color: #64748b;
             padding: 0 4px 4px;
-            text-align: center;
         }
 
         .dia-calendario {
-            min-height: 88px;
-            border-radius: 16px;
+            min-height: 96px;
+            border-radius: 18px;
             border: 1px solid #dbe3ec;
             background: #f8fafc;
             padding: 10px;
@@ -527,7 +532,6 @@
             flex-direction: column;
             gap: 8px;
             align-items: flex-start;
-            justify-content: space-between;
             overflow: hidden;
             transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 
@@ -546,18 +550,19 @@
         }
 
         .dia-numero {
-            font-size: 1rem;
-            font-weight: 900;
-            line-height: 1;
+            font-size: 1.15rem;
+            font-weight: 800;
         }
 
         .dia-estado-texto {
             margin-top: auto;
-            max-width: 100%;
-            font-size: 0.72rem;
-            line-height: 1.15;
+            width: 100%;
+            font-size: 0.78rem;
             font-weight: 800;
-            white-space: normal;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .dia-marcador-publico {
@@ -610,9 +615,8 @@
 
         .legenda-calendario {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
-            gap: 10px;
-            margin-top: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
         }
 
         .legenda-item {
@@ -917,18 +921,8 @@
                 justify-content: flex-start;
             }
 
-            .disponibilidade-lateral {
-                grid-template-columns: 1fr;
-            }
-
             .grelha-calendario {
-                grid-template-columns: repeat(7, minmax(62px, 1fr));
-                gap: 6px;
-            }
-
-            .dia-calendario {
-                min-height: 78px;
-                padding: 8px;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
     }
@@ -943,11 +937,7 @@
         }
 
         .detalhe-anuncio {
-            .grelha-calendario {
-                grid-template-columns: repeat(7, minmax(54px, 1fr));
-                gap: 5px;
-            }
-
+            .grelha-calendario,
             .legenda-calendario {
                 grid-template-columns: 1fr;
             }
@@ -1139,6 +1129,603 @@ body.entconnect-dark {
                 border-color: #475569 !important;
                 color: #94a3b8 !important;
             }
+        }
+    }
+}
+
+
+/* Fase 8 - Os meus alugueres */
+.marketplace-page {
+    .meus-alugueres {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .meus-alugueres-topo {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+
+        h3 {
+            margin: 0 0 6px;
+        }
+
+        p {
+            margin: 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+    }
+
+    .meus-alugueres-vistas {
+        display: flex;
+        gap: 8px;
+        padding: 4px;
+        border-radius: 14px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+
+        button {
+            border: 0;
+            border-radius: 10px;
+            padding: 9px 12px;
+            background: transparent;
+            color: #475569;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .ativo {
+            background: #0f172a;
+            color: #fff;
+        }
+    }
+
+    .meus-alugueres-filtros {
+        display: grid;
+        grid-template-columns: minmax(240px, 1fr) minmax(180px, 240px) minmax(180px, 240px);
+        gap: 10px;
+
+        input,
+        select {
+            border: 1px solid #d9e2ec;
+            border-radius: 12px;
+            padding: 12px 14px;
+            background: #fff;
+            color: #0f172a;
+        }
+    }
+
+    .meus-alugueres-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 380px;
+        gap: 16px;
+        align-items: start;
+    }
+
+    .meus-alugueres-calendario,
+    .meus-alugueres-lista,
+    .meus-alugueres-detalhe {
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        background: #fff;
+        padding: 16px;
+    }
+
+    .meus-alugueres-calendario-cabecalho {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        margin-bottom: 16px;
+
+        h4 {
+            margin: 0 0 6px;
+        }
+
+        p {
+            margin: 0;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+    }
+
+    .meus-alugueres-navegacao {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        button,
+        span {
+            border: 1px solid #d9e2ec;
+            background: #f8fafc;
+            border-radius: 12px;
+            color: #334155;
+            min-height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 12px;
+            font-weight: 700;
+        }
+
+        button {
+            cursor: pointer;
+            min-width: 38px;
+        }
+
+        span {
+            min-width: 150px;
+            text-transform: capitalize;
+        }
+    }
+
+    .meus-alugueres-dias-semana,
+    .meus-alugueres-grelha {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .meus-alugueres-dias-semana {
+        margin-bottom: 8px;
+
+        span {
+            text-align: center;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+    }
+
+    .meus-alugueres-dia {
+        min-height: 118px;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        background: #f8fafc;
+        padding: 8px;
+        overflow: hidden;
+
+        &.fora-mes {
+            opacity: 0.42;
+        }
+
+        > strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+    }
+
+    .meus-alugueres-dia-itens {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .chip-meu-aluguer,
+    .chip-mais-alugueres {
+        width: 100%;
+        border-radius: 8px;
+        padding: 5px 7px;
+        font-size: 11px;
+        line-height: 1.2;
+        text-align: left;
+        font-weight: 800;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .chip-meu-aluguer {
+        border: 1px solid transparent;
+        cursor: pointer;
+
+        &.selecionado {
+            outline: 2px solid rgba(37, 99, 235, 0.38);
+            outline-offset: 1px;
+        }
+    }
+
+    .chip-mais-alugueres {
+        display: block;
+        border: 1px dashed #cbd5e1;
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    .meus-alugueres-legenda {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 14px;
+    }
+
+    .legenda-meu-aluguer,
+    .badge-meu-aluguer {
+        border: 1px solid transparent;
+    }
+
+    .legenda-meu-aluguer {
+        border-radius: 14px;
+        padding: 12px;
+        font-size: 12px;
+    }
+
+    .badge-meu-aluguer {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 4px 9px;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .estado-meu-aluguer-pendente {
+        background: #e0f2fe;
+        border-color: #7dd3fc;
+        color: #075985;
+    }
+
+    .estado-meu-aluguer-reservado {
+        background: #fef3c7;
+        border-color: #fbbf24;
+        color: #92400e;
+    }
+
+    .estado-meu-aluguer-ativo {
+        background: #dcfce7;
+        border-color: #86efac;
+        color: #166534;
+    }
+
+    .estado-meu-aluguer-devolucao_pendente {
+        background: #ffedd5;
+        border-color: #fdba74;
+        color: #9a3412;
+    }
+
+    .estado-meu-aluguer-concluido {
+        background: #e2e8f0;
+        border-color: #cbd5e1;
+        color: #334155;
+    }
+
+    .estado-meu-aluguer-cancelado,
+    .estado-meu-aluguer-rejeitado {
+        background: #ffe4e6;
+        border-color: #fda4af;
+        color: #9f1239;
+    }
+
+    .meus-alugueres-lista {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .meu-aluguer-linha {
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        border-radius: 16px;
+        padding: 14px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        text-align: left;
+        cursor: pointer;
+
+        &.ativo,
+        &:hover {
+            border-color: #2563eb;
+            background: rgba(37, 99, 235, 0.06);
+        }
+
+        strong {
+            display: block;
+            margin-top: 8px;
+        }
+
+        p {
+            margin: 4px 0 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+    }
+
+    .meu-aluguer-outra-pessoa {
+        min-width: 160px;
+        text-align: right;
+
+        span {
+            display: block;
+            color: #64748b;
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+
+        strong {
+            margin-top: 4px;
+        }
+    }
+
+    .meus-alugueres-detalhe {
+        position: sticky;
+        top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .detalhe-meu-aluguer-cabecalho {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+
+        span:first-child {
+            color: #64748b;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        h4 {
+            margin: 4px 0 0;
+            font-size: 22px;
+        }
+    }
+
+    .detalhe-meu-aluguer-linhas {
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        overflow: hidden;
+
+        div {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 11px 12px;
+            border-bottom: 1px solid #e2e8f0;
+
+            &:last-child {
+                border-bottom: 0;
+            }
+        }
+
+        span {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        strong {
+            text-align: right;
+            font-size: 13px;
+        }
+    }
+
+    .tracking-meu-aluguer {
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 14px;
+
+        h4 {
+            margin: 0 0 10px;
+        }
+    }
+
+    .tracking-meu-item {
+        display: flex;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid #e2e8f0;
+
+        &:last-child {
+            border-bottom: 0;
+        }
+
+        > span {
+            width: 11px;
+            height: 11px;
+            border-radius: 999px;
+            margin-top: 4px;
+            background: #cbd5e1;
+            flex: 0 0 auto;
+        }
+
+        &.done > span {
+            background: #10b981;
+        }
+
+        &.active > span {
+            background: #2563eb;
+            box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.14);
+        }
+
+        strong {
+            display: block;
+            font-size: 14px;
+        }
+
+        p {
+            margin: 3px 0 0;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+    }
+
+    .acoes-meu-aluguer {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        button {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 1180px) {
+        .meus-alugueres-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .meus-alugueres-detalhe {
+            position: static;
+        }
+    }
+
+    @media (max-width: 860px) {
+        .meus-alugueres-filtros {
+            grid-template-columns: 1fr;
+        }
+
+        .meus-alugueres-dias-semana,
+        .meus-alugueres-grelha {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .meus-alugueres-legenda {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .meu-aluguer-linha {
+            flex-direction: column;
+        }
+
+        .meu-aluguer-outra-pessoa {
+            text-align: left;
+        }
+    }
+}
+
+body.entconnect-dark {
+    .marketplace-page {
+        .meus-alugueres-vistas,
+        .meus-alugueres-calendario,
+        .meus-alugueres-lista,
+        .meus-alugueres-detalhe,
+        .meus-alugueres-dia,
+        .meu-aluguer-linha,
+        .detalhe-meu-aluguer-linhas,
+        .tracking-meu-aluguer {
+            background: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+
+        .meus-alugueres-vistas button,
+        .meus-alugueres-navegacao button,
+        .meus-alugueres-navegacao span,
+        .chip-mais-alugueres {
+            background: #1f2937 !important;
+            border-color: #475569 !important;
+            color: #e2e8f0 !important;
+        }
+
+        .meus-alugueres-vistas .ativo {
+            background: #2563eb !important;
+            color: #ffffff !important;
+        }
+
+        .meus-alugueres-filtros input,
+        .meus-alugueres-filtros select {
+            background: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+            color-scheme: dark;
+        }
+
+        .meu-aluguer-linha.ativo,
+        .meu-aluguer-linha:hover {
+            background: rgba(37, 99, 235, 0.16) !important;
+            border-color: #2563eb !important;
+        }
+
+        .detalhe-meu-aluguer-linhas div,
+        .tracking-meu-item {
+            border-color: #334155 !important;
+        }
+    }
+}
+
+/* Ajustes finais - contacto de venda e disponibilidade do dono */
+.marketplace-page {
+    .modal-contacto-anunciante {
+        .contacto-anunciante-info {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+
+            div {
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                background: #f8fafc;
+                padding: 14px;
+                display: grid;
+                gap: 6px;
+            }
+
+            span {
+                color: #64748b;
+                font-size: 12px;
+                font-weight: 800;
+                text-transform: uppercase;
+            }
+
+            strong {
+                color: #0f172a;
+                font-size: 16px;
+                word-break: break-word;
+            }
+        }
+    }
+
+    .detalhe-anuncio {
+        .disponibilidade-lateral.disponibilidade-lateral-dono {
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) minmax(0, 1.15fr);
+            align-items: stretch;
+        }
+
+        .disponibilidade-lateral.disponibilidade-lateral-dono > .painel-disponibilidade {
+            min-width: 0;
+            height: 100%;
+        }
+    }
+
+    @media (max-width: 1250px) {
+        .detalhe-anuncio {
+            .disponibilidade-lateral.disponibilidade-lateral-dono {
+                grid-template-columns: 1fr;
+            }
+        }
+    }
+
+    @media (max-width: 640px) {
+        .modal-contacto-anunciante {
+            .contacto-anunciante-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    }
+}
+
+body.entconnect-dark {
+    .marketplace-page {
+        .modal-contacto-anunciante .contacto-anunciante-info div {
+            background: #1f2937 !important;
+            border-color: #334155 !important;
+        }
+
+        .modal-contacto-anunciante .contacto-anunciante-info strong {
+            color: #f8fafc !important;
         }
     }
 }

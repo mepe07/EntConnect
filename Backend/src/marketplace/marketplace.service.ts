@@ -1795,10 +1795,10 @@ export class MarketplaceService {
           in: ESTADOS_ALUGUER_BLOQUEANTES,
         },
         Data_Entrega: {
-          lte: dataFim,
+          lt: dataFim,
         },
         Data_Recolha_Prevista: {
-          gte: dataInicio,
+          gt: dataInicio,
         },
       },
     });

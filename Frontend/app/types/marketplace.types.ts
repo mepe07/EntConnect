@@ -31,7 +31,11 @@ export interface PessoaResumo {
     ID_Pessoa: number;
     Nome: string;
     Contato?: string;
+    Contacto?: string;
+    Telefone?: string;
+    Telemovel?: string;
     Mail?: string;
+    Email?: string;
 }
 
 export interface UtilizadorResumo {
@@ -188,4 +192,41 @@ export interface RegistoModeracaoMarketplace {
 
     Utilizador?: UtilizadorResumo;
     Utilizador_Moderador?: UtilizadorResumo;
+}
+
+
+export type TipoRegistoMeuAluguer = 'pedido' | 'aluguer';
+export type PapelMeuAluguer = 'interessado' | 'dono';
+export type EstadoMeuAluguer =
+    | 'pendente'
+    | 'reservado'
+    | 'ativo'
+    | 'devolucao_pendente'
+    | 'concluido'
+    | 'cancelado'
+    | 'rejeitado';
+
+export interface MeuAluguer {
+    id: number | string;
+    tipoRegisto: TipoRegistoMeuAluguer;
+    idAluguer?: number | null;
+    idPedido?: number | null;
+    idAnuncio: number;
+    artigo: string;
+    categoria?: string | null;
+    foto?: string | null;
+    estado: EstadoMeuAluguer;
+    papel: PapelMeuAluguer;
+    inicio: string;
+    fim: string;
+    outraPessoa?: string | null;
+    contactoOutraPessoa?: string | null;
+    origem?: string | null;
+    aluguerContinuo?: boolean;
+    podeAceitar?: boolean;
+    podeRejeitar?: boolean;
+    podeMarcarComoDevolvido?: boolean;
+    podeConfirmarDevolucao?: boolean;
+    podeCancelar?: boolean;
+    podeVerAnuncio?: boolean;
 }

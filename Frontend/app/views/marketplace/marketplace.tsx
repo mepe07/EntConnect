@@ -8,17 +8,19 @@ import {
     type CalendarioAnuncioItem,
     type CriarAnuncioPayload,
     type CriarPedidoAluguerPayload,
+    type MeuAluguer,
+    type RegistoModeracaoMarketplace,
     EstadoAnuncio,
     OrigemRegisto,
     TipoAnuncio,
-    TipoInteresse,
 } from '../../types/marketplace.types';
 import { ModalCriarAnuncio } from './partials/modalCriarAnuncio';
 import { AnuncioDisponibilidade } from './partials/anuncioDisponibilidade';
+import { MeusAlugueres } from './partials/meusAlugueres';
 import './marketplace.scss';
 
 import { showToast } from '~/components/toast/toast';
-type Vista = 'montra' | 'detalhe' | 'meus' | 'moderacao';
+type Vista = 'montra' | 'detalhe' | 'meus' | 'alugueres' | 'moderacao';
 type VistaLista = Exclude<Vista, 'detalhe'>;
 type AcaoModeracao = 'remover' | 'reativar' | 'arquivar';
 type TabDetalhe = 'detalhe' | 'disponibilidade' | 'moderacao';
@@ -64,13 +66,29 @@ function getEstadoPeca(anuncio: Anuncio) {
     return anuncio.Stock_Armazem?.[0]?.Estado?.Descricao || '--';
 }
 
+function getPessoaCriador(anuncio: Anuncio) {
+    const relacaoCriador = anuncio.Utilizador_Criador ?? anuncio.Utilizador_Artigo_ID_Utilizador_CriadorToUtilizador;
+    return relacaoCriador?.Pessoa;
+}
+
 function getNomeCriador(anuncio: Anuncio) {
     if (anuncio.Origem_Registo === OrigemRegisto.INVENTARIO_ESCOLA) {
         return 'Escola 50+10';
     }
 
-    const relacaoCriador = anuncio.Utilizador_Criador ?? anuncio.Utilizador_Artigo_ID_Utilizador_CriadorToUtilizador;
-    return relacaoCriador?.Pessoa?.Nome || 'Utilizador';
+    return getPessoaCriador(anuncio)?.Nome || 'Utilizador';
+}
+
+function getTelefoneCriador(anuncio: Anuncio) {
+    const pessoa = getPessoaCriador(anuncio);
+
+    return (
+        pessoa?.Contacto ??
+        pessoa?.Contato ??
+        pessoa?.Telefone ??
+        pessoa?.Telemovel ??
+        '--'
+    );
 }
 
 function formatarData(valor?: string) {
@@ -103,7 +121,14 @@ export function Marketplace() {
     const [calendarioLoading, setCalendarioLoading] = useState(false);
     const [calendarioErro, setCalendarioErro] = useState('');
 
+    const [meusAlugueres, setMeusAlugueres] = useState<MeuAluguer[]>([]);
+    const [meusAlugueresLoading, setMeusAlugueresLoading] = useState(false);
+    const [meusAlugueresErro, setMeusAlugueresErro] = useState('');
+
+    const [registosModeracao, setRegistosModeracao] = useState<RegistoModeracaoMarketplace[]>([]);
+
     const [mostrarModalCriar, setMostrarModalCriar] = useState(false);
+    const [mostrarModalContacto, setMostrarModalContacto] = useState(false);
     const [mostrarModalModeracao, setMostrarModalModeracao] = useState(false);
     const [motivoModeracao, setMotivoModeracao] = useState('');
     const [acaoModeracaoPendente, setAcaoModeracaoPendente] = useState<AcaoModeracao>('remover');
@@ -147,12 +172,31 @@ export function Marketplace() {
         }
     };
 
+    const carregarMeusAlugueres = async () => {
+        setMeusAlugueresLoading(true);
+        setMeusAlugueresErro('');
+
+        try {
+            const dados = await marketplaceService.listarMeusAlugueres();
+            setMeusAlugueres(dados);
+        } catch (error: any) {
+            setMeusAlugueresErro(error.message || 'Erro ao carregar os teus alugueres.');
+        } finally {
+            setMeusAlugueresLoading(false);
+        }
+    };
+
     const carregarModeracao = async () => {
         setLoading(true);
         setErro('');
         try {
-            const dados = await marketplaceService.listarAnunciosModeracao();
+            const [dados, registos] = await Promise.all([
+                marketplaceService.listarAnunciosModeracao(),
+                marketplaceService.listarRegistoModeracao(),
+            ]);
+
             setAnuncios(dados);
+            setRegistosModeracao(registos);
             selecionarPrimeiroAnuncio(dados);
         } catch (error: any) {
             setErro(error.message || 'Erro ao carregar a fila de moderação.');
@@ -174,6 +218,11 @@ export function Marketplace() {
 
         if (vista === 'meus') {
             carregarMeusAnuncios();
+            return;
+        }
+
+        if (vista === 'alugueres') {
+            carregarMeusAlugueres();
         }
     }, [vista]);
 
@@ -202,6 +251,20 @@ export function Marketplace() {
 
     const meusAnuncios = anunciosFiltrados;
     const anunciosModeracao = anunciosFiltrados;
+
+    const ultimoRegistoModeracaoPorArtigo = useMemo(() => {
+        const mapa = new Map<number, RegistoModeracaoMarketplace>();
+
+        [...registosModeracao]
+            .sort((a, b) => new Date(b.Data_Registo).getTime() - new Date(a.Data_Registo).getTime())
+            .forEach((registo) => {
+                if (!mapa.has(registo.ID_Artigo)) {
+                    mapa.set(registo.ID_Artigo, registo);
+                }
+            });
+
+        return mapa;
+    }, [registosModeracao]);
 
     const isDono = (anuncio?: Anuncio | null) => {
         if (!anuncio || !utilizador) return false;
@@ -253,6 +316,11 @@ export function Marketplace() {
             return;
         }
 
+        if (vistaAnterior === 'alugueres') {
+            await carregarMeusAlugueres();
+            return;
+        }
+
         await carregarMontra();
     };
 
@@ -271,21 +339,9 @@ export function Marketplace() {
         }
     };
 
-    const registarInteresse = async () => {
+    const abrirContactoAnunciante = () => {
         if (!anuncioSelecionado) return;
-        const mensagem = window.prompt('Queres deixar alguma mensagem ao anunciante?');
-        if (mensagem === null) return;
-
-        try {
-            await marketplaceService.registarInteresse(anuncioSelecionado.ID_Artigo, {
-                tipo: TipoInteresse.CONTACTO,
-                mensagem,
-            });
-            setMensagemFluxo(`Registaste interesse em '${anuncioSelecionado.Nome}'.`);
-            showToast('Interesse registado com sucesso.');
-        } catch (error: any) {
-            showToast(error.message || 'Não foi possível registar o interesse.');
-        }
+        setMostrarModalContacto(true);
     };
 
     const criarPedidoAluguer = async (payload: CriarPedidoAluguerPayload) => {
@@ -316,6 +372,59 @@ export function Marketplace() {
         }
     };
 
+    const aceitarPedidoAluguer = async (idPedido: number) => {
+        try {
+            await marketplaceService.aceitarPedidoAluguer(idPedido);
+            showToast('Pedido de aluguer aceite com sucesso.');
+            setMensagemFluxo('Aceitaste um pedido de aluguer.');
+            await carregarMeusAlugueres();
+        } catch (error: any) {
+            showToast(error.message || 'Não foi possível aceitar o pedido de aluguer.');
+        }
+    };
+
+    const rejeitarPedidoAluguer = async (idPedido: number) => {
+        try {
+            await marketplaceService.rejeitarPedidoAluguer(idPedido);
+            showToast('Pedido de aluguer rejeitado.');
+            setMensagemFluxo('Rejeitaste um pedido de aluguer.');
+            await carregarMeusAlugueres();
+        } catch (error: any) {
+            showToast(error.message || 'Não foi possível rejeitar o pedido de aluguer.');
+        }
+    };
+
+    const marcarAluguerComoDevolvido = async (idAluguer: number) => {
+        try {
+            await marketplaceService.marcarAluguerComoDevolvido(idAluguer);
+            showToast('Aluguer marcado como devolvido.');
+            setMensagemFluxo('Marcaste um aluguer como devolvido.');
+            await carregarMeusAlugueres();
+        } catch (error: any) {
+            showToast(error.message || 'Não foi possível marcar o aluguer como devolvido.');
+        }
+    };
+
+    const confirmarDevolucaoMeuAluguer = async (idAluguer: number) => {
+        try {
+            await marketplaceService.confirmarDevolucaoAluguer(idAluguer);
+            showToast('Devolução confirmada com sucesso.');
+            setMensagemFluxo('Confirmaste a devolução de um aluguer.');
+            await carregarMeusAlugueres();
+        } catch (error: any) {
+            showToast(error.message || 'Não foi possível confirmar a devolução.');
+        }
+    };
+
+    const abrirAnuncioPorId = async (idAnuncio: number) => {
+        try {
+            const anuncio = await marketplaceService.obterAnuncio(idAnuncio);
+            abrirDetalhe(anuncio);
+        } catch (error: any) {
+            showToast(error.message || 'Não foi possível abrir o anúncio.');
+        }
+    };
+
     const alterarEstado = async (estado: EstadoAnuncio) => {
         if (!anuncioSelecionado) return;
         try {
@@ -332,13 +441,7 @@ export function Marketplace() {
         setAnuncioSelecionado(anuncio);
         setAcaoModeracaoPendente(acao);
         setMotivoModeracao('');
-
-        if (acao === 'remover') {
-            setMostrarModalModeracao(true);
-            return;
-        }
-
-        executarAcaoModeracao(acao, anuncio);
+        setMostrarModalModeracao(true);
     };
 
     const executarAcaoModeracao = async (acao: AcaoModeracao, anuncioAlvo?: Anuncio) => {
@@ -372,23 +475,47 @@ export function Marketplace() {
         anuncioSelecionado.Estado_Anuncio === EstadoAnuncio.ATIVO,
     );
 
-    const podeRemoverPorModeracao = Boolean(
-        isCoordenadora &&
-        anuncioSelecionado &&
-        anuncioSelecionado.Estado_Anuncio !== EstadoAnuncio.REMOVIDO &&
-        anuncioSelecionado.Estado_Anuncio !== EstadoAnuncio.ARQUIVADO,
-    );
 
-    const podeReativarPorModeracao = Boolean(
-        isCoordenadora &&
-        anuncioSelecionado?.Estado_Anuncio === EstadoAnuncio.REMOVIDO,
-    );
+    const obterUltimoRegistoModeracao = (anuncio?: Anuncio | null) => {
+        if (!anuncio) return null;
+        return ultimoRegistoModeracaoPorArtigo.get(anuncio.ID_Artigo) ?? null;
+    };
 
-    const podeArquivarPorModeracao = Boolean(
-        isCoordenadora &&
-        anuncioSelecionado &&
-        anuncioSelecionado.Estado_Anuncio !== EstadoAnuncio.ARQUIVADO,
-    );
+    const obterAcaoPrincipalModeracao = (anuncio?: Anuncio | null): AcaoModeracao | null => {
+        if (!isCoordenadora || !anuncio) return null;
+
+        if (
+            anuncio.Estado_Anuncio === EstadoAnuncio.REMOVIDO ||
+            anuncio.Estado_Anuncio === EstadoAnuncio.ARQUIVADO
+        ) {
+            return 'reativar';
+        }
+
+        return 'remover';
+    };
+
+    const obterLabelAcaoModeracao = (acao: AcaoModeracao) => {
+        const labels: Record<AcaoModeracao, string> = {
+            remover: 'Remover por moderação',
+            reativar: 'Reativar anúncio',
+            arquivar: 'Arquivar por moderação',
+        };
+
+        return labels[acao];
+    };
+
+    const obterDescricaoAcaoModeracao = (acao: AcaoModeracao) => {
+        const descricoes: Record<AcaoModeracao, string> = {
+            remover: 'Remove o anúncio da montra pública e regista a decisão no histórico.',
+            reativar: 'Volta a colocar o anúncio visível, mantendo o histórico anterior apenas como consulta.',
+            arquivar: 'Arquiva o anúncio por decisão da coordenação.',
+        };
+
+        return descricoes[acao];
+    };
+
+    const acaoPrincipalAnuncioSelecionado = obterAcaoPrincipalModeracao(anuncioSelecionado);
+    const ultimoRegistoAnuncioSelecionado = obterUltimoRegistoModeracao(anuncioSelecionado);
 
     const tabsDetalheDisponiveis: TabDetalhe[] = [
         'detalhe',
@@ -427,31 +554,34 @@ export function Marketplace() {
                         <div className="tabs">
                             <ButtonComponent className={vista === 'montra' ? 'ativo' : ''} onClick={() => abrirVista('montra')}>Montra</ButtonComponent>
                             <ButtonComponent className={vista === 'meus' ? 'ativo' : ''} onClick={() => abrirVista('meus')}>Meus anúncios</ButtonComponent>
-                            {isCoordenadora ? <ButtonComponent className={vista === 'moderacao' ? 'ativo' : ''} onClick={() => abrirVista('moderacao')}>Registo</ButtonComponent> : null}
+                            <ButtonComponent className={vista === 'alugueres' ? 'ativo' : ''} onClick={() => abrirVista('alugueres')}>Meus alugueres</ButtonComponent>
+                            {isCoordenadora ? <ButtonComponent className={vista === 'moderacao' ? 'ativo' : ''} onClick={() => abrirVista('moderacao')}>Moderação</ButtonComponent> : null}
                         </div>
                     </div>
 
-                    <div className="marketplace-filtros">
-                        <input value={pesquisa} onChange={(e) => setPesquisa(e.target.value)} placeholder="Pesquisar anúncio, categoria ou autor" />
-                        <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
-                            <option value="todos">Todos os estados</option>
-                            <option value={EstadoAnuncio.ATIVO}>Ativo</option>
-                            <option value={EstadoAnuncio.RESERVADO}>Reservado</option>
-                            <option value={EstadoAnuncio.CONCLUIDO}>Concluído</option>
-                            <option value={EstadoAnuncio.ARQUIVADO}>Arquivado</option>
-                            <option value={EstadoAnuncio.REMOVIDO}>Removido</option>
-                        </select>
-                        <select value={filtroOrigem} onChange={(e) => setFiltroOrigem(e.target.value)}>
-                            <option value="todas">Todas as origens</option>
-                            <option value={OrigemRegisto.UTILIZADOR}>Utilizador</option>
-                            <option value={OrigemRegisto.INVENTARIO_ESCOLA}>Inventário da escola</option>
-                        </select>
-                        <select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
-                            <option value="todos">Todos os tipos</option>
-                            <option value={TipoAnuncio.VENDA}>Venda</option>
-                            <option value={TipoAnuncio.ALUGUER}>Aluguer</option>
-                        </select>
-                    </div>
+                    {vista !== 'alugueres' ? (
+                        <div className="marketplace-filtros">
+                            <input value={pesquisa} onChange={(e) => setPesquisa(e.target.value)} placeholder="Pesquisar anúncio, categoria ou autor" />
+                            <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
+                                <option value="todos">Todos os estados</option>
+                                <option value={EstadoAnuncio.ATIVO}>Ativo</option>
+                                <option value={EstadoAnuncio.RESERVADO}>Reservado</option>
+                                <option value={EstadoAnuncio.CONCLUIDO}>Concluído</option>
+                                <option value={EstadoAnuncio.ARQUIVADO}>Arquivado</option>
+                                <option value={EstadoAnuncio.REMOVIDO}>Removido</option>
+                            </select>
+                            <select value={filtroOrigem} onChange={(e) => setFiltroOrigem(e.target.value)}>
+                                <option value="todas">Todas as origens</option>
+                                <option value={OrigemRegisto.UTILIZADOR}>Utilizador</option>
+                                <option value={OrigemRegisto.INVENTARIO_ESCOLA}>Inventário da escola</option>
+                            </select>
+                            <select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
+                                <option value="todos">Todos os tipos</option>
+                                <option value={TipoAnuncio.VENDA}>Venda</option>
+                                <option value={TipoAnuncio.ALUGUER}>Aluguer</option>
+                            </select>
+                        </div>
+                    ) : null}
 
                     {erro ? <div className="mensagem-erro">{erro}</div> : null}
                     {loading ? <div className="estado-vazio">A carregar...</div> : null}
@@ -484,7 +614,7 @@ export function Marketplace() {
                     {!loading && vista === 'detalhe' && anuncioSelecionado && (
                         <div className="detalhe-anuncio">
                             <ButtonComponent className="btn-link" onClick={() => setVista(vistaAnterior)}>Voltar</ButtonComponent>
-                            <div className="detalhe-grid">
+                            <div className={`detalhe-grid ${tabDetalhe === 'disponibilidade' ? 'detalhe-grid-disponibilidade' : ''}`}>
                                 <div className="detalhe-principal">
                                     <img className="detalhe-imagem" src={anuncioSelecionado.Foto || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1200&auto=format&fit=crop'} alt={anuncioSelecionado.Nome} />
                                     <div className="detalhe-etiquetas">
@@ -542,7 +672,7 @@ export function Marketplace() {
                                                 <div className="bloco-lateral">
                                                     <h3>Ações</h3>
                                                     <div className="acoes-lateral">
-                                                        {podeRegistarInteresse ? <ButtonComponent className="btn-principal" onClick={registarInteresse}>Tenho interesse</ButtonComponent> : null}
+                                                        {podeRegistarInteresse ? <ButtonComponent className="btn-principal" onClick={abrirContactoAnunciante}>Tenho interesse</ButtonComponent> : null}
 
                                                         {isDono(anuncioSelecionado) && anuncioSelecionado.Estado_Anuncio === EstadoAnuncio.ATIVO ? (
                                                             <ButtonComponent className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.RESERVADO)}>Marcar como reservado</ButtonComponent>
@@ -576,21 +706,37 @@ export function Marketplace() {
                                         {tabDetalhe === 'moderacao' && isCoordenadora ? (
                                             <div className="detalhe-tab detalhe-moderacao-tab">
                                                 <div className="bloco-lateral">
-                                                    <h3>Ações de moderação</h3>
+                                                    <h3>Ação principal</h3>
                                                     <p>
-                                                        A coordenação pode moderar o conteúdo do anúncio, mas não deve consultar nomes, contactos ou o tracking operacional dos empréstimos nesta área.
+                                                        O histórico é apenas informativo. A ação disponível é calculada pelo estado atual do anúncio.
                                                     </p>
-                                                    <div className="acoes-lateral">
-                                                        {podeRemoverPorModeracao ? (
-                                                            <ButtonComponent className="btn-perigo" onClick={() => abrirModalModeracao(anuncioSelecionado, 'remover')}>Remover por moderação</ButtonComponent>
-                                                        ) : null}
-                                                        {podeReativarPorModeracao ? (
-                                                            <ButtonComponent className="btn-secundario" onClick={() => abrirModalModeracao(anuncioSelecionado, 'reativar')}>Reativar anúncio</ButtonComponent>
-                                                        ) : null}
-                                                        {podeArquivarPorModeracao ? (
-                                                            <ButtonComponent className="btn-secundario" onClick={() => abrirModalModeracao(anuncioSelecionado, 'arquivar')}>Arquivar por moderação</ButtonComponent>
-                                                        ) : null}
-                                                    </div>
+
+                                                    {acaoPrincipalAnuncioSelecionado ? (
+                                                        <div className="acao-principal-moderacao">
+                                                            <ButtonComponent
+                                                                className={acaoPrincipalAnuncioSelecionado === 'remover' ? 'btn-perigo' : 'btn-secundario'}
+                                                                onClick={() => abrirModalModeracao(anuncioSelecionado, acaoPrincipalAnuncioSelecionado)}
+                                                            >
+                                                                {obterLabelAcaoModeracao(acaoPrincipalAnuncioSelecionado)}
+                                                            </ButtonComponent>
+                                                            <span>{obterDescricaoAcaoModeracao(acaoPrincipalAnuncioSelecionado)}</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="caixa-lateral">Este anúncio não tem ação de moderação disponível.</div>
+                                                    )}
+                                                </div>
+
+                                                <div className="bloco-lateral">
+                                                    <h3>Última moderação</h3>
+                                                    {ultimoRegistoAnuncioSelecionado ? (
+                                                        <div className="linhas-info">
+                                                            <div><span>Ação</span><strong>{ultimoRegistoAnuncioSelecionado.Acao}</strong></div>
+                                                            <div><span>Motivo</span><strong>{ultimoRegistoAnuncioSelecionado.Motivo || 'Sem motivo indicado'}</strong></div>
+                                                            <div><span>Data</span><strong>{formatarData(ultimoRegistoAnuncioSelecionado.Data_Registo)}</strong></div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="caixa-lateral">Sem histórico de moderação para este anúncio.</div>
+                                                    )}
                                                 </div>
 
                                                 <div className="bloco-lateral">
@@ -601,6 +747,7 @@ export function Marketplace() {
                                                 </div>
                                             </div>
                                         ) : null}
+
                                     </div>
                                 </div>
                             </div>
@@ -627,34 +774,66 @@ export function Marketplace() {
                         </div>
                     )}
 
+
+
+                    {!loading && vista === 'alugueres' && (
+                        <MeusAlugueres
+                            itens={meusAlugueres}
+                            loading={meusAlugueresLoading}
+                            erro={meusAlugueresErro}
+                            onVerAnuncio={abrirAnuncioPorId}
+                            onAceitarPedido={aceitarPedidoAluguer}
+                            onRejeitarPedido={rejeitarPedidoAluguer}
+                            onMarcarComoDevolvido={marcarAluguerComoDevolvido}
+                            onConfirmarDevolucao={confirmarDevolucaoMeuAluguer}
+                        />
+                    )}
+
                     {!loading && vista === 'moderacao' && isCoordenadora && (
-                        <div className="lista-simples">
-                            {anunciosModeracao.length === 0 ? <div className="estado-vazio">Não existem anúncios para moderar.</div> : anunciosModeracao.map((anuncio) => (
-                                <div key={anuncio.ID_Artigo} className="linha-simples">
-                                    <div>
-                                        <div className="linha-topo">
-                                            <span className={`badge-estado estado-${anuncio.Estado_Anuncio}`}>{ESTADO_LABEL[anuncio.Estado_Anuncio]}</span>
-                                            <span className="badge-outline">{ORIGEM_LABEL[anuncio.Origem_Registo]}</span>
-                                        </div>
-                                        <strong>{anuncio.Nome}</strong>
-                                        <p>{getNomeCriador(anuncio)}</p>
-                                    </div>
-                                    <div className="linha-acoes">
-                                        <ButtonComponent className="btn-secundario" onClick={() => abrirDetalhe(anuncio)}>Ver</ButtonComponent>
-                                        {anuncio.Estado_Anuncio === EstadoAnuncio.REMOVIDO ? (
-                                            <>
-                                                <ButtonComponent className="btn-secundario" onClick={() => abrirModalModeracao(anuncio, 'reativar')}>Reativar</ButtonComponent>
-                                                <ButtonComponent className="btn-secundario" onClick={() => abrirModalModeracao(anuncio, 'arquivar')}>Arquivar</ButtonComponent>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <ButtonComponent className="btn-perigo" onClick={() => abrirModalModeracao(anuncio, 'remover')}>Remover</ButtonComponent>
-                                                <ButtonComponent className="btn-secundario" onClick={() => abrirModalModeracao(anuncio, 'arquivar')}>Arquivar</ButtonComponent>
-                                            </>
-                                        )}
-                                    </div>
+                        <div className="moderacao-layout">
+                            {anunciosModeracao.length === 0 ? (
+                                <div className="estado-vazio">Não existem anúncios para moderar.</div>
+                            ) : (
+                                <div className="moderacao-lista">
+                                    {anunciosModeracao.map((anuncio) => {
+                                        const ultimoRegisto = obterUltimoRegistoModeracao(anuncio);
+                                        const acaoPrincipal = obterAcaoPrincipalModeracao(anuncio);
+
+                                        return (
+                                            <div key={anuncio.ID_Artigo} className="moderacao-card">
+                                                <div>
+                                                    <div className="linha-topo">
+                                                        <span className={`badge-estado estado-${anuncio.Estado_Anuncio}`}>{ESTADO_LABEL[anuncio.Estado_Anuncio]}</span>
+                                                        <span className="badge-outline">{TIPO_LABEL[anuncio.Tipo_Anuncio]}</span>
+                                                        <span className="badge-outline">{ORIGEM_LABEL[anuncio.Origem_Registo]}</span>
+                                                    </div>
+                                                    <strong>{anuncio.Nome}</strong>
+                                                    <p>Publicado por {getNomeCriador(anuncio)}</p>
+                                                    {ultimoRegisto ? (
+                                                        <small>
+                                                            Última ação: {ultimoRegisto.Acao} · {ultimoRegisto.Motivo || 'Sem motivo indicado'} · {formatarData(ultimoRegisto.Data_Registo)}
+                                                        </small>
+                                                    ) : (
+                                                        <small>Sem histórico de moderação.</small>
+                                                    )}
+                                                </div>
+
+                                                <div className="linha-acoes">
+                                                    <ButtonComponent className="btn-secundario" onClick={() => abrirDetalhe(anuncio)}>Ver anúncio</ButtonComponent>
+                                                    {acaoPrincipal ? (
+                                                        <ButtonComponent
+                                                            className={acaoPrincipal === 'remover' ? 'btn-perigo' : 'btn-secundario'}
+                                                            onClick={() => abrirModalModeracao(anuncio, acaoPrincipal)}
+                                                        >
+                                                            {obterLabelAcaoModeracao(acaoPrincipal)}
+                                                        </ButtonComponent>
+                                                    ) : null}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                            ))}
+                            )}
                         </div>
                     )}
                 </div>
@@ -666,15 +845,53 @@ export function Marketplace() {
                 onGuardar={executarCriacaoAnuncio}
             />
 
+            {mostrarModalContacto && anuncioSelecionado && (
+                <div className="modal-overlay" onClick={() => setMostrarModalContacto(false)}>
+                    <div className="modal-card modal-contacto-anunciante" onClick={(e) => e.stopPropagation()}>
+                        <h3>Contacto do anunciante</h3>
+                        <p className="texto-ajuda">
+                            Informação de contacto associada ao anúncio <strong>{anuncioSelecionado.Nome}</strong>.
+                        </p>
+
+                        <div className="contacto-anunciante-info">
+                            <div>
+                                <span>Nome</span>
+                                <strong>{getNomeCriador(anuncioSelecionado)}</strong>
+                            </div>
+                            <div>
+                                <span>Telefone</span>
+                                <strong>{getTelefoneCriador(anuncioSelecionado)}</strong>
+                            </div>
+                        </div>
+
+                        <div className="modal-acoes">
+                            <ButtonComponent className="btn-principal" onClick={() => setMostrarModalContacto(false)}>
+                                Fechar
+                            </ButtonComponent>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {mostrarModalModeracao && anuncioSelecionado && (
                 <div className="modal-overlay" onClick={() => setMostrarModalModeracao(false)}>
                     <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-                        <h3>Remover anúncio por moderação</h3>
+                        <h3>{obterLabelAcaoModeracao(acaoModeracaoPendente)}</h3>
                         <p className="texto-ajuda">Anúncio: <strong>{anuncioSelecionado.Nome}</strong></p>
-                        <textarea placeholder="Motivo da moderação" value={motivoModeracao} onChange={(e) => setMotivoModeracao(e.target.value)} />
+                        <p className="texto-ajuda">{obterDescricaoAcaoModeracao(acaoModeracaoPendente)}</p>
+                        <textarea
+                            placeholder={acaoModeracaoPendente === 'reativar' ? 'Nota opcional da reativação' : 'Motivo da moderação'}
+                            value={motivoModeracao}
+                            onChange={(e) => setMotivoModeracao(e.target.value)}
+                        />
                         <div className="modal-acoes">
                             <ButtonComponent className="btn-secundario" onClick={() => setMostrarModalModeracao(false)}>Cancelar</ButtonComponent>
-                            <ButtonComponent className="btn-perigo" onClick={() => executarAcaoModeracao(acaoModeracaoPendente)}>Confirmar remoção</ButtonComponent>
+                            <ButtonComponent
+                                className={acaoModeracaoPendente === 'remover' ? 'btn-perigo' : 'btn-principal'}
+                                onClick={() => executarAcaoModeracao(acaoModeracaoPendente)}
+                            >
+                                Confirmar
+                            </ButtonComponent>
                         </div>
                     </div>
                 </div>

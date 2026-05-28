@@ -6,7 +6,16 @@ import type { RegistoModeracaoMarketplace } from '../../types/marketplace.types'
 import './atividades.scss';
 
 import { showToast } from '~/components/toast/toast';
+
 type FiltroAcao = 'todas' | 'remover' | 'reativar' | 'arquivar';
+
+type GrupoModeracao = {
+    idArtigo: number;
+    nomeArtigo: string;
+    estadoAtual: string;
+    ultimoRegisto: RegistoModeracaoMarketplace;
+    historico: RegistoModeracaoMarketplace[];
+};
 
 export function Atividades() {
     const [registos, setRegistos] = useState<RegistoModeracaoMarketplace[]>([]);
@@ -15,7 +24,7 @@ export function Atividades() {
     const [pesquisa, setPesquisa] = useState('');
     const [acaoFiltro, setAcaoFiltro] = useState<FiltroAcao>('todas');
 
-    const [registoSelecionado, setRegistoSelecionado] = useState<RegistoModeracaoMarketplace | null>(null);
+    const [grupoSelecionado, setGrupoSelecionado] = useState<GrupoModeracao | null>(null);
     const [aReativar, setAReativar] = useState<number | null>(null);
 
     useEffect(() => {
@@ -50,28 +59,6 @@ export function Atividades() {
             ?? registo.Utilizador_Moderador?.Pessoa?.Nome
             ?? `Utilizador #${registo.ID_Utilizador_Moderador}`;
     };
-
-    const registosFiltrados = useMemo(() => {
-        const termo = pesquisa.trim().toLowerCase();
-
-        return registos.filter((registo) => {
-            const nomeArtigo = obterNomeArtigo(registo).toLowerCase();
-            const motivo = (registo.Motivo ?? '').toLowerCase();
-            const moderador = obterNomeModerador(registo).toLowerCase();
-            const acao = registo.Acao.toLowerCase();
-
-            const passaPesquisa =
-                !termo ||
-                nomeArtigo.includes(termo) ||
-                motivo.includes(termo) ||
-                moderador.includes(termo) ||
-                acao.includes(termo);
-
-            const passaAcao = acaoFiltro === 'todas' || registo.Acao === acaoFiltro;
-
-            return passaPesquisa && passaAcao;
-        });
-    }, [registos, pesquisa, acaoFiltro]);
 
     const formatarData = (data?: string) => {
         if (!data) return '-';
@@ -123,39 +110,98 @@ export function Atividades() {
         }
     };
 
-    const abrirModal = (registo: RegistoModeracaoMarketplace) => {
-        setRegistoSelecionado(registo);
+    const formatarEstadoAnterior = (registo: RegistoModeracaoMarketplace) => {
+        if (registo.Estado_Anterior) {
+            return formatarEstado(registo.Estado_Anterior);
+        }
+
+        return 'Não registado';
+    };
+
+    const gruposModeracao = useMemo<GrupoModeracao[]>(() => {
+        const mapa = new Map<number, RegistoModeracaoMarketplace[]>();
+
+        registos.forEach((registo) => {
+            const lista = mapa.get(registo.ID_Artigo) ?? [];
+            lista.push(registo);
+            mapa.set(registo.ID_Artigo, lista);
+        });
+
+        return Array.from(mapa.entries())
+            .map(([idArtigo, historico]) => {
+                const historicoOrdenado = [...historico].sort(
+                    (a, b) => new Date(b.Data_Registo).getTime() - new Date(a.Data_Registo).getTime(),
+                );
+                const ultimoRegisto = historicoOrdenado[0];
+
+                return {
+                    idArtigo,
+                    nomeArtigo: obterNomeArtigo(ultimoRegisto),
+                    estadoAtual: ultimoRegisto.Artigo?.Estado_Anuncio ?? ultimoRegisto.Estado_Novo,
+                    ultimoRegisto,
+                    historico: historicoOrdenado,
+                };
+            })
+            .sort(
+                (a, b) =>
+                    new Date(b.ultimoRegisto.Data_Registo).getTime() -
+                    new Date(a.ultimoRegisto.Data_Registo).getTime(),
+            );
+    }, [registos]);
+
+    const gruposFiltrados = useMemo(() => {
+        const termo = pesquisa.trim().toLowerCase();
+
+        return gruposModeracao.filter((grupo) => {
+            const textoGrupo = [
+                grupo.nomeArtigo,
+                grupo.estadoAtual,
+                grupo.ultimoRegisto.Motivo ?? '',
+                obterNomeModerador(grupo.ultimoRegisto),
+                ...grupo.historico.map((registo) => `${registo.Acao} ${registo.Motivo ?? ''} ${obterNomeModerador(registo)}`),
+            ]
+                .join(' ')
+                .toLowerCase();
+
+            const passaPesquisa = !termo || textoGrupo.includes(termo);
+            const passaAcao = acaoFiltro === 'todas' || grupo.ultimoRegisto.Acao === acaoFiltro;
+
+            return passaPesquisa && passaAcao;
+        });
+    }, [gruposModeracao, pesquisa, acaoFiltro]);
+
+    const abrirModal = (grupo: GrupoModeracao) => {
+        setGrupoSelecionado(grupo);
     };
 
     const fecharModal = () => {
-        setRegistoSelecionado(null);
+        setGrupoSelecionado(null);
     };
 
-    const podeReativar = (registo: RegistoModeracaoMarketplace) => {
-        const estadoAtual = registo.Artigo?.Estado_Anuncio ?? registo.Estado_Novo;
-
-        return estadoAtual === EstadoAnuncio.REMOVIDO || estadoAtual === 'removido';
+    const podeReativarGrupo = (grupo: GrupoModeracao) => {
+        return grupo.estadoAtual === EstadoAnuncio.REMOVIDO || grupo.estadoAtual === 'removido';
     };
 
-    const reativarAnuncio = async (registo: RegistoModeracaoMarketplace) => {
-        const confirmar = window.confirm(`Pretendes reativar o anúncio "${obterNomeArtigo(registo)}"?`);
+    const reativarAnuncio = async (grupo: GrupoModeracao) => {
+        const confirmar = window.confirm(`Pretendes reativar o anúncio "${grupo.nomeArtigo}"?`);
         if (!confirmar) return;
 
         try {
-            setAReativar(registo.ID_Artigo);
+            setAReativar(grupo.idArtigo);
 
             await marketplaceService.moderarAnuncio(
-                registo.ID_Artigo,
+                grupo.idArtigo,
                 'reativar',
                 'Reativado através do registo de moderação.',
             );
 
             await carregarRegistoModeracao();
 
-
-            if (registoSelecionado?.ID_Artigo === registo.ID_Artigo) {
+            if (grupoSelecionado?.idArtigo === grupo.idArtigo) {
                 fecharModal();
             }
+
+            showToast('Anúncio reativado com sucesso.');
         } catch (error) {
             const mensagem =
                 error instanceof Error
@@ -168,14 +214,6 @@ export function Atividades() {
         }
     };
 
-    const formatarEstadoAnterior = (registo: RegistoModeracaoMarketplace) => {
-        if (registo.Estado_Anterior) {
-            return formatarEstado(registo.Estado_Anterior);
-        }
-
-        return 'Não registado';
-    };
-
     return (
         <div className="atividades-container">
             <section className="atividades-header card-header-claro">
@@ -183,7 +221,7 @@ export function Atividades() {
                     <span className="eyebrow">Marketplace</span>
                     <h1>Registo de Moderação</h1>
                     <p>
-                        Consulta o histórico de ações feitas pela coordenação nos anúncios do Marketplace.
+                        Consulta o histórico de ações da coordenação. Cada anúncio aparece uma única vez, mesmo que tenha vários registos de moderação.
                     </p>
                 </div>
 
@@ -195,8 +233,8 @@ export function Atividades() {
             <section className="cartao-branco">
                 <div className="toolbar">
                     <div>
-                        <h2>Histórico de decisões</h2>
-                        <p>Registos ordenados dos mais recentes para os mais antigos.</p>
+                        <h2>Histórico por anúncio</h2>
+                        <p>O histórico é informativo. A ação disponível depende apenas do estado atual do anúncio.</p>
                     </div>
 
                     <div className="filtros">
@@ -212,9 +250,9 @@ export function Atividades() {
                             onChange={(event) => setAcaoFiltro(event.target.value as FiltroAcao)}
                         >
                             <option value="todas">Todas as ações</option>
-                            <option value="remover">Removidos</option>
-                            <option value="reativar">Reativados</option>
-                            <option value="arquivar">Arquivados</option>
+                            <option value="remover">Última ação: removidos</option>
+                            <option value="reativar">Última ação: reativados</option>
+                            <option value="arquivar">Última ação: arquivados</option>
                         </select>
                     </div>
                 </div>
@@ -231,72 +269,76 @@ export function Atividades() {
                     </div>
                 )}
 
-                {!loading && !erro && registosFiltrados.length === 0 && (
+                {!loading && !erro && gruposFiltrados.length === 0 && (
                     <div className="mensagem-centro">
-                        Ainda não existem registos de moderação para os filtros selecionados.
+                        Ainda não existem anúncios para os filtros selecionados.
                     </div>
                 )}
 
-                {!loading && !erro && registosFiltrados.length > 0 && (
+                {!loading && !erro && gruposFiltrados.length > 0 && (
                     <div className="tabela-wrapper">
                         <table className="tabela-registos">
                             <thead>
                                 <tr>
-                                    <th>Data</th>
                                     <th>Anúncio</th>
-                                    <th>Ação</th>
-                                    <th>Transição</th>
+                                    <th>Estado atual</th>
+                                    <th>Última ação</th>
+                                    <th>Última transição</th>
                                     <th>Motivo</th>
                                     <th>Moderador</th>
-                                    <th>Ações</th>
+                                    <th>Histórico</th>
+                                    <th>Ação atual</th>
                                 </tr>
                             </thead>
 
                             <tbody>
-                                {registosFiltrados.map((registo) => (
-                                    <tr key={registo.ID_Registo_Moderacao}>
-                                        <td>{formatarData(registo.Data_Registo)}</td>
-
+                                {gruposFiltrados.map((grupo) => (
+                                    <tr key={grupo.idArtigo}>
                                         <td>
-                                            <strong>{obterNomeArtigo(registo)}</strong>
-                                            <span>#{registo.ID_Artigo}</span>
+                                            <strong>{grupo.nomeArtigo}</strong>
+                                            <span>#{grupo.idArtigo}</span>
                                         </td>
 
+                                        <td>{formatarEstado(grupo.estadoAtual)}</td>
+
                                         <td>
-                                            <span className={classeAcao(registo.Acao)}>
-                                                {formatarAcao(registo.Acao)}
+                                            <span className={classeAcao(grupo.ultimoRegisto.Acao)}>
+                                                {formatarAcao(grupo.ultimoRegisto.Acao)}
                                             </span>
+                                            <span>{formatarData(grupo.ultimoRegisto.Data_Registo)}</span>
                                         </td>
 
                                         <td>
                                             <span className="estado-transicao">
-                                                {formatarEstadoAnterior(registo)} → {formatarEstado(registo.Estado_Novo)}
+                                                {formatarEstadoAnterior(grupo.ultimoRegisto)} → {formatarEstado(grupo.ultimoRegisto.Estado_Novo)}
                                             </span>
                                         </td>
 
-                                        <td>{registo.Motivo || 'Sem motivo indicado'}</td>
+                                        <td>{grupo.ultimoRegisto.Motivo || 'Sem motivo indicado'}</td>
 
-                                        <td>{obterNomeModerador(registo)}</td>
+                                        <td>{obterNomeModerador(grupo.ultimoRegisto)}</td>
 
                                         <td>
-                                            <div className="acoes-linha">
-                                                <ButtonComponent
-                                                    className="btn-tabela btn-ver"
-                                                    onClick={() => abrirModal(registo)}
-                                                >
-                                                    Ver
-                                                </ButtonComponent>
+                                            <ButtonComponent
+                                                className="btn-tabela btn-ver"
+                                                onClick={() => abrirModal(grupo)}
+                                            >
+                                                Ver {grupo.historico.length} registo{grupo.historico.length === 1 ? '' : 's'}
+                                            </ButtonComponent>
+                                        </td>
 
-                                                {podeReativar(registo) && (
-                                                    <ButtonComponent
-                                                        className="btn-tabela btn-reativar"
-                                                        onClick={() => reativarAnuncio(registo)}
-                                                        disabled={aReativar === registo.ID_Artigo}
-                                                    >
-                                                        {aReativar === registo.ID_Artigo ? 'A reativar...' : 'Reativar'}
-                                                    </ButtonComponent>
-                                                )}
-                                            </div>
+                                        <td>
+                                            {podeReativarGrupo(grupo) ? (
+                                                <ButtonComponent
+                                                    className="btn-tabela btn-reativar"
+                                                    onClick={() => reativarAnuncio(grupo)}
+                                                    disabled={aReativar === grupo.idArtigo}
+                                                >
+                                                    {aReativar === grupo.idArtigo ? 'A reativar...' : 'Reativar'}
+                                                </ButtonComponent>
+                                            ) : (
+                                                <span className="acao-indisponivel">Sem ação</span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -306,13 +348,14 @@ export function Atividades() {
                 )}
             </section>
 
-            {registoSelecionado && (
+            {grupoSelecionado && (
                 <div className="modal-overlay" onClick={fecharModal}>
                     <div className="modal-registo" onClick={(event) => event.stopPropagation()}>
                         <div className="modal-header">
                             <div>
                                 <span className="eyebrow">Anúncio</span>
-                                <h3>{obterNomeArtigo(registoSelecionado)}</h3>
+                                <h3>{grupoSelecionado.nomeArtigo}</h3>
+                                <p>Estado atual: {formatarEstado(grupoSelecionado.estadoAtual)}</p>
                             </div>
 
                             <ButtonComponent className="btn-fechar" onClick={fecharModal}>
@@ -324,59 +367,60 @@ export function Atividades() {
                             <div className="modal-grid">
                                 <div>
                                     <label>ID do artigo</label>
-                                    <p>#{registoSelecionado.ID_Artigo}</p>
+                                    <p>#{grupoSelecionado.idArtigo}</p>
                                 </div>
 
                                 <div>
-                                    <label>Ação</label>
-                                    <p>{formatarAcao(registoSelecionado.Acao)}</p>
+                                    <label>Total de registos</label>
+                                    <p>{grupoSelecionado.historico.length}</p>
                                 </div>
 
                                 <div>
-                                    <label>Data</label>
-                                    <p>{formatarData(registoSelecionado.Data_Registo)}</p>
+                                    <label>Última ação</label>
+                                    <p>{formatarAcao(grupoSelecionado.ultimoRegisto.Acao)}</p>
                                 </div>
 
                                 <div>
-                                    <label>Moderador</label>
-                                    <p>{obterNomeModerador(registoSelecionado)}</p>
-                                </div>
-
-                                <div>
-                                    <label>Estado anterior</label>
-                                    <p>{formatarEstado(registoSelecionado.Estado_Anterior)}</p>
-                                </div>
-
-                                <div>
-                                    <label>Estado novo</label>
-                                    <p>{formatarEstado(registoSelecionado.Estado_Novo)}</p>
-                                </div>
-
-                                <div>
-                                    <label>Tipo de anúncio</label>
-                                    <p>{registoSelecionado.Artigo?.Tipo_Anuncio ?? '-'}</p>
-                                </div>
-
-                                <div>
-                                    <label>Origem do registo</label>
-                                    <p>{registoSelecionado.Artigo?.Origem_Registo ?? '-'}</p>
+                                    <label>Última data</label>
+                                    <p>{formatarData(grupoSelecionado.ultimoRegisto.Data_Registo)}</p>
                                 </div>
                             </div>
 
                             <div className="bloco-texto">
-                                <label>Motivo</label>
-                                <p>{registoSelecionado.Motivo || 'Sem motivo indicado.'}</p>
+                                <label>Regra aplicada</label>
+                                <p>
+                                    O botão de reativar aparece apenas uma vez porque é calculado pelo estado atual do anúncio. Os registos abaixo são apenas histórico.
+                                </p>
+                            </div>
+
+                            <div className="historico-moderacao-lista">
+                                {grupoSelecionado.historico.map((registo) => (
+                                    <article key={registo.ID_Registo_Moderacao} className="historico-moderacao-item">
+                                        <div>
+                                            <span className={classeAcao(registo.Acao)}>
+                                                {formatarAcao(registo.Acao)}
+                                            </span>
+                                            <strong>{registo.Motivo || 'Sem motivo indicado'}</strong>
+                                            <p>{formatarEstadoAnterior(registo)} → {formatarEstado(registo.Estado_Novo)}</p>
+                                        </div>
+
+                                        <div>
+                                            <small>{formatarData(registo.Data_Registo)}</small>
+                                            <small>{obterNomeModerador(registo)}</small>
+                                        </div>
+                                    </article>
+                                ))}
                             </div>
                         </div>
 
                         <div className="modal-footer">
-                            {podeReativar(registoSelecionado) && (
+                            {podeReativarGrupo(grupoSelecionado) && (
                                 <ButtonComponent
                                     className="btn-primario"
-                                    onClick={() => reativarAnuncio(registoSelecionado)}
-                                    disabled={aReativar === registoSelecionado.ID_Artigo}
+                                    onClick={() => reativarAnuncio(grupoSelecionado)}
+                                    disabled={aReativar === grupoSelecionado.idArtigo}
                                 >
-                                    {aReativar === registoSelecionado.ID_Artigo ? 'A reativar...' : 'Reativar anúncio'}
+                                    {aReativar === grupoSelecionado.idArtigo ? 'A reativar...' : 'Reativar anúncio'}
                                 </ButtonComponent>
                             )}
 

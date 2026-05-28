@@ -472,7 +472,7 @@ export function AnuncioDisponibilidade({
                         </div>
                     </div>
 
-                    <div className="disponibilidade-lateral">
+                    <div className={`disponibilidade-lateral ${isDono ? 'disponibilidade-lateral-dono' : ''}`}>
                         {podeCriarPedido ? (
                             <div className="painel-disponibilidade pedido-aluguer-box">
                                 <h4>Pedir aluguer</h4>
@@ -514,7 +514,7 @@ export function AnuncioDisponibilidade({
                                 <p>{detalhePublico.descricao}</p>
                             </div>
                         ) : itemSelecionado ? (
-                            <div className="detalhe-emprestimo-grid">
+                            <>
                                 <div className="painel-disponibilidade detalhe-emprestimo-box">
                                     <h4>Detalhe do empréstimo</h4>
                                     <div className="linhas-info detalhe-emprestimo-linhas">
@@ -552,7 +552,7 @@ export function AnuncioDisponibilidade({
                                         ))}
                                     </div>
                                 </div>
-                            </div>
+                            </>
                         ) : (
                             <div className="painel-disponibilidade detalhe-dia-box">
                                 <h4>Detalhe do empréstimo</h4>
