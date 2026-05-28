@@ -34,6 +34,13 @@ function parseDateOnlyToUtcNoon(dateString: string) {
   return date;
 }
 
+function formatHoraDisponibilidade(data: Date, usarUtc: boolean) {
+  const horas = usarUtc ? data.getUTCHours() : data.getHours();
+  const minutos = usarUtc ? data.getUTCMinutes() : data.getMinutes();
+
+  return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`;
+}
+
 @Injectable()
 export class DispobilidadeService {
   constructor(private prisma: PrismaService) {}
@@ -82,19 +89,8 @@ export class DispobilidadeService {
 
         const horaInicio = new Date(disp.Hora_Inicio);
         const horaFim = new Date(horaInicio.getTime() + disp.Duracao * 60000);
-
-        /**
-         * Executa a operacao format hora.
-         * @param data Dados recebidos para a operacao.
-         * @returns Resultado da operacao.
-         */
-
-        const formatHora = (data: Date) =>
-          data.toLocaleTimeString('pt-PT', {
-            hour: '2-digit',
-            minute: '2-digit',
-          });
-        const stringHorario = `${formatHora(horaInicio)} - ${formatHora(horaFim)}`;
+        const usarUtc = disp.Dia_Semana !== null && disp.Dia_Semana !== undefined;
+        const stringHorario = `${formatHoraDisponibilidade(horaInicio, usarUtc)} - ${formatHoraDisponibilidade(horaFim, usarUtc)}`;
 
         const strindData = horaInicio.toLocaleDateString('pt-PT');
 
