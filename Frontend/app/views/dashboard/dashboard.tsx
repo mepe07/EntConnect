@@ -9,6 +9,7 @@ import { coachingPropostasService } from '~/services/coachingPropostas.service';
 import { AdminService } from '~/services/admin.service';
 import { eventosService } from '~/services/eventos.service';
 import type { Evento } from '~/types/eventos.types';
+import { professoresService } from '~/services/professor.service';
 
 import './dashboard.scss';
 
@@ -62,6 +63,48 @@ type SessaoValidacaoDashboard = {
     horario: string;
 };
 
+type ProfessorDashboard = {
+    ID_Pessoa: number;
+    Pessoa: {
+        Nome: string;
+    };
+    Professor_Modalidade?: { ID_Modalidade: number }[];
+};
+
+const NOVOS_KPI_COORD_IDS = [13, 14, 15, 16, 17];
+const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terca', 'Quarta', 'Quinta', 'Sexta', 'Sabado'];
+
+function normalizarNome(valor?: string | null) {
+    return (valor ?? '').trim().toLowerCase();
+}
+
+function parseDashboardDataHora(data: string, horario = '00:00') {
+    const [dia, mes, ano] = data.split('/').map(Number);
+    const [horaInicio = '00:00'] = horario.split(' - ');
+    const [hora, minuto] = horaInicio.split(':').map(Number);
+    return new Date(ano, (mes || 1) - 1, dia || 1, hora || 0, minuto || 0, 0, 0);
+}
+
+async function carregarTodosProfessores() {
+    const primeiraPagina = await professoresService.getProfessores(1);
+    const professores = Array.isArray(primeiraPagina?.data) ? primeiraPagina.data : [];
+    const ultimaPagina = Number(primeiraPagina?.meta?.lastPage ?? 1);
+
+    if (ultimaPagina <= 1) return professores as ProfessorDashboard[];
+
+    const restantes = await Promise.all(
+        Array.from({ length: ultimaPagina - 1 }, (_, index) => professoresService.getProfessores(index + 2)),
+    );
+
+    restantes.forEach((resposta) => {
+        if (Array.isArray(resposta?.data)) {
+            professores.push(...resposta.data);
+        }
+    });
+
+    return professores as ProfessorDashboard[];
+}
+
 export const KPIS_CONFIG_INICIAIS: KpiConfig[] = [
     { id: 1, slug: 'ocupacao', nome: 'Ocupação Estúdios ', roles: ['Coordenador'] },
     { id: 2, slug: 'faturacao_prev', nome: 'Faturação Prevista', roles: ['Coordenador'] },
@@ -75,6 +118,11 @@ export const KPIS_CONFIG_INICIAIS: KpiConfig[] = [
     { id: 10, slug: 'educandos_ee', nome: 'Educandos Associados', roles: ['EncEducacao', 'Enc_Educacao'] },
     { id: 11, slug: 'bailarinos', nome: 'Total de Bailarinos', roles: ['Coordenador', 'Professor'] },
     { id: 12, slug: 'aulas_geral', nome: 'Aulas & Ensaios (Geral)', roles: ['Coordenador', 'Professor'] },
+    { id: 13, slug: 'prof_disp_ativa', nome: 'Professores com Disponibilidade Ativa', roles: ['Coordenador'] },
+    { id: 14, slug: 'prof_sem_modalidades', nome: 'Professores sem Modalidades', roles: ['Coordenador'] },
+    { id: 15, slug: 'prof_sem_sessoes', nome: 'Professores sem Sessoes Marcadas', roles: ['Coordenador'] },
+    { id: 16, slug: 'dia_maior_ocupacao', nome: 'Dia com Maior Ocupacao de Coaching', roles: ['Coordenador'] },
+    { id: 17, slug: 'media_alunos_sessao', nome: 'Media de Alunos por Sessao', roles: ['Coordenador'] },
 ];
 
 export function Dashboard() {
@@ -115,6 +163,11 @@ export function Dashboard() {
         eeSessoesConfirmar: 0,
         eeSessoesMarcadas: 0,
         eeTotalEducandos: 0,
+        professoresDisponibilidadeAtiva: 0,
+        professoresSemModalidades: 0,
+        professoresSemSessoesMarcadas: 0,
+        diaMaiorOcupacaoCoaching: 'Sem dados',
+        mediaAlunosPorSessao: 0,
         isLoading: true 
     });
     const [propostasPendentesDashboard, setPropostasPendentesDashboard] = useState<PropostaDashboard[]>([]);
@@ -212,7 +265,8 @@ export function Dashboard() {
                 const dOcup = resOcupacao?.ok ? await resOcupacao.json() : {};
                 const dFatPrev = resFatPrev?.ok ? await resFatPrev.json() : {};
 
-                setDadosKpis({
+                setDadosKpis((prev) => ({
+                    ...prev,
                     ocupacaoEstudios: dOcup?.percentagem ?? 0,
                     faturacaoPrevistaDia: dFatPrev?.valor ?? 0,
                     alunosAtivos: dAlu?.total ?? dAlu?.totalAtual ?? 0, 
@@ -231,7 +285,7 @@ export function Dashboard() {
                     eeSessoesMarcadas: dEE?.sessoesMarcadas ?? 0,
                     eeTotalEducandos: dEE?.totalEducandos ?? 0,
                     isLoading: false
-                });
+                }));
 
             } catch (error) {
                 console.error("Erro geral ao carregar KPIs:", error);
@@ -243,29 +297,103 @@ export function Dashboard() {
     }, [verFinanceiro, verBailarinos, verAulas, verKpisEE, verKpisProf, verNovosKpisCoordenador, userId]); 
 
     useEffect(() => {
+        if (!isCoordenador || !userId) return;
+
+        const chaveMigracao = `dashboard_coord_novos_kpis_v1_${userId}`;
+        if (localStorage.getItem(chaveMigracao)) return;
+
+        const proximosIds = Array.from(new Set([...kpisAtivosIds, ...NOVOS_KPI_COORD_IDS]));
+        setKpisAtivosIds(proximosIds);
+        localStorage.setItem(`kpis_visiveis_${userId}`, JSON.stringify(proximosIds));
+        localStorage.setItem(chaveMigracao, '1');
+
+        authService.updateQuadrosPreferences(userId, proximosIds).catch((error) => {
+            console.error('Erro ao sincronizar novos KPIs da coordenadora:', error);
+        });
+    }, [isCoordenador, kpisAtivosIds, userId]);
+
+    useEffect(() => {
         if (!isCoordenador) return;
 
         let ativo = true;
 
         async function fetchCoordenadorResumo() {
             try {
-                const [propostas, disponibilidades, sessoesPorValidar, eventos] = await Promise.all([
+                const [propostas, disponibilidades, sessoesPorValidar, eventos, professores, sessoesFuturas] = await Promise.all([
                     coachingPropostasService.getPendentesAdmin().catch(() => []),
                     disponibilidadesService.getAvailability().catch(() => []),
                     adminService.getSessoesPorValidar().catch(() => []),
                     eventosService.listarEventosPublicos({ apenasFuturos: true, limite: 5 }).catch(() => []),
+                    carregarTodosProfessores().catch(() => []),
+                    adminService.getSessoesFuturas().catch(() => []),
                 ]);
 
                 if (!ativo) return;
 
+                const disponibilidadesLista = Array.isArray(disponibilidades) ? disponibilidades : [];
+                const professoresLista = Array.isArray(professores) ? professores : [];
+                const sessoesFuturasLista = Array.isArray(sessoesFuturas) ? sessoesFuturas : [];
+
+                const professoresComDisponibilidadeAtiva = new Set(
+                    disponibilidadesLista
+                        .filter((item: any) => item?.ativa !== false)
+                        .map((item: any) => normalizarNome(item?.nomeProfessor))
+                        .filter(Boolean),
+                ).size;
+
+                const professoresSemModalidades = professoresLista.filter(
+                    (professor: ProfessorDashboard) => (professor?.Professor_Modalidade?.length ?? 0) === 0,
+                ).length;
+
+                const professoresComSessoes = new Set(
+                    sessoesFuturasLista
+                        .map((sessao: any) => normalizarNome(sessao?.nomeProfessor))
+                        .filter(Boolean),
+                );
+
+                const professoresSemSessoesMarcadas = professoresLista.filter((professor: ProfessorDashboard) => {
+                    const nomeProfessor = normalizarNome(professor?.Pessoa?.Nome);
+                    return nomeProfessor && !professoresComSessoes.has(nomeProfessor);
+                }).length;
+
+                const totaisPorDia = sessoesFuturasLista.reduce((acc: number[], sessao: any) => {
+                    const dataSessao = parseDashboardDataHora(sessao?.data, sessao?.horario);
+                    if (Number.isNaN(dataSessao.getTime())) return acc;
+                    const diaSemana = dataSessao.getDay();
+                    acc[diaSemana] = (acc[diaSemana] ?? 0) + 1;
+                    return acc;
+                }, Array(7).fill(0));
+
+                const maiorOcupacao = Math.max(...totaisPorDia, 0);
+                const indiceMaiorOcupacao = totaisPorDia.findIndex((total) => total === maiorOcupacao);
+                const diaMaiorOcupacaoCoaching =
+                    maiorOcupacao > 0 && indiceMaiorOcupacao >= 0
+                        ? DIAS_SEMANA[indiceMaiorOcupacao]
+                        : 'Sem dados';
+
+                const totalAlunos = sessoesFuturasLista.reduce(
+                    (acc: number, sessao: any) => acc + (Array.isArray(sessao?.alunos) ? sessao.alunos.length : 0),
+                    0,
+                );
+                const mediaAlunosPorSessao =
+                    sessoesFuturasLista.length > 0 ? totalAlunos / sessoesFuturasLista.length : 0;
+
                 setPropostasPendentesDashboard(Array.isArray(propostas) ? propostas : []);
                 setDisponibilidadesPendentesDashboard(
-                    Array.isArray(disponibilidades)
-                        ? disponibilidades.filter((item: DisponibilidadeDashboard) => item.estado === 'Pendente')
+                    disponibilidadesLista
+                        ? disponibilidadesLista.filter((item: DisponibilidadeDashboard) => item.estado === 'Pendente')
                         : [],
                 );
                 setSessoesPorValidarDashboard(Array.isArray(sessoesPorValidar) ? sessoesPorValidar : []);
                 setEventosDashboard(Array.isArray(eventos) ? eventos : []);
+                setDadosKpis((prev) => ({
+                    ...prev,
+                    professoresDisponibilidadeAtiva: professoresComDisponibilidadeAtiva,
+                    professoresSemModalidades,
+                    professoresSemSessoesMarcadas,
+                    diaMaiorOcupacaoCoaching,
+                    mediaAlunosPorSessao,
+                }));
             } catch (error) {
                 if (!ativo) return;
                 console.error('Erro ao carregar resumo da coordenadora:', error);
@@ -273,6 +401,14 @@ export function Dashboard() {
                 setDisponibilidadesPendentesDashboard([]);
                 setSessoesPorValidarDashboard([]);
                 setEventosDashboard([]);
+                setDadosKpis((prev) => ({
+                    ...prev,
+                    professoresDisponibilidadeAtiva: 0,
+                    professoresSemModalidades: 0,
+                    professoresSemSessoesMarcadas: 0,
+                    diaMaiorOcupacaoCoaching: 'Sem dados',
+                    mediaAlunosPorSessao: 0,
+                }));
             }
         }
 
@@ -569,6 +705,86 @@ export function Dashboard() {
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
                         <h3 style={{ color: '#000' }}>{dadosKpis.isLoading ? '...' : dadosKpis.aulasHoje}</h3>
                         {!dadosKpis.isLoading && renderTendencia(dadosKpis.tendenciaAulas)}
+                    </div>
+                </div>
+            </article>
+        ),
+        'prof_disp_ativa': (props) => (
+            <article {...props}>
+                <div className="icone verde" style={{ backgroundColor: '#dcfce7', color: '#16a34a' }}>
+                    <i className="fa-solid fa-user-check"></i>
+                </div>
+                <div className="info">
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000' }}>
+                        Professores com disponibilidade ativa
+                        <i className="fa-solid fa-circle-info" title="Numero de professores com pelo menos uma disponibilidade ativa registada." style={{ color: '#94a3b8', cursor: 'default', fontSize: '0.85rem' }}></i>
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                        <h3 style={{ color: '#000' }}>{dadosKpis.isLoading ? '...' : dadosKpis.professoresDisponibilidadeAtiva}</h3>
+                    </div>
+                </div>
+            </article>
+        ),
+        'prof_sem_modalidades': (props) => (
+            <article {...props}>
+                <div className="icone amarelo" style={{ backgroundColor: '#fef3c7', color: '#d97706' }}>
+                    <i className="fa-solid fa-link-slash"></i>
+                </div>
+                <div className="info">
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000' }}>
+                        Professores sem modalidades
+                        <i className="fa-solid fa-circle-info" title="Professores ainda sem modalidades associadas no perfil." style={{ color: '#94a3b8', cursor: 'default', fontSize: '0.85rem' }}></i>
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                        <h3 style={{ color: '#000' }}>{dadosKpis.isLoading ? '...' : dadosKpis.professoresSemModalidades}</h3>
+                    </div>
+                </div>
+            </article>
+        ),
+        'prof_sem_sessoes': (props) => (
+            <article {...props}>
+                <div className="icone vermelho" style={{ backgroundColor: '#fee2e2', color: '#dc2626' }}>
+                    <i className="fa-solid fa-calendar-xmark"></i>
+                </div>
+                <div className="info">
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000' }}>
+                        Professores sem sessoes marcadas
+                        <i className="fa-solid fa-circle-info" title="Professores sem qualquer sessao futura de coaching agendada." style={{ color: '#94a3b8', cursor: 'default', fontSize: '0.85rem' }}></i>
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                        <h3 style={{ color: '#000' }}>{dadosKpis.isLoading ? '...' : dadosKpis.professoresSemSessoesMarcadas}</h3>
+                    </div>
+                </div>
+            </article>
+        ),
+        'dia_maior_ocupacao': (props) => (
+            <article {...props}>
+                <div className="icone azul" style={{ backgroundColor: '#e0f2fe', color: '#0284c7' }}>
+                    <i className="fa-solid fa-calendar-day"></i>
+                </div>
+                <div className="info">
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000' }}>
+                        Dia com maior ocupacao de coaching
+                        <i className="fa-solid fa-circle-info" title="Dia da semana com mais sessoes futuras de coaching marcadas." style={{ color: '#94a3b8', cursor: 'default', fontSize: '0.85rem' }}></i>
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                        <h3 style={{ color: '#000', fontSize: '1.7rem' }}>{dadosKpis.isLoading ? '...' : dadosKpis.diaMaiorOcupacaoCoaching}</h3>
+                    </div>
+                </div>
+            </article>
+        ),
+        'media_alunos_sessao': (props) => (
+            <article {...props}>
+                <div className="icone roxo" style={{ backgroundColor: '#f3e8ff', color: '#9333ea' }}>
+                    <i className="fa-solid fa-users"></i>
+                </div>
+                <div className="info">
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000' }}>
+                        Media de alunos por sessao
+                        <i className="fa-solid fa-circle-info" title="Media de alunos inscritos por sessao futura de coaching." style={{ color: '#94a3b8', cursor: 'default', fontSize: '0.85rem' }}></i>
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                        <h3 style={{ color: '#000' }}>{dadosKpis.isLoading ? '...' : dadosKpis.mediaAlunosPorSessao.toFixed(1)}</h3>
                     </div>
                 </div>
             </article>
