@@ -4,6 +4,11 @@ import { useNavigate } from 'react-router';
 import { AuthService } from '~/services/auth.service';
 import { ResumoEventosDashboard } from '~/components/eventos/resumo-eventos-dashboard.component';
 import type { User } from '../../models/interfaces/user.interface';
+import { DisponibilidadesService } from '~/services/disponibilidades.service';
+import { coachingPropostasService } from '~/services/coachingPropostas.service';
+import { AdminService } from '~/services/admin.service';
+import { eventosService } from '~/services/eventos.service';
+import type { Evento } from '~/types/eventos.types';
 
 import './dashboard.scss';
 
@@ -32,6 +37,31 @@ type KpiConfig = {
     roles: string[];
 };
 
+type DisponibilidadeDashboard = {
+    idDisponibilidade: number;
+    nomeProfessor: string;
+    data: string;
+    horario: string;
+    estado: string;
+};
+
+type PropostaDashboard = {
+    idPedido: number;
+    nomeProfessor: string;
+    nomeEncEducacao: string;
+    modalidade: string;
+    data: string;
+    horario: string;
+};
+
+type SessaoValidacaoDashboard = {
+    idCoaching: number;
+    nomeProfessor: string;
+    modalidade: string;
+    data: string;
+    horario: string;
+};
+
 export const KPIS_CONFIG_INICIAIS: KpiConfig[] = [
     { id: 1, slug: 'ocupacao', nome: 'Ocupação Estúdios ', roles: ['Coordenador'] },
     { id: 2, slug: 'faturacao_prev', nome: 'Faturação Prevista', roles: ['Coordenador'] },
@@ -50,6 +80,8 @@ export const KPIS_CONFIG_INICIAIS: KpiConfig[] = [
 export function Dashboard() {
     const navigate = useNavigate();
     const authService = new AuthService();
+    const disponibilidadesService = new DisponibilidadesService();
+    const adminService = new AdminService();
     
     const userInfo = authService.getUserInfo() as User & { Acoes_Rapidas?: string | number[], Quadros_Visualizacao?: string | string[], idUtilizador?: number, id?: number, nome?: string };
     const roleDoUser = userInfo?.role;
@@ -85,6 +117,10 @@ export function Dashboard() {
         eeTotalEducandos: 0,
         isLoading: true 
     });
+    const [propostasPendentesDashboard, setPropostasPendentesDashboard] = useState<PropostaDashboard[]>([]);
+    const [disponibilidadesPendentesDashboard, setDisponibilidadesPendentesDashboard] = useState<DisponibilidadeDashboard[]>([]);
+    const [sessoesPorValidarDashboard, setSessoesPorValidarDashboard] = useState<SessaoValidacaoDashboard[]>([]);
+    const [eventosDashboard, setEventosDashboard] = useState<Evento[]>([]);
 
     const [acoesAtivasIds, setAcoesAtivasIds] = useState<number[]>(() => {
         const cacheLocal = localStorage.getItem(`acoes_rapidas_${userId}`);
@@ -206,6 +242,47 @@ export function Dashboard() {
         fetchKpiData();
     }, [verFinanceiro, verBailarinos, verAulas, verKpisEE, verKpisProf, verNovosKpisCoordenador, userId]); 
 
+    useEffect(() => {
+        if (!isCoordenador) return;
+
+        let ativo = true;
+
+        async function fetchCoordenadorResumo() {
+            try {
+                const [propostas, disponibilidades, sessoesPorValidar, eventos] = await Promise.all([
+                    coachingPropostasService.getPendentesAdmin().catch(() => []),
+                    disponibilidadesService.getAvailability().catch(() => []),
+                    adminService.getSessoesPorValidar().catch(() => []),
+                    eventosService.listarEventosPublicos({ apenasFuturos: true, limite: 5 }).catch(() => []),
+                ]);
+
+                if (!ativo) return;
+
+                setPropostasPendentesDashboard(Array.isArray(propostas) ? propostas : []);
+                setDisponibilidadesPendentesDashboard(
+                    Array.isArray(disponibilidades)
+                        ? disponibilidades.filter((item: DisponibilidadeDashboard) => item.estado === 'Pendente')
+                        : [],
+                );
+                setSessoesPorValidarDashboard(Array.isArray(sessoesPorValidar) ? sessoesPorValidar : []);
+                setEventosDashboard(Array.isArray(eventos) ? eventos : []);
+            } catch (error) {
+                if (!ativo) return;
+                console.error('Erro ao carregar resumo da coordenadora:', error);
+                setPropostasPendentesDashboard([]);
+                setDisponibilidadesPendentesDashboard([]);
+                setSessoesPorValidarDashboard([]);
+                setEventosDashboard([]);
+            }
+        }
+
+        fetchCoordenadorResumo();
+
+        return () => {
+            ativo = false;
+        };
+    }, [isCoordenador]);
+
     async function alternarVisibilidadeAcao(id: number) {
         let novosIds = acoesAtivasIds.includes(id) 
             ? acoesAtivasIds.filter(aId => aId !== id) 
@@ -242,6 +319,52 @@ export function Dashboard() {
     }
 
     const formatarEuros = (valor: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(valor);
+    const formatarDataCurta = (valor: string) =>
+        new Date(valor).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' });
+    const formatarHoraCurta = (valor: string) =>
+        new Date(valor).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+
+    const paineisCoordenacao = useMemo(() => ([
+        {
+            titulo: 'Propostas de coaching',
+            valor: propostasPendentesDashboard.length,
+            descricao: 'Pedidos a aguardar aprovacao da coordenacao.',
+            rota: '/admin/coaching',
+            icone: 'fa-solid fa-clipboard-check',
+            items: propostasPendentesDashboard.slice(0, 3).map((item) => ({
+                id: `proposta-${item.idPedido}`,
+                titulo: item.nomeProfessor || 'Professor',
+                subtitulo: `${item.data} • ${item.horario}`,
+                meta: item.nomeEncEducacao || item.modalidade || 'Pedido pendente',
+            })),
+        },
+        {
+            titulo: 'Disponibilidades por aprovar',
+            valor: disponibilidadesPendentesDashboard.length,
+            descricao: 'Novas disponibilidades pendentes de validacao.',
+            rota: '/admin/professores-disponibilidade',
+            icone: 'fa-solid fa-calendar-check',
+            items: disponibilidadesPendentesDashboard.slice(0, 3).map((item) => ({
+                id: `disp-${item.idDisponibilidade}`,
+                titulo: item.nomeProfessor || 'Professor',
+                subtitulo: `${item.data} • ${item.horario}`,
+                meta: 'Disponibilidade pendente',
+            })),
+        },
+        {
+            titulo: 'Sessoes por validar',
+            valor: sessoesPorValidarDashboard.length,
+            descricao: 'Sessoes com alunos que ainda aguardam validacao final.',
+            rota: '/admin/coaching',
+            icone: 'fa-solid fa-user-clock',
+            items: sessoesPorValidarDashboard.slice(0, 3).map((item) => ({
+                id: `sessao-${item.idCoaching}`,
+                titulo: item.modalidade || 'Sessao',
+                subtitulo: `${item.data} • ${item.horario}`,
+                meta: item.nomeProfessor || 'Professor',
+            })),
+        },
+    ]), [disponibilidadesPendentesDashboard, propostasPendentesDashboard, sessoesPorValidarDashboard]);
 
     const renderTendencia = (valor: number, inverso: boolean = false) => {
         if (!valor || valor === 0) return null;
@@ -523,9 +646,95 @@ export function Dashboard() {
                 </>
             )}
 
-            <div style={{ width: '100%', marginTop: '20px' }}>
-                <ResumoEventosDashboard />
-            </div>
+            {isCoordenador && (
+                <section className="dashboard-coordenacao">
+                    <div className="coordenacao-grid">
+                        {paineisCoordenacao.map((painel) => (
+                            <article
+                                key={painel.titulo}
+                                className="coordenacao-card"
+                                onClick={() => navigate(painel.rota)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Enter' || event.key === ' ') {
+                                        event.preventDefault();
+                                        navigate(painel.rota);
+                                    }
+                                }}
+                            >
+                                <div className="coordenacao-card-header">
+                                    <div className="coordenacao-card-icon">
+                                        <i className={painel.icone}></i>
+                                    </div>
+                                    <div className="coordenacao-card-copy">
+                                        <h3>{painel.titulo}</h3>
+                                        <p>{painel.descricao}</p>
+                                    </div>
+                                    <strong className="coordenacao-card-value">{painel.valor}</strong>
+                                </div>
+
+                                <div className="coordenacao-card-list">
+                                    {painel.items.length > 0 ? (
+                                        painel.items.map((item) => (
+                                            <div key={item.id} className="coordenacao-list-item">
+                                                <strong>{item.titulo}</strong>
+                                                <span>{item.subtitulo}</span>
+                                                <small>{item.meta}</small>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="coordenacao-empty">Sem itens pendentes.</div>
+                                    )}
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+
+                    <article className="eventos-card-compacto">
+                        <div className="eventos-card-header">
+                            <div>
+                                <h2>Próximos eventos</h2>
+                                <p>Lista rápida para consulta e abertura direta.</p>
+                            </div>
+                            <ButtonComponent type="button" className="eventos-link-button" onClick={() => navigate('/admin/eventos')}>
+                                Gestão de eventos
+                            </ButtonComponent>
+                        </div>
+
+                        <div className="eventos-lista-compacta">
+                            {eventosDashboard.length > 0 ? (
+                                eventosDashboard.map((evento) => (
+                                    <button
+                                        key={evento.id}
+                                        type="button"
+                                        className="evento-linha"
+                                        onClick={() => navigate(`/eventos/${evento.slug}`)}
+                                    >
+                                        <div className="evento-linha-data">
+                                            <strong>{formatarDataCurta(evento.dataInicio)}</strong>
+                                            <span>{formatarHoraCurta(evento.dataInicio)}</span>
+                                        </div>
+                                        <div className="evento-linha-copy">
+                                            <strong>{evento.titulo}</strong>
+                                            <span>{evento.local || 'Local a confirmar'}</span>
+                                        </div>
+                                        <i className="fa-solid fa-chevron-right"></i>
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="coordenacao-empty">Sem eventos futuros publicados.</div>
+                            )}
+                        </div>
+                    </article>
+                </section>
+            )}
+
+            {!isCoordenador && (
+                <div style={{ width: '100%', marginTop: '20px' }}>
+                    <ResumoEventosDashboard />
+                </div>
+            )}
 
         </main>
     );
