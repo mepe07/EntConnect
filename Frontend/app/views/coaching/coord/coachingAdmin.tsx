@@ -841,6 +841,26 @@ export default function CoachingAdmin() {
                 </button>
             </section>
 
+            <section className="quick-actions-section">
+                <div className={`quick-action-card ${kpis.porValidar > 0 ? 'warning' : ''}`}>
+                    <div className="quick-action-copy">
+                        <span className="quick-action-eyebrow">Ação rápida</span>
+                        <h2>Sessões terminadas por validar</h2>
+                        <p>
+                            {kpis.porValidar > 0
+                                ? `Existem ${kpis.porValidar} sess${kpis.porValidar === 1 ? 'ão' : 'ões'} a aguardar validação final.`
+                                : 'Não existem sessões terminadas por validar neste momento.'}
+                        </p>
+                    </div>
+                    <div className="quick-action-controls">
+                        <strong className="quick-action-value">{kpis.porValidar}</strong>
+                        <ButtonComponent type="button" className="btn-quick-action" onClick={abrirModalPorValidar}>
+                            <i className="fa-solid fa-list-check"></i> Ver sessões por validar
+                        </ButtonComponent>
+                    </div>
+                </div>
+            </section>
+
             <section className="propostas-section">
                 <div className="propostas-header">
                     <div>
