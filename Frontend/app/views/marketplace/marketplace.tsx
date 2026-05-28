@@ -23,7 +23,7 @@ import { showToast } from '~/components/toast/toast';
 type Vista = 'montra' | 'detalhe' | 'meus' | 'alugueres' | 'moderacao';
 type VistaLista = Exclude<Vista, 'detalhe'>;
 type AcaoModeracao = 'remover' | 'reativar' | 'arquivar';
-type TabDetalhe = 'detalhe' | 'disponibilidade' | 'moderacao';
+type TabDetalhe = 'detalhe' | 'disponibilidade';
 
 const ESTADO_LABEL: Record<string, string> = {
     [EstadoAnuncio.ATIVO]: 'Ativo',
@@ -520,7 +520,6 @@ export function Marketplace() {
     const tabsDetalheDisponiveis: TabDetalhe[] = [
         'detalhe',
         ...(isAnuncioAluguer(anuncioSelecionado) ? ['disponibilidade' as const] : []),
-        ...(isCoordenadora ? ['moderacao' as const] : []),
     ];
 
     return (
@@ -652,7 +651,7 @@ export function Marketplace() {
                                                 className={tabDetalhe === tab ? 'ativo' : ''}
                                                 onClick={() => setTabDetalhe(tab)}
                                             >
-                                                {tab === 'detalhe' ? 'Detalhe' : tab === 'disponibilidade' ? 'Disponibilidade' : 'Ações'}
+                                                {tab === 'detalhe' ? 'Detalhe' : 'Disponibilidade'}
                                             </button>
                                         ))}
                                     </div>
@@ -686,6 +685,14 @@ export function Marketplace() {
                                                         {isDono(anuncioSelecionado) && anuncioSelecionado.Estado_Anuncio !== EstadoAnuncio.ARQUIVADO && anuncioSelecionado.Estado_Anuncio !== EstadoAnuncio.REMOVIDO ? (
                                                             <ButtonComponent className="btn-secundario" onClick={() => alterarEstado(EstadoAnuncio.ARQUIVADO)}>Arquivar anúncio</ButtonComponent>
                                                         ) : null}
+                                                        {isCoordenadora && acaoPrincipalAnuncioSelecionado ? (
+                                                            <ButtonComponent
+                                                                className={acaoPrincipalAnuncioSelecionado === 'remover' ? 'btn-perigo' : 'btn-secundario'}
+                                                                onClick={() => abrirModalModeracao(anuncioSelecionado, acaoPrincipalAnuncioSelecionado)}
+                                                            >
+                                                                {obterLabelAcaoModeracao(acaoPrincipalAnuncioSelecionado)}
+                                                            </ButtonComponent>
+                                                        ) : null}
                                                     </div>
                                                 </div>
                                             </div>
@@ -701,51 +708,6 @@ export function Marketplace() {
                                                 onCriarPedido={criarPedidoAluguer}
                                                 onConfirmarDevolucao={confirmarDevolucaoAluguer}
                                             />
-                                        ) : null}
-
-                                        {tabDetalhe === 'moderacao' && isCoordenadora ? (
-                                            <div className="detalhe-tab detalhe-moderacao-tab">
-                                                <div className="bloco-lateral">
-                                                    <h3>Ação principal</h3>
-                                                    <p>
-                                                        O histórico é apenas informativo. A ação disponível é calculada pelo estado atual do anúncio.
-                                                    </p>
-
-                                                    {acaoPrincipalAnuncioSelecionado ? (
-                                                        <div className="acao-principal-moderacao">
-                                                            <ButtonComponent
-                                                                className={acaoPrincipalAnuncioSelecionado === 'remover' ? 'btn-perigo' : 'btn-secundario'}
-                                                                onClick={() => abrirModalModeracao(anuncioSelecionado, acaoPrincipalAnuncioSelecionado)}
-                                                            >
-                                                                {obterLabelAcaoModeracao(acaoPrincipalAnuncioSelecionado)}
-                                                            </ButtonComponent>
-                                                            <span>{obterDescricaoAcaoModeracao(acaoPrincipalAnuncioSelecionado)}</span>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="caixa-lateral">Este anúncio não tem ação de moderação disponível.</div>
-                                                    )}
-                                                </div>
-
-                                                <div className="bloco-lateral">
-                                                    <h3>Última moderação</h3>
-                                                    {ultimoRegistoAnuncioSelecionado ? (
-                                                        <div className="linhas-info">
-                                                            <div><span>Ação</span><strong>{ultimoRegistoAnuncioSelecionado.Acao}</strong></div>
-                                                            <div><span>Motivo</span><strong>{ultimoRegistoAnuncioSelecionado.Motivo || 'Sem motivo indicado'}</strong></div>
-                                                            <div><span>Data</span><strong>{formatarData(ultimoRegistoAnuncioSelecionado.Data_Registo)}</strong></div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="caixa-lateral">Sem histórico de moderação para este anúncio.</div>
-                                                    )}
-                                                </div>
-
-                                                <div className="bloco-lateral">
-                                                    <h3>Regra de privacidade</h3>
-                                                    <div className="caixa-lateral">
-                                                        A coordenação consegue consultar o anúncio, pedir aluguer como qualquer utilizador e moderar conteúdo. Não deve ver a quem o artigo está alugado nem o tracking operacional do dono.
-                                                    </div>
-                                                </div>
-                                            </div>
                                         ) : null}
 
                                     </div>
