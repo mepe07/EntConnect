@@ -172,6 +172,8 @@ export interface CriarItemInventarioPayload {
     foto?: string;
     ficheiroFoto?: File;
     idCor?: number;
+    idEstado?: number;
+    idTamanho?: number;
     quantidade: number;
 }
 

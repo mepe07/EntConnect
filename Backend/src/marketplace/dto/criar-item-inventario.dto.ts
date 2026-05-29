@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -13,7 +14,7 @@ import {
 
 export class CriarItemInventarioDto {
   @IsString()
-  @IsNotEmpty({ message: 'O título é obrigatório.' })
+  @IsNotEmpty({ message: 'O titulo e obrigatorio.' })
   @MaxLength(255)
   titulo: string;
 
@@ -23,6 +24,18 @@ export class CriarItemInventarioDto {
   descricao?: string;
 
   @Type(() => Number)
-  @Min(0, { message: 'A quantidade não pode ser negativa.' })
+  @Min(0, { message: 'A quantidade nao pode ser negativa.' })
   quantidade: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1, { message: 'O estado da peca selecionado e invalido.' })
+  idEstado?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1, { message: 'O tamanho selecionado e invalido.' })
+  idTamanho?: number;
 }

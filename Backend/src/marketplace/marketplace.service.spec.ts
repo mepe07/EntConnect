@@ -1177,8 +1177,8 @@ describe('MarketplaceService', () => {
         where: {
           ID_Stock: 5,
           Estado: { in: ['Reservado', 'Ativo', 'Devolucao_Pendente'] },
-          Data_Entrega: { lte: new Date(2030, 5, 15, 0, 0, 0, 0) },
-          Data_Recolha_Prevista: { gte: new Date(2030, 5, 10, 0, 0, 0, 0) },
+          Data_Entrega: { lt: new Date(2030, 5, 15, 0, 0, 0, 0) },
+          Data_Recolha_Prevista: { gt: new Date(2030, 5, 10, 0, 0, 0, 0) },
         },
       });
       expect(prismaService.interesse_Artigo.create).toHaveBeenCalledWith({
@@ -1289,6 +1289,12 @@ describe('MarketplaceService', () => {
           Publicado_No_Marketplace: false,
         }),
       });
+      expect(prismaService.$transaction).toHaveBeenCalledWith(
+        expect.any(Function),
+        expect.objectContaining({
+          isolationLevel: 'Serializable',
+        }),
+      );
     });
 
     it('deve aceitar pedido com data de hoje e criar aluguer ativo', async () => {
@@ -1404,6 +1410,134 @@ describe('MarketplaceService', () => {
       ).rejects.toThrow(BadRequestException);
 
       expect(prismaService.aluguer_Artigo.create).not.toHaveBeenCalled();
+    });
+
+    it('deve rejeitar segundo pedido para exatamente as mesmas datas', async () => {
+      const pedido = criarPedidoAluguer();
+      const aluguerSobreposto = criarAluguer({
+        Estado: 'Reservado',
+        Data_Entrega: new Date('2030-06-10T00:00:00.000Z'),
+        Data_Recolha_Prevista: new Date('2030-06-15T00:00:00.000Z'),
+      });
+
+      prismaMock.interesse_Artigo.findUnique
+        .mockResolvedValueOnce(pedido)
+        .mockResolvedValueOnce(pedido);
+      prismaMock.aluguer_Artigo.findFirst.mockResolvedValue(aluguerSobreposto);
+
+      await expect(
+        service.aceitarPedidoAluguer(100, utilizador),
+      ).rejects.toThrow(
+        'Já existe um aluguer ativo ou reservado para esse intervalo de datas.',
+      );
+
+      expect(prismaService.aluguer_Artigo.create).not.toHaveBeenCalled();
+    });
+
+    it('deve permitir pedido que começa no dia em que outro termina', async () => {
+      const pedido = criarPedidoAluguer({
+        Data_Inicio_Pretendida: new Date('2030-06-15T00:00:00.000Z'),
+        Data_Fim_Pretendida: new Date('2030-06-20T00:00:00.000Z'),
+        Data_Recolha_Prevista: new Date('2030-06-20T00:00:00.000Z'),
+      });
+      const aluguerCriado = criarAluguer({
+        Data_Entrega: new Date('2030-06-15T00:00:00.000Z'),
+        Data_Recolha_Prevista: new Date('2030-06-20T00:00:00.000Z'),
+        Estado: 'Reservado',
+      });
+
+      prismaMock.interesse_Artigo.findUnique
+        .mockResolvedValueOnce(pedido)
+        .mockResolvedValueOnce(pedido);
+      prismaMock.aluguer_Artigo.findFirst.mockResolvedValue(null);
+      prismaMock.aluguer_Artigo.create.mockResolvedValue(aluguerCriado);
+
+      await expect(
+        service.aceitarPedidoAluguer(100, utilizador),
+      ).resolves.toEqual(aluguerCriado);
+
+      expect(prismaService.aluguer_Artigo.findFirst).toHaveBeenCalledWith({
+        where: {
+          ID_Stock: 5,
+          Estado: { in: ['Reservado', 'Ativo', 'Devolucao_Pendente'] },
+          Data_Entrega: {
+            lt: new Date('2030-06-20T00:00:00.000Z'),
+          },
+          Data_Recolha_Prevista: {
+            gt: new Date('2030-06-15T00:00:00.000Z'),
+          },
+        },
+      });
+    });
+
+    it('deve bloquear pedido que sobrepõe um dia', async () => {
+      const pedido = criarPedidoAluguer({
+        Data_Inicio_Pretendida: new Date('2030-06-14T00:00:00.000Z'),
+        Data_Fim_Pretendida: new Date('2030-06-20T00:00:00.000Z'),
+        Data_Recolha_Prevista: new Date('2030-06-20T00:00:00.000Z'),
+      });
+
+      prismaMock.interesse_Artigo.findUnique
+        .mockResolvedValueOnce(pedido)
+        .mockResolvedValueOnce(pedido);
+      prismaMock.aluguer_Artigo.findFirst.mockResolvedValue(
+        criarAluguer({
+          Estado: 'Ativo',
+          Data_Entrega: new Date('2030-06-10T00:00:00.000Z'),
+          Data_Recolha_Prevista: new Date('2030-06-15T00:00:00.000Z'),
+        }),
+      );
+
+      await expect(
+        service.aceitarPedidoAluguer(100, utilizador),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(prismaService.aluguer_Artigo.create).not.toHaveBeenCalled();
+    });
+
+    it('deve permitir novo aluguer quando o anterior está concluído', async () => {
+      const pedido = criarPedidoAluguer();
+      const aluguerCriado = criarAluguer();
+
+      prismaMock.interesse_Artigo.findUnique
+        .mockResolvedValueOnce(pedido)
+        .mockResolvedValueOnce(pedido);
+      prismaMock.aluguer_Artigo.findFirst.mockResolvedValue(null);
+      prismaMock.aluguer_Artigo.create.mockResolvedValue(aluguerCriado);
+
+      await expect(
+        service.aceitarPedidoAluguer(100, utilizador),
+      ).resolves.toEqual(aluguerCriado);
+
+      expect(prismaService.aluguer_Artigo.findFirst).toHaveBeenCalledWith({
+        where: {
+          ID_Stock: 5,
+          Estado: { in: ['Reservado', 'Ativo', 'Devolucao_Pendente'] },
+          Data_Entrega: {
+            lt: new Date('2030-06-15T00:00:00.000Z'),
+          },
+          Data_Recolha_Prevista: {
+            gt: new Date('2030-06-10T00:00:00.000Z'),
+          },
+        },
+      });
+    });
+
+    it('deve permitir novo aluguer quando o anterior está cancelado', async () => {
+      const pedido = criarPedidoAluguer();
+      const aluguerCriado = criarAluguer();
+
+      prismaMock.interesse_Artigo.findUnique
+        .mockResolvedValueOnce(pedido)
+        .mockResolvedValueOnce(pedido);
+      prismaMock.aluguer_Artigo.findFirst.mockResolvedValue(null);
+      prismaMock.aluguer_Artigo.create.mockResolvedValue(aluguerCriado);
+
+      await expect(
+        service.aceitarPedidoAluguer(100, utilizador),
+      ).resolves.toEqual(aluguerCriado);
+
+      expect(prismaService.aluguer_Artigo.create).toHaveBeenCalledTimes(1);
     });
 
     it('deve rejeitar pedido de aluguer', async () => {
@@ -1605,7 +1739,13 @@ describe('MarketplaceService', () => {
 
       await expect(
         service.criarItemInventario(
-          { titulo: 'Saia', descricao: 'Nova', quantidade: 6 } as any,
+          {
+            titulo: 'Saia',
+            descricao: 'Nova',
+            quantidade: 6,
+            idEstado: 2,
+            idTamanho: 3,
+          } as any,
           coordenador,
         ),
       ).resolves.toEqual(item);
@@ -1621,6 +1761,8 @@ describe('MarketplaceService', () => {
       expect(prismaService.stock_Armazem.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           ID_Artigo: 1,
+          ID_Estado: 2,
+          ID_Tamanho: 3,
           Quantidade_Total: 6,
           Quantidade_Venda: 0,
           Quantidade_Aluguer: 0,
