@@ -75,7 +75,10 @@ function formatDate(value: string) {
 }
 
 
-const HORAS_DIA = Array.from({ length: 24 }, (_, i) => i);
+const HORA_INICIO_CALENDARIO = 6;
+const MINUTOS_INICIO_CALENDARIO = HORA_INICIO_CALENDARIO * 60;
+const HORAS_DIA = Array.from({ length: 24 - HORA_INICIO_CALENDARIO }, (_, i) => i + HORA_INICIO_CALENDARIO);
+const ALTURA_CALENDARIO = HORAS_DIA.length * 60;
 
 export default function HorariosAdmin() {
     const [horarios, setHorarios] = useState<HorarioFixo[]>([]);
@@ -184,7 +187,7 @@ export default function HorariosAdmin() {
         if (Number.isNaN(date.getTime())) return 0;
         const horas = date.getHours();
         const minutos = date.getMinutes();
-        return (horas * 60) + minutos;
+        return (horas * 60) + minutos - MINUTOS_INICIO_CALENDARIO;
     };
 
 
@@ -407,7 +410,7 @@ export default function HorariosAdmin() {
                         </div>
 
 
-                        <div className="calendario-grelha">
+                        <div className="calendario-grelha" style={{ height: `${ALTURA_CALENDARIO}px` }}>
 
                             <div className="grelha-linhas-fundo">
                                 {HORAS_DIA.map(hora => (
