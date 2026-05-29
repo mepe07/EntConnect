@@ -102,7 +102,7 @@ const MENU_CONFIG: MenuConfig = {
             titulo: 'Coaching',
             icone: 'fa-solid fa-handshake-angle',
             submenu: [
-                { titulo: 'Ver Oferta', path: '/coaching/oferta' },
+                { titulo: 'Ver Disponibilidades', path: '/coaching/oferta' },
                 { titulo: 'Marcações', path: '/coaching/marcacoes' },
                 { titulo: 'Confirmações', path: '/coaching/confirmacoes' },
             ]
