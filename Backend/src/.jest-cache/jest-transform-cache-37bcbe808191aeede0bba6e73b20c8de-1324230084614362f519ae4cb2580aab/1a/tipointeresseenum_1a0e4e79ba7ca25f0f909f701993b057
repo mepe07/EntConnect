@@ -1,0 +1,11 @@
+89fcf6e00c4c9bb550629eba6360ab6d
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TipoInteresse = void 0;
+var TipoInteresse;
+(function (TipoInteresse) {
+    TipoInteresse["CONTACTO"] = "Contacto";
+    TipoInteresse["COMPRA"] = "Compra";
+    TipoInteresse["ALUGUER"] = "Aluguer";
+})(TipoInteresse || (exports.TipoInteresse = TipoInteresse = {}));
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiQzpcXFVzZXJzXFxVdGlsaXphZG9yXFxzb3VyY2VcXHJlcG9zXFxFbnRDb25uZWN0XFxCYWNrZW5kXFxzcmNcXG1hcmtldHBsYWNlXFxlbnVtc1xcdGlwby1pbnRlcmVzc2UuZW51bS50cyIsIm1hcHBpbmdzIjoiOzs7QUFBQSxJQUFZLGFBSVg7QUFKRCxXQUFZLGFBQWE7SUFDdkIsc0NBQXFCLENBQUE7SUFDckIsa0NBQWlCLENBQUE7SUFDakIsb0NBQW1CLENBQUE7QUFDckIsQ0FBQyxFQUpXLGFBQWEsNkJBQWIsYUFBYSxRQUl4QiIsIm5hbWVzIjpbXSwic291cmNlcyI6WyJDOlxcVXNlcnNcXFV0aWxpemFkb3JcXHNvdXJjZVxccmVwb3NcXEVudENvbm5lY3RcXEJhY2tlbmRcXHNyY1xcbWFya2V0cGxhY2VcXGVudW1zXFx0aXBvLWludGVyZXNzZS5lbnVtLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCBlbnVtIFRpcG9JbnRlcmVzc2Uge1xyXG4gIENPTlRBQ1RPID0gJ0NvbnRhY3RvJyxcclxuICBDT01QUkEgPSAnQ29tcHJhJyxcclxuICBBTFVHVUVSID0gJ0FsdWd1ZXInLFxyXG59XHJcbiJdLCJ2ZXJzaW9uIjozfQ==

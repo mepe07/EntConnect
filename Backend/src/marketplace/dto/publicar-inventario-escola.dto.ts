@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsOptional,
@@ -53,4 +54,9 @@ export class PublicarInventarioEscolaDto {
   @IsInt({ message: 'A quantidade para aluguer tem de ser um número inteiro.' })
   @Min(0)
   quantidadeAluguer?: number;
+
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  aluguerContinuo?: boolean;
 }

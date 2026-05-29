@@ -101,13 +101,13 @@ export function Inventario() {
 
     const confirmarPublicacao = async ({
         tipoAnuncio,
-        quantidadeVenda,
-        quantidadeAluguer,
+        quantidadeDisponivel,
+        aluguerContinuo,
         descricao,
     }: {
         tipoAnuncio: TipoAnuncio;
-        quantidadeVenda: number;
-        quantidadeAluguer: number;
+        quantidadeDisponivel: number;
+        aluguerContinuo: boolean;
         descricao: string;
     }) => {
         if (!itemSelecionado) return;
@@ -117,8 +117,8 @@ export function Inventario() {
                 titulo: itemSelecionado.Nome,
                 foto: itemSelecionado.Foto,
                 tipoAnuncio,
-                quantidadeVenda,
-                quantidadeAluguer,
+                quantidadeDisponivel,
+                aluguerContinuo,
                 descricao,
             });
             setResumoFluxo(`Publicaste '${itemSelecionado.Nome}' no Marketplace.`);

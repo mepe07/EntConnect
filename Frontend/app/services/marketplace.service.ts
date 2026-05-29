@@ -1,5 +1,3 @@
-
-
 import type {
     FiltrosAnuncios,
     CriarAnuncioPayload,
@@ -10,11 +8,13 @@ import type {
     Proposta,
     CriarItemInventarioPayload,
     RegistoModeracaoMarketplace,
+    CalendarioAnuncioItem,
+    CriarPedidoAluguerPayload,
+    MeuAluguer,
 } from '../types/marketplace.types';
 
-import { API_BASE_URL } from "../../src/config/api.config";
+import { API_BASE_URL } from '../../src/config/api.config';
 import { authService } from './auth.service';
-
 
 const API_URL = `${API_BASE_URL}/marketplace`;
 
@@ -41,10 +41,16 @@ async function parseError(response: Response, fallback: string): Promise<never> 
             mensagem = erro.message;
         }
     } catch {
-
+        // Mantém a mensagem de fallback quando a resposta não tem JSON válido.
     }
 
     throw new Error(mensagem);
+}
+
+function appendBoolean(formData: FormData, key: string, value?: boolean) {
+    if (value !== undefined) {
+        formData.append(key, String(value));
+    }
 }
 
 export const marketplaceService = {
@@ -59,7 +65,8 @@ export const marketplaceService = {
             });
         }
 
-        const response = await fetch(`${API_URL}/anuncios?${params.toString()}`, {
+        const query = params.toString();
+        const response = await fetch(`${API_URL}/anuncios${query ? `?${query}` : ''}`, {
             method: 'GET',
             headers: getHeaders(),
         });
@@ -108,6 +115,16 @@ export const marketplaceService = {
         return response.json();
     },
 
+    async listarMeusAlugueres(): Promise<MeuAluguer[]> {
+        const response = await fetch(`${API_URL}/meus-alugueres`, {
+            method: 'GET',
+            headers: getHeaders(),
+        });
+
+        if (!response.ok) return parseError(response, 'Erro ao carregar os teus alugueres.');
+        return response.json();
+    },
+
     async listarInventarioDaEscola(): Promise<Anuncio[]> {
         const response = await fetch(`${API_URL}/inventario-escola`, {
             method: 'GET',
@@ -128,13 +145,13 @@ export const marketplaceService = {
         return response.json();
     },
 
-
     async criarAnuncio(dados: CriarAnuncioPayload): Promise<Anuncio> {
         const formData = new FormData();
 
         formData.append('titulo', dados.titulo);
         formData.append('tipoAnuncio', dados.tipoAnuncio);
         formData.append('quantidadeTotal', String(dados.quantidadeTotal));
+        appendBoolean(formData, 'aluguerContinuo', dados.aluguerContinuo);
 
         if (dados.quantidadeDisponivel !== undefined) {
             formData.append('quantidadeDisponivel', String(dados.quantidadeDisponivel));
@@ -184,9 +201,7 @@ export const marketplaceService = {
 
         const response = await fetch(`${API_URL}/anuncios/${idArtigo}`, {
             method: 'PATCH',
-            headers: usarMultipart
-                ? getAuthHeader()
-                : getHeaders(),
+            headers: usarMultipart ? getAuthHeader() : getHeaders(),
             body: usarMultipart
                 ? (() => {
                     const formData = new FormData();
@@ -262,39 +277,88 @@ export const marketplaceService = {
         return response.json();
     },
 
+    async obterCalendarioAnuncio(idArtigo: number): Promise<CalendarioAnuncioItem[]> {
+        const response = await fetch(`${API_URL}/anuncios/${idArtigo}/calendario`, {
+            method: 'GET',
+            headers: getHeaders(),
+        });
+
+        if (!response.ok) return parseError(response, 'Erro ao carregar a disponibilidade do anúncio.');
+        return response.json();
+    },
+
+    async criarPedidoAluguer(idArtigo: number, dados: CriarPedidoAluguerPayload): Promise<unknown> {
+        const response = await fetch(`${API_URL}/anuncios/${idArtigo}/pedidos-aluguer`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(dados),
+        });
+
+        if (!response.ok) return parseError(response, 'Erro ao criar pedido de aluguer.');
+        return response.json();
+    },
+
+    async aceitarPedidoAluguer(idPedido: number): Promise<unknown> {
+        const response = await fetch(`${API_URL}/pedidos-aluguer/${idPedido}/aceitar`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+        });
+
+        if (!response.ok) return parseError(response, 'Erro ao aceitar o pedido de aluguer.');
+        return response.json();
+    },
+
+    async rejeitarPedidoAluguer(idPedido: number): Promise<unknown> {
+        const response = await fetch(`${API_URL}/pedidos-aluguer/${idPedido}/rejeitar`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+        });
+
+        if (!response.ok) return parseError(response, 'Erro ao rejeitar o pedido de aluguer.');
+        return response.json();
+    },
+
+    async marcarAluguerComoDevolvido(idAluguer: number): Promise<unknown> {
+        const response = await fetch(`${API_URL}/alugueres/${idAluguer}/marcar-devolvido`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+        });
+
+        if (!response.ok) return parseError(response, 'Erro ao marcar aluguer como devolvido.');
+        return response.json();
+    },
+
+    async confirmarDevolucaoAluguer(idAluguer: number): Promise<unknown> {
+        const response = await fetch(`${API_URL}/alugueres/${idAluguer}/confirmar-devolucao`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+        });
+
+        if (!response.ok) return parseError(response, 'Erro ao confirmar devolução do aluguer.');
+        return response.json();
+    },
 
     async criarItemInventario(dados: CriarItemInventarioPayload): Promise<Anuncio> {
-
         const formData = new FormData();
 
-
         formData.append('titulo', dados.titulo);
-
-
         formData.append('quantidade', String(dados.quantidade));
-
 
         if (dados.descricao) {
             formData.append('descricao', dados.descricao);
         }
 
-
         if (dados.ficheiroFoto) {
             formData.append('foto', dados.ficheiroFoto);
         }
 
-
         const response = await fetch(`${API_URL}/inventario`, {
             method: 'POST',
-
-
             headers: getAuthHeader(),
             body: formData,
         });
 
-
         if (!response.ok) return parseError(response, 'Erro ao adicionar item ao inventário.');
-
         return response.json();
     },
 };

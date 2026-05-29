@@ -99,6 +99,12 @@ export function resolverDistribuicaoStock(
 
     validarQuantidades(quantidadeTotal, totalAlocado);
 
+    if (vendaFinal > 0 && aluguerFinal > 0) {
+      throw new BadRequestException(
+        'O artigo deve ser publicado apenas como venda ou apenas como aluguer.',
+      );
+    }
+
     return {
       tipoAnuncio: derivarTipoAnuncio(vendaFinal, aluguerFinal),
       quantidadeVenda: vendaFinal,

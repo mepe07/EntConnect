@@ -19,6 +19,7 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
         quantidadeDisponivel: 1,
         quantidadeVenda: 1,
         quantidadeAluguer: 0,
+        aluguerContinuo: false,
         descricao: '',
         notasInternas: '',
         idEstado: 1,
@@ -28,9 +29,6 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
 
     if (!isOpen) return null;
 
-    const totalDistribuido = (form.quantidadeVenda ?? 0) + (form.quantidadeAluguer ?? 0);
-    const usaDistribuicao = form.tipoAnuncio === TipoAnuncio.AMBOS;
-
     const handleTipoChange = (tipoAnuncio: TipoAnuncio) => {
         if (tipoAnuncio === TipoAnuncio.VENDA) {
             setForm({
@@ -39,17 +37,7 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
                 quantidadeDisponivel: form.quantidadeTotal,
                 quantidadeVenda: form.quantidadeTotal,
                 quantidadeAluguer: 0,
-            });
-            return;
-        }
-
-        if (tipoAnuncio === TipoAnuncio.ALUGUER) {
-            setForm({
-                ...form,
-                tipoAnuncio,
-                quantidadeDisponivel: form.quantidadeTotal,
-                quantidadeVenda: 0,
-                quantidadeAluguer: form.quantidadeTotal,
+                aluguerContinuo: false,
             });
             return;
         }
@@ -57,9 +45,10 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
         setForm({
             ...form,
             tipoAnuncio,
-            quantidadeDisponivel: undefined,
-            quantidadeVenda: form.quantidadeVenda ?? form.quantidadeTotal,
-            quantidadeAluguer: form.quantidadeAluguer ?? 0,
+            quantidadeDisponivel: form.quantidadeTotal,
+            quantidadeVenda: 0,
+            quantidadeAluguer: form.quantidadeTotal,
+            aluguerContinuo: form.aluguerContinuo ?? false,
         });
     };
 
@@ -91,7 +80,9 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
         setForm({
             ...form,
             quantidadeTotal: totalFinal,
-            quantidadeDisponivel: undefined,
+            quantidadeDisponivel: totalFinal,
+            quantidadeVenda: 0,
+            quantidadeAluguer: totalFinal,
         });
     };
 
@@ -101,25 +92,14 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
             return;
         }
 
-        if (usaDistribuicao) {
-            if (totalDistribuido < 1) {
-                showToast('Indica pelo menos 1 unidade para venda ou aluguer.');
-                return;
-            }
-
-            if (totalDistribuido > form.quantidadeTotal) {
-                showToast('A soma de venda e aluguer não pode ultrapassar a quantidade total.');
-                return;
-            }
-        }
-
         setLoading(true);
         try {
             await onGuardar({
                 ...form,
-                quantidadeDisponivel: usaDistribuicao ? undefined : form.quantidadeTotal,
-                quantidadeVenda: usaDistribuicao ? form.quantidadeVenda : undefined,
-                quantidadeAluguer: usaDistribuicao ? form.quantidadeAluguer : undefined,
+                quantidadeDisponivel: form.quantidadeTotal,
+                quantidadeVenda: undefined,
+                quantidadeAluguer: undefined,
+                aluguerContinuo: form.tipoAnuncio === TipoAnuncio.ALUGUER ? Boolean(form.aluguerContinuo) : false,
             });
         } catch (error) {
             console.error('Erro ao guardar', error);
@@ -160,7 +140,6 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
                             >
                                 <option value="venda">Vender</option>
                                 <option value="aluguer">Alugar / Emprestar</option>
-                                <option value="ambos">Vender ou Alugar</option>
                             </select>
                         </div>
                         <div>
@@ -174,31 +153,22 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
                         </div>
                     </div>
 
-                    {usaDistribuicao && (
-                        <div className="form-grupo" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                            <div>
-                                <label style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Qtd. para Venda</label>
+                    {form.tipoAnuncio === TipoAnuncio.ALUGUER && (
+                        <div className="form-grupo">
+                            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
                                 <input
-                                    type="number"
-                                    min="0"
-                                    value={form.quantidadeVenda ?? 0}
-                                    onChange={(e) => setForm({ ...form, quantidadeVenda: parseInt(e.target.value) || 0, quantidadeDisponivel: undefined })}
-                                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                                    type="checkbox"
+                                    checked={Boolean(form.aluguerContinuo)}
+                                    onChange={(e) => setForm({ ...form, aluguerContinuo: e.target.checked })}
+                                    style={{ width: 'auto', marginTop: '3px' }}
                                 />
-                            </div>
-                            <div>
-                                <label style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Qtd. para Aluguer</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={form.quantidadeAluguer ?? 0}
-                                    onChange={(e) => setForm({ ...form, quantidadeAluguer: parseInt(e.target.value) || 0, quantidadeDisponivel: undefined })}
-                                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-                                />
-                            </div>
-                            <div style={{ gridColumn: '1 / -1', fontSize: '13px', color: totalDistribuido > form.quantidadeTotal ? '#dc2626' : '#64748b' }}>
-                                Total distribuído: <strong>{totalDistribuido}</strong> / {form.quantidadeTotal}
-                            </div>
+                                <span>
+                                    <strong>Aluguer contínuo</strong>
+                                    <span style={{ display: 'block', marginTop: '4px', fontSize: '13px', color: '#64748b' }}>
+                                        Quando o artigo for devolvido, o anúncio volta automaticamente a disponível.
+                                    </span>
+                                </span>
+                            </label>
                         </div>
                     )}
 
