@@ -17,10 +17,10 @@ interface Disponibilidade {
     modalidade: string;
     modalidadesProfessor: { idModalidade: number; descricao: string }[];
     estado: string;
-    valorPorAluno: number;
-    maxAlunos: number;
+    valorPorAluno?: number | null;
+    maxAlunos?: number | null;
     idProfessor: number;
-    idEstudio: number;
+    idEstudio?: number | null;
     duracao: number;
     idCoordenador: number;
     horaInicio?: string;
@@ -262,7 +262,7 @@ function expandirDisponibilidadesRecorrentes(disponibilidades: Disponibilidade[]
                 (sessao) => getIsoDateKey(sessao.inicioCoaching) === dataKey,
             );
             const alunosInscritosIds = sessoesDaOcorrencia.flatMap((sessao) => sessao.alunosInscritosIds ?? []);
-            const maxAlunosBase = disponibilidade.maxAlunos ?? 0;
+            const maxAlunosBase = Number(disponibilidade.maxAlunos ?? 0);
 
             expandidas.push({
                 ...disponibilidade,
@@ -339,8 +339,7 @@ export default function CoachingEE() {
 
     const disponibilidadesOrdenadas = useMemo(() => {
         return disponibilidades
-            .filter((disp) => disp.maxAlunos > 0)
-            .filter((disp) => (disp.modalidadesProfessor?.length ?? 0) > 0)
+            .filter((disp) => Number(disp.maxAlunos ?? 0) > 0)
             .filter((disp) => !temExcecaoNaData(disp, formatDateKey(parseDataDisponibilidade(disp.data))))
             .filter((disp) => (filtroProfessor ? disp.nomeProfessor === filtroProfessor : true))
             .filter((disp) => filtroModalidade
@@ -462,13 +461,12 @@ export default function CoachingEE() {
                 idEncEducacao: userInfo.idPessoa,
                 idProfessor: disponibilidadeSelecionada.idProfessor,
                 idEstadoCoaching: 7,
-                idSala: disponibilidadeSelecionada.idEstudio,
-                valorPorAluno: disponibilidadeSelecionada.valorPorAluno,
+                valorPorAluno: Number(disponibilidadeSelecionada.valorPorAluno ?? 0),
                 idModalidade: modalidadeSelecionada,
                 inicio_Coaching: inicioCoachingFormatado,
                 duracao: disponibilidadeSelecionada.duracao,
                 idCoordenador: disponibilidadeSelecionada.idCoordenador,
-                valorEmFalta: disponibilidadeSelecionada.valorPorAluno,
+                valorEmFalta: Number(disponibilidadeSelecionada.valorPorAluno ?? 0),
                 obs: observacoes
             };
 
@@ -587,6 +585,8 @@ export default function CoachingEE() {
             label: aluno.Nome
         }));
     const professorSelecionadoProposta = professoresProposta.find((professor) => professor.idProfessor === propostaProfessor);
+    const disponibilidadeSemModalidades =
+        (disponibilidadeSelecionada?.modalidadesProfessor?.length ?? 0) === 0;
 
     const renderDisponibilidadeCard = (disponibilidade: Disponibilidade, small = false) => (
         <button
@@ -768,8 +768,11 @@ export default function CoachingEE() {
                                 <p><strong>Horário:</strong> {disponibilidadeSelecionada.horario}</p>
                                 <p><strong>Modalidades:</strong> {disponibilidadeSelecionada.modalidadesProfessor?.map((modalidade) => modalidade.descricao).join(', ') || 'Sem modalidades associadas'}</p>
                                 <p><strong>Duração:</strong> {disponibilidadeSelecionada.duracao} minutos</p>
-                                <p><strong>Vagas disponíveis:</strong> {disponibilidadeSelecionada.maxAlunos}</p>
-                                <p><strong>Valor a pagar:</strong> {disponibilidadeSelecionada.valorPorAluno.toFixed(2)}€</p>
+                                <p><strong>Vagas disponíveis:</strong> {Number(disponibilidadeSelecionada.maxAlunos ?? 0)}</p>
+                                <p><strong>Valor a pagar:</strong> {Number(disponibilidadeSelecionada.valorPorAluno ?? 0).toFixed(2)}€</p>
+                                {disponibilidadeSemModalidades && (
+                                    <p><strong>Aviso:</strong> Esta disponibilidade foi aprovada, mas o professor ainda nao tem modalidades associadas. A coordenacao precisa de associar pelo menos uma modalidade para ser possivel marcar a sessao.</p>
+                                )}
                             </div>
 
                             <div className="form-group">
@@ -816,7 +819,7 @@ export default function CoachingEE() {
                                 <ButtonComponent
                                     className="btn-confirmar"
                                     onClick={handleInscreverAluno}
-                                    disabled={!alunoSelecionado || !modalidadeSelecionada}
+                                    disabled={!alunoSelecionado || !modalidadeSelecionada || disponibilidadeSemModalidades}
                                 >
                                     Inscrever
                                 </ButtonComponent>
@@ -933,3 +936,4 @@ export default function CoachingEE() {
         </div>
     );
 }
+

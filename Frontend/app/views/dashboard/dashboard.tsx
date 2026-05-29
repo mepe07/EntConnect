@@ -10,6 +10,7 @@ import { AdminService } from '~/services/admin.service';
 import { eventosService } from '~/services/eventos.service';
 import type { Evento } from '~/types/eventos.types';
 import { professoresService } from '~/services/professor.service';
+import { salasService } from '~/services/salas.service';
 
 import './dashboard.scss';
 
@@ -61,6 +62,10 @@ type SessaoValidacaoDashboard = {
     modalidade: string;
     data: string;
     horario: string;
+    idSala?: number | null;
+    sala?: string | null;
+    estado?: string;
+    alunos?: { idAluno: number; nome: string }[];
 };
 
 type ProfessorDashboard = {
@@ -69,6 +74,18 @@ type ProfessorDashboard = {
         Nome: string;
     };
     Professor_Modalidade?: { ID_Modalidade: number }[];
+};
+
+type EstudioDashboard = {
+    ID_Sala: number;
+    Nome: string;
+    Disponivel?: boolean;
+};
+
+type ColunaAgendaDia = {
+    id: string;
+    nome: string;
+    semEstudio?: boolean;
 };
 
 const NOVOS_KPI_COORD_IDS = [13, 14, 15, 16, 17];
@@ -83,6 +100,17 @@ function parseDashboardDataHora(data: string, horario = '00:00') {
     const [horaInicio = '00:00'] = horario.split(' - ');
     const [hora, minuto] = horaInicio.split(':').map(Number);
     return new Date(ano, (mes || 1) - 1, dia || 1, hora || 0, minuto || 0, 0, 0);
+}
+
+function formatDateKey(date: Date) {
+    const ano = date.getFullYear();
+    const mes = String(date.getMonth() + 1).padStart(2, '0');
+    const dia = String(date.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+}
+
+function horaInicioSessao(sessao: SessaoValidacaoDashboard) {
+    return parseDashboardDataHora(sessao.data, sessao.horario).getHours();
 }
 
 async function carregarTodosProfessores() {
@@ -173,6 +201,11 @@ export function Dashboard() {
     const [propostasPendentesDashboard, setPropostasPendentesDashboard] = useState<PropostaDashboard[]>([]);
     const [disponibilidadesPendentesDashboard, setDisponibilidadesPendentesDashboard] = useState<DisponibilidadeDashboard[]>([]);
     const [sessoesPorValidarDashboard, setSessoesPorValidarDashboard] = useState<SessaoValidacaoDashboard[]>([]);
+    const [sessoesPendentesEstudioDashboard, setSessoesPendentesEstudioDashboard] = useState<SessaoValidacaoDashboard[]>([]);
+    const [sessoesAgendaDiaDashboard, setSessoesAgendaDiaDashboard] = useState<SessaoValidacaoDashboard[]>([]);
+    const [estudiosDashboard, setEstudiosDashboard] = useState<EstudioDashboard[]>([]);
+    const [agendaDiaAberta, setAgendaDiaAberta] = useState(false);
+    const [agendaDiaModalAberta, setAgendaDiaModalAberta] = useState(false);
     const [eventosDashboard, setEventosDashboard] = useState<Evento[]>([]);
 
     const [acoesAtivasIds, setAcoesAtivasIds] = useState<number[]>(() => {
@@ -319,13 +352,15 @@ export function Dashboard() {
 
         async function fetchCoordenadorResumo() {
             try {
-                const [propostas, disponibilidades, sessoesPorValidar, eventos, professores, sessoesFuturas] = await Promise.all([
+                const [propostas, disponibilidades, sessoesPorValidar, eventos, professores, sessoesFuturas, sessoesRealizadasMes, salas] = await Promise.all([
                     coachingPropostasService.getPendentesAdmin().catch(() => []),
                     disponibilidadesService.getAvailability().catch(() => []),
                     adminService.getSessoesPorValidar().catch(() => []),
                     eventosService.listarEventosPublicos({ apenasFuturos: true, limite: 5 }).catch(() => []),
                     carregarTodosProfessores().catch(() => []),
                     adminService.getSessoesFuturas().catch(() => []),
+                    adminService.getSessoesRealizadasMes().catch(() => []),
+                    salasService.getSalas().catch(() => []),
                 ]);
 
                 if (!ativo) return;
@@ -333,6 +368,16 @@ export function Dashboard() {
                 const disponibilidadesLista = Array.isArray(disponibilidades) ? disponibilidades : [];
                 const professoresLista = Array.isArray(professores) ? professores : [];
                 const sessoesFuturasLista = Array.isArray(sessoesFuturas) ? sessoesFuturas : [];
+                const sessoesPorValidarLista = Array.isArray(sessoesPorValidar) ? sessoesPorValidar : [];
+                const sessoesRealizadasMesLista = Array.isArray(sessoesRealizadasMes) ? sessoesRealizadasMes : [];
+                const salasLista = Array.isArray(salas) ? salas : [];
+                const sessoesAgendaMap = new Map<number, SessaoValidacaoDashboard>();
+
+                [...sessoesFuturasLista, ...sessoesPorValidarLista, ...sessoesRealizadasMesLista].forEach((sessao: SessaoValidacaoDashboard) => {
+                    if (typeof sessao?.idCoaching === 'number') {
+                        sessoesAgendaMap.set(sessao.idCoaching, sessao);
+                    }
+                });
 
                 const professoresComDisponibilidadeAtiva = new Set(
                     disponibilidadesLista
@@ -356,7 +401,7 @@ export function Dashboard() {
                     return nomeProfessor && !professoresComSessoes.has(nomeProfessor);
                 }).length;
 
-                const totaisPorDia = sessoesFuturasLista.reduce((acc: number[], sessao: any) => {
+                const totaisPorDia: number[] = sessoesFuturasLista.reduce((acc: number[], sessao: any) => {
                     const dataSessao = parseDashboardDataHora(sessao?.data, sessao?.horario);
                     if (Number.isNaN(dataSessao.getTime())) return acc;
                     const diaSemana = dataSessao.getDay();
@@ -365,7 +410,7 @@ export function Dashboard() {
                 }, Array(7).fill(0));
 
                 const maiorOcupacao = Math.max(...totaisPorDia, 0);
-                const indiceMaiorOcupacao = totaisPorDia.findIndex((total) => total === maiorOcupacao);
+                const indiceMaiorOcupacao = totaisPorDia.findIndex((total: number) => total === maiorOcupacao);
                 const diaMaiorOcupacaoCoaching =
                     maiorOcupacao > 0 && indiceMaiorOcupacao >= 0
                         ? DIAS_SEMANA[indiceMaiorOcupacao]
@@ -384,7 +429,12 @@ export function Dashboard() {
                         ? disponibilidadesLista.filter((item: DisponibilidadeDashboard) => item.estado === 'Pendente')
                         : [],
                 );
-                setSessoesPorValidarDashboard(Array.isArray(sessoesPorValidar) ? sessoesPorValidar : []);
+                setSessoesPorValidarDashboard(sessoesPorValidarLista);
+                setSessoesPendentesEstudioDashboard(
+                    sessoesFuturasLista.filter((sessao: any) => !sessao?.idSala),
+                );
+                setSessoesAgendaDiaDashboard(Array.from(sessoesAgendaMap.values()));
+                setEstudiosDashboard(salasLista);
                 setEventosDashboard(Array.isArray(eventos) ? eventos : []);
                 setDadosKpis((prev) => ({
                     ...prev,
@@ -400,6 +450,9 @@ export function Dashboard() {
                 setPropostasPendentesDashboard([]);
                 setDisponibilidadesPendentesDashboard([]);
                 setSessoesPorValidarDashboard([]);
+                setSessoesPendentesEstudioDashboard([]);
+                setSessoesAgendaDiaDashboard([]);
+                setEstudiosDashboard([]);
                 setEventosDashboard([]);
                 setDadosKpis((prev) => ({
                     ...prev,
@@ -488,6 +541,19 @@ export function Dashboard() {
             })),
         },
         {
+            titulo: 'Sessoes sem estudio',
+            valor: sessoesPendentesEstudioDashboard.length,
+            descricao: 'Marcacoes reais que aguardam atribuicao de estudio.',
+            rota: '/admin/coaching',
+            icone: 'fa-solid fa-building-circle-exclamation',
+            items: sessoesPendentesEstudioDashboard.slice(0, 3).map((item) => ({
+                id: `sessao-estudio-${item.idCoaching}`,
+                titulo: item.modalidade || 'Sessao',
+                subtitulo: `${item.data} â€¢ ${item.horario}`,
+                meta: item.nomeProfessor || 'Professor',
+            })),
+        },
+        {
             titulo: 'Sessoes por validar',
             valor: sessoesPorValidarDashboard.length,
             descricao: 'Sessoes com alunos que ainda aguardam validacao final.',
@@ -500,7 +566,103 @@ export function Dashboard() {
                 meta: item.nomeProfessor || 'Professor',
             })),
         },
-    ]), [disponibilidadesPendentesDashboard, propostasPendentesDashboard, sessoesPorValidarDashboard]);
+    ]), [disponibilidadesPendentesDashboard, propostasPendentesDashboard, sessoesPendentesEstudioDashboard, sessoesPorValidarDashboard]);
+
+    const sessoesAgendaHoje = useMemo(() => {
+        const hojeKey = formatDateKey(new Date());
+
+        return sessoesAgendaDiaDashboard
+            .filter((sessao) => {
+                const dataSessao = parseDashboardDataHora(sessao.data, sessao.horario);
+                return !Number.isNaN(dataSessao.getTime()) && formatDateKey(dataSessao) === hojeKey;
+            })
+            .sort((a, b) => parseDashboardDataHora(a.data, a.horario).getTime() - parseDashboardDataHora(b.data, b.horario).getTime());
+    }, [sessoesAgendaDiaDashboard]);
+
+    const colunasAgendaDia = useMemo<ColunaAgendaDia[]>(() => {
+        const colunas = estudiosDashboard
+            .map((estudio) => ({
+                id: String(estudio.ID_Sala),
+                nome: estudio.Nome,
+            }))
+            .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-PT'));
+
+        const temSessoesSemEstudio = sessoesAgendaHoje.some((sessao) => !sessao.idSala);
+
+        return temSessoesSemEstudio
+            ? [...colunas, { id: 'sem-estudio', nome: 'Sem estudio', semEstudio: true }]
+            : colunas;
+    }, [estudiosDashboard, sessoesAgendaHoje]);
+
+    const horasAgendaDia = useMemo(() => {
+        if (sessoesAgendaHoje.length === 0) {
+            return Array.from({ length: 14 }, (_, index) => index + 8);
+        }
+
+        const horas = sessoesAgendaHoje.map(horaInicioSessao).filter((hora) => !Number.isNaN(hora));
+        const primeiraHora = Math.min(8, ...horas);
+        const ultimaHora = Math.max(21, ...horas);
+
+        return Array.from({ length: ultimaHora - primeiraHora + 1 }, (_, index) => primeiraHora + index);
+    }, [sessoesAgendaHoje]);
+
+    const obterSessoesAgendaCelula = (hora: number, coluna: ColunaAgendaDia) =>
+        sessoesAgendaHoje.filter((sessao) => {
+            if (horaInicioSessao(sessao) !== hora) return false;
+            if (coluna.semEstudio) return !sessao.idSala;
+            return Number(sessao.idSala) === Number(coluna.id);
+        });
+
+    const renderAgendaDiaTable = (className = '') => (
+        <div className={`agenda-dia-table-wrap ${className}`.trim()}>
+            <table className="agenda-dia-table">
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        {colunasAgendaDia.map((coluna) => (
+                            <th key={coluna.id}>{coluna.nome}</th>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody>
+                    {horasAgendaDia.map((hora) => (
+                        <tr key={hora}>
+                            <th>{String(hora).padStart(2, '0')}:00</th>
+                            {colunasAgendaDia.map((coluna) => {
+                                const sessoesCelula = obterSessoesAgendaCelula(hora, coluna);
+
+                                return (
+                                    <td key={coluna.id}>
+                                        {sessoesCelula.length > 0 ? (
+                                            <div className="agenda-dia-cell-list">
+                                                {sessoesCelula.map((sessao) => (
+                                                    <button
+                                                        key={sessao.idCoaching}
+                                                        type="button"
+                                                        className={`agenda-dia-session ${!sessao.idSala ? 'sem-estudio' : ''}`}
+                                                        onClick={() => navigate('/admin/coaching')}
+                                                    >
+                                                        <strong>{sessao.horario}</strong>
+                                                        <span>{sessao.modalidade || 'Coaching'}</span>
+                                                        <small>Prof. {sessao.nomeProfessor || 'N/D'}</small>
+                                                        {Array.isArray(sessao.alunos) && (
+                                                            <small>{sessao.alunos.length} aluno{sessao.alunos.length === 1 ? '' : 's'}</small>
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <span className="agenda-dia-empty">Livre</span>
+                                        )}
+                                    </td>
+                                );
+                            })}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
 
     const renderTendencia = (valor: number, inverso: boolean = false) => {
         if (!valor || valor === 0) return null;
@@ -906,6 +1068,60 @@ export function Dashboard() {
                             </article>
                         ))}
                     </div>
+
+                    <article className={`agenda-dia-card ${agendaDiaAberta ? 'aberta' : ''}`}>
+                        <div className="agenda-dia-header">
+                            <div>
+                                <span className="agenda-dia-eyebrow">Calendario do dia</span>
+                                <h2>Estudios e marcacoes de hoje</h2>
+                                <p>{dataHoje} - {sessoesAgendaHoje.length} marcacao{sessoesAgendaHoje.length === 1 ? '' : 'es'} registada{sessoesAgendaHoje.length === 1 ? '' : 's'}</p>
+                            </div>
+                            <div className="agenda-dia-actions">
+                                <ButtonComponent
+                                    type="button"
+                                    className="agenda-dia-toggle"
+                                    onClick={() => setAgendaDiaModalAberta(true)}
+                                >
+                                    <i className="fa-solid fa-up-right-and-down-left-from-center"></i>
+                                    Abrir em grande
+                                </ButtonComponent>
+                                <ButtonComponent
+                                    type="button"
+                                    className="agenda-dia-toggle"
+                                    onClick={() => setAgendaDiaAberta((aberta) => !aberta)}
+                                    aria-expanded={agendaDiaAberta}
+                                >
+                                    <i className={`fa-solid ${agendaDiaAberta ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+                                    {agendaDiaAberta ? 'Recolher' : 'Expandir'}
+                                </ButtonComponent>
+                            </div>
+                        </div>
+
+                        {agendaDiaAberta && renderAgendaDiaTable()}
+                    </article>
+
+                    {agendaDiaModalAberta && (
+                        <div className="agenda-dia-modal-overlay" onClick={() => setAgendaDiaModalAberta(false)}>
+                            <section className="agenda-dia-modal" onClick={(event) => event.stopPropagation()}>
+                                <div className="agenda-dia-modal-header">
+                                    <div>
+                                        <span className="agenda-dia-eyebrow">Calendario do dia</span>
+                                        <h2>Estudios e marcacoes de hoje</h2>
+                                        <p>{dataHoje} - {sessoesAgendaHoje.length} marcacao{sessoesAgendaHoje.length === 1 ? '' : 'es'} registada{sessoesAgendaHoje.length === 1 ? '' : 's'}</p>
+                                    </div>
+                                    <ButtonComponent
+                                        type="button"
+                                        className="agenda-dia-modal-close"
+                                        onClick={() => setAgendaDiaModalAberta(false)}
+                                        aria-label="Fechar calendario"
+                                    >
+                                        <i className="fa-solid fa-xmark"></i>
+                                    </ButtonComponent>
+                                </div>
+                                {renderAgendaDiaTable('agenda-dia-table-wrap-modal')}
+                            </section>
+                        </div>
+                    )}
 
                     <article className="eventos-card-compacto">
                         <div className="eventos-card-header">

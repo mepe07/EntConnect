@@ -32,9 +32,9 @@ export class InscreverAlunoDto {
   idEstadoCoaching!: number;
 
   @ApiProperty({ description: 'ID do estúdio', example: 1 })
-  @IsNotEmpty()
+  @IsOptional()
   @IsInt()
-  idSala!: number;
+  idSala?: number;
 
   @ApiProperty({ description: 'ID do Coordenador', example: 1 })
   @IsNotEmpty()

@@ -44,13 +44,13 @@ model Artigo {
   Origem_Registo                                        String                          @default("utilizador") @db.VarChar(30)
   Tipo_Anuncio                                          String                          @default("venda") @db.VarChar(20)
   Estado_Anuncio                                        String                          @default("ativo") @db.VarChar(30)
-  Aluguer_Continuo                                      Boolean                         @default(false)
   Motivo_Moderacao                                      String?                         @db.VarChar(500)
   Publicado_No_Marketplace                              Boolean                         @default(false)
   Descricao                                             String?                         @db.VarChar(1000)
   Data_Moderacao                                        DateTime?                       @db.DateTime
   Data_Criacao                                          DateTime                        @default(now(), map: "DF__Artigo__Data_Cri__0D44F85C") @db.DateTime
   Data_Atualizacao                                      DateTime                        @db.DateTime
+  Aluguer_Continuo                                      Boolean                         @default(false)
   Utilizador_Artigo_ID_Utilizador_CriadorToUtilizador   Utilizador?                     @relation("Artigo_ID_Utilizador_CriadorToUtilizador", fields: [ID_Utilizador_Criador], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction)
   Utilizador_Artigo_ID_Utilizador_ModeradorToUtilizador Utilizador?                     @relation("Artigo_ID_Utilizador_ModeradorToUtilizador", fields: [ID_Utilizador_Moderador], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction)
   Registo_Moderacao_Marketplace                         Registo_Moderacao_Marketplace[]
@@ -262,18 +262,18 @@ model Excecao_Disponibilidade {
 }
 
 model Interesse_Artigo {
-  ID_Interesse          Int           @id @default(autoincrement())
-  ID_Utilizador         Int
-  ID_Stock              Int
-  Mensagem              String?       @db.VarChar(500)
-  Estado                String        @default("Pendente") @db.VarChar(20)
-  Data_Registo          DateTime      @default(now())
-  Data_Inicio_Pretendida DateTime?
+  ID_Interesse           Int           @id @default(autoincrement())
+  ID_Utilizador          Int
+  ID_Stock               Int
+  Mensagem               String?       @db.VarChar(500)
+  Estado                 String        @default("Pendente") @db.VarChar(20)
+  Data_Registo           DateTime      @default(now())
+  Data_Recolha_Prevista  DateTime?
+  Tipo                   String        @default("Compra")
   Data_Fim_Pretendida    DateTime?
-  Data_Recolha_Prevista DateTime?
-  Tipo                  String        @default("Compra")
-  Stock_Armazem         Stock_Armazem @relation(fields: [ID_Stock], references: [ID_Stock], onDelete: Cascade)
-  Utilizador            Utilizador    @relation(fields: [ID_Utilizador], references: [ID_Utilizador])
+  Data_Inicio_Pretendida DateTime?
+  Stock_Armazem          Stock_Armazem @relation(fields: [ID_Stock], references: [ID_Stock], onDelete: Cascade)
+  Utilizador             Utilizador    @relation(fields: [ID_Utilizador], references: [ID_Utilizador])
 }
 
 model Modalidade {

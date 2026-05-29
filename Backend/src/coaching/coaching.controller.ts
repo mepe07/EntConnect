@@ -130,6 +130,24 @@ export class CoachingController {
   }
 
   @Roles(Role.COORDENADOR)
+  @Get('admin/sessoes-pendentes-estudio')
+  @ApiOperation({ summary: 'Obter sessoes futuras que ainda aguardam atribuicao de estudio' })
+  async getSessoesPendentesEstudioAdmin() {
+    return this.coachingService.getSessoesPendentesEstudioAdmin();
+  }
+
+  @Roles(Role.COORDENADOR)
+  @Patch('admin/sessoes/:id/atribuir-estudio')
+  @ApiOperation({ summary: 'Atribuir estudio a uma sessao de coaching futura' })
+  async atribuirEstudioSessao(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('idEstudio') idEstudio: number,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.coachingService.atribuirEstudioSessao(id, Number(idEstudio), req.user);
+  }
+
+  @Roles(Role.COORDENADOR)
   @Patch('admin/propostas/:id/rejeitar')
   @ApiOperation({ summary: 'Rejeitar proposta de coaching' })
   async rejeitarPedido(@Param('id', ParseIntPipe) id: number) {
@@ -288,6 +306,13 @@ export class CoachingController {
   @ApiOperation({ summary: 'Obter sessoes realizadas no mes para gestao do admin' })
   async getSessoesRealizadasMesAdmin() {
     return this.coachingService.getSessoesRealizadasMesAdmin();
+  }
+
+  @Roles(Role.COORDENADOR)
+  @Patch('admin/sessoes/:id/validar')
+  @ApiOperation({ summary: 'Validar sessao terminada e confirmar professor e alunos' })
+  async validarSessaoAdmin(@Param('id', ParseIntPipe) id: number) {
+    return this.coachingService.validarSessaoAdmin(id);
   }
   /**
    * Executa a operacao get kpis admin.

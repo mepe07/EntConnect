@@ -380,12 +380,26 @@ select.input-campo {
 .modal-row {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
     gap: 1rem;
     margin-bottom: 0.85rem;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
     font-size: 14px;
 
-    span { color: colors.$gray-5; }
-    strong { color: colors.$gray-8; text-align: right;}
+    span {
+        min-width: 140px;
+        color: colors.$gray-5;
+    }
+
+    strong {
+        min-width: 0;
+        color: colors.$gray-8;
+        text-align: right;
+        overflow-wrap: anywhere;
+    }
 }
 
 .modal-divider {
@@ -421,6 +435,76 @@ select.input-campo {
 
 .empty-state { text-align: center; color: colors.$gray-4; font-style: italic; font-size: 14px; }
 .tabela-loading { text-align: center; padding: 48px; color: colors.$theme-60; font-size: 15px; }
+
+.horarios-admin {
+    .modal-overlay {
+        padding: 1rem;
+    }
+
+    .modal-content {
+        border-radius: 12px;
+        overflow: hidden;
+
+        &.detalhes-modal {
+            max-width: 520px;
+        }
+
+        .modal-body {
+            display: block;
+            padding: 24px;
+            max-height: min(65vh, calc(100vh - 190px));
+            overflow-y: auto;
+
+            &::-webkit-scrollbar {
+                width: 8px;
+            }
+
+            &::-webkit-scrollbar-thumb {
+                background-color: colors.$gray-3;
+                border-radius: 999px;
+            }
+        }
+
+        .modal-footer {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 16px 24px;
+            background-color: #fafafa;
+            border-top: 1px solid colors.$gray-3;
+            border-radius: 0 0 12px 12px;
+        }
+    }
+
+    .modal-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 1rem;
+        margin-bottom: 0.85rem;
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
+        font-size: 14px;
+
+        span {
+            min-width: 140px;
+            color: colors.$gray-5;
+            font-weight: 400;
+            text-align: left;
+        }
+
+        strong {
+            min-width: 0;
+            color: colors.$gray-8;
+            font-size: 14px;
+            text-align: right;
+            overflow-wrap: anywhere;
+        }
+    }
+}
 
 @keyframes fadeEntrada {
     from { opacity: 0; transform: translateY(10px); }

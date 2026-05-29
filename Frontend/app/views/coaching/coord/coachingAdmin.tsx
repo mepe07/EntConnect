@@ -37,6 +37,8 @@ interface SessaoAdmin {
     horario: string;
     modalidade: string;
     estado: string;
+    idSala?: number | null;
+    sala?: string | null;
     alunos: AlunoSessao[];
 }
 
@@ -255,6 +257,54 @@ function calcularEstudiosLivresProposta(proposta: PropostaCoachingAdmin | null, 
     return estudios.filter((estudio) => !estudiosOcupados.has(estudio.ID_Sala));
 }
 
+function calcularEstudiosLivresSessao(
+    sessao: SessaoAdmin | null,
+    estudios: Estudio[],
+    aulasFixas: AulaFixa[],
+    sessoesExistentes: SessaoAdmin[],
+) {
+    if (!sessao) return estudios;
+
+    const dataSessao = parseDataHora(sessao.data, sessao.horario);
+    const [horaInicioStr, horaFimStr] = sessao.horario.split(' - ');
+    const inicioSessao = minutosDeHora(horaInicioStr);
+    const fimSessao = minutosDeHora(horaFimStr);
+
+    const estudiosOcupadosAulas = aulasFixas
+        .filter((aula) => aula.Ativa !== false)
+        .filter((aula) => aulaFixaAconteceNoDia(aula, dataSessao))
+        .filter((aula) => !aulaFixaTemExcecaoNestaData(aula, dataSessao))
+        .filter((aula) => {
+            const inicioAula = minutosDeHora(aula.Hora_Inicio);
+            return intervalosSobrepostos(
+                inicioSessao,
+                fimSessao,
+                inicioAula,
+                inicioAula + aula.Duracao,
+            );
+        })
+        .map((aula) => aula.ID_Estudio);
+
+    const dataKey = formatDateKey(dataSessao);
+    const estudiosOcupadosSessoes = sessoesExistentes
+        .filter((item) => item.idCoaching !== sessao.idCoaching)
+        .filter((item) => item.idSala)
+        .filter((item) => formatDateKey(parseDataHora(item.data, item.horario)) === dataKey)
+        .filter((item) => {
+            const [horaInicioItem, horaFimItem] = item.horario.split(' - ');
+            return intervalosSobrepostos(
+                inicioSessao,
+                fimSessao,
+                minutosDeHora(horaInicioItem),
+                minutosDeHora(horaFimItem),
+            );
+        })
+        .map((item) => Number(item.idSala));
+
+    const estudiosOcupados = new Set([...estudiosOcupadosAulas, ...estudiosOcupadosSessoes]);
+    return estudios.filter((estudio) => !estudiosOcupados.has(estudio.ID_Sala));
+}
+
 function getWeekRange(date: Date) {
     const copy = new Date(date);
     const weekday = copy.getDay();
@@ -314,6 +364,7 @@ export default function CoachingAdmin() {
     const salasService = new SalasService();
 
     const [sessoes, setSessoes] = useState<SessaoAdmin[]>([]);
+    const [sessoesPendentesEstudio, setSessoesPendentesEstudio] = useState<SessaoAdmin[]>([]);
     const [sessoesPorValidar, setSessoesPorValidar] = useState<SessaoAdmin[]>([]);
     const [sessoesPorValidarCalendario, setSessoesPorValidarCalendario] = useState<SessaoAdmin[]>([]);
     const [viewMode, setViewMode] = useState<ViewMode>('month');
@@ -324,6 +375,7 @@ export default function CoachingAdmin() {
     const [isAlunoInfoModalAberto, setIsAlunoInfoModalAberto] = useState(false);
     const [alunoDetalhes, setAlunoDetalhes] = useState<AlunoDetalhes | null>(null);
     const [isCarregandoAluno, setIsCarregandoAluno] = useState(false);
+    const [isValidandoSessao, setIsValidandoSessao] = useState(false);
     const [isExportando, setIsExportando] = useState(false); 
 
     const [isCarregandoPorValidar, setIsCarregandoPorValidar] = useState(false);
@@ -332,6 +384,9 @@ export default function CoachingAdmin() {
     const [propostaEmTratamento, setPropostaEmTratamento] = useState<number | null>(null);
     const [propostaSelecionada, setPropostaSelecionada] = useState<PropostaCoachingAdmin | null>(null);
     const [estudioPropostaSelecionado, setEstudioPropostaSelecionado] = useState('');
+    const [isPendentesEstudioModalAberto, setIsPendentesEstudioModalAberto] = useState(false);
+    const [sessaoPendenteEstudioSelecionada, setSessaoPendenteEstudioSelecionada] = useState<SessaoAdmin | null>(null);
+    const [estudioSessaoSelecionado, setEstudioSessaoSelecionado] = useState('');
     const [listaEstudios, setListaEstudios] = useState<Estudio[]>([]);
     const [aulasFixas, setAulasFixas] = useState<AulaFixa[]>([]);
     const [kpiModalInfo, setKpiModalInfo] = useState<KpiModalInfo>({
@@ -348,13 +403,15 @@ export default function CoachingAdmin() {
 
     async function fetchDadosDashboard() {
         try {
-            const [dadosKpis, dadosTabela] = await Promise.all([
+            const [dadosKpis, dadosTabela, dadosPendentesEstudio] = await Promise.all([
                 adminService.getKpis(),
-                adminService.getSessoesFuturas()
+                adminService.getSessoesFuturas(),
+                adminService.getSessoesPendentesEstudio().catch(() => []),
             ]);
 
             setKpis(dadosKpis);
             setSessoes(Array.isArray(dadosTabela) ? dadosTabela : []);
+            setSessoesPendentesEstudio(Array.isArray(dadosPendentesEstudio) ? dadosPendentesEstudio : []);
             fetchPropostasPendentes();
 
             try {
@@ -368,6 +425,7 @@ export default function CoachingAdmin() {
             console.error('Erro ao carregar dados:', error);
             setKpis({ proximas24h: 0, marcadas: 0, porValidar: 0, realizadasMes: 0 });
             setSessoes([]);
+            setSessoesPendentesEstudio([]);
             setSessoesPorValidarCalendario([]);
         }
     }
@@ -580,6 +638,31 @@ export default function CoachingAdmin() {
         abrirModal(sessao);
     }
 
+    async function handleValidarSessao() {
+        if (!sessaoSelecionada) return;
+
+        if (!isSessaoPorValidar(sessaoSelecionada)) {
+            showToast('Apenas sessoes terminadas por validar podem ser validadas.');
+            return;
+        }
+
+        setIsValidandoSessao(true);
+        try {
+            showToast('A validar sessao...');
+            await adminService.validarSessao(sessaoSelecionada.idCoaching);
+            showToast('Sessao validada com sucesso.');
+            setSessoesPorValidar((atuais) => atuais.filter((sessao) => sessao.idCoaching !== sessaoSelecionada.idCoaching));
+            setSessoesPorValidarCalendario((atuais) => atuais.filter((sessao) => sessao.idCoaching !== sessaoSelecionada.idCoaching));
+            fecharModal();
+            fetchDadosDashboard();
+        } catch (error) {
+            console.error(error);
+            showToast(error instanceof Error ? error.message : 'Erro ao validar sessao.');
+        } finally {
+            setIsValidandoSessao(false);
+        }
+    }
+
     async function handleEliminarSessao() {
         if (!sessaoSelecionada) return;
 
@@ -646,6 +729,45 @@ export default function CoachingAdmin() {
     function fecharModalAprovacaoProposta() {
         setPropostaSelecionada(null);
         setEstudioPropostaSelecionado('');
+    }
+
+    function abrirModalPendentesEstudio() {
+        setIsPendentesEstudioModalAberto(true);
+    }
+
+    function fecharModalPendentesEstudio() {
+        setIsPendentesEstudioModalAberto(false);
+        setSessaoPendenteEstudioSelecionada(null);
+        setEstudioSessaoSelecionado('');
+    }
+
+    function selecionarSessaoPendenteEstudio(sessao: SessaoAdmin) {
+        setSessaoPendenteEstudioSelecionada(sessao);
+        setEstudioSessaoSelecionado('');
+    }
+
+    async function confirmarAtribuicaoEstudioSessao() {
+        if (!sessaoPendenteEstudioSelecionada || !estudioSessaoSelecionado) {
+            showToast('Selecione um estudio para esta sessao.');
+            return;
+        }
+
+        try {
+            await adminService.atribuirEstudioSessao(
+                sessaoPendenteEstudioSelecionada.idCoaching,
+                Number(estudioSessaoSelecionado),
+            );
+            showToast('Estudio atribuido com sucesso.');
+            setSessoesPendentesEstudio((atuais) =>
+                atuais.filter((sessao) => sessao.idCoaching !== sessaoPendenteEstudioSelecionada.idCoaching),
+            );
+            setSessaoPendenteEstudioSelecionada(null);
+            setEstudioSessaoSelecionado('');
+            fetchDadosDashboard();
+        } catch (error) {
+            console.error(error);
+            showToast(error instanceof Error ? error.message : 'Erro ao atribuir estudio.');
+        }
     }
 
     async function confirmarAprovacaoProposta() {
@@ -777,6 +899,12 @@ export default function CoachingAdmin() {
     );
 
     const estudiosLivresProposta = calcularEstudiosLivresProposta(propostaSelecionada, listaEstudios, aulasFixas);
+    const estudiosLivresSessao = calcularEstudiosLivresSessao(
+        sessaoPendenteEstudioSelecionada,
+        listaEstudios,
+        aulasFixas,
+        sessoes,
+    );
 
     return (
         <div className="dashboard-wrapper">
@@ -842,6 +970,23 @@ export default function CoachingAdmin() {
             </section>
 
             <section className="quick-actions-section">
+                <div className={`quick-action-card ${sessoesPendentesEstudio.length > 0 ? 'warning' : ''}`}>
+                    <div className="quick-action-copy">
+                        <span className="quick-action-eyebrow">Ação rápida</span>
+                        <h2>Sessões sem estúdio</h2>
+                        <p>
+                            {sessoesPendentesEstudio.length > 0
+                                ? `Existem ${sessoesPendentesEstudio.length} sess${sessoesPendentesEstudio.length === 1 ? 'ão' : 'ões'} reais a aguardar atribuição de estúdio.`
+                                : 'Não existem sessões pendentes de estúdio neste momento.'}
+                        </p>
+                    </div>
+                    <div className="quick-action-controls">
+                        <strong className="quick-action-value">{sessoesPendentesEstudio.length}</strong>
+                        <ButtonComponent type="button" className="btn-quick-action" onClick={abrirModalPendentesEstudio}>
+                            <i className="fa-solid fa-building-circle-exclamation"></i> Ver sessões sem estúdio
+                        </ButtonComponent>
+                    </div>
+                </div>
                 <div className={`quick-action-card ${kpis.porValidar > 0 ? 'warning' : ''}`}>
                     <div className="quick-action-copy">
                         <span className="quick-action-eyebrow">Ação rápida</span>
@@ -912,6 +1057,108 @@ export default function CoachingAdmin() {
                     </div>
                 )}
             </section>
+
+            {isPendentesEstudioModalAberto && (
+                <div className="modal-overlay" onClick={fecharModalPendentesEstudio}>
+                    <div className="modal-conteudo modal-conteudo-proposta" onClick={(event) => event.stopPropagation()}>
+                        <div className="modal-cabecalho">
+                            <div>
+                                <h2>Sessões sem estúdio</h2>
+                                <p className="modal-subtitle">Atribua o estúdio apenas às sessões que já foram realmente marcadas.</p>
+                            </div>
+                            <ButtonComponent type="button" className="btn-fechar-icon" onClick={fecharModalPendentesEstudio}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </ButtonComponent>
+                        </div>
+
+                        {sessoesPendentesEstudio.length === 0 ? (
+                            <div className="empty-state">Não existem sessões pendentes de estúdio.</div>
+                        ) : (
+                            <>
+                                <div className="validacao-list">
+                                    {sessoesPendentesEstudio.map((sessao) => (
+                                        <button
+                                            key={sessao.idCoaching}
+                                            type="button"
+                                            className={`validacao-card ${sessaoPendenteEstudioSelecionada?.idCoaching === sessao.idCoaching ? 'is-selected' : ''}`}
+                                            onClick={() => selecionarSessaoPendenteEstudio(sessao)}
+                                        >
+                                            <span className="validacao-date">{sessao.data}</span>
+                                            <span className="validacao-main">
+                                                <strong>{sessao.modalidade || 'Coaching'}</strong>
+                                                <span>{sessao.horario}</span>
+                                            </span>
+                                            <span className="validacao-meta">
+                                                <span>Prof. {sessao.nomeProfessor || 'Não definido'}</span>
+                                                <span>{sessao.alunos.length} aluno{sessao.alunos.length === 1 ? '' : 's'}</span>
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {sessaoPendenteEstudioSelecionada && (
+                                    <>
+                                        <div className="proposta-aprovacao-info">
+                                            <div>
+                                                <span>Data</span>
+                                                <strong>{sessaoPendenteEstudioSelecionada.data} | {sessaoPendenteEstudioSelecionada.horario}</strong>
+                                            </div>
+                                            <div>
+                                                <span>Modalidade</span>
+                                                <strong>{sessaoPendenteEstudioSelecionada.modalidade}</strong>
+                                            </div>
+                                            <div>
+                                                <span>Professor</span>
+                                                <strong>{sessaoPendenteEstudioSelecionada.nomeProfessor}</strong>
+                                            </div>
+                                            <div>
+                                                <span>Alunos</span>
+                                                <strong>{sessaoPendenteEstudioSelecionada.alunos.map((aluno) => aluno.nome).join(', ')}</strong>
+                                            </div>
+                                        </div>
+
+                                        <label className="proposta-estudio-field">
+                                            Estúdio
+                                            <select
+                                                className="select-box"
+                                                value={estudioSessaoSelecionado}
+                                                onChange={(event) => setEstudioSessaoSelecionado(event.target.value)}
+                                            >
+                                                <option value="">Selecione um estúdio...</option>
+                                                {estudiosLivresSessao.map((estudio) => (
+                                                    <option key={estudio.ID_Sala} value={estudio.ID_Sala}>
+                                                        {estudio.Nome}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </label>
+
+                                        {estudiosLivresSessao.length === 0 && (
+                                            <p className="proposta-estudio-alerta">
+                                                Nenhum estúdio livre para este dia e horário.
+                                            </p>
+                                        )}
+
+                                        <div className="modal-acoes">
+                                            <ButtonComponent type="button" className="btn-fechar" onClick={fecharModalPendentesEstudio}>
+                                                Fechar
+                                            </ButtonComponent>
+                                            <ButtonComponent
+                                                type="button"
+                                                className="btn-confirmar-proposta"
+                                                onClick={confirmarAtribuicaoEstudioSessao}
+                                                disabled={!estudioSessaoSelecionado || estudiosLivresSessao.length === 0}
+                                            >
+                                                Atribuir estúdio
+                                            </ButtonComponent>
+                                        </div>
+                                    </>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {propostaSelecionada && (
                 <div className="modal-overlay">
@@ -1187,6 +1434,15 @@ export default function CoachingAdmin() {
                         </div>
 
                         <div className="modal-acoes">
+                            {isSessaoPorValidar(sessaoSelecionada) && (
+                                <ButtonComponent
+                                    className="btn-validarSessao"
+                                    onClick={handleValidarSessao}
+                                    disabled={isValidandoSessao}
+                                >
+                                    <i className="fa-solid fa-check"></i> {isValidandoSessao ? 'A validar...' : 'Validar sessao'}
+                                </ButtonComponent>
+                            )}
                             {isSessaoFutura(sessaoSelecionada) && (
                                 <ButtonComponent className="btn-anularSessao" onClick={handleEliminarSessao}>Anular sessão</ButtonComponent>
                             )}

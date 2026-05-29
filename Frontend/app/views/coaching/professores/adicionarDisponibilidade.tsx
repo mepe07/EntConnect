@@ -68,7 +68,7 @@ const initialForm = {
     tipo: 'recorrente' as 'recorrente' | 'unica',
     diaSemana: 1,
     dataUnica: '',
-    hora: '16:00',
+    hora: '00:00',
     duracao: 60,
 };
 
@@ -82,6 +82,11 @@ function getDataAtualInput() {
 }
 
 function formatTime(value: string) {
+    const recurringMatch = /^1970-01-01T(\d{2}):(\d{2})/.exec(value);
+    if (recurringMatch) {
+        return `${recurringMatch[1]}:${recurringMatch[2]}`;
+    }
+
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
     return date.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
@@ -117,6 +122,11 @@ function horaParaDataIso(hora: string) {
 }
 
 function calcularPosicaoY(horaInicio: string) {
+    const recurringMatch = /^1970-01-01T(\d{2}):(\d{2})/.exec(horaInicio);
+    if (recurringMatch) {
+        return Number(recurringMatch[1]) * 60 + Number(recurringMatch[2]);
+    }
+
     const date = new Date(horaInicio);
     if (Number.isNaN(date.getTime())) return 0;
     return date.getHours() * 60 + date.getMinutes();

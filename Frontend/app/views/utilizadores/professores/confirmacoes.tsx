@@ -69,10 +69,9 @@ export default function Confirmacoes() {
     }, []);
 
     const handleConfirmar = async (sessao: SessaoPendente) => {
-        if (!window.confirm('Confirma que esta sessão foi realizada com sucesso?')) return;
-
         setIsAguardar(true);
         try {
+            showToast('A confirmar sessão...');
             await profConfirmacoesService.confirmarSessao(sessao.idCoaching);
 
             setSessoes((sessoesAnteriores) =>

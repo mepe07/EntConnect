@@ -31,6 +31,20 @@ export class AdminService {
         return response.json();
     }
 
+    async getSessoesPendentesEstudio(): Promise<any[]> {
+        const response = await fetch(`${this._apiUrl}/coaching/admin/sessoes-pendentes-estudio`, {
+            method: 'GET',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Erro ao buscar sessoes pendentes de estudio (${response.status})`);
+        }
+
+        return response.json();
+    }
+
     async getSessoesPorValidar(): Promise<any[]> {
         const response = await fetch(`${this._apiUrl}/coaching/admin/sessoes-por-validar`, {
             method: 'GET',
@@ -54,6 +68,20 @@ export class AdminService {
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
             throw new Error(errorData?.message || `Erro ao buscar sessoes realizadas no mes (${response.status})`);
+        }
+
+        return response.json();
+    }
+
+    async validarSessao(idCoaching: number): Promise<any> {
+        const response = await fetch(`${this._apiUrl}/coaching/admin/sessoes/${idCoaching}/validar`, {
+            method: 'PATCH',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Erro ao validar sessao (${response.status})`);
         }
 
         return response.json();
@@ -93,6 +121,21 @@ export class AdminService {
 
         if (!response.ok) {
             throw new Error('Erro ao buscar detalhes do aluno');
+        }
+
+        return response.json();
+    }
+
+    async atribuirEstudioSessao(idCoaching: number, idEstudio: number): Promise<any> {
+        const response = await fetch(`${this._apiUrl}/coaching/admin/sessoes/${idCoaching}/atribuir-estudio`, {
+            method: 'PATCH',
+            headers: this.getHeaders(),
+            body: JSON.stringify({ idEstudio }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || 'Erro ao atribuir estudio a sessao.');
         }
 
         return response.json();
