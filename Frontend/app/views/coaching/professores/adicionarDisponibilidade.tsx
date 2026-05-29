@@ -68,7 +68,7 @@ const initialForm = {
     tipo: 'recorrente' as 'recorrente' | 'unica',
     diaSemana: 1,
     dataUnica: '',
-    hora: '16:00',
+    hora: '00:00',
     duracao: 60,
 };
 

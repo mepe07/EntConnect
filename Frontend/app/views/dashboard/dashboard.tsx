@@ -61,6 +61,8 @@ type SessaoValidacaoDashboard = {
     modalidade: string;
     data: string;
     horario: string;
+    idSala?: number | null;
+    sala?: string | null;
 };
 
 type ProfessorDashboard = {
@@ -173,6 +175,7 @@ export function Dashboard() {
     const [propostasPendentesDashboard, setPropostasPendentesDashboard] = useState<PropostaDashboard[]>([]);
     const [disponibilidadesPendentesDashboard, setDisponibilidadesPendentesDashboard] = useState<DisponibilidadeDashboard[]>([]);
     const [sessoesPorValidarDashboard, setSessoesPorValidarDashboard] = useState<SessaoValidacaoDashboard[]>([]);
+    const [sessoesPendentesEstudioDashboard, setSessoesPendentesEstudioDashboard] = useState<SessaoValidacaoDashboard[]>([]);
     const [eventosDashboard, setEventosDashboard] = useState<Evento[]>([]);
 
     const [acoesAtivasIds, setAcoesAtivasIds] = useState<number[]>(() => {
@@ -385,6 +388,9 @@ export function Dashboard() {
                         : [],
                 );
                 setSessoesPorValidarDashboard(Array.isArray(sessoesPorValidar) ? sessoesPorValidar : []);
+                setSessoesPendentesEstudioDashboard(
+                    sessoesFuturasLista.filter((sessao: any) => !sessao?.idSala),
+                );
                 setEventosDashboard(Array.isArray(eventos) ? eventos : []);
                 setDadosKpis((prev) => ({
                     ...prev,
@@ -400,6 +406,7 @@ export function Dashboard() {
                 setPropostasPendentesDashboard([]);
                 setDisponibilidadesPendentesDashboard([]);
                 setSessoesPorValidarDashboard([]);
+                setSessoesPendentesEstudioDashboard([]);
                 setEventosDashboard([]);
                 setDadosKpis((prev) => ({
                     ...prev,
@@ -488,6 +495,19 @@ export function Dashboard() {
             })),
         },
         {
+            titulo: 'Sessoes sem estudio',
+            valor: sessoesPendentesEstudioDashboard.length,
+            descricao: 'Marcacoes reais que aguardam atribuicao de estudio.',
+            rota: '/admin/coaching',
+            icone: 'fa-solid fa-building-circle-exclamation',
+            items: sessoesPendentesEstudioDashboard.slice(0, 3).map((item) => ({
+                id: `sessao-estudio-${item.idCoaching}`,
+                titulo: item.modalidade || 'Sessao',
+                subtitulo: `${item.data} â€¢ ${item.horario}`,
+                meta: item.nomeProfessor || 'Professor',
+            })),
+        },
+        {
             titulo: 'Sessoes por validar',
             valor: sessoesPorValidarDashboard.length,
             descricao: 'Sessoes com alunos que ainda aguardam validacao final.',
@@ -500,7 +520,7 @@ export function Dashboard() {
                 meta: item.nomeProfessor || 'Professor',
             })),
         },
-    ]), [disponibilidadesPendentesDashboard, propostasPendentesDashboard, sessoesPorValidarDashboard]);
+    ]), [disponibilidadesPendentesDashboard, propostasPendentesDashboard, sessoesPendentesEstudioDashboard, sessoesPorValidarDashboard]);
 
     const renderTendencia = (valor: number, inverso: boolean = false) => {
         if (!valor || valor === 0) return null;

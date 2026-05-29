@@ -4,8 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { DisponibilidadesService } from '../../../services/disponibilidades.service';
 import { authService } from '~/services/auth.service';
 import type { User } from '../../../models/interfaces/user.interface';
-import { SalasService } from '../../../services/salas.service';
-import { horariosService } from '~/services/horarios.service';
 import { showToast } from '~/components/toast/toast';
 
 interface DiaSemana {
@@ -28,6 +26,7 @@ export interface Disponibilidade {
     maxAlunos: number;
     idEstudio?: number | null;
     valorPorAluno?: number;
+    modalidadesProfessor?: { idModalidade: number; descricao: string }[];
     duracao: number;
     horaInicio: string;
     diaSemana?: number | null;
@@ -49,34 +48,7 @@ export interface Estudio {
     Disponivel: boolean;
 }
 
-interface ExcecaoAulaFixa {
-    Data_Cancelada: string;
-}
-
-interface AulaFixa {
-    ID_AulaFixa: number;
-    Dia_Semana: number;
-    Hora_Inicio: string;
-    Duracao: number;
-    ID_Estudio: number;
-    Ativa: boolean;
-    Dias_Semana?: {
-        Nome_Dia: string;
-    };
-    Excecao_Aula_Fixa?: ExcecaoAulaFixa[];
-}
-
 type ViewMode = 'month' | 'week' | 'day';
-
-const DIAS_SEMANA_PT: Record<number, string[]> = {
-    0: ['domingo'],
-    1: ['segunda', 'segunda-feira'],
-    2: ['terca', 'terca-feira', 'terca-feira'],
-    3: ['quarta', 'quarta-feira'],
-    4: ['quinta', 'quinta-feira'],
-    5: ['sexta', 'sexta-feira'],
-    6: ['sabado', 'sabado'],
-};
 
 function pad(value: number) {
     return String(value).padStart(2, '0');
@@ -157,10 +129,6 @@ function reorderMonthGridToStartWithWeek(monthGrid: Date[], referenceDate: Date)
     return [...chunkedWeeks.slice(weekIndex), ...chunkedWeeks.slice(0, weekIndex)].flat();
 }
 
-function dataLocalIso(data: Date) {
-    return formatDateKey(data);
-}
-
 function dataIsoDeValor(valor: string) {
     const isoMatch = valor.match(/^(\d{4}-\d{2}-\d{2})/);
     if (isoMatch) return isoMatch[1];
@@ -168,77 +136,9 @@ function dataIsoDeValor(valor: string) {
     const data = new Date(valor);
     if (Number.isNaN(data.getTime())) return valor.slice(0, 10);
 
-    return dataLocalIso(data);
+    return formatDateKey(data);
 }
 
-function minutosDeHora(valor: string) {
-    const data = new Date(valor);
-    if (!Number.isNaN(data.getTime())) {
-        return data.getHours() * 60 + data.getMinutes();
-    }
-
-    const match = valor.match(/(\d{1,2}):(\d{2})/);
-    if (!match) return 0;
-
-    return Number(match[1]) * 60 + Number(match[2]);
-}
-
-function intervalosSobrepostos(inicioA: number, fimA: number, inicioB: number, fimB: number) {
-    return inicioA < fimB && inicioB < fimA;
-}
-
-function normalizarTexto(valor: string) {
-    return valor
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase();
-}
-
-function aulaFixaAconteceNoDia(aula: AulaFixa, dataDisponibilidade: Date) {
-    const nomeDia = aula.Dias_Semana?.Nome_Dia;
-
-    if (nomeDia) {
-        const nomeNormalizado = normalizarTexto(nomeDia);
-        return DIAS_SEMANA_PT[dataDisponibilidade.getDay()].some((dia) => nomeNormalizado.includes(normalizarTexto(dia)));
-    }
-
-    const diaSemanaPt = dataDisponibilidade.getDay() === 0 ? 7 : dataDisponibilidade.getDay();
-    return aula.Dia_Semana === diaSemanaPt;
-}
-
-function aulaFixaTemExcecaoNestaData(aula: AulaFixa, dataDisponibilidade: Date) {
-    const dataIso = dataLocalIso(dataDisponibilidade);
-
-    return aula.Excecao_Aula_Fixa?.some((excecao) => dataIsoDeValor(excecao.Data_Cancelada) === dataIso) ?? false;
-}
-
-function calcularEstudiosLivres(disponibilidade: Disponibilidade | null, dataReferencia: string | null, estudios: Estudio[], aulasFixas: AulaFixa[]) {
-    if (!disponibilidade) return estudios;
-
-    const dataDisponibilidade = dataReferencia ? parseDataDisponibilidade(dataReferencia) : parseDataDisponibilidade(disponibilidade.data);
-    const [horaInicioStr, horaFimStr] = disponibilidade.horario.split(' - ');
-    const inicioDisponibilidade = minutosDeHora(horaInicioStr);
-    const fimDisponibilidade = minutosDeHora(horaFimStr);
-
-    const estudiosOcupados = new Set(
-        aulasFixas
-            .filter((aula) => aula.Ativa !== false)
-            .filter((aula) => aulaFixaAconteceNoDia(aula, dataDisponibilidade))
-            .filter((aula) => !aulaFixaTemExcecaoNestaData(aula, dataDisponibilidade))
-            .filter((aula) => {
-                const inicioAula = minutosDeHora(aula.Hora_Inicio);
-                return intervalosSobrepostos(
-                    inicioDisponibilidade,
-                    fimDisponibilidade,
-                    inicioAula,
-                    inicioAula + aula.Duracao,
-                );
-            })
-            .map((aula) => aula.ID_Estudio),
-    );
-
-    return estudios.filter((estudio) => !estudiosOcupados.has(estudio.ID_Sala));
-}
 
 function normalizarEstado(estado?: string) {
     return (estado ?? '')
@@ -324,16 +224,11 @@ export default function ApproveAvailability() {
     const isCoordenador = userInfo?.role?.toLowerCase().includes('coord');
 
     const disponibilidadesService = new DisponibilidadesService();
-    const salasService = new SalasService();
 
     const [disponibilidades, setDisponibilidades] = useState<Disponibilidade[]>([]);
-    const [listaEstudios, setListaEstudios] = useState<Estudio[]>([]);
-    const [todosEstudios, setTodosEstudios] = useState<Estudio[]>([]);
-    const [aulasFixas, setAulasFixas] = useState<AulaFixa[]>([]);
     const [modalAberto, setModalAberto] = useState(false);
     const [linhaSelecionada, setLinhaSelecionada] = useState<Disponibilidade | null>(null);
     const [dataReferenciaSelecionada, setDataReferenciaSelecionada] = useState<string | null>(null);
-    const [estudioSelecionado, setEstudioSelecionado] = useState('');
     const [valorPorAluno, setValorPorAluno] = useState('');
     const [maxAlunosSelecionado, setMaxAlunosSelecionado] = useState('1');
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -351,32 +246,10 @@ export default function ApproveAvailability() {
         }
     }
 
-    async function fetchEstudios() {
-        try {
-            const data = await salasService.getSalas();
-            setTodosEstudios(Array.isArray(data) ? data : []);
-            const salasDisponiveis = data.filter((sala: Estudio) => sala.Disponivel === true);
-            setListaEstudios(salasDisponiveis);
-        } catch (error) {
-            console.error('Erro ao carregar as salas:', error);
-        }
-    }
-
-    async function fetchAulasFixas() {
-        try {
-            const data = await horariosService.getHorarios();
-            setAulasFixas(data);
-        } catch (error) {
-            console.error('Erro ao carregar as aulas fixas:', error);
-        }
-    }
-
     useEffect(() => {
         if (!isCoordenador) return;
 
         fetchDisponibilidades();
-        fetchEstudios();
-        fetchAulasFixas();
     }, [isCoordenador]);
 
     const weekGrid = useMemo(() => getWeekDates(selectedDate), [selectedDate]);
@@ -463,7 +336,6 @@ export default function ApproveAvailability() {
     function abrirModalAprovacao(disponibilidade: Disponibilidade, dataReferencia?: string) {
         setLinhaSelecionada(disponibilidade);
         setDataReferenciaSelecionada(dataReferencia ?? null);
-        setEstudioSelecionado('');
         setValorPorAluno('');
         setMaxAlunosSelecionado('1');
         setModalAberto(true);
@@ -476,19 +348,24 @@ export default function ApproveAvailability() {
     }
 
     function getNomeEstudio(idEstudio?: number | null) {
-        if (!idEstudio) return 'Sem estúdio definido';
-        return todosEstudios.find((estudio) => estudio.ID_Sala === idEstudio)?.Nome ?? `Estúdio #${idEstudio}`;
+        if (!idEstudio) return 'Por definir quando existir sessao';
+        return `Estudio #${idEstudio}`;
     }
 
     async function confirmarAprovacao() {
         if (!linhaSelecionada) return;
 
-        if (!estudioSelecionado || !valorPorAluno || !maxAlunosSelecionado) {
-            showToast('Seleciona um estúdio e preenche os dados de aprovação.');
+        if (!valorPorAluno || !maxAlunosSelecionado) {
+            showToast('Preenche os dados de aprovacao.');
             return;
         }
 
-        await handleAtualizarEstado(linhaSelecionada, 1, Number(estudioSelecionado), Number(valorPorAluno), Number(maxAlunosSelecionado));
+        if ((linhaSelecionada.modalidadesProfessor?.length ?? 0) === 0) {
+            showToast('Associe pelo menos uma modalidade ao professor antes de aprovar esta disponibilidade.');
+            return;
+        }
+
+        await handleAtualizarEstado(linhaSelecionada, 1, undefined, Number(valorPorAluno), Number(maxAlunosSelecionado));
         fecharModal();
     }
 
@@ -537,7 +414,6 @@ export default function ApproveAvailability() {
         setSelectedDate(nextDate);
     }
 
-    const estudiosLivres = calcularEstudiosLivres(linhaSelecionada, dataReferenciaSelecionada, listaEstudios, aulasFixas);
     const disponibilidadeAprovada = normalizarEstado(linhaSelecionada?.estado) === 'aprovado';
 
     if (!isCoordenador) {
@@ -769,25 +645,6 @@ export default function ApproveAvailability() {
                             ) : (
                                 <>
                                     <div className="form-group">
-                                        <label>Atribuir estúdio</label>
-                                        <select
-                                            className="select-box"
-                                            value={estudioSelecionado}
-                                            onChange={(e) => setEstudioSelecionado(e.target.value)}
-                                        >
-                                            <option value="">Selecione um estúdio...</option>
-                                            {estudiosLivres.map((estudio) => (
-                                                <option key={estudio.ID_Sala} value={estudio.ID_Sala}>
-                                                    {estudio.Nome}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        {estudiosLivres.length === 0 && (
-                                            <p className="field-alert">Nenhum estúdio livre para este dia e horário.</p>
-                                        )}
-                                    </div>
-
-                                    <div className="form-group">
                                         <label>Máximo de alunos</label>
                                         <input
                                             type="number"
@@ -816,7 +673,7 @@ export default function ApproveAvailability() {
                                     <ButtonComponent
                                         className="btn-confirmar"
                                         onClick={confirmarAprovacao}
-                                        disabled={!estudioSelecionado || !valorPorAluno || !maxAlunosSelecionado || estudiosLivres.length === 0 || loading}
+                                        disabled={!valorPorAluno || !maxAlunosSelecionado || loading}
                                     >
                                         Confirmar aprovação
                                     </ButtonComponent>
@@ -829,3 +686,5 @@ export default function ApproveAvailability() {
         </div>
     );
 }
+
+

@@ -92,6 +92,31 @@ export class CoachingService {
       .trim();
   }
 
+  private formatSessaoAdmin(session: any) {
+    return {
+      idCoaching: session.ID_Coaching,
+      nomeProfessor: session.Professor?.Pessoa?.Nome || 'N/A',
+      data: session.Inicio_Coaching
+        ? session.Inicio_Coaching.toLocaleDateString('pt-PT')
+        : 'N/A',
+      horario:
+        session.Inicio_Coaching && session.Duracao
+          ? `${session.Inicio_Coaching.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} - ${new Date(session.Inicio_Coaching.getTime() + session.Duracao * 60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
+          : 'N/A',
+      modalidade:
+        session.Modalidade?.Descricao ||
+        session.Disponibilidade?.Modalidade ||
+        'N/A',
+      estado: session.Estado_Coaching?.Tipo || 'N/A',
+      idSala: session.ID_Sala ?? null,
+      sala: session.Sala?.Nome || null,
+      alunos: session.Coaching_Aluno.map((ca: any) => ({
+        idAluno: ca.ID_Aluno,
+        nome: ca.Aluno?.Nome || 'Aluno nÃ£o encontrado',
+      })),
+    };
+  }
+
   /**
    * Cria um novo registo.
    * @param createCoachingDto Dados recebidos para a operacao.
@@ -182,7 +207,7 @@ export class CoachingService {
         data: {
           ID_Professor: body.idProfessor,
           ID_Estado_Coaching: body.idEstadoCoaching,
-          ID_Sala: body.idSala,
+          ID_Sala: body.idSala ?? null,
           ID_Coordenador: body.idCoordenador,
           ID_Modalidade: body.idModalidade,
           ValorPorAluno: body.valorPorAluno,
@@ -297,6 +322,7 @@ export class CoachingService {
         },
         Disponibilidade: true,
         Modalidade: true,
+        Sala: true,
         Estado_Coaching: true,
         Coaching_Aluno: {
           include: {
@@ -308,6 +334,8 @@ export class CoachingService {
         Inicio_Coaching: 'asc',
       },
     });
+
+    return futureSessions.map((session) => this.formatSessaoAdmin(session));
 
     return futureSessions.map((session) => ({
       idCoaching: session.ID_Coaching,
@@ -635,6 +663,7 @@ export class CoachingService {
         },
         Disponibilidade: true,
         Modalidade: true,
+        Sala: true,
         Estado_Coaching: true,
         Coaching_Aluno: {
           include: {
@@ -646,6 +675,8 @@ export class CoachingService {
         Inicio_Coaching: 'asc',
       },
     });
+
+    return sessions.map((session) => this.formatSessaoAdmin(session));
 
     return sessions.map((session) => ({
       idCoaching: session.ID_Coaching,
@@ -699,6 +730,7 @@ export class CoachingService {
         },
         Disponibilidade: true,
         Modalidade: true,
+        Sala: true,
         Estado_Coaching: true,
         Coaching_Aluno: {
           include: {
@@ -710,6 +742,8 @@ export class CoachingService {
         Inicio_Coaching: 'asc',
       },
     });
+
+    return sessions.map((session) => this.formatSessaoAdmin(session));
 
     return sessions.map((session) => ({
       idCoaching: session.ID_Coaching,
@@ -731,6 +765,136 @@ export class CoachingService {
         nome: ca.Aluno?.Nome || 'Aluno não encontrado',
       })),
     }));
+  }
+
+  async validarSessaoAdmin(idCoaching: number) {
+    this.logger.log(`Coordenacao a validar sessao idCoaching=${idCoaching}`);
+
+    const sessao = await this.prisma.coaching.findUnique({
+      where: { ID_Coaching: idCoaching },
+      select: {
+        ID_Coaching: true,
+        Inicio_Coaching: true,
+        ID_Estado_Coaching: true,
+      },
+    });
+
+    if (!sessao) {
+      throw new NotFoundException('Sessao de coaching nao encontrada.');
+    }
+
+    if (!sessao.Inicio_Coaching || sessao.Inicio_Coaching > new Date()) {
+      throw new BadRequestException('Apenas sessoes ja terminadas podem ser validadas.');
+    }
+
+    if (sessao.ID_Estado_Coaching === 13) {
+      throw new BadRequestException('Esta sessao ja se encontra validada.');
+    }
+
+    const resultado = await this.prisma.$transaction(async (tx) => {
+      const alunosAtualizados = await tx.coaching_Aluno.updateMany({
+        where: { ID_Coaching: idCoaching },
+        data: { confirmado: true },
+      });
+
+      const sessaoAtualizada = await tx.coaching.update({
+        where: { ID_Coaching: idCoaching },
+        data: {
+          confirmacao_prof: true,
+          confirmacao_EE: true,
+          ID_Estado_Coaching: 13,
+        },
+      });
+
+      return { alunosAtualizados: alunosAtualizados.count, sessaoAtualizada };
+    });
+
+    this.logger.log(
+      `Sessao validada pela coordenacao idCoaching=${idCoaching} alunosAtualizados=${resultado.alunosAtualizados}`,
+    );
+
+    return {
+      message: 'Sessao validada com sucesso.',
+      idCoaching: resultado.sessaoAtualizada.ID_Coaching,
+      alunosValidados: resultado.alunosAtualizados,
+    };
+  }
+
+  async getSessoesPendentesEstudioAdmin() {
+    const now = new Date();
+    const sessions = await this.prisma.coaching.findMany({
+      where: {
+        Inicio_Coaching: {
+          gte: now,
+        },
+        ID_Sala: null,
+      },
+      include: {
+        Professor: {
+          include: {
+            Pessoa: true,
+          },
+        },
+        Disponibilidade: true,
+        Modalidade: true,
+        Sala: true,
+        Estado_Coaching: true,
+        Coaching_Aluno: {
+          include: {
+            Aluno: true,
+          },
+        },
+      },
+      orderBy: {
+        Inicio_Coaching: 'asc',
+      },
+    });
+
+    return sessions.map((session) => this.formatSessaoAdmin(session));
+  }
+
+  async atribuirEstudioSessao(
+    idCoaching: number,
+    idEstudio: number,
+    user: UtilizadorAutenticado,
+  ) {
+    if (!Number.isInteger(idEstudio) || idEstudio <= 0) {
+      throw new BadRequestException('Selecione um estudio valido.');
+    }
+
+    const [sessao, estudio] = await Promise.all([
+      this.prisma.coaching.findUnique({
+        where: { ID_Coaching: idCoaching },
+      }),
+      this.prisma.sala.findUnique({
+        where: { ID_Sala: idEstudio },
+      }),
+    ]);
+
+    if (!sessao) {
+      throw new NotFoundException('Sessao nao encontrada.');
+    }
+
+    if (!sessao.Inicio_Coaching || sessao.Inicio_Coaching <= new Date()) {
+      throw new BadRequestException('Apenas sessoes futuras podem receber estudio.');
+    }
+
+    if (!estudio || estudio.Disponivel === false) {
+      throw new BadRequestException('O estudio selecionado nao esta disponivel.');
+    }
+
+    const sessaoAtualizada = await this.prisma.coaching.update({
+      where: { ID_Coaching: idCoaching },
+      data: {
+        ID_Sala: idEstudio,
+        ID_Coordenador: user.idPessoa ?? sessao.ID_Coordenador ?? null,
+      },
+    });
+
+    return {
+      message: 'Estudio atribuido com sucesso.',
+      idCoaching: sessaoAtualizada.ID_Coaching,
+    };
   }
 
   /**
