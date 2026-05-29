@@ -1,0 +1,11 @@
+78909592342e861a67eb99f13ebca0da
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TipoAnuncio = void 0;
+var TipoAnuncio;
+(function (TipoAnuncio) {
+    TipoAnuncio["VENDA"] = "venda";
+    TipoAnuncio["ALUGUER"] = "aluguer";
+    TipoAnuncio["AMBOS"] = "ambos";
+})(TipoAnuncio || (exports.TipoAnuncio = TipoAnuncio = {}));
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiQzpcXFVzZXJzXFxVdGlsaXphZG9yXFxzb3VyY2VcXHJlcG9zXFxFbnRDb25uZWN0XFxCYWNrZW5kXFxzcmNcXG1hcmtldHBsYWNlXFxlbnVtc1xcdGlwby1hbnVuY2lvLmVudW0udHMiLCJtYXBwaW5ncyI6Ijs7O0FBQUEsSUFBWSxXQUlYO0FBSkQsV0FBWSxXQUFXO0lBQ3JCLDhCQUFlLENBQUE7SUFDZixrQ0FBbUIsQ0FBQTtJQUNuQiw4QkFBZSxDQUFBO0FBQ2pCLENBQUMsRUFKVyxXQUFXLDJCQUFYLFdBQVcsUUFJdEIiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiQzpcXFVzZXJzXFxVdGlsaXphZG9yXFxzb3VyY2VcXHJlcG9zXFxFbnRDb25uZWN0XFxCYWNrZW5kXFxzcmNcXG1hcmtldHBsYWNlXFxlbnVtc1xcdGlwby1hbnVuY2lvLmVudW0udHMiXSwic291cmNlc0NvbnRlbnQiOlsiZXhwb3J0IGVudW0gVGlwb0FudW5jaW8ge1xyXG4gIFZFTkRBID0gJ3ZlbmRhJyxcclxuICBBTFVHVUVSID0gJ2FsdWd1ZXInLFxyXG4gIEFNQk9TID0gJ2FtYm9zJyxcclxufVxyXG4iXSwidmVyc2lvbiI6M30=

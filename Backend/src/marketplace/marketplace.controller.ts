@@ -28,6 +28,7 @@ import { ModerarAnuncioMarketplaceDto } from './dto/moderar-anuncio-marketplace.
 import { PublicarInventarioEscolaDto } from './dto/publicar-inventario-escola.dto';
 import { RegistarInteresseMarketplaceDto } from './dto/registar-interesse-marketplace.dto';
 import { CriarItemInventarioDto } from './dto/criar-item-inventario.dto';
+import { CriarPedidoAluguerDto } from './dto/criar-pedido-aluguer.dto';
 import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 
 const TODAS_AS_ROLES_MARKETPLACE = [
@@ -163,6 +164,18 @@ export class MarketplaceController {
   listarMeusAnuncios(@Request() req: { user: UtilizadorAutenticado }) {
     return this.marketplaceService.listarMeusAnuncios(req.user);
   }
+
+  /**
+   * Executa a operacao listar meus alugueres.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  @Roles(...TODAS_AS_ROLES_MARKETPLACE)
+  @Get('meus-alugueres')
+  listarMeusAlugueres(@Request() req: { user: UtilizadorAutenticado }) {
+    return this.marketplaceService.listarMeusAlugueres(req.user);
+  }
   /**
    * Executa a operacao obter anuncio.
    * @param idArtigo Dados recebidos para a operacao.
@@ -173,6 +186,22 @@ export class MarketplaceController {
   @Get('anuncios/:id')
   obterAnuncio(@Param('id') idArtigo: string) {
     return this.marketplaceService.obterAnuncio(+idArtigo);
+  }
+
+  /**
+   * Executa a operacao obter calendario do anuncio.
+   * @param idArtigo Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  @Roles(...TODAS_AS_ROLES_MARKETPLACE)
+  @Get('anuncios/:id/calendario')
+  obterCalendarioAnuncio(
+    @Param('id') idArtigo: string,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.marketplaceService.obterCalendarioAnuncio(+idArtigo, req.user);
   }
   /**
    * Executa a operacao criar anuncio.
@@ -265,6 +294,94 @@ export class MarketplaceController {
     @Request() req: { user: UtilizadorAutenticado },
   ) {
     return this.marketplaceService.registarInteresse(+idArtigo, dto, req.user);
+  }
+
+  /**
+   * Executa a operacao criar pedido de aluguer.
+   * @param idArtigo Dados recebidos para a operacao.
+   * @param dto Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  @Roles(...TODAS_AS_ROLES_MARKETPLACE)
+  @Post('anuncios/:id/pedidos-aluguer')
+  criarPedidoAluguer(
+    @Param('id') idArtigo: string,
+    @Body() dto: CriarPedidoAluguerDto,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.marketplaceService.criarPedidoAluguer(+idArtigo, dto, req.user);
+  }
+
+  /**
+   * Executa a operacao aceitar pedido de aluguer.
+   * @param idInteresse Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  @Roles(...TODAS_AS_ROLES_MARKETPLACE)
+  @Patch('pedidos-aluguer/:id/aceitar')
+  aceitarPedidoAluguer(
+    @Param('id') idInteresse: string,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.marketplaceService.aceitarPedidoAluguer(+idInteresse, req.user);
+  }
+
+  /**
+   * Executa a operacao rejeitar pedido de aluguer.
+   * @param idInteresse Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  @Roles(...TODAS_AS_ROLES_MARKETPLACE)
+  @Patch('pedidos-aluguer/:id/rejeitar')
+  rejeitarPedidoAluguer(
+    @Param('id') idInteresse: string,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.marketplaceService.rejeitarPedidoAluguer(+idInteresse, req.user);
+  }
+
+  /**
+   * Executa a operacao marcar aluguer como devolvido.
+   * @param idAluguer Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  @Roles(...TODAS_AS_ROLES_MARKETPLACE)
+  @Patch('alugueres/:id/marcar-devolvido')
+  marcarAluguerComoDevolvido(
+    @Param('id') idAluguer: string,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.marketplaceService.marcarAluguerComoDevolvido(
+      +idAluguer,
+      req.user,
+    );
+  }
+
+  /**
+   * Executa a operacao confirmar devolucao de aluguer.
+   * @param idAluguer Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  @Roles(...TODAS_AS_ROLES_MARKETPLACE)
+  @Patch('alugueres/:id/confirmar-devolucao')
+  confirmarDevolucaoAluguer(
+    @Param('id') idAluguer: string,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.marketplaceService.confirmarDevolucaoAluguer(
+      +idAluguer,
+      req.user,
+    );
   }
   /**
    * Executa a operacao listar interesses do anuncio.

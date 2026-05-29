@@ -1,11 +1,11 @@
 
 
 export type AcaoModeracao = 'remover' | 'reativar' | 'arquivar' | 'moderacao';
+export type TipoAnuncioLegado = TipoAnuncio | 'ambos';
 
 export enum TipoAnuncio {
     VENDA = 'venda',
     ALUGUER = 'aluguer',
-    AMBOS = 'ambos',
 }
 
 export enum EstadoAnuncio {
@@ -31,7 +31,11 @@ export interface PessoaResumo {
     ID_Pessoa: number;
     Nome: string;
     Contato?: string;
+    Contacto?: string;
+    Telefone?: string;
+    Telemovel?: string;
     Mail?: string;
+    Email?: string;
 }
 
 export interface UtilizadorResumo {
@@ -70,7 +74,8 @@ export interface Anuncio {
     Descricao?: string;
     Notas?: string;
     Foto?: string;
-    Tipo_Anuncio: TipoAnuncio;
+    Tipo_Anuncio: TipoAnuncioLegado;
+    Aluguer_Continuo?: boolean;
     Estado_Anuncio: EstadoAnuncio;
     Origem_Registo: OrigemRegisto;
     Publicado_No_Marketplace: boolean;
@@ -96,6 +101,21 @@ export interface Proposta {
     Stock_Armazem?: StockArmazem;
 }
 
+export type EstadoCalendarioAnuncio =
+    | 'ocupado'
+    | 'reservado'
+    | 'alugado'
+    | 'devolucao_pendente';
+
+export interface CalendarioAnuncioItem {
+    idAluguer?: number;
+    dataInicio: string;
+    dataFim: string;
+    estado: EstadoCalendarioAnuncio;
+    nomePessoa?: string | null;
+    contacto?: string | null;
+}
+
 export interface FiltrosAnuncios {
     pesquisa?: string;
     tipoAnuncio?: TipoAnuncio;
@@ -115,6 +135,7 @@ export interface CriarAnuncioPayload {
     quantidadeDisponivel?: number;
     quantidadeVenda?: number;
     quantidadeAluguer?: number;
+    aluguerContinuo?: boolean;
     notasInternas?: string;
     idCor?: number;
     idEstado?: number;
@@ -130,6 +151,7 @@ export interface PublicarInventarioEscolaPayload {
     quantidadeDisponivel?: number;
     quantidadeVenda?: number;
     quantidadeAluguer?: number;
+    aluguerContinuo?: boolean;
 }
 
 export interface RegistarInteressePayload {
@@ -138,11 +160,15 @@ export interface RegistarInteressePayload {
     dataRecolhaPrevista?: string;
 }
 
+export interface CriarPedidoAluguerPayload {
+    dataInicio: string;
+    dataFim: string;
+    mensagem?: string;
+}
+
 export interface CriarItemInventarioPayload {
     titulo: string;
     descricao?: string;
-    quantidadeVenda: number;
-    quantidadeAluguer: number;
     foto?: string;
     ficheiroFoto?: File;
     idCor?: number;
@@ -166,4 +192,41 @@ export interface RegistoModeracaoMarketplace {
 
     Utilizador?: UtilizadorResumo;
     Utilizador_Moderador?: UtilizadorResumo;
+}
+
+
+export type TipoRegistoMeuAluguer = 'pedido' | 'aluguer';
+export type PapelMeuAluguer = 'interessado' | 'dono';
+export type EstadoMeuAluguer =
+    | 'pendente'
+    | 'reservado'
+    | 'ativo'
+    | 'devolucao_pendente'
+    | 'concluido'
+    | 'cancelado'
+    | 'rejeitado';
+
+export interface MeuAluguer {
+    id: number | string;
+    tipoRegisto: TipoRegistoMeuAluguer;
+    idAluguer?: number | null;
+    idPedido?: number | null;
+    idAnuncio: number;
+    artigo: string;
+    categoria?: string | null;
+    foto?: string | null;
+    estado: EstadoMeuAluguer;
+    papel: PapelMeuAluguer;
+    inicio: string;
+    fim: string;
+    outraPessoa?: string | null;
+    contactoOutraPessoa?: string | null;
+    origem?: string | null;
+    aluguerContinuo?: boolean;
+    podeAceitar?: boolean;
+    podeRejeitar?: boolean;
+    podeMarcarComoDevolvido?: boolean;
+    podeConfirmarDevolucao?: boolean;
+    podeCancelar?: boolean;
+    podeVerAnuncio?: boolean;
 }

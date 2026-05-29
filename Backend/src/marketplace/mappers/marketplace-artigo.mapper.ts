@@ -7,6 +7,7 @@ import { PublicarInventarioEscolaDto } from '../dto/publicar-inventario-escola.d
 
 import { EstadoAnuncio } from '../enums/estado-anuncio.enum';
 import { OrigemRegisto } from '../enums/origem-registo.enum';
+import { TipoAnuncio } from '../enums/tipo-anuncio.enum';
 
 import {
   type ArtigoComBase,
@@ -40,6 +41,10 @@ export function montarDadosCriacaoAnuncio(params: {
     Notas: dto.notasInternas ?? null,
     Foto: urlFoto,
     Tipo_Anuncio: dto.tipoAnuncio,
+    Aluguer_Continuo:
+      dto.tipoAnuncio === TipoAnuncio.ALUGUER
+        ? Boolean(dto.aluguerContinuo)
+        : false,
     Origem_Registo: OrigemRegisto.UTILIZADOR,
     Publicado_No_Marketplace: true,
     Estado_Anuncio: EstadoAnuncio.ATIVO,
@@ -64,6 +69,10 @@ export function montarDadosStockCriacaoAnuncio(params: {
   return {
     ID_Artigo: idArtigo,
     Quantidade_Total: dto.quantidadeTotal,
+    Quantidade_Venda:
+      dto.tipoAnuncio === TipoAnuncio.VENDA ? dto.quantidadeTotal : 0,
+    Quantidade_Aluguer:
+      dto.tipoAnuncio === TipoAnuncio.ALUGUER ? dto.quantidadeTotal : 0,
     ID_Tamanho: dto.idTamanho ? Number(dto.idTamanho) : null,
     ID_Estado: dto.idEstado ? Number(dto.idEstado) : null,
   };
@@ -153,6 +162,10 @@ export function montarDadosPublicacaoInventario(params: {
     Foto: dto.foto ?? artigo.Foto ?? null,
     Origem_Registo: OrigemRegisto.INVENTARIO_ESCOLA,
     Tipo_Anuncio: distribuicao.tipoAnuncio,
+    Aluguer_Continuo:
+      distribuicao.tipoAnuncio === TipoAnuncio.ALUGUER
+        ? Boolean(dto.aluguerContinuo)
+        : false,
     Estado_Anuncio: EstadoAnuncio.ATIVO,
     Publicado_No_Marketplace: true,
     Data_Atualizacao: dataAtual,
@@ -204,6 +217,10 @@ export function montarDadosAtualizacaoAnuncio(params: {
     Foto: urlFotoFinal,
     Notas: dto.notasInternas ?? artigo.Notas ?? null,
     Tipo_Anuncio: distribuicao.tipoAnuncio,
+    Aluguer_Continuo:
+      distribuicao.tipoAnuncio === TipoAnuncio.ALUGUER
+        ? Boolean(dto.aluguerContinuo ?? artigo.Aluguer_Continuo)
+        : false,
     Data_Atualizacao: dataAtual,
   };
 }
