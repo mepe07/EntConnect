@@ -23,7 +23,6 @@ import { showToast } from '~/components/toast/toast';
 type Vista = 'montra' | 'detalhe' | 'meus' | 'alugueres' | 'moderacao';
 type VistaLista = Exclude<Vista, 'detalhe'>;
 type AcaoModeracao = 'remover' | 'reativar' | 'arquivar';
-type TabDetalhe = 'detalhe' | 'disponibilidade';
 
 const ESTADO_LABEL: Record<string, string> = {
     [EstadoAnuncio.ATIVO]: 'Ativo',
@@ -116,7 +115,6 @@ export function Marketplace() {
     const [filtroTipo, setFiltroTipo] = useState('todos');
     const [mensagemFluxo, setMensagemFluxo] = useState('Nenhuma ação executada ainda.');
 
-    const [tabDetalhe, setTabDetalhe] = useState<TabDetalhe>('detalhe');
     const [calendarioAnuncio, setCalendarioAnuncio] = useState<CalendarioAnuncioItem[]>([]);
     const [calendarioLoading, setCalendarioLoading] = useState(false);
     const [calendarioErro, setCalendarioErro] = useState('');
@@ -227,14 +225,10 @@ export function Marketplace() {
     }, [vista]);
 
     useEffect(() => {
-        if (
-            vista === 'detalhe' &&
-            tabDetalhe === 'disponibilidade' &&
-            isAnuncioAluguer(anuncioSelecionado)
-        ) {
+        if (vista === 'detalhe' && isAnuncioAluguer(anuncioSelecionado)) {
             carregarCalendarioAnuncio(anuncioSelecionado?.ID_Artigo);
         }
-    }, [vista, tabDetalhe, anuncioSelecionado?.ID_Artigo, anuncioSelecionado?.Tipo_Anuncio]);
+    }, [vista, anuncioSelecionado?.ID_Artigo, anuncioSelecionado?.Tipo_Anuncio]);
 
     const anunciosFiltrados = useMemo(() => {
         return anuncios.filter((anuncio) => {
@@ -299,7 +293,6 @@ export function Marketplace() {
             setVistaAnterior(vista as VistaLista);
         }
         setAnuncioSelecionado(anuncio);
-        setTabDetalhe('detalhe');
         setCalendarioAnuncio([]);
         setCalendarioErro('');
         setVista('detalhe');
@@ -475,7 +468,6 @@ export function Marketplace() {
         anuncioSelecionado.Estado_Anuncio === EstadoAnuncio.ATIVO,
     );
 
-
     const obterUltimoRegistoModeracao = (anuncio?: Anuncio | null) => {
         if (!anuncio) return null;
         return ultimoRegistoModeracaoPorArtigo.get(anuncio.ID_Artigo) ?? null;
@@ -515,12 +507,6 @@ export function Marketplace() {
     };
 
     const acaoPrincipalAnuncioSelecionado = obterAcaoPrincipalModeracao(anuncioSelecionado);
-    const ultimoRegistoAnuncioSelecionado = obterUltimoRegistoModeracao(anuncioSelecionado);
-
-    const tabsDetalheDisponiveis: TabDetalhe[] = [
-        'detalhe',
-        ...(isAnuncioAluguer(anuncioSelecionado) ? ['disponibilidade' as const] : []),
-    ];
 
     return (
         <div className="marketplace-page">
@@ -531,7 +517,6 @@ export function Marketplace() {
                     <p>Montra interna de anúncios, sem preços públicos, com foco em detalhe, interesse e estados do anúncio.</p>
                 </div>
                 <div className="marketplace-topo-acoes">
-                    <div className="perfil-indicador">Perfil: <strong>{isCoordenadora ? 'Coordenadora' : 'Utilizador'}</strong></div>
                     <ButtonComponent className="btn-principal" onClick={() => setMostrarModalCriar(true)}>Novo anúncio</ButtonComponent>
                 </div>
             </div>
@@ -588,12 +573,33 @@ export function Marketplace() {
                     {!loading && vista === 'montra' && (
                         <div className="lista-anuncios">
                             {anunciosFiltrados.length === 0 ? <div className="estado-vazio">Não existem anúncios com estes filtros.</div> : anunciosFiltrados.map((anuncio) => (
-                                <div key={anuncio.ID_Artigo} className="cartao-anuncio">
-                                    <div className="cartao-corpo">
-                                        <img src={anuncio.Foto || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1200&auto=format&fit=crop'} alt={anuncio.Nome} />
+                                <div
+                                    key={anuncio.ID_Artigo}
+                                    className="cartao-anuncio cartao-anuncio-clicavel"
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => abrirDetalhe(anuncio)}
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Enter' || event.key === ' ') {
+                                            event.preventDefault();
+                                            abrirDetalhe(anuncio);
+                                        }
+                                    }}
+                                >
+                                    <div className="cartao-imagem-wrap">
+                                        {anuncio.Foto ? (
+                                            <img className="cartao-imagem" src={anuncio.Foto} alt={anuncio.Nome} />
+                                        ) : (
+                                            <div className="cartao-imagem cartao-imagem-placeholder" aria-hidden="true">
+                                                <span>{anuncio.Nome.slice(0, 1).toUpperCase()}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="cartao-conteudo">
                                         <div>
-                                            <div className="linha-topo">
+                                            <div className="cartao-etiquetas">
                                                 <span className={`badge-estado estado-${anuncio.Estado_Anuncio}`}>{ESTADO_LABEL[anuncio.Estado_Anuncio]}</span>
+                                                <span className="badge-outline">{TIPO_LABEL[anuncio.Tipo_Anuncio]}</span>
                                                 <span className="badge-outline">{ORIGEM_LABEL[anuncio.Origem_Registo]}</span>
                                             </div>
                                             <h3>{anuncio.Nome}</h3>
@@ -603,7 +609,6 @@ export function Marketplace() {
                                     </div>
                                     <div className="cartao-rodape">
                                         <span>Publicado por {getNomeCriador(anuncio)} · {formatarData(anuncio.Data_Atualizacao || anuncio.Data_Criacao)}</span>
-                                        <ButtonComponent className="btn-secundario" onClick={() => abrirDetalhe(anuncio)}>Ver detalhe</ButtonComponent>
                                     </div>
                                 </div>
                             ))}
@@ -613,7 +618,7 @@ export function Marketplace() {
                     {!loading && vista === 'detalhe' && anuncioSelecionado && (
                         <div className="detalhe-anuncio">
                             <ButtonComponent className="btn-link" onClick={() => setVista(vistaAnterior)}>Voltar</ButtonComponent>
-                            <div className={`detalhe-grid ${tabDetalhe === 'disponibilidade' ? 'detalhe-grid-disponibilidade' : ''}`}>
+                            <div className={`detalhe-grid ${isAnuncioAluguer(anuncioSelecionado) ? 'detalhe-grid-disponibilidade' : ''}`}>
                                 <div className="detalhe-principal">
                                     <img className="detalhe-imagem" src={anuncioSelecionado.Foto || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1200&auto=format&fit=crop'} alt={anuncioSelecionado.Nome} />
                                     <div className="detalhe-etiquetas">
@@ -643,22 +648,8 @@ export function Marketplace() {
                                     ) : null}
                                 </div>
                                 <div className="detalhe-painel">
-                                    <div className="detalhe-tabs">
-                                        {tabsDetalheDisponiveis.map((tab) => (
-                                            <button
-                                                key={tab}
-                                                type="button"
-                                                className={tabDetalhe === tab ? 'ativo' : ''}
-                                                onClick={() => setTabDetalhe(tab)}
-                                            >
-                                                {tab === 'detalhe' ? 'Detalhe' : 'Disponibilidade'}
-                                            </button>
-                                        ))}
-                                    </div>
-
                                     <div className="detalhe-painel-conteudo">
-                                        {tabDetalhe === 'detalhe' ? (
-                                            <div className="detalhe-tab detalhe-conteudo-tab">
+                                        <div className="detalhe-tab detalhe-conteudo-tab">
                                                 <div className="bloco-lateral">
                                                     <h3>Contexto do anúncio</h3>
                                                     <div className="linhas-info">
@@ -696,9 +687,8 @@ export function Marketplace() {
                                                     </div>
                                                 </div>
                                             </div>
-                                        ) : null}
 
-                                        {tabDetalhe === 'disponibilidade' && isAnuncioAluguer(anuncioSelecionado) ? (
+                                        {isAnuncioAluguer(anuncioSelecionado) ? (
                                             <AnuncioDisponibilidade
                                                 anuncio={anuncioSelecionado}
                                                 calendario={calendarioAnuncio}
@@ -709,7 +699,6 @@ export function Marketplace() {
                                                 onConfirmarDevolucao={confirmarDevolucaoAluguer}
                                             />
                                         ) : null}
-
                                     </div>
                                 </div>
                             </div>
@@ -763,16 +752,16 @@ export function Marketplace() {
 
                                         return (
                                             <div key={anuncio.ID_Artigo} className="moderacao-card">
-                                                <div>
-                                                    <div className="linha-topo">
+                                                <div className="moderacao-card-conteudo">
+                                                    <div className="moderacao-card-topo">
                                                         <span className={`badge-estado estado-${anuncio.Estado_Anuncio}`}>{ESTADO_LABEL[anuncio.Estado_Anuncio]}</span>
                                                         <span className="badge-outline">{TIPO_LABEL[anuncio.Tipo_Anuncio]}</span>
                                                         <span className="badge-outline">{ORIGEM_LABEL[anuncio.Origem_Registo]}</span>
                                                     </div>
-                                                    <strong>{anuncio.Nome}</strong>
-                                                    <p>Publicado por {getNomeCriador(anuncio)}</p>
+                                                    <strong className="moderacao-card-titulo">{anuncio.Nome}</strong>
+                                                    <p className="moderacao-card-meta">Publicado por {getNomeCriador(anuncio)}</p>
                                                     {ultimoRegisto ? (
-                                                        <small>
+                                                        <small className="moderacao-card-historico">
                                                             Última ação: {ultimoRegisto.Acao} · {ultimoRegisto.Motivo || 'Sem motivo indicado'} · {formatarData(ultimoRegisto.Data_Registo)}
                                                         </small>
                                                     ) : (
@@ -780,7 +769,7 @@ export function Marketplace() {
                                                     )}
                                                 </div>
 
-                                                <div className="linha-acoes">
+                                                <div className="linha-acoes moderacao-card-acoes">
                                                     <ButtonComponent className="btn-secundario" onClick={() => abrirDetalhe(anuncio)}>Ver anúncio</ButtonComponent>
                                                     {acaoPrincipal ? (
                                                         <ButtonComponent

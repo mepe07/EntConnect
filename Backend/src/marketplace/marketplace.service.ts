@@ -895,8 +895,9 @@ export class MarketplaceService {
           Data_Atualizacao: new Date(),
         },
       });
-
       return aluguer;
+    }, {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
     });
 
     this.logger.log(

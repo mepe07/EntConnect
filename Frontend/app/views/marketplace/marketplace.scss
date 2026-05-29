@@ -50,11 +50,6 @@
         flex-wrap: wrap;
     }
 
-    .perfil-indicador {
-        color: #475569;
-        font-size: 14px;
-    }
-
     .marketplace-resumos {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -152,68 +147,142 @@
         gap: 12px;
     }
 
+    .lista-anuncios {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        align-items: stretch;
+        gap: 18px;
+    }
+
     .cartao-anuncio {
         border: 1px solid #e2e8f0;
-        border-radius: 18px;
+        border-radius: 22px;
         background: #fff;
-        padding: 16px;
+        padding: 20px;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        height: 100%;
 
-        .cartao-corpo {
-            display: flex;
-            gap: 16px;
-        }
-
-        img {
-            width: 88px;
-            height: 88px;
-            border-radius: 14px;
-            object-fit: cover;
+        .cartao-imagem-wrap {
+            height: 320px;
+            border-radius: 18px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #e2e8f0, #f8fafc);
             border: 1px solid #e2e8f0;
-            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
         }
 
-        .cartao-info {
+        .cartao-imagem {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .cartao-imagem-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(circle at top, rgba(255, 255, 255, 0.92), transparent 55%),
+                linear-gradient(135deg, #dbeafe, #eff6ff 55%, #ecfeff);
+
+            span {
+                width: 76px;
+                height: 76px;
+                border-radius: 999px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(255, 255, 255, 0.78);
+                color: #2563eb;
+                font-size: 1.8rem;
+                font-weight: 800;
+                border: 1px solid rgba(37, 99, 235, 0.14);
+            }
+        }
+
+        .cartao-conteudo {
             min-width: 0;
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
 
-            h3 {
-                margin: 0 0 6px;
-                font-size: 1.1rem;
-            }
+        .cartao-conteudo > div {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 100%;
+        }
 
-            p {
-                margin: 0;
-                color: #475569;
-                font-size: 14px;
-                line-height: 1.5;
-            }
+        h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            line-height: 1.35;
+        }
 
-            small {
-                display: block;
-                margin-top: 8px;
-                color: #64748b;
-            }
+        .cartao-conteudo p {
+            margin: 0;
+            color: #475569;
+            font-size: 15px;
+            line-height: 1.55;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .cartao-meta {
+            display: block;
+            margin-top: auto;
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .cartao-conteudo small {
+            display: block;
+            margin-top: auto;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.5;
         }
 
         .cartao-etiquetas,
         .linha-topo,
-        .detalhe-etiquetas {
+        .detalhe-etiquetas,
+        .moderacao-card-topo {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
-            margin-bottom: 10px;
         }
 
         .cartao-rodape {
-            margin-top: 14px;
-            padding-top: 14px;
+            margin-top: auto;
+            padding-top: 16px;
             border-top: 1px solid #eef2f7;
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: center;
             color: #64748b;
-            font-size: 12px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+    }
+
+    .cartao-anuncio-clicavel {
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+
+        &:hover,
+        &:focus-visible {
+            border-color: #2563eb;
+            box-shadow: 0 10px 24px rgba(37, 99, 235, 0.12);
+            transform: translateY(-2px);
+            outline: none;
         }
     }
 
@@ -600,7 +669,7 @@
             background: #fff7ed;
             color: #9a3412;
         }
-
+        
         .estado-selecionado {
             border-color: #2563eb;
             background: #dbeafe;
@@ -777,6 +846,58 @@
         flex-wrap: wrap;
     }
 
+    .moderacao-layout,
+    .moderacao-lista {
+        display: grid;
+        gap: 14px;
+    }
+
+    .moderacao-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        background: #fff;
+        padding: 18px;
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        align-items: flex-end;
+    }
+
+    .moderacao-card-conteudo {
+        min-width: 0;
+        flex: 1;
+        display: grid;
+        gap: 10px;
+
+        small {
+            margin: 0;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.55;
+        }
+    }
+
+    .moderacao-card-titulo {
+        display: block;
+        font-size: 1.1rem;
+        line-height: 1.35;
+    }
+
+    .moderacao-card-meta,
+    .moderacao-card-historico {
+        margin: 0;
+        color: #64748b;
+        font-size: 14px;
+        line-height: 1.55;
+    }
+
+    .moderacao-card-acoes {
+        justify-content: flex-end;
+        align-items: center;
+        align-self: stretch;
+        margin-left: auto;
+    }
+
     .caixa-lateral {
         border-radius: 14px;
         background: #f8fafc;
@@ -890,6 +1011,10 @@
     }
 
     @media (max-width: 1100px) {
+        .lista-anuncios {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
         .detalhe-anuncio {
             .detalhe-grid,
             .disponibilidade-conteudo,
@@ -906,11 +1031,25 @@
             grid-template-columns: 1fr 1fr;
         }
 
-        .cartao-anuncio .cartao-corpo,
+        .lista-anuncios {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .cartao-anuncio .cartao-imagem-wrap {
+            height: 280px;
+        }
+
         .cartao-anuncio .cartao-rodape,
+        .moderacao-card,
         .linha-simples {
             flex-direction: column;
             align-items: flex-start;
+        }
+
+        .moderacao-card-acoes {
+            width: 100%;
+            justify-content: flex-start;
+            margin-left: 0;
         }
 
         .detalhe-anuncio {
@@ -935,6 +1074,14 @@
         .marketplace-filtros,
         .detalhe-anuncio .detalhe-resumo {
             grid-template-columns: 1fr;
+        }
+
+        .lista-anuncios {
+            grid-template-columns: 1fr;
+        }
+
+        .cartao-anuncio .cartao-imagem-wrap {
+            height: 250px;
         }
 
         .detalhe-anuncio {
@@ -965,6 +1112,7 @@ body.entconnect-dark {
         .card-base,
         .resumo-box,
         .cartao-anuncio,
+        .moderacao-card,
         .detalhe-principal,
         .detalhe-subcabecalho,
         .detalhe-painel,
@@ -987,7 +1135,8 @@ body.entconnect-dark {
         .marketplace-topo h1,
         .marketplace-barra h2,
         .resumo-box strong,
-        .cartao-info h3,
+        .cartao-anuncio h3,
+        .moderacao-card-titulo,
         .detalhe-anuncio h2,
         .detalhe-anuncio h3,
         .detalhe-anuncio h4,
@@ -1002,8 +1151,11 @@ body.entconnect-dark {
         .perfil-indicador,
         .resumo-box span,
         .marketplace-barra p,
-        .cartao-info p,
-        .cartao-info small,
+        .cartao-conteudo p,
+        .cartao-conteudo small,
+        .moderacao-card-conteudo small,
+        .moderacao-card-meta,
+        .moderacao-card-historico,
         .cartao-rodape,
         .detalhe-anuncio p,
         .detalhe-resumo span,
@@ -1026,9 +1178,23 @@ body.entconnect-dark {
         .etiqueta-mes,
         .dia-calendario,
         .legenda-item,
-        .tracking-item {
+        .tracking-item,
+        .cartao-imagem-wrap,
+        .cartao-nota {
             background: #1f2937 !important;
             border-color: #334155 !important;
+        }
+
+        .cartao-imagem-placeholder {
+            background:
+                radial-gradient(circle at top, rgba(148, 163, 184, 0.28), transparent 55%),
+                linear-gradient(135deg, #0f172a, #1e293b 55%, #111827) !important;
+
+            span {
+                background: rgba(15, 23, 42, 0.7) !important;
+                border-color: rgba(96, 165, 250, 0.25) !important;
+                color: #93c5fd !important;
+            }
         }
 
         .marketplace-filtros input,
@@ -1141,6 +1307,99 @@ body.entconnect-dark {
         display: flex;
         flex-direction: column;
         gap: 16px;
+    }
+
+    .propostas-pendentes-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        background: #fff;
+        overflow: hidden;
+
+        &.tem-pendentes {
+            background: #fffbeb;
+            border-color: #fcd34d;
+        }
+    }
+
+    .propostas-pendentes-header {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        padding: 16px 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        cursor: pointer;
+        text-align: left;
+
+        strong {
+            font-size: 16px;
+        }
+    }
+
+    .propostas-pendentes-acoes-topo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .propostas-pendentes-contador {
+        color: #92400e;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .propostas-pendentes-toggle {
+        width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        border: 1px solid #fcd34d;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #92400e;
+        background: rgba(255, 255, 255, 0.7);
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    .propostas-pendentes-lista {
+        display: grid;
+        gap: 12px;
+        padding: 0 18px 18px;
+    }
+
+    .proposta-pendente-item {
+        border: 1px solid #f5d48b;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.75);
+        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+    }
+
+    .proposta-pendente-info {
+        display: grid;
+        gap: 6px;
+
+        strong {
+            font-size: 16px;
+        }
+
+        span {
+            color: #475569;
+            font-size: 14px;
+        }
+    }
+
+    .proposta-pendente-acoes {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }
 
     .meus-alugueres-topo {
@@ -1583,6 +1842,17 @@ body.entconnect-dark {
     }
 
     @media (max-width: 860px) {
+        .propostas-pendentes-header,
+        .proposta-pendente-item {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .propostas-pendentes-acoes-topo,
+        .proposta-pendente-acoes {
+            justify-content: space-between;
+        }
+
         .meus-alugueres-filtros {
             grid-template-columns: 1fr;
         }
@@ -1609,6 +1879,8 @@ body.entconnect-dark {
 body.entconnect-dark {
     .marketplace-page {
         .meus-alugueres-vistas,
+        .propostas-pendentes-card,
+        .proposta-pendente-item,
         .meus-alugueres-calendario,
         .meus-alugueres-lista,
         .meus-alugueres-detalhe,
@@ -1619,6 +1891,22 @@ body.entconnect-dark {
             background: #111827 !important;
             border-color: #334155 !important;
             color: #e2e8f0 !important;
+        }
+
+        .propostas-pendentes-card.tem-pendentes {
+            background: rgba(120, 53, 15, 0.35) !important;
+            border-color: rgba(251, 191, 36, 0.45) !important;
+        }
+
+        .propostas-pendentes-contador,
+        .propostas-pendentes-toggle,
+        .proposta-pendente-info span {
+            color: #fcd34d !important;
+        }
+
+        .propostas-pendentes-toggle {
+            background: rgba(17, 24, 39, 0.72) !important;
+            border-color: rgba(251, 191, 36, 0.4) !important;
         }
 
         .meus-alugueres-vistas button,

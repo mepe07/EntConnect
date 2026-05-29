@@ -6,20 +6,57 @@ import { TableComponent } from '../../../components/table/table.component';
 import { TableColumnTypesEnum } from '../../../components/table/models/enums/table-column-types.enum';
 import { ButtonComponent } from '../../../components/button/button.component';
 import { InputComponent } from '../../../components/input/input.component';
-import { faturacaoService } from "../../../services/faturacao.service";
-import type { LinhaHistoricoCoaching } from '../../../models/interfaces/historico.interface'
+import { faturacaoService } from '../../../services/faturacao.service';
+import type { LinhaHistoricoCoaching } from '../../../models/interfaces/historico.interface';
+
+const formatarDataInput = (data: Date) => {
+    const dataLocal = new Date(data.getFullYear(), data.getMonth(), data.getDate());
+    const offsetTimezone = dataLocal.getTimezoneOffset() * 60000;
+
+    return new Date(dataLocal.getTime() - offsetTimezone).toISOString().split('T')[0];
+};
+
+const obterPeriodoHoje = () => {
+    const hoje = formatarDataInput(new Date());
+
+    return { dataInicio: hoje, dataFim: hoje };
+};
+
+const obterPeriodoSemanaAtual = () => {
+    const hoje = new Date();
+    const diaSemana = hoje.getDay();
+    const diferencaSegunda = diaSemana === 0 ? -6 : 1 - diaSemana;
+
+    const segunda = new Date(hoje);
+    segunda.setDate(hoje.getDate() + diferencaSegunda);
+
+    const domingo = new Date(segunda);
+    domingo.setDate(segunda.getDate() + 6);
+
+    return {
+        dataInicio: formatarDataInput(segunda),
+        dataFim: formatarDataInput(domingo),
+    };
+};
+
+const obterPeriodoMesAtual = () => {
+    const hoje = new Date();
+    const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+
+    return {
+        dataInicio: formatarDataInput(primeiroDia),
+        dataFim: formatarDataInput(ultimoDia),
+    };
+};
 
 export function HistoricoCoaching() {
-
-
     const [filtro, setFiltro] = useState({ dataInicio: '', dataFim: '' });
     const [aulas, setAulas] = useState<LinhaHistoricoCoaching[]>([]);
     const [pesquisaRealizada, setPesquisaRealizada] = useState(false);
     const [aCarregar, setACarregar] = useState(false);
-
     const [alunoSelecionado, setAlunoSelecionado] = useState<string | null>(null);
     const [pesquisaAluno, setPesquisaAluno] = useState('');
-
 
     useEffect(() => {
         if (alunoSelecionado) {
@@ -27,14 +64,14 @@ export function HistoricoCoaching() {
         }
     }, [alunoSelecionado]);
 
-
-    const handlePesquisa = async () => {
-        if (!filtro.dataInicio || !filtro.dataFim) return showToast('Por favor, selecione ambas as datas.');
+    const handlePesquisa = async (periodo = filtro) => {
+        if (!periodo.dataInicio || !periodo.dataFim) {
+            return showToast('Por favor, selecione ambas as datas.');
+        }
 
         setACarregar(true);
         try {
-
-            const dados = await faturacaoService.getHistorico(filtro.dataInicio, filtro.dataFim);
+            const dados = await faturacaoService.getHistorico(periodo.dataInicio, periodo.dataFim);
             setAulas(dados);
             setPesquisaRealizada(true);
             setAlunoSelecionado(null);
@@ -46,42 +83,45 @@ export function HistoricoCoaching() {
         }
     };
 
+    const aplicarFiltroRapido = (periodo: { dataInicio: string; dataFim: string }) => {
+        setFiltro(periodo);
+        handlePesquisa(periodo);
+    };
+
+    const filtrosRapidos = [
+        { label: 'Hoje', icon: 'fa-solid fa-calendar-day', aplicar: () => aplicarFiltroRapido(obterPeriodoHoje()) },
+        { label: 'Esta semana', icon: 'fa-solid fa-calendar-week', aplicar: () => aplicarFiltroRapido(obterPeriodoSemanaAtual()) },
+        { label: 'Mês atual', icon: 'fa-solid fa-calendar-days', aplicar: () => aplicarFiltroRapido(obterPeriodoMesAtual()) },
+    ];
 
     const resumoAlunos = useMemo(() => {
-        const resumo: Record<string, any> = {};
+        const resumo: Record<string, { nome: string; totalAulas: number }> = {};
 
         aulas.forEach(aula => {
             if (!resumo[aula.nomeAluno]) {
                 resumo[aula.nomeAluno] = {
                     nome: aula.nomeAluno,
-                    totalAulas: 0
+                    totalAulas: 0,
                 };
             }
             resumo[aula.nomeAluno].totalAulas++;
         });
 
-
         return Object.values(resumo).sort((a, b) => b.totalAulas - a.totalAulas);
     }, [aulas]);
 
-
     const alunosFiltrados = resumoAlunos.filter(a =>
-        a.nome.toLowerCase().includes(pesquisaAluno.toLowerCase())
+        a.nome.toLowerCase().includes(pesquisaAluno.toLowerCase()),
     );
 
     const alunoFocado = resumoAlunos.find(a => a.nome === alunoSelecionado);
-
 
     const tableData = aulas
         .filter(aula => aula.nomeAluno === alunoSelecionado)
         .map(aula => {
             const dataObj = new Date(aula.dataAula);
-
-
             const apenasData = dataObj.toLocaleDateString('pt-PT');
-
             const apenasHora = dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-
 
             let corChip = 'default';
             if (aula.estadoAula === 'Realizada') corChip = 'success';
@@ -94,43 +134,54 @@ export function HistoricoCoaching() {
                 horaFormatada: apenasHora,
                 estadoTabela: {
                     value: aula.estadoAula,
-                    infoType: corChip
-                }
+                    infoType: corChip,
+                },
             };
         });
-
 
     return (
         <div className="pagina-historico">
             <h1>Histórico de Coaching</h1>
 
             <div className="filtros-iniciais">
-                <div className="grupo-data">
-                    <label>Data Início</label>
-                    <input type="date" value={filtro.dataInicio} onChange={e => setFiltro({ ...filtro, dataInicio: e.target.value })} />
+                <div className="pesquisa-periodo">
+                    <div className="grupo-data">
+                        <label>Data Início</label>
+                        <input type="date" value={filtro.dataInicio} onChange={e => setFiltro({ ...filtro, dataInicio: e.target.value })} />
+                    </div>
+                    <div className="grupo-data">
+                        <label>Data Final</label>
+                        <input type="date" value={filtro.dataFim} onChange={e => setFiltro({ ...filtro, dataFim: e.target.value })} />
+                    </div>
+                    <ButtonComponent
+                        label={aCarregar ? 'A carregar...' : 'Pesquisar'}
+                        disabled={aCarregar}
+                        onClick={() => handlePesquisa()}
+                        icon="fa-solid fa-magnifying-glass"
+                    />
                 </div>
-                <div className="grupo-data">
-                    <label>Data Final</label>
-                    <input type="date" value={filtro.dataFim} onChange={e => setFiltro({ ...filtro, dataFim: e.target.value })} />
+                <div className="filtros-rapidos" aria-label="Filtros rápidos de data">
+                    {filtrosRapidos.map(filtroRapido => (
+                        <ButtonComponent
+                            key={filtroRapido.label}
+                            label={filtroRapido.label}
+                            onClick={filtroRapido.aplicar}
+                            icon={filtroRapido.icon}
+                            disabled={aCarregar}
+                        />
+                    ))}
                 </div>
-                <ButtonComponent
-                    label={aCarregar ? "A carregar..." : "Pesquisar"}
-                    disabled={aCarregar}
-                    onClick={handlePesquisa}
-                    icon="fa-solid fa-magnifying-glass"
-                />
             </div>
 
             {pesquisaRealizada && (
                 <div className="layout-master-detail">
-
                     <div className="painel-esquerdo">
                         <h3><i className="fa-solid fa-user-graduate"></i> Diário de Turma</h3>
 
                         <div style={{ marginBottom: '15px' }}>
                             <InputComponent
                                 id="pesquisa-aluno"
-                                placeholder="🔍 Procurar aluno..."
+                                placeholder="Procurar aluno..."
                                 value={pesquisaAluno}
                                 onChange={(e) => setPesquisaAluno(e.target.value)}
                             />
@@ -154,7 +205,6 @@ export function HistoricoCoaching() {
                         </div>
                     </div>
 
-
                     <div className="painel-direito">
                         {alunoSelecionado ? (
                             <div className="detalhe-conteudo">
@@ -174,8 +224,8 @@ export function HistoricoCoaching() {
                                             { key: 'horaFormatada', value: 'Hora' },
                                             { key: 'nomeProfessor', value: 'Professor' },
                                             { key: 'nomeSala', value: 'Estúdio' },
-                                            { key: 'estadoTabela', value: 'Estado', type: TableColumnTypesEnum.Chip }
-                                        ]
+                                            { key: 'estadoTabela', value: 'Estado', type: TableColumnTypesEnum.Chip },
+                                        ],
                                     }}
                                     data={tableData}
                                 />

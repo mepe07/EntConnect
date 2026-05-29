@@ -142,18 +142,20 @@
 
     .lista-lotes {
         display: grid;
-        gap: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+        gap: 18px;
     }
 
     .linha-lote {
-        display: flex;
-        justify-content: space-between;
-        gap: 16px;
-        align-items: center;
-        padding: 16px;
-        border: 1px solid #e2e8f0;
-        border-radius: 18px;
+        display: grid;
+        grid-template-rows: auto auto;
+        gap: 18px;
+        align-items: stretch;
+        padding: 20px;
+        border: 1px solid #dbe3ec;
+        border-radius: 24px;
         background: #fff;
+        min-height: 100%;
 
         &.linha-publicada {
             background: #fefefe;
@@ -161,36 +163,75 @@
 
         .linha-lote-principal {
             display: flex;
-            align-items: center;
-            gap: 14px;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
             min-width: 0;
             flex: 1;
         }
 
-        img {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 14px;
+        .linha-lote-imagem-wrap {
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            border-radius: 18px;
+            overflow: hidden;
             border: 1px solid #e2e8f0;
-            flex-shrink: 0;
+            background: linear-gradient(135deg, #e2e8f0, #f8fafc);
+        }
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
         strong {
             display: block;
             margin-bottom: 6px;
+            font-size: 1.2rem;
         }
 
         p {
             margin: 0;
             color: #64748b;
             font-size: 14px;
+            line-height: 1.6;
         }
 
         small {
             display: block;
             margin-top: 6px;
             color: #94a3b8;
+        }
+    }
+
+    .linha-lote-conteudo {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .linha-lote-resumo {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+
+        span {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            font-size: 12px;
+            color: #475569;
+        }
+
+        strong {
+            margin: 0 0 0 4px;
+            font-size: inherit;
         }
     }
 
@@ -204,8 +245,12 @@
 
     .linha-acoes {
         display: flex;
+        justify-content: flex-end;
         gap: 8px;
         flex-wrap: wrap;
+        margin-top: auto;
+        padding-top: 8px;
+        border-top: 1px solid #eef2f7;
     }
 
     .badge-estado,
@@ -411,6 +456,12 @@
             gap: 12px;
         }
 
+        .form-grupo-linha {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
         .modal-acoes {
             display: flex;
             justify-content: flex-end;
@@ -471,8 +522,7 @@
         }
 
         .linha-lote {
-            flex-direction: column;
-            align-items: flex-start;
+            grid-template-rows: auto auto;
         }
 
         .inventario-filtros {
@@ -486,6 +536,19 @@
         .inventario-resumos,
         .detalhe-lote .detalhe-resumo {
             grid-template-columns: 1fr;
+        }
+
+        .lista-lotes,
+        .modal-card .form-grupo-linha {
+            grid-template-columns: 1fr;
+        }
+
+        .linha-acoes {
+            justify-content: stretch;
+
+            button {
+                width: 100%;
+            }
         }
     }
 }

@@ -16,7 +16,7 @@
 
     .filtros-iniciais {
         display: flex;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
         gap: 16px;
         align-items: flex-end;
         background-color: #ffffff;
@@ -25,6 +25,14 @@
         border: 1px solid #e2e8f0;
         margin-bottom: 32px;
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+        .pesquisa-periodo {
+            display: flex;
+            flex: 0 0 auto;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-end;
+        }
 
         .grupo-data {
             position: relative;
@@ -49,7 +57,7 @@
                 color: #1e293b;
                 font-family: inherit;
                 font-size: 16px;
-                width: 260px;
+                width: clamp(210px, 18vw, 260px);
                 outline: none;
                 cursor: pointer;
 
@@ -92,6 +100,17 @@
             height: 42px;
             font-size: 16px;
             white-space: nowrap;
+        }
+
+        .filtros-rapidos {
+            display: flex;
+            flex: 1 1 320px;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-left: auto;
+            justify-content: flex-end;
+            align-items: flex-end;
+            min-width: 0;
         }
     }
 
