@@ -72,6 +72,24 @@
         }
     }
 
+    &.success {
+        color: colors.$gray-1;
+        background-color: colors.$success-100;
+
+        &:hover {
+            background-color: colors.$success-80;
+        }
+
+        &.ativo {
+            background-color: colors.$success-100;
+            color: colors.$gray-1;
+
+            &:hover {
+                background-color: colors.$success-80;
+            }
+        }
+    }
+
     &.tertiary {
         color: colors.$theme-100;
         background-color: colors.$gray-1;

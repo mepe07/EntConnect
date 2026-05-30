@@ -29,6 +29,15 @@ export interface LinhaFaturacaoCoaching {
     salaNome?: string;
 }
 
+export interface ResumoFaturacao {
+    nome: string;
+    totalFaturado: number;
+    totalPago: number;
+    totalEmDivida: number;
+    aulas: number;
+    alunos: number;
+}
+
 export interface FiltroFaturacao {
     dataInicio: string;
     dataFim: string;

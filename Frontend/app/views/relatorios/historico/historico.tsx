@@ -9,13 +9,56 @@ import { InputComponent } from '../../../components/input/input.component';
 import { faturacaoService } from "../../../services/faturacao.service";
 import type { LinhaHistoricoCoaching } from '../../../models/interfaces/historico.interface'
 
+type FiltroHistorico = {
+    dataInicio: string;
+    dataFim: string;
+};
+
+type FiltroRapido = 'Hoje' | 'Esta semana' | 'Mês atual' | 'Personalizado';
+
+const formatarDataInput = (data: Date) => {
+    const dataLocal = new Date(data.getFullYear(), data.getMonth(), data.getDate());
+    const offsetTimezone = dataLocal.getTimezoneOffset() * 60000;
+    return new Date(dataLocal.getTime() - offsetTimezone).toISOString().split('T')[0];
+};
+
+const obterPeriodoHoje = (): FiltroHistorico => {
+    const hoje = formatarDataInput(new Date());
+    return { dataInicio: hoje, dataFim: hoje };
+};
+
+const obterPeriodoSemanaAtual = (): FiltroHistorico => {
+    const hoje = new Date();
+    const diaSemana = hoje.getDay();
+    const diferencaSegunda = diaSemana === 0 ? -6 : 1 - diaSemana;
+    const segunda = new Date(hoje);
+    segunda.setDate(hoje.getDate() + diferencaSegunda);
+    const domingo = new Date(segunda);
+    domingo.setDate(segunda.getDate() + 6);
+    return {
+        dataInicio: formatarDataInput(segunda),
+        dataFim: formatarDataInput(domingo),
+    };
+};
+
+const obterPeriodoMesAtual = (): FiltroHistorico => {
+    const hoje = new Date();
+    const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    return {
+        dataInicio: formatarDataInput(primeiroDia),
+        dataFim: formatarDataInput(ultimoDia),
+    };
+};
+
 export function HistoricoCoaching() {
 
 
-    const [filtro, setFiltro] = useState({ dataInicio: '', dataFim: '' });
+    const [filtro, setFiltro] = useState<FiltroHistorico>({ dataInicio: '', dataFim: '' });
     const [aulas, setAulas] = useState<LinhaHistoricoCoaching[]>([]);
     const [pesquisaRealizada, setPesquisaRealizada] = useState(false);
     const [aCarregar, setACarregar] = useState(false);
+    const [filtroRapidoAtivo, setFiltroRapidoAtivo] = useState<FiltroRapido>('Personalizado');
 
     const [alunoSelecionado, setAlunoSelecionado] = useState<string | null>(null);
     const [pesquisaAluno, setPesquisaAluno] = useState('');
@@ -28,13 +71,13 @@ export function HistoricoCoaching() {
     }, [alunoSelecionado]);
 
 
-    const handlePesquisa = async () => {
-        if (!filtro.dataInicio || !filtro.dataFim) return showToast('Por favor, selecione ambas as datas.');
+    const handlePesquisa = async (periodo: FiltroHistorico = filtro) => {
+        if (!periodo.dataInicio || !periodo.dataFim) return showToast('Por favor, selecione ambas as datas.');
 
         setACarregar(true);
         try {
 
-            const dados = await faturacaoService.getHistorico(filtro.dataInicio, filtro.dataFim);
+            const dados = await faturacaoService.getHistorico(periodo.dataInicio, periodo.dataFim);
             setAulas(dados);
             setPesquisaRealizada(true);
             setAlunoSelecionado(null);
@@ -44,6 +87,16 @@ export function HistoricoCoaching() {
         } finally {
             setACarregar(false);
         }
+    };
+
+    const aplicarFiltroRapido = (periodo: FiltroHistorico, nome: FiltroRapido) => {
+        setFiltroRapidoAtivo(nome);
+        setFiltro(periodo);
+        handlePesquisa(periodo);
+    };
+
+    const aplicarFiltroPersonalizado = () => {
+        setFiltroRapidoAtivo('Personalizado');
     };
 
 
@@ -102,24 +155,46 @@ export function HistoricoCoaching() {
 
     return (
         <div className="pagina-historico">
-            <h1>Histórico de Coaching</h1>
+            <div className="cabecalho-pagina">
+                <h1>Histórico de Coaching</h1>
 
-            <div className="filtros-iniciais">
-                <div className="grupo-data">
-                    <label>Data Início</label>
-                    <input type="date" value={filtro.dataInicio} onChange={e => setFiltro({ ...filtro, dataInicio: e.target.value })} />
+                <div className="botoes-tempo" aria-label="Filtros rápidos de data">
+                    <button disabled={aCarregar} className={filtroRapidoAtivo === 'Hoje' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido(obterPeriodoHoje(), 'Hoje')}>
+                        Hoje
+                    </button>
+                    <button disabled={aCarregar} className={filtroRapidoAtivo === 'Esta semana' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido(obterPeriodoSemanaAtual(), 'Esta semana')}>
+                        Esta semana
+                    </button>
+                    <button disabled={aCarregar} className={filtroRapidoAtivo === 'Mês atual' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido(obterPeriodoMesAtual(), 'Mês atual')}>
+                        Mês atual
+                    </button>
+                    <button disabled={aCarregar} className={filtroRapidoAtivo === 'Personalizado' ? 'ativo' : ''} onClick={aplicarFiltroPersonalizado}>
+                        Personalizado
+                    </button>
                 </div>
-                <div className="grupo-data">
-                    <label>Data Final</label>
-                    <input type="date" value={filtro.dataFim} onChange={e => setFiltro({ ...filtro, dataFim: e.target.value })} />
-                </div>
-                <ButtonComponent
-                    label={aCarregar ? "A carregar..." : "Pesquisar"}
-                    disabled={aCarregar}
-                    onClick={handlePesquisa}
-                    icon="fa-solid fa-magnifying-glass"
-                />
             </div>
+
+            {filtroRapidoAtivo === 'Personalizado' && (
+            <div className="filtros-iniciais">
+                <div className="pesquisa-periodo">
+                    <div className="grupo-data">
+                        <label>Data Início</label>
+                        <input type="date" value={filtro.dataInicio} onChange={e => setFiltro({ ...filtro, dataInicio: e.target.value })} />
+                    </div>
+                    <div className="grupo-data">
+                        <label>Data Final</label>
+                        <input type="date" value={filtro.dataFim} onChange={e => setFiltro({ ...filtro, dataFim: e.target.value })} />
+                    </div>
+                    <ButtonComponent
+                        label={aCarregar ? "A carregar..." : "Pesquisar"}
+                        disabled={aCarregar}
+                        onClick={() => handlePesquisa()}
+                        icon="fa-solid fa-magnifying-glass"
+                        className="btn-pesquisar"
+                    />
+                </div>
+            </div>
+            )}
 
             {pesquisaRealizada && (
                 <div className="layout-master-detail">

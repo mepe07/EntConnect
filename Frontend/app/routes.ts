@@ -38,7 +38,7 @@ export default [
     route("relatorios/faturacao", "routes/faturacao.tsx"),
 
 
-    route("relatorios/relatorioCoaching", "routes/relatorioCoaching.tsx"),
+    route("relatorios/coaching", "routes/relatorioCoaching.tsx"),
 
 
     route("marketplace/inventario", "routes/inventario.tsx"),
