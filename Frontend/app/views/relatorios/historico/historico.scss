@@ -114,6 +114,17 @@
                 font-size: 0.95rem;
             }
         }
+
+        .filtros-rapidos {
+            display: flex;
+            flex: 1 1 320px;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-left: auto;
+            justify-content: flex-end;
+            align-items: flex-end;
+            min-width: 0;
+        }
     }
 
     .layout-master-detail {

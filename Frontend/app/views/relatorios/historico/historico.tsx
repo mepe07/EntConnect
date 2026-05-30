@@ -63,7 +63,6 @@ export function HistoricoCoaching() {
     const [alunoSelecionado, setAlunoSelecionado] = useState<string | null>(null);
     const [pesquisaAluno, setPesquisaAluno] = useState('');
 
-
     useEffect(() => {
         if (alunoSelecionado) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -101,40 +100,33 @@ export function HistoricoCoaching() {
 
 
     const resumoAlunos = useMemo(() => {
-        const resumo: Record<string, any> = {};
+        const resumo: Record<string, { nome: string; totalAulas: number }> = {};
 
         aulas.forEach(aula => {
             if (!resumo[aula.nomeAluno]) {
                 resumo[aula.nomeAluno] = {
                     nome: aula.nomeAluno,
-                    totalAulas: 0
+                    totalAulas: 0,
                 };
             }
             resumo[aula.nomeAluno].totalAulas++;
         });
 
-
         return Object.values(resumo).sort((a, b) => b.totalAulas - a.totalAulas);
     }, [aulas]);
 
-
     const alunosFiltrados = resumoAlunos.filter(a =>
-        a.nome.toLowerCase().includes(pesquisaAluno.toLowerCase())
+        a.nome.toLowerCase().includes(pesquisaAluno.toLowerCase()),
     );
 
     const alunoFocado = resumoAlunos.find(a => a.nome === alunoSelecionado);
-
 
     const tableData = aulas
         .filter(aula => aula.nomeAluno === alunoSelecionado)
         .map(aula => {
             const dataObj = new Date(aula.dataAula);
-
-
             const apenasData = dataObj.toLocaleDateString('pt-PT');
-
             const apenasHora = dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-
 
             let corChip = 'default';
             if (aula.estadoAula === 'Realizada') corChip = 'success';
@@ -147,11 +139,10 @@ export function HistoricoCoaching() {
                 horaFormatada: apenasHora,
                 estadoTabela: {
                     value: aula.estadoAula,
-                    infoType: corChip
-                }
+                    infoType: corChip,
+                },
             };
         });
-
 
     return (
         <div className="pagina-historico">
@@ -198,14 +189,13 @@ export function HistoricoCoaching() {
 
             {pesquisaRealizada && (
                 <div className="layout-master-detail">
-
                     <div className="painel-esquerdo">
                         <h3><i className="fa-solid fa-user-graduate"></i> Diário de Turma</h3>
 
                         <div style={{ marginBottom: '15px' }}>
                             <InputComponent
                                 id="pesquisa-aluno"
-                                placeholder="🔍 Procurar aluno..."
+                                placeholder="Procurar aluno..."
                                 value={pesquisaAluno}
                                 onChange={(e) => setPesquisaAluno(e.target.value)}
                             />
@@ -229,7 +219,6 @@ export function HistoricoCoaching() {
                         </div>
                     </div>
 
-
                     <div className="painel-direito">
                         {alunoSelecionado ? (
                             <div className="detalhe-conteudo">
@@ -249,8 +238,8 @@ export function HistoricoCoaching() {
                                             { key: 'horaFormatada', value: 'Hora' },
                                             { key: 'nomeProfessor', value: 'Professor' },
                                             { key: 'nomeSala', value: 'Estúdio' },
-                                            { key: 'estadoTabela', value: 'Estado', type: TableColumnTypesEnum.Chip }
-                                        ]
+                                            { key: 'estadoTabela', value: 'Estado', type: TableColumnTypesEnum.Chip },
+                                        ],
                                     }}
                                     data={tableData}
                                 />
@@ -266,3 +255,4 @@ export function HistoricoCoaching() {
         </div>
     );
 }
+

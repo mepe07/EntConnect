@@ -5,16 +5,15 @@ import {
     type Anuncio,
     type CriarItemInventarioPayload,
     EstadoAnuncio,
-    OrigemRegisto,
     TipoAnuncio,
 } from '../../types/marketplace.types';
 import './inventario.scss';
-
 
 import { ModalCriarItem } from './partials/modalCriarItem';
 import { ModalPublicar } from './partials/modalPublicar';
 
 import { showToast } from '~/components/toast/toast';
+
 function getStockPrincipal(item: Anuncio) { return item.Stock_Armazem?.[0]; }
 function getQuantidadeTotal(item: Anuncio) { return getStockPrincipal(item)?.Quantidade_Total ?? 0; }
 function getQuantidadeVenda(item: Anuncio) { return getStockPrincipal(item)?.Quantidade_Venda ?? 0; }
@@ -28,8 +27,10 @@ function formatarData(valor?: string) {
 }
 
 const ESTADO_LABEL: Record<string, string> = {
-    [EstadoAnuncio.ATIVO]: 'Ativo', [EstadoAnuncio.RESERVADO]: 'Reservado',
-    [EstadoAnuncio.CONCLUIDO]: 'Concluído', [EstadoAnuncio.ARQUIVADO]: 'Arquivado',
+    [EstadoAnuncio.ATIVO]: 'Ativo',
+    [EstadoAnuncio.RESERVADO]: 'Reservado',
+    [EstadoAnuncio.CONCLUIDO]: 'Concluído',
+    [EstadoAnuncio.ARQUIVADO]: 'Arquivado',
     [EstadoAnuncio.REMOVIDO]: 'Removido',
 };
 
@@ -45,16 +46,21 @@ export function Inventario() {
     const [erro, setErro] = useState('');
     const [resumoFluxo, setResumoFluxo] = useState('Sem ações executadas ainda.');
 
-
     const [mostrarModalPublicar, setMostrarModalPublicar] = useState(false);
     const [mostrarModalCriar, setMostrarModalCriar] = useState(false);
 
     const [formCriar, setFormCriar] = useState<CriarItemInventarioPayload>({
-        titulo: '', descricao: '', quantidade: 0, foto: ''
+        titulo: '',
+        descricao: '',
+        quantidade: 0,
+        foto: '',
+        idEstado: 1,
+        idTamanho: 2,
     });
 
     const carregarInventario = async () => {
-        setLoading(true); setErro('');
+        setLoading(true);
+        setErro('');
         try {
             const dados = await marketplaceService.listarInventarioDaEscola();
             setInventario(dados);
@@ -70,9 +76,12 @@ export function Inventario() {
 
     const inventarioFiltrado = useMemo(() => {
         return inventario.filter((item) => {
-            const texto = [item.Nome, item.Descricao, getCor(item), getTamanho(item)].join(' ').toLowerCase();
+            const texto = [item.Nome, item.Descricao, getCor(item), getTamanho(item), getEstadoPeca(item)].join(' ').toLowerCase();
             const okPesquisa = texto.includes(pesquisa.toLowerCase());
-            const okPublicacao = filtroPublicacao === 'todos' || (filtroPublicacao === 'publicado' && item.Publicado_No_Marketplace) || (filtroPublicacao === 'nao_publicado' && !item.Publicado_No_Marketplace);
+            const okPublicacao =
+                filtroPublicacao === 'todos' ||
+                (filtroPublicacao === 'publicado' && item.Publicado_No_Marketplace) ||
+                (filtroPublicacao === 'nao_publicado' && !item.Publicado_No_Marketplace);
             return okPesquisa && okPublicacao;
         });
     }, [inventario, pesquisa, filtroPublicacao]);
@@ -92,7 +101,14 @@ export function Inventario() {
         try {
             await marketplaceService.criarItemInventario(formCriar);
             setMostrarModalCriar(false);
-            setFormCriar({ titulo: '', descricao: '', quantidade: 0, foto: '' });
+            setFormCriar({
+                titulo: '',
+                descricao: '',
+                quantidade: 0,
+                foto: '',
+                idEstado: 1,
+                idTamanho: 2,
+            });
             carregarInventario();
         } catch (err: any) {
             showToast(err.message);
@@ -169,7 +185,7 @@ export function Inventario() {
                     </div>
 
                     <div className="inventario-filtros">
-                        <input value={pesquisa} onChange={(e) => setPesquisa(e.target.value)} placeholder="Pesquisar lote, cor ou tamanho" />
+                        <input value={pesquisa} onChange={(e) => setPesquisa(e.target.value)} placeholder="Pesquisar lote, tamanho ou estado da peça" />
                         <select value={filtroPublicacao} onChange={(e) => setFiltroPublicacao(e.target.value)}>
                             <option value="todos">Todos</option>
                             <option value="publicado">Publicado</option>
@@ -182,18 +198,30 @@ export function Inventario() {
 
                     {!loading && vista === 'lista' && (
                         <div className="lista-lotes">
-                            {inventarioFiltrado.length === 0 ? <div className="estado-vazio">Não existem artigos para mostrar.</div> : inventarioFiltrado.map((item) => (
+                            {inventarioFiltrado.length === 0 ? (
+                                <div className="estado-vazio">Não existem artigos para mostrar.</div>
+                            ) : inventarioFiltrado.map((item) => (
                                 <div key={item.ID_Artigo} className="linha-lote">
                                     <div className="linha-lote-principal">
-                                        <img src={item.Foto || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1200&auto=format&fit=crop'} alt={item.Nome} />
-                                        <div>
+                                        <div className="linha-lote-imagem-wrap">
+                                            <img
+                                                src={item.Foto || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1200&auto=format&fit=crop'}
+                                                alt={item.Nome}
+                                            />
+                                        </div>
+                                        <div className="linha-lote-conteudo">
                                             <div className="linha-topo">
                                                 <span className={`badge-estado estado-${item.Estado_Anuncio}`}>{ESTADO_LABEL[item.Estado_Anuncio] || item.Estado_Anuncio}</span>
                                                 {item.Publicado_No_Marketplace ? <span className="badge-outline">Publicado na montra</span> : <span className="badge-outline">Só inventário</span>}
                                             </div>
                                             <strong>{item.Nome}</strong>
-                                            <p>{getEstadoPeca(item)} · {getCor(item)} · Tamanho {getTamanho(item)} · Quantidade {getQuantidadeTotal(item)}</p>
-                                            <small>Atualizado: {formatarData(item.Data_Atualizacao || item.Data_Criacao)}</small>
+                                            <div className="linha-lote-resumo">
+                                                <span>Estado da peça: <strong>{getEstadoPeca(item)}</strong></span>
+                                                <span>Tamanho: <strong>{getTamanho(item)}</strong></span>
+                                                <span>Quantidade: <strong>{getQuantidadeTotal(item)}</strong></span>
+                                            </div>
+                                            <p>{item.Descricao || 'Item institucional preparado para publicação na montra e gestão interna.'}</p>
+                                            <small>Atualizado em {formatarData(item.Data_Atualizacao || item.Data_Criacao)}</small>
                                         </div>
                                     </div>
                                     <div className="linha-acoes">
@@ -207,7 +235,7 @@ export function Inventario() {
 
                     {!loading && vista === 'detalhe' && itemSelecionado && (
                         <div className="detalhe-lote">
-                            <ButtonComponent className="btn-link" onClick={() => setVista('lista')}>← Voltar à lista</ButtonComponent>
+                            <ButtonComponent className="btn-link" onClick={() => setVista('lista')}>Voltar à lista</ButtonComponent>
                             <div className="detalhe-grid">
                                 <div className="detalhe-principal">
                                     <img className="detalhe-imagem" src={itemSelecionado.Foto || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1200&auto=format&fit=crop'} alt={itemSelecionado.Nome} />
@@ -236,7 +264,7 @@ export function Inventario() {
                                         </div>
                                     </div>
                                     <div className="bloco-lateral">
-                                        <h3>Ações do lote</h3>
+                                        <h3>Acoes do lote</h3>
                                         <div className="acoes-lateral">
                                             <ButtonComponent className="btn-principal" onClick={() => setMostrarModalPublicar(true)}>{itemSelecionado.Publicado_No_Marketplace ? 'Rever publicação' : 'Publicar no Marketplace'}</ButtonComponent>
                                             <ButtonComponent className="btn-secundario" onClick={() => setVista('publicados')}>Ver publicados</ButtonComponent>
@@ -252,8 +280,10 @@ export function Inventario() {
                             {publicados.length === 0 ? <div className="estado-vazio">Ainda não existem publicações ativas vindas do inventário.</div> : publicados.map((item) => (
                                 <div key={item.ID_Artigo} className="linha-lote linha-publicada">
                                     <div className="linha-lote-principal">
-                                        <img src={item.Foto || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1200&auto=format&fit=crop'} alt={item.Nome} />
-                                        <div>
+                                        <div className="linha-lote-imagem-wrap">
+                                            <img src={item.Foto || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1200&auto=format&fit=crop'} alt={item.Nome} />
+                                        </div>
+                                        <div className="linha-lote-conteudo">
                                             <div className="linha-topo">
                                                 <span className={`badge-estado estado-${item.Estado_Anuncio}`}>{ESTADO_LABEL[item.Estado_Anuncio] || item.Estado_Anuncio}</span>
                                                 <span className="badge-outline">Publicado na montra</span>
@@ -272,7 +302,6 @@ export function Inventario() {
                     )}
                 </div>
             </div>
-
 
             {mostrarModalCriar && (
                 <ModalCriarItem
@@ -298,7 +327,6 @@ export function Inventario() {
                     }}
                 />
             )}
-
         </div>
     );
 }

@@ -84,6 +84,10 @@ function getDisponibilidadeDateTime(disponibilidade: Disponibilidade) {
     return date;
 }
 
+function isDisponibilidadeFutura(disponibilidade: Disponibilidade) {
+    return getDisponibilidadeDateTime(disponibilidade).getTime() >= Date.now();
+}
+
 function formatMonthLabel(date: Date) {
     return date.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
 }
@@ -339,6 +343,7 @@ export default function CoachingEE() {
 
     const disponibilidadesOrdenadas = useMemo(() => {
         return disponibilidades
+            .filter(isDisponibilidadeFutura)
             .filter((disp) => Number(disp.maxAlunos ?? 0) > 0)
             .filter((disp) => !temExcecaoNaData(disp, formatDateKey(parseDataDisponibilidade(disp.data))))
             .filter((disp) => (filtroProfessor ? disp.nomeProfessor === filtroProfessor : true))

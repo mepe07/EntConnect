@@ -119,6 +119,8 @@ export function montarDadosStockItemInventario(params: {
 
   return {
     ID_Artigo: idArtigo,
+    ID_Estado: dto.idEstado ?? null,
+    ID_Tamanho: dto.idTamanho ?? null,
     Quantidade_Total: dto.quantidade,
     Quantidade_Venda: 0,
     Quantidade_Aluguer: 0,

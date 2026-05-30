@@ -348,6 +348,14 @@ export const marketplaceService = {
             formData.append('descricao', dados.descricao);
         }
 
+        if (dados.idEstado) {
+            formData.append('idEstado', String(dados.idEstado));
+        }
+
+        if (dados.idTamanho) {
+            formData.append('idTamanho', String(dados.idTamanho));
+        }
+
         if (dados.ficheiroFoto) {
             formData.append('foto', dados.ficheiroFoto);
         }
