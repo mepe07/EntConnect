@@ -345,6 +345,7 @@ export class FaturacaoService {
               },
             },
             Sala: true,
+            Modalidade: true,
           },
         },
       },
@@ -355,7 +356,33 @@ export class FaturacaoService {
       },
     });
 
-    return inscricoes.map((item) => {
+    const resumoEstudios: Record<
+      string,
+      {
+        nome: string;
+        totalFaturado: number;
+        totalPago: number;
+        totalEmDivida: number;
+        aulas: number;
+        alunos: Set<number>;
+      }
+    > = {};
+
+    const resumoModalidades: Record<
+      string,
+      {
+        nome: string;
+        totalFaturado: number;
+        totalPago: number;
+        totalEmDivida: number;
+        aulas: number;
+        alunos: Set<number>;
+      }
+    > = {};
+
+    const alunosUnicos = new Set<number>();
+
+    const faturas = inscricoes.map((item) => {
       const valorTotal = this.obterValorTotalAluno(item);
       const valorEmFalta = this.obterValorEmFalta(item, valorTotal);
       const estaPago = valorEmFalta <= 0;
@@ -368,6 +395,54 @@ export class FaturacaoService {
         : dataAula && dataAula < agora
           ? 'atrasado'
           : 'pendente';
+
+      const nomeSala = item.Coaching?.Sala?.Nome?.trim() || 'Sem estúdio';
+      const nomeModalidade =
+        item.Coaching?.Modalidade?.Descricao?.trim() || 'Sem modalidade';
+      const idAluno = item.ID_Aluno;
+      const valorPago = Math.max(valorTotal - valorEmFalta, 0);
+
+      if (!resumoEstudios[nomeSala]) {
+        resumoEstudios[nomeSala] = {
+          nome: nomeSala,
+          totalFaturado: 0,
+          totalPago: 0,
+          totalEmDivida: 0,
+          aulas: 0,
+          alunos: new Set<number>(),
+        };
+      }
+
+      if (!resumoModalidades[nomeModalidade]) {
+        resumoModalidades[nomeModalidade] = {
+          nome: nomeModalidade,
+          totalFaturado: 0,
+          totalPago: 0,
+          totalEmDivida: 0,
+          aulas: 0,
+          alunos: new Set<number>(),
+        };
+      }
+
+      resumoEstudios[nomeSala].totalFaturado += valorTotal;
+      resumoEstudios[nomeSala].totalPago += valorPago;
+      resumoEstudios[nomeSala].totalEmDivida += valorEmFalta;
+      resumoEstudios[nomeSala].aulas += 1;
+      if (idAluno !== null && idAluno !== undefined) {
+        resumoEstudios[nomeSala].alunos.add(idAluno);
+      }
+
+      resumoModalidades[nomeModalidade].totalFaturado += valorTotal;
+      resumoModalidades[nomeModalidade].totalPago += valorPago;
+      resumoModalidades[nomeModalidade].totalEmDivida += valorEmFalta;
+      resumoModalidades[nomeModalidade].aulas += 1;
+      if (idAluno !== null && idAluno !== undefined) {
+        resumoModalidades[nomeModalidade].alunos.add(idAluno);
+      }
+
+      if (idAluno !== null && idAluno !== undefined) {
+        alunosUnicos.add(idAluno);
+      }
 
       return {
         idCoaching: item.ID_Coaching,
@@ -384,7 +459,7 @@ export class FaturacaoService {
 
         valorTotal,
 
-        valorPago: Math.max(valorTotal - valorEmFalta, 0),
+        valorPago,
 
         valorEmFalta,
 
@@ -397,6 +472,35 @@ export class FaturacaoService {
         salaNome: item.Coaching?.Sala?.Nome || 'Sem sala',
       };
     });
+
+    const faturacaoPorEstudio = Object.values(resumoEstudios)
+      .map((item) => ({
+        nome: item.nome,
+        totalFaturado: item.totalFaturado,
+        totalPago: item.totalPago,
+        totalEmDivida: item.totalEmDivida,
+        aulas: item.aulas,
+        alunos: item.alunos.size,
+      }))
+      .sort((a, b) => b.totalFaturado - a.totalFaturado);
+
+    const faturacaoPorModalidade = Object.values(resumoModalidades)
+      .map((item) => ({
+        nome: item.nome,
+        totalFaturado: item.totalFaturado,
+        totalPago: item.totalPago,
+        totalEmDivida: item.totalEmDivida,
+        aulas: item.aulas,
+        alunos: item.alunos.size,
+      }))
+      .sort((a, b) => b.totalFaturado - a.totalFaturado);
+
+    return {
+      faturas,
+      faturacaoPorEstudio,
+      faturacaoPorModalidade,
+      totalAlunos: alunosUnicos.size,
+    };
   }
 
   /**

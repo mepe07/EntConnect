@@ -1,5 +1,5 @@
 import { authService } from './auth.service';
-import type { LinhaFaturacaoCoaching } from '../models/interfaces/faturacao.interface';
+import type { LinhaFaturacaoCoaching, ResumoFaturacao } from '../models/interfaces/faturacao.interface';
 import { API_BASE_URL } from "../../src/config/api.config";
 
 class FaturacaoService {
@@ -17,7 +17,15 @@ class FaturacaoService {
         };
     }
 
-    async getRelatorio(inicio: string, fim: string) {
+    async getRelatorio(
+        inicio: string,
+        fim: string,
+    ): Promise<{
+        faturas: LinhaFaturacaoCoaching[];
+        faturacaoPorEstudio: ResumoFaturacao[];
+        faturacaoPorModalidade: ResumoFaturacao[];
+        totalAlunos: number;
+    }> {
         const urlCompleto = `${this.API_URL}/Relatorio?inicio=${inicio}&fim=${fim}`;
 
         try {

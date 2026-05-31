@@ -1,0 +1,238 @@
+// ===========================================================
+// SISTEMA DE DESIGN - RELATÓRIOS
+// Arquivo centralizado de variáveis e estilos compartilhados
+// ===========================================================
+
+// ============ CORES ============
+$color-background-page: #f1f5f9;
+$color-background-card: #ffffff;
+$color-text-primary: #0f172a;
+$color-text-secondary: #64748b;
+$color-text-label: #64748b;
+$color-border: #e2e8f0;
+$color-button-primary: #3b82f6;
+$color-button-primary-hover: #2563eb;
+$color-button-primary-active: #3b82f6;
+$color-text-button: #ffffff;
+$color-placeholder: #cbd5e1;
+
+// ============ TIPOGRAFIA ============
+$font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  sans-serif;
+$font-size-h1: 2.5rem;
+$font-weight-h1: 800;
+$letter-spacing-h1: -1px;
+$font-size-label: 0.9rem;
+$font-weight-label: 700;
+$text-transform-label: uppercase;
+
+// ============ ESPAÇAMENTO ============
+$spacing-page: 32px;
+$spacing-card: 32px;
+$spacing-gap-default: 16px;
+$spacing-gap-small: 10px;
+
+// ============ BORDER RADIUS ============
+$border-radius-card: 16px;
+$border-radius-input: 10px;
+$border-radius-button: 10px;
+
+// ============ SHADOWS ============
+$shadow-card: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+$shadow-button: 0 2px 4px rgba(59, 130, 246, 0.3);
+
+// ============ ANIMAÇÕES ============
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ============ MIXINS ============
+
+// Mixin para página base
+@mixin pagina-base {
+  padding: $spacing-page;
+  background-color: $color-background-page;
+  min-height: 100vh;
+  font-family: $font-family-base;
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+// Mixin para título h1
+@mixin titulo-h1 {
+  font-size: $font-size-h1;
+  font-weight: $font-weight-h1;
+  color: $color-text-primary;
+  letter-spacing: $letter-spacing-h1;
+  margin: 0;
+}
+
+// Mixin para labels
+@mixin label-style {
+  font-size: $font-size-label;
+  font-weight: $font-weight-label;
+  color: $color-text-label;
+  text-transform: $text-transform-label;
+}
+
+// Mixin para cards/filtros
+@mixin card-style {
+  background-color: $color-background-card;
+  padding: $spacing-card;
+  border-radius: $border-radius-card;
+  border: 1px solid $color-border;
+  box-shadow: $shadow-card;
+}
+
+// Mixin para inputs de data
+@mixin input-date-style {
+  height: 42px;
+  padding: 0 16px;
+  border: 2px solid $color-background-page;
+  border-radius: $border-radius-input;
+  background-color: #f8fafc;
+  color: $color-text-primary;
+  font-family: inherit;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.2s;
+
+  &:focus {
+    border-color: $color-button-primary;
+    background-color: $color-background-card;
+  }
+}
+
+// Mixin para botão primário
+@mixin button-primary-style {
+  background: transparent;
+  border: none;
+  padding: 10px 20px;
+  border-radius: $border-radius-button;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: $color-text-secondary;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    color: $color-text-primary;
+  }
+
+  &.ativo {
+    background-color: $color-button-primary;
+    color: $color-text-button;
+    box-shadow: $shadow-button;
+  }
+}
+
+// ============ COMPONENTES COMUNS ============
+
+.relatorio-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-card;
+  flex-wrap: wrap;
+  gap: $spacing-gap-default;
+
+  h1 {
+    @include titulo-h1;
+  }
+
+  .botoes-tempo {
+    display: flex;
+    background-color: $color-background-card;
+    padding: 6px;
+    border-radius: $border-radius-button;
+    border: 1px solid $color-border;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    gap: 6px;
+
+    button {
+      @include button-primary-style;
+    }
+  }
+}
+
+.relatorio-filtros {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: $spacing-gap-default;
+  align-items: flex-end;
+  @include card-style;
+  margin-bottom: $spacing-card;
+  animation: slideDown 0.3s ease-out;
+
+  .grupo-data {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-gap-small;
+
+    label {
+      @include label-style;
+    }
+
+    input[type="date"] {
+      @include input-date-style;
+      width: 260px;
+    }
+  }
+
+  .button-container {
+    height: 42px;
+    min-width: 150px;
+    padding: 0 1.25rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+}
+
+.relatorio-vazio {
+  text-align: center;
+  padding: 100px 20px;
+  font-size: 1.2rem;
+  color: $color-text-secondary;
+  font-weight: 600;
+  background: $color-background-card;
+  border-radius: $border-radius-card;
+  border: 1px solid $color-border;
+}
+
+.relatorio-empty-state-grafico {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 350px;
+  color: #94a3b8;
+
+  i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    color: $color-placeholder;
+  }
+
+  p {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+}

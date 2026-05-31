@@ -46,14 +46,26 @@
 .primaryButton {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
-    padding: 13px 18px;
+    min-height: 44px;
+    padding: 0 22px;
     border: none;
     border-radius: 14px;
     color: #ffffff;
     background: #0f5138;
-    font-weight: 900;
+    font-size: 0.95rem;
+    font-weight: 800;
+    line-height: 1;
     cursor: pointer;
+    box-shadow: none;
+    transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+    white-space: nowrap;
+}
+
+.primaryButton:hover {
+    background: #0b3f2b;
+    transform: translateY(-1px);
 }
 
 .statsGrid {
@@ -276,31 +288,61 @@
 .secondaryAction,
 .dangerAction,
 .successAction {
-    padding: 9px 12px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 18px;
     border: 1px solid transparent;
-    border-radius: 12px;
-    font-size: 0.82rem;
-    font-weight: 900;
+    border-radius: 14px;
+    font-size: 0.92rem;
+    font-weight: 800;
+    line-height: 1;
     text-decoration: none;
     cursor: pointer;
+    box-shadow: none;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+    white-space: nowrap;
+}
+
+.secondaryAction:hover,
+.dangerAction:hover,
+.successAction:hover {
+    transform: translateY(-1px);
 }
 
 .secondaryAction {
-    color: #0f5138;
-    background: #edf8f2;
-    border-color: #ccebdd;
+    color: #ffffff;
+    background: #0f5138;
+    border-color: #0f5138;
+}
+
+.secondaryAction:hover {
+    background: #0b3f2b;
+    border-color: #0b3f2b;
 }
 
 .dangerAction {
-    color: #b91c1c;
-    background: #fff1f2;
-    border-color: #fecdd3;
+    color: #ffffff;
+    background: #b42318;
+    border-color: #b42318;
+}
+
+.dangerAction:hover {
+    background: #8f1d15;
+    border-color: #8f1d15;
 }
 
 .successAction {
-    color: #047857;
-    background: #ecfdf5;
-    border-color: #bbf7d0;
+    color: #ffffff;
+    background: #15803d;
+    border-color: #15803d;
+}
+
+.successAction:hover {
+    background: #166534;
+    border-color: #166534;
 }
 
 
@@ -463,11 +505,14 @@
 }
 
     .modalFooter button {
-        padding: 12px 16px;
+        min-height: 44px;
+        padding: 0 18px;
         border: none;
         border-radius: 14px;
-        font-weight: 900;
+        font-size: 0.95rem;
+        font-weight: 800;
         cursor: pointer;
+        transition: background 0.18s ease, transform 0.18s ease;
     }
 
         .modalFooter button:first-child {
@@ -478,6 +523,10 @@
         .modalFooter button:last-child {
             color: #ffffff;
             background: #0f5138;
+        }
+
+        .modalFooter button:not(:disabled):hover {
+            transform: translateY(-1px);
         }
 
         .modalFooter button:disabled {
@@ -567,9 +616,41 @@
 :global(body.entconnect-dark) .form input,
 :global(body.entconnect-dark) .form select,
 :global(body.entconnect-dark) .form textarea {
-    background: #111827 !important;
+    background: #0f172a !important;
     border-color: #334155 !important;
     color: #e2e8f0 !important;
+}
+
+:global(body.entconnect-dark) .primaryButton,
+:global(body.entconnect-dark) .secondaryAction,
+:global(body.entconnect-dark) .modalFooter button:last-child {
+    background: #0f5138 !important;
+    border-color: #0f5138 !important;
+    color: #ffffff !important;
+}
+
+:global(body.entconnect-dark) .primaryButton:hover,
+:global(body.entconnect-dark) .secondaryAction:hover,
+:global(body.entconnect-dark) .modalFooter button:last-child:hover {
+    background: #0b3f2b !important;
+    border-color: #0b3f2b !important;
+}
+
+:global(body.entconnect-dark) .dangerAction {
+    background: #b42318 !important;
+    border-color: #b42318 !important;
+    color: #ffffff !important;
+}
+
+:global(body.entconnect-dark) .dangerAction:hover {
+    background: #8f1d15 !important;
+    border-color: #8f1d15 !important;
+}
+
+:global(body.entconnect-dark) .successAction {
+    background: #15803d !important;
+    border-color: #15803d !important;
+    color: #ffffff !important;
 }
 
 :global(body.entconnect-dark) .modalFooter {
@@ -587,8 +668,6 @@
 :global(body.entconnect-dark) .badgeMuted,
 :global(body.entconnect-dark) .badgeDanger,
 :global(body.entconnect-dark) .badgeLogin,
-:global(body.entconnect-dark) .secondaryAction,
-:global(body.entconnect-dark) .dangerAction,
-:global(body.entconnect-dark) .successAction {
+:global(body.entconnect-dark) .badgeDanger {
     color: #0f172a !important;
 }

@@ -5,6 +5,7 @@ import { faturacaoService } from "~/services/faturacao.service";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { ButtonComponent } from '~/components/button/button.component';
 import type { DadosDashboard, DadosPrevisao } from '../../../models/interfaces/estatisticas.interface';
+import type { ResumoFaturacao } from '~/models/interfaces/faturacao.interface';
 
 type TipoFiltroData = 'Hoje' | 'Semana' | 'Mes' | 'Personalizado';
 
@@ -27,6 +28,9 @@ export function Estatisticas() {
 
     const [dados, setDados] = useState<DadosDashboard | null>(null);
     const [previsao, setPrevisao] = useState<DadosPrevisao[] | null>(null);
+    const [totalAlunos, setTotalAlunos] = useState<number>(0);
+    const [faturacaoPorEstudio, setFaturacaoPorEstudio] = useState<ResumoFaturacao[]>([]);
+    const [faturacaoPorModalidade, setFaturacaoPorModalidade] = useState<ResumoFaturacao[]>([]);
 
 
     const aplicarFiltroRapido = (tipo: TipoFiltroData) => {
@@ -48,8 +52,15 @@ export function Estatisticas() {
         if (!inicio || !fim) return;
         setACarregar(true);
         try {
-            const payload = await faturacaoService.getDashboardFinanceiro(inicio, fim);
+            const [payload, relatorio] = await Promise.all([
+                faturacaoService.getDashboardFinanceiro(inicio, fim),
+                faturacaoService.getRelatorio(inicio, fim),
+            ]);
+
             setDados(payload);
+            setTotalAlunos(relatorio.totalAlunos);
+            setFaturacaoPorEstudio(relatorio.faturacaoPorEstudio);
+            setFaturacaoPorModalidade(relatorio.faturacaoPorModalidade);
         } catch (error) {
             console.error('[Estatisticas] Erro ao obter dados do dashboard:', error);
         } finally {
@@ -88,10 +99,10 @@ export function Estatisticas() {
             <div className="cabecalho-estatisticas">
                 <h1>Painel Estratégico</h1>
                 <div className="botoes-tempo">
-                    <ButtonComponent className={tipoFiltro === 'Hoje' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido('Hoje')}>Hoje</ButtonComponent>
-                    <ButtonComponent className={tipoFiltro === 'Semana' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido('Semana')}>Últimos 7 Dias</ButtonComponent>
-                    <ButtonComponent className={tipoFiltro === 'Mes' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido('Mes')}>Últimos 30 Dias</ButtonComponent>
-                    <ButtonComponent className={tipoFiltro === 'Personalizado' ? 'ativo' : ''} onClick={() => setTipoFiltro('Personalizado')}>Personalizado</ButtonComponent>
+                    <button disabled={aCarregar} className={tipoFiltro === 'Hoje' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido('Hoje')}>Hoje</button>
+                    <button disabled={aCarregar} className={tipoFiltro === 'Semana' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido('Semana')}>Últimos 7 Dias</button>
+                    <button disabled={aCarregar} className={tipoFiltro === 'Mes' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido('Mes')}>Últimos 30 Dias</button>
+                    <button disabled={aCarregar} className={tipoFiltro === 'Personalizado' ? 'ativo' : ''} onClick={() => setTipoFiltro('Personalizado')}>Personalizado</button>
                 </div>
             </div>
 
@@ -113,7 +124,56 @@ export function Estatisticas() {
                 <div className="loading-state">A carregar inteligência financeira...</div>
             ) : dados && (
                 <>
-
+                    {/* <div className="resumo-geral-grid">
+                        <div className="resumo-card">
+                            <span className="resumo-card-titulo">Total de alunos únicos</span>
+                            <strong className="resumo-card-valor">{totalAlunos}</strong>
+                        </div>
+                        <div className="resumo-card">
+                            <span className="resumo-card-titulo">Estúdio com mais faturação</span>
+                            <strong className="resumo-card-valor">{faturacaoPorEstudio[0]?.nome || 'Nenhum'}</strong>
+                            <span className="resumo-card-subtexto">{faturacaoPorEstudio[0] ? `${faturacaoPorEstudio[0].totalFaturado.toFixed(2)}€` : ''}</span>
+                        </div>
+                        <div className="resumo-card">
+                            <span className="resumo-card-titulo">Modalidade com mais faturação</span>
+                            <strong className="resumo-card-valor">{faturacaoPorModalidade[0]?.nome || 'Nenhum'}</strong>
+                            <span className="resumo-card-subtexto">{faturacaoPorModalidade[0] ? `${faturacaoPorModalidade[0].totalFaturado.toFixed(2)}€` : ''}</span>
+                        </div>
+                    </div>
+                    <div className="resumo-listas">
+                        <div className="resumo-lista resumo-lista--estudio">
+                            <div className="resumo-lista-cabecalho">
+                                <h4>Top 5 Estúdios</h4>
+                            </div>
+                            <ul>
+                                {faturacaoPorEstudio.slice(0, 5).map((item) => (
+                                    <li key={item.nome}>
+                                        <div className="resumo-lista-info">
+                                            <strong>{item.nome}</strong>
+                                            <span>{item.alunos} alunos</span>
+                                        </div>
+                                        <span className="resumo-lista-valor">{item.totalFaturado.toFixed(2)}€</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div className="resumo-lista resumo-lista--modalidade">
+                            <div className="resumo-lista-cabecalho">
+                                <h4>Top 5 Modalidades</h4>
+                            </div>
+                            <ul>
+                                {faturacaoPorModalidade.slice(0, 5).map((item) => (
+                                    <li key={item.nome}>
+                                        <div className="resumo-lista-info">
+                                            <strong>{item.nome}</strong>
+                                            <span>{item.alunos} alunos</span>
+                                        </div>
+                                        <span className="resumo-lista-valor">{item.totalFaturado.toFixed(2)}€</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div> 
+                    </div>*/}
                     <div className="card-grafico-gigante">
                         <h3>Evolução de Faturação Diária</h3>
                         {existemDados ? (
@@ -184,7 +244,7 @@ export function Estatisticas() {
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                                             <XAxis type="number" stroke="#94a3b8" tickFormatter={(value) => formatarMoeda(value)} />
                                             <YAxis dataKey="nome" type="category" stroke="#64748b" fontWeight="600" width={86} />
-                                            <Tooltip formatter={(value: any) => [formatarMoeda(Number(value)), "Faturou"]} cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '10px' }} />
+                                            <Tooltip formatter={(value: any) => [formatarMoeda(Number(value)), "Faturou"]} cursor={{ fill: 'rgba(148, 163, 184, 0.12)' }} contentStyle={{ borderRadius: '10px' }} />
                                             <Bar dataKey="total" fill="#10b981" radius={[0, 6, 6, 0]} barSize={34} minPointSize={6} />
                                         </BarChart>
                                     </ResponsiveContainer>
@@ -203,7 +263,7 @@ export function Estatisticas() {
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                             <XAxis dataKey="mes" stroke="#94a3b8" fontWeight="600" />
                                             <YAxis stroke="#94a3b8" tickFormatter={(value) => formatarMoeda(value)} fontSize="15px" />
-                                            <Tooltip formatter={(value: any) => [formatarMoeda(Number(value)), "Previsto"]} cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '10px' }} />
+                                            <Tooltip formatter={(value: any) => [formatarMoeda(Number(value)), "Previsto"]} cursor={{ fill: 'rgba(148, 163, 184, 0.12)' }} contentStyle={{ borderRadius: '10px' }} />
                                             <Bar dataKey="previsto" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={40} />
                                         </BarChart>
                                     </ResponsiveContainer>

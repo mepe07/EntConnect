@@ -56,6 +56,8 @@ const obterPeriodoMesAtual = (): FiltroFaturacao => {
     };
 };
 
+type FiltroRapido = 'Hoje' | 'Esta semana' | 'Mês atual' | 'Personalizado';
+
 type CelulaXlsx = {
     valor: string | number;
     tipo?: 'string' | 'number';
@@ -331,28 +333,10 @@ export function Faturacao() {
     const [pesquisaRealizada, setPesquisaRealizada] = useState(false);
     const [professorSelecionado, setProfessorSelecionado] = useState<string | null>(null);
     const [aCarregar, setACarregar] = useState(false);
+    const [filtroRapidoAtivo, setFiltroRapidoAtivo] = useState<FiltroRapido>('Personalizado');
 
 
     const [pesquisaProf, setPesquisaProf] = useState('');
-
-    const filtrosRapidos = [
-        {
-            label: 'Hoje',
-            icon: 'fa-solid fa-calendar-day',
-            aplicar: () => aplicarFiltroRapido(obterPeriodoHoje()),
-        },
-        {
-            label: 'Esta semana',
-            icon: 'fa-solid fa-calendar-week',
-            aplicar: () => aplicarFiltroRapido(obterPeriodoSemanaAtual()),
-        },
-        {
-            label: 'Mês atual',
-            icon: 'fa-solid fa-calendar-days',
-            aplicar: () => aplicarFiltroRapido(obterPeriodoMesAtual()),
-        },
-    ];
-
 
     useEffect(() => {
         if (professorSelecionado) {
@@ -369,7 +353,7 @@ export function Faturacao() {
         try {
             const dados = await faturacaoService.getRelatorio(periodo.dataInicio, periodo.dataFim);
 
-            setFaturas(dados);
+            setFaturas(dados.faturas);
             setPesquisaRealizada(true);
             setPeriodoPesquisado({ ...periodo });
             setProfessorSelecionado(null);
@@ -381,9 +365,14 @@ export function Faturacao() {
         }
     };
 
-    const aplicarFiltroRapido = (periodo: FiltroFaturacao) => {
+    const aplicarFiltroRapido = (periodo: FiltroFaturacao, nome: FiltroRapido) => {
+        setFiltroRapidoAtivo(nome);
         setFiltro(periodo);
         handlePesquisa(periodo);
+    };
+
+    const aplicarFiltroPersonalizado = () => {
+        setFiltroRapidoAtivo('Personalizado');
     };
 
 
@@ -531,7 +520,22 @@ export function Faturacao() {
     return (
         <div className="pagina-faturacao">
             <div className="cabecalho-pagina">
-            <h1>Report de Faturação</h1>
+                <h1>Relatório de Faturação</h1>
+
+                <div className="botoes-tempo" aria-label="Filtros rápidos de data">
+                    <button disabled={aCarregar} className={filtroRapidoAtivo === 'Hoje' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido(obterPeriodoHoje(), 'Hoje')}>
+                        Hoje
+                    </button>
+                    <button disabled={aCarregar} className={filtroRapidoAtivo === 'Esta semana' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido(obterPeriodoSemanaAtual(), 'Esta semana')}>
+                        Esta semana
+                    </button>
+                    <button disabled={aCarregar} className={filtroRapidoAtivo === 'Mês atual' ? 'ativo' : ''} onClick={() => aplicarFiltroRapido(obterPeriodoMesAtual(), 'Mês atual')}>
+                        Mês atual
+                    </button>
+                    <button disabled={aCarregar} className={filtroRapidoAtivo === 'Personalizado' ? 'ativo' : ''} onClick={aplicarFiltroPersonalizado}>
+                        Personalizado
+                    </button>
+                </div>
 
                 {pesquisaRealizada && (
                     <ButtonComponent
@@ -539,10 +543,12 @@ export function Faturacao() {
                         disabled={aCarregar || faturas.length === 0}
                         onClick={exportarFaturacao}
                         icon="fa-solid fa-file-excel"
+                        className="btn-exportar"
                     />
                 )}
             </div>
 
+            {filtroRapidoAtivo === 'Personalizado' && (
             <div className="filtros-iniciais">
                 <div className="pesquisa-periodo">
                 <div className="grupo-data">
@@ -558,23 +564,15 @@ export function Faturacao() {
                     disabled={aCarregar}
                     onClick={() => handlePesquisa()}
                     icon="fa-solid fa-magnifying-glass"
+                    className="btn-pesquisar"
                 />
                 </div>
-                <div className="filtros-rapidos" aria-label="Filtros rápidos de data">
-                    {filtrosRapidos.map(filtroRapido => (
-                        <ButtonComponent
-                            key={filtroRapido.label}
-                            label={filtroRapido.label}
-                            onClick={filtroRapido.aplicar}
-                            icon={filtroRapido.icon}
-                            disabled={aCarregar}
-                        />
-                    ))}
-                </div>
             </div>
+            )}
 
             {pesquisaRealizada && (
-                <div className="layout-master-detail">
+                <>
+                    <div className="layout-master-detail">
 
                     <div className="painel-esquerdo">
                         <h3><i className="fa-solid fa-users"></i> Resumo por Professor</h3>
@@ -653,6 +651,7 @@ export function Faturacao() {
                         )}
                     </div>
                 </div>
+                </>
             )}
         </div>
     );
