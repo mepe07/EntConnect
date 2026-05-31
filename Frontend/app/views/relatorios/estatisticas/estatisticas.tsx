@@ -244,7 +244,7 @@ export function Estatisticas() {
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                                             <XAxis type="number" stroke="#94a3b8" tickFormatter={(value) => formatarMoeda(value)} />
                                             <YAxis dataKey="nome" type="category" stroke="#64748b" fontWeight="600" width={86} />
-                                            <Tooltip formatter={(value: any) => [formatarMoeda(Number(value)), "Faturou"]} cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '10px' }} />
+                                            <Tooltip formatter={(value: any) => [formatarMoeda(Number(value)), "Faturou"]} cursor={{ fill: 'rgba(148, 163, 184, 0.12)' }} contentStyle={{ borderRadius: '10px' }} />
                                             <Bar dataKey="total" fill="#10b981" radius={[0, 6, 6, 0]} barSize={34} minPointSize={6} />
                                         </BarChart>
                                     </ResponsiveContainer>
@@ -263,7 +263,7 @@ export function Estatisticas() {
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                             <XAxis dataKey="mes" stroke="#94a3b8" fontWeight="600" />
                                             <YAxis stroke="#94a3b8" tickFormatter={(value) => formatarMoeda(value)} fontSize="15px" />
-                                            <Tooltip formatter={(value: any) => [formatarMoeda(Number(value)), "Previsto"]} cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '10px' }} />
+                                            <Tooltip formatter={(value: any) => [formatarMoeda(Number(value)), "Previsto"]} cursor={{ fill: 'rgba(148, 163, 184, 0.12)' }} contentStyle={{ borderRadius: '10px' }} />
                                             <Bar dataKey="previsto" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={40} />
                                         </BarChart>
                                     </ResponsiveContainer>
