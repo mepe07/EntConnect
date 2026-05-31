@@ -37,25 +37,26 @@
 		}
 
 		.btn-principal {
-			padding: 12px 24px;
-			background-color: colors.$theme-100;
+			min-height: 44px;
+			padding: 0 22px;
+			background-color: #0f5138;
 			color: #fff;
 			border: none;
-			border-radius: 8px;
-			font-size: 15px;
-			font-weight: 600;
+			border-radius: 14px;
+			font-size: 0.95rem;
+			font-weight: 800;
+			line-height: 1;
 			cursor: pointer;
 			display: flex;
-			gap: 8px;
+			justify-content: center;
+			gap: 10px;
 			align-items: center;
 			transition: all 0.2s ease;
-
-			box-shadow: 0 4px 15px rgba(colors.$theme-100, 0.3);
+			box-shadow: none;
 
 			&:hover {
-				background-color: color.adjust(colors.$theme-100, $lightness: -8%);
-
-				transform: translateY(-2px);
+				background-color: #0b3f2b;
+				transform: translateY(-1px);
 			}
 		}
 	}
@@ -281,29 +282,37 @@
 			gap: 12px;
 
 			button {
-				padding: 10px 20px;
-				border-radius: 8px;
-				font-weight: 600;
+				min-height: 44px;
+				padding: 0 18px;
+				border-radius: 14px;
+				font-size: 0.95rem;
+				font-weight: 800;
+				line-height: 1;
 				cursor: pointer;
 				transition: all 0.2s;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 8px;
 
 				&.btn-secundario {
-					background: #fff;
-					border: 1px solid colors.$gray-4;
-					color: colors.$gray-7;
+					background: #f8fafc;
+					border: 1px solid #cbd5e1;
+					color: #334155;
 
 					&:hover {
-						background: colors.$gray-2;
+						background: #e2e8f0;
+						transform: translateY(-1px);
 					}
 				}
 
 				&.btn-primario {
-					background: colors.$theme-100;
-					border: 1px solid colors.$theme-100;
+					background: #0f5138;
+					border: 1px solid #0f5138;
 					color: #fff;
 
 					&:hover {
-						background: color.adjust(colors.$theme-100, $lightness: -10%);
+						background: #0b3f2b;
 						transform: translateY(-1px);
 					}
 				}
@@ -350,10 +359,20 @@
 body.entconnect-dark {
 	.crud-container {
 		color: #e2e8f0;
+		background: transparent !important;
 
 		.crud-header .textos {
 			h1 { color: #f8fafc !important; }
 			p { color: #cbd5e1 !important; }
+		}
+
+		.crud-header .btn-principal {
+			background-color: #0f5138 !important;
+			color: #ffffff !important;
+
+			&:hover {
+				background-color: #0b3f2b !important;
+			}
 		}
 
 		.crud-toolbar,
@@ -397,6 +416,16 @@ body.entconnect-dark {
 				background: #1f2937 !important;
 				border-color: #475569 !important;
 				color: #e2e8f0 !important;
+			}
+
+			.modal-footer button.btn-primario {
+				background: #0f5138 !important;
+				border-color: #0f5138 !important;
+				color: #ffffff !important;
+
+				&:hover {
+					background: #0b3f2b !important;
+				}
 			}
 		}
 	}

@@ -18,10 +18,20 @@
 
         button {
             min-height: 44px;
-            padding: 0 18px;
-            border-radius: 10px;
-            font-weight: 600;
-            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+            padding: 0 22px;
+            border-radius: 14px;
+            background-color: #0f5138;
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 800;
+            line-height: 1;
+            gap: 10px;
+            box-shadow: none;
+
+            &:hover:not(:disabled) {
+                background-color: #0b3f2b;
+                transform: translateY(-1px);
+            }
         }
     }
 
@@ -867,15 +877,18 @@
             gap: 12px;
 
             button {
-                padding: 10px 20px;
-                border-radius: 8px;
-                font-weight: 600;
-                font-size: 14px;
+                min-height: 44px;
+                padding: 0 18px;
+                border-radius: 14px;
+                font-weight: 800;
+                font-size: 0.95rem;
+                line-height: 1;
                 cursor: pointer;
                 transition: all 0.2s;
                 display: flex;
                 align-items: center;
-                gap: 6px;
+                justify-content: center;
+                gap: 8px;
 
                 &:disabled {
                     opacity: 0.6;
@@ -883,20 +896,23 @@
                 }
 
                 &.btn-secundario {
-                    background: #fff;
-                    border: 1px solid colors.$gray-4;
-                    color: colors.$gray-7;
+                    background: #f8fafc;
+                    border: 1px solid #cbd5e1;
+                    color: #334155;
 
-                    &:hover:not(:disabled) { background: colors.$gray-2; }
+                    &:hover:not(:disabled) {
+                        background: #e2e8f0;
+                        transform: translateY(-1px);
+                    }
                 }
 
                 &.btn-primario {
-                    background: colors.$theme-100;
-                    border: 1px solid colors.$theme-100;
+                    background: #0f5138;
+                    border: 1px solid #0f5138;
                     color: #fff;
 
                     &:hover:not(:disabled) {
-                        background: colors.$theme-80;
+                        background: #0b3f2b;
                         transform: translateY(-1px);
                     }
                 }
@@ -908,6 +924,27 @@
 
 body.entconnect-dark {
     .crud-container {
+        background: transparent !important;
+
+        .header-acoes {
+            button {
+                background-color: #0f5138 !important;
+                color: #ffffff !important;
+
+                &:hover:not(:disabled) {
+                    background-color: #0b3f2b !important;
+                }
+            }
+        }
+
+        .crud-toolbar,
+        .tabela-wrapper {
+            background-color: #111827 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+            box-shadow: none !important;
+        }
+
         .crud-header {
             .textos {
                 h1 {
@@ -921,6 +958,12 @@ body.entconnect-dark {
         }
 
         .tabela-crud {
+            th {
+                background-color: #1f2937 !important;
+                border-color: #334155 !important;
+                color: #f8fafc !important;
+            }
+
             td,
             .id-coluna,
             .text-secondary {
@@ -1036,6 +1079,42 @@ body.entconnect-dark {
                 &:hover {
                     background-color: #2dd4bf;
                     color: #0f172a;
+                }
+            }
+        }
+    }
+
+    .modal-content {
+        background-color: #111827 !important;
+        border: 1px solid #334155 !important;
+        color: #e2e8f0 !important;
+    }
+
+    .modal-header,
+    .modal-footer {
+        background-color: #111827 !important;
+        border-color: #334155 !important;
+    }
+
+    .modal-footer {
+        button {
+            &.btn-secundario {
+                background: #1f2937 !important;
+                border-color: #475569 !important;
+                color: #e2e8f0 !important;
+
+                &:hover:not(:disabled) {
+                    background: #334155 !important;
+                }
+            }
+
+            &.btn-primario {
+                background: #0f5138 !important;
+                border-color: #0f5138 !important;
+                color: #ffffff !important;
+
+                &:hover:not(:disabled) {
+                    background: #0b3f2b !important;
                 }
             }
         }
