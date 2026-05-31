@@ -513,6 +513,23 @@ body.entconnect-dark {
                 border-color: #334155 !important;
             }
         }
+
+        .estado-chip {
+            &.atrasado {
+                background: #fee2e2 !important;
+                color: #7f1d1d !important;
+            }
+
+            &.pendente {
+                background: #fef3c7 !important;
+                color: #78350f !important;
+            }
+
+            &.pago {
+                background: #dcfce7 !important;
+                color: #14532d !important;
+            }
+        }
     }
 
     .pagamento-modal {

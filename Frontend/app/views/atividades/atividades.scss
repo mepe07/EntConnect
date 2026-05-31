@@ -443,9 +443,30 @@ body.entconnect-dark {
         color: #ffffff !important;
     }
 
-    .badge,
+    .badge-verde {
+        background: #dcfce7 !important;
+        color: #14532d !important;
+    }
+
+    .badge-vermelha {
+        background: #fee2e2 !important;
+        color: #7f1d1d !important;
+    }
+
+    .badge-cinzenta {
+        background: #e5e7eb !important;
+        color: #111827 !important;
+    }
+
+    .badge-azul {
+        background: #dbeafe !important;
+        color: #1e3a8a !important;
+    }
+
     .btn-reativar {
-        color: #0f172a !important;
+        background: #dcfce7 !important;
+        border-color: #86efac !important;
+        color: #14532d !important;
     }
 }
 

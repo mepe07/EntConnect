@@ -71,7 +71,7 @@ export function ModalPublicar({ isOpen, onClose, onConfirm, loteInfo }: ModalPub
                 style={{ zIndex: 1000 }}
             ></div>
             <div
-                className="modal-card"
+                className="modal-card inventory-modal publish-inventory-modal"
                 style={{
                     position: 'fixed',
                     top: '50%',
@@ -88,6 +88,7 @@ export function ModalPublicar({ isOpen, onClose, onConfirm, loteInfo }: ModalPub
                 </p>
 
                 <div
+                    className="stock-summary"
                     style={{
                         background: '#f8fafc',
                         padding: '1rem',
@@ -110,9 +111,9 @@ export function ModalPublicar({ isOpen, onClose, onConfirm, loteInfo }: ModalPub
                     </p>
                 </div>
 
-                <div className="form-grid">
+                <div className="form-grid modal-form-grid">
                     <div
-                        className="form-grupo"
+                        className="form-grupo modal-form-row"
                         style={{
                             display: 'grid',
                             gridTemplateColumns: '1fr 1fr',
@@ -150,7 +151,7 @@ export function ModalPublicar({ isOpen, onClose, onConfirm, loteInfo }: ModalPub
                     </div>
 
                     {tipoAnuncio === TipoAnuncio.ALUGUER && (
-                        <div className="form-grupo">
+                        <div className="form-grupo form-field-full">
                             <label
                                 style={{
                                     display: 'flex',
@@ -185,7 +186,7 @@ export function ModalPublicar({ isOpen, onClose, onConfirm, loteInfo }: ModalPub
                         </div>
                     )}
 
-                    <div className="form-grupo">
+                    <div className="form-grupo form-field-full">
                         <label>Descrição para o Público</label>
                         <textarea
                             value={descricao}

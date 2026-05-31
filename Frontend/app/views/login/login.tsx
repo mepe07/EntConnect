@@ -6,7 +6,6 @@ import { AuthService } from '../../services/auth.service';
 import { EventoLoginToast } from '~/components/eventos/evento-login-toast.component';
 import styles from './login.module.css';
 import { ThemeToggle } from '~/components/theme-toggle/theme-toggle';
-import { useTheme } from '~/utils/theme';
 
 const CITACOES = [
     "Utilizadores, turmas, eventos e coaching reunidos numa unica plataforma.",
@@ -37,7 +36,6 @@ export function Login() {
 
     const [mostrarPassword, setMostrarPassword] = useState(false);
     const [mostrarNovaPassword, setMostrarNovaPassword] = useState(false);
-    const { isDarkTheme } = useTheme();
     const [lembrarMe, setLembrarMe] = useState(false);
     const [capsLockAtivo, setCapsLockAtivo] = useState(false);
 
@@ -367,7 +365,7 @@ export function Login() {
             : 'Escolha uma nova password para a sua conta.';
 
     return (
-        <div className={`${styles.loginContainer} ${isDarkTheme ? styles.dark : ''}`}>
+        <div className={styles.loginContainer}>
             <ThemeToggle className={styles.themeToggle} />
 
             <div className={styles.brandPanel}>

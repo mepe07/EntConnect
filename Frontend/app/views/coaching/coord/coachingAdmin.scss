@@ -1096,6 +1096,41 @@ table button {
 }
 
 body.entconnect-dark {
+    .quick-action-card {
+        background: #111827 !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+
+        &.warning {
+            background: rgba(250, 204, 21, 0.1) !important;
+            border-color: rgba(250, 204, 21, 0.35) !important;
+        }
+    }
+
+    .quick-action-copy {
+        .quick-action-eyebrow {
+            color: #fcd34d !important;
+        }
+
+        h2 {
+            color: #f8fafc !important;
+        }
+
+        p {
+            color: #cbd5e1 !important;
+        }
+    }
+
+    .quick-action-value {
+        color: #f8fafc !important;
+    }
+
+    .btn-quick-action {
+        background: #0f172a !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+    }
+
     .dashboard-wrapper {
         background-color: transparent !important;
         color: #e2e8f0 !important;
@@ -1294,6 +1329,27 @@ body.entconnect-dark {
     .modal-overlay .modal-conteudo .modal-cabecalho,
     .modal-overlay .modal-conteudo .modal-acoes {
         border-color: #334155 !important;
+    }
+
+    .modal-overlay .modal-conteudo .proposta-aprovacao-info,
+    .modal-overlay .modal-conteudo .proposta-estudio-field .select-box {
+        background: #020617 !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+    }
+
+    .modal-overlay .modal-conteudo .proposta-aprovacao-info span,
+    .modal-overlay .modal-conteudo .proposta-estudio-field {
+        color: #94a3b8 !important;
+    }
+
+    .modal-overlay .modal-conteudo .proposta-aprovacao-info strong {
+        color: #f8fafc !important;
+    }
+
+    .modal-overlay .modal-conteudo .proposta-estudio-field .select-box option {
+        background: #0f172a;
+        color: #e2e8f0;
     }
 
     .modal-overlay .modal-conteudo .lista-alunos-modal > div:hover {

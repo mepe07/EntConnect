@@ -111,15 +111,15 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
     return (
         <>
             <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1000 }}></div>
-            <div className="modal-card" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1001, width: '90%', maxWidth: '500px' }}>
+            <div className="modal-card publish-modal marketplace-publish-modal" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1001, width: '90%', maxWidth: '500px' }}>
                 <h2 style={{ marginTop: 0, marginBottom: '4px' }}>Publicar Anúncio</h2>
                 <p className="texto-ajuda" style={{ marginBottom: '1.5rem', color: '#64748b' }}>
                     O que queres vender, alugar ou partilhar com a comunidade?
                 </p>
 
-                <div className="form-grid" style={{ display: 'grid', gap: '16px' }}>
+                <div className="form-grid modal-form-grid" style={{ display: 'grid', gap: '16px' }}>
 
-                    <div className="form-grupo">
+                    <div className="form-grupo form-field-full">
                         <label style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Título do Anúncio *</label>
                         <input
                             type="text"
@@ -130,7 +130,7 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
                         />
                     </div>
 
-                    <div className="form-grupo" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="form-grupo modal-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         <div>
                             <label style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Tipo de Negócio *</label>
                             <select
@@ -154,7 +154,7 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
                     </div>
 
                     {form.tipoAnuncio === TipoAnuncio.ALUGUER && (
-                        <div className="form-grupo">
+                        <div className="form-grupo form-field-full">
                             <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
                                 <input
                                     type="checkbox"
@@ -172,9 +172,9 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
                         </div>
                     )}
 
-                    <div className="form-grupo">
+                    <div className="form-grupo form-field-full">
                         <label style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Fotografia</label>
-                        <div style={{ border: '1px dashed #cbd5e1', padding: '12px', borderRadius: '8px', background: '#f8fafc' }}>
+                        <div className="upload-area" style={{ border: '1px dashed #cbd5e1', padding: '12px', borderRadius: '8px', background: '#f8fafc' }}>
                             <input
                                 type="file"
                                 accept="image/*"
@@ -201,7 +201,7 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
                         />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="modal-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         <div>
                             <label>Estado da Peça</label>
                             <select value={form.idEstado} onChange={(e) => setForm({ ...form, idEstado: +e.target.value })}>
@@ -221,7 +221,7 @@ export function ModalCriarAnuncio({ isOpen, onClose, onGuardar }: ModalCriarAnun
                         </div>
                     </div>
 
-                    <div className="form-grupo">
+                    <div className="form-grupo form-field-full">
                         <label style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Descrição para o Público</label>
                         <textarea
                             placeholder="Descreve o estado do item, preço sugerido ou condições..."

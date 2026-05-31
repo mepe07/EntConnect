@@ -18,6 +18,7 @@ import { ListarEventosPublicosDto } from './dto/listar-eventos-publicos.dto';
 import { ListarEventosGestaoDto } from './dto/listar-eventos-gestao.dto';
 import { CriarEventoDto } from './dto/criar-evento.dto';
 import { AtualizarEventoDto } from './dto/atualizar-evento.dto';
+import { CriarComunicacaoEventoDto } from './dto/criar-comunicacao-evento.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -27,6 +28,12 @@ import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autentica
 import { FileInterceptor } from '@nestjs/platform-express';
 import 'multer';
 import { ApiTags } from '@nestjs/swagger/dist/decorators/api-use-tags.decorator';
+
+const TODAS_AS_ROLES_EVENTOS = [
+  Role.COORDENADOR,
+  Role.PROFESSOR,
+  Role.ENC_EDUCACAO,
+];
 /**
  * Controlador responsavel pelos pedidos de Eventos.
  */
@@ -170,5 +177,58 @@ export class EventosController {
     @Request() req: { user: UtilizadorAutenticado },
   ) {
     return this.eventosService.reativarEvento(idEvento, req.user);
+  }
+
+  /**
+   * Executa a operacao criar comunicacao do evento.
+   * @param idEvento Dados recebidos para a operacao.
+   * @param dto Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.COORDENADOR, Role.PROFESSOR)
+  @Post(':idEvento/comunicacoes')
+  criarComunicacaoEvento(
+    @Param('idEvento', ParseIntPipe) idEvento: number,
+    @Body() dto: CriarComunicacaoEventoDto,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.eventosService.criarComunicacaoEvento(idEvento, dto, req.user);
+  }
+
+  /**
+   * Executa a operacao listar comunicacoes ativas do evento.
+   * @param idEvento Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(...TODAS_AS_ROLES_EVENTOS)
+  @Get(':idEvento/comunicacoes')
+  listarComunicacoesEvento(
+    @Param('idEvento', ParseIntPipe) idEvento: number,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.eventosService.listarComunicacoesEvento(idEvento, req.user);
+  }
+
+  /**
+   * Executa a operacao remover comunicacao do evento.
+   * @param idComunicacao Dados recebidos para a operacao.
+   * @param req Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.COORDENADOR, Role.PROFESSOR)
+  @Delete('comunicacoes/:idComunicacao')
+  removerComunicacaoEvento(
+    @Param('idComunicacao', ParseIntPipe) idComunicacao: number,
+    @Request() req: { user: UtilizadorAutenticado },
+  ) {
+    return this.eventosService.removerComunicacaoEvento(idComunicacao, req.user);
   }
 }

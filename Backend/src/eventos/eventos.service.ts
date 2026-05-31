@@ -1,15 +1,17 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Evento, Prisma } from '@prisma/client';
+import { Evento, EventoComunicacao, Prisma } from '@prisma/client';
 import 'multer';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { UtilizadorAutenticado } from '../common/interfaces/utilizador-autenticado.interface';
 import { BlobsService } from '../Infraestrutura/Blobs/blobs.service';
+import { Role } from '../auth/enums/roles.enum';
 
 import {
   garantirEventoVisivelPublicamente,
@@ -18,6 +20,7 @@ import {
 
 import { CriarEventoDto } from './dto/criar-evento.dto';
 import { AtualizarEventoDto } from './dto/atualizar-evento.dto';
+import { CriarComunicacaoEventoDto } from './dto/criar-comunicacao-evento.dto';
 import { ListarEventosPublicosDto } from './dto/listar-eventos-publicos.dto';
 import { ListarEventosGestaoDto } from './dto/listar-eventos-gestao.dto';
 import { TipoEvento } from './enums/tipo-evento.enum';
@@ -358,6 +361,182 @@ export class EventosService {
   }
 
   /**
+   * Executa a operacao criar comunicacao do evento.
+   * @param idEvento Dados recebidos para a operacao.
+   * @param dto Dados recebidos para a operacao.
+   * @param utilizador Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  async criarComunicacaoEvento(
+    idEvento: number,
+    dto: CriarComunicacaoEventoDto,
+    utilizador: UtilizadorAutenticado,
+  ) {
+    this.logger.log(
+      `A criar comunicacao de evento idEvento=${idEvento} userId=${utilizador.sub}`,
+    );
+
+    this.validarPermissaoGestaoComunicacoes(utilizador.role);
+    await this.obterEventoOuFalhar(idEvento);
+
+    const titulo = this.normalizarTextoObrigatorio(
+      dto.titulo,
+      'O titulo da comunicacao do evento e obrigatorio.',
+    );
+    const mensagem = this.normalizarTextoObrigatorio(
+      dto.mensagem,
+      'A mensagem da comunicacao do evento e obrigatoria.',
+    );
+
+    const comunicacao = await this.prisma.eventoComunicacao.create({
+      data: {
+        ID_Evento: idEvento,
+        ID_Utilizador_Criador: utilizador.sub,
+        Titulo: titulo,
+        Mensagem: mensagem,
+        Tipo: dto.tipo?.trim() || 'GERAL',
+        Importante: dto.importante ?? false,
+        Ativo: true,
+        Data_Criacao: new Date(),
+      },
+      include: {
+        Utilizador: {
+          select: {
+            ID_Utilizador: true,
+            Pessoa: {
+              select: {
+                Nome: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    this.logger.log(
+      `Comunicacao de evento criada idEvento=${idEvento} idComunicacao=${comunicacao.ID_Evento_Comunicacao} userId=${utilizador.sub}`,
+    );
+
+    return {
+      mensagem: 'Comunicacao do evento criada com sucesso.',
+      comunicacao: this.mapearComunicacaoEvento(comunicacao),
+    };
+  }
+
+  /**
+   * Executa a operacao listar comunicacoes ativas do evento.
+   * @param idEvento Dados recebidos para a operacao.
+   * @param utilizador Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  async listarComunicacoesEvento(
+    idEvento: number,
+    utilizador: UtilizadorAutenticado,
+  ) {
+    this.validarPermissaoConsultaComunicacoes(utilizador.role);
+    await this.obterEventoOuFalhar(idEvento);
+
+    const comunicacoes = await this.prisma.eventoComunicacao.findMany({
+      where: {
+        ID_Evento: idEvento,
+        Ativo: true,
+      },
+      include: {
+        Utilizador: {
+          select: {
+            ID_Utilizador: true,
+            Pessoa: {
+              select: {
+                Nome: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: [{ Importante: 'desc' }, { Data_Criacao: 'desc' }],
+    });
+
+    return comunicacoes.map((comunicacao) =>
+      this.mapearComunicacaoEvento(comunicacao),
+    );
+  }
+
+  /**
+ * Remove uma comunicação de evento através de soft delete.
+ *
+ * Regras:
+ * - Coordenadores podem remover qualquer comunicação;
+ * - Professores só podem remover comunicações criadas por si;
+ * - A comunicação não é apagada fisicamente da base de dados;
+ * - O registo fica inativo e com data de remoção preenchida.
+ *
+ * @param idComunicacao Identificador da comunicação.
+ * @param utilizador Utilizador autenticado que está a realizar a operação.
+ * @returns Comunicação removida.
+ */
+async removerComunicacaoEvento(
+  idComunicacao: number,
+  utilizador: UtilizadorAutenticado,
+) {
+  this.logger.log(
+    `A remover comunicacao de evento idComunicacao=${idComunicacao} userId=${utilizador.sub}`,
+  );
+
+  this.validarPermissaoGestaoComunicacoes(utilizador.role);
+
+  const comunicacaoAtual =
+    await this.obterComunicacaoEventoOuFalhar(idComunicacao);
+
+  /**
+   * Regra de autorização:
+   * - O coordenador pode remover qualquer comunicação;
+   * - O professor só pode remover comunicações criadas por ele próprio.
+   */
+  if (
+    utilizador.role === Role.PROFESSOR &&
+    comunicacaoAtual.ID_Utilizador_Criador !== utilizador.sub
+  ) {
+    throw new ForbiddenException(
+      'Apenas pode remover comunicações criadas por si.',
+    );
+  }
+
+  const comunicacao = await this.prisma.eventoComunicacao.update({
+    where: {
+      ID_Evento_Comunicacao: idComunicacao,
+    },
+    data: {
+      Ativo: false,
+      Data_Remocao: new Date(),
+      Data_Atualizacao: new Date(),
+    },
+    include: {
+      Utilizador: {
+        select: {
+          ID_Utilizador: true,
+          Pessoa: {
+            select: {
+              Nome: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  this.logger.log(
+    `Comunicacao de evento removida idComunicacao=${idComunicacao} userId=${utilizador.sub}`,
+  );
+
+  return {
+    mensagem: 'Comunicacao do evento removida com sucesso.',
+    comunicacao: this.mapearComunicacaoEvento(comunicacao),
+  };
+}
+
+  /**
    * Executa a operacao construir where eventos publicos.
    * @param filtros Dados recebidos para a operacao.
    * @returns Resultado da operacao.
@@ -628,6 +807,38 @@ export class EventosService {
   }
 
   /**
+   * Executa a operacao validar permissao de gestao das comunicacoes.
+   * @param role Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  private validarPermissaoGestaoComunicacoes(role: Role): void {
+    if (role !== Role.COORDENADOR && role !== Role.PROFESSOR) {
+      throw new ForbiddenException(
+        'Apenas coordenadores e professores podem gerir comunicacoes do evento.',
+      );
+    }
+  }
+
+  /**
+   * Executa a operacao validar permissao de consulta das comunicacoes.
+   * @param role Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  private validarPermissaoConsultaComunicacoes(role: Role): void {
+    if (
+      role !== Role.COORDENADOR &&
+      role !== Role.PROFESSOR &&
+      role !== Role.ENC_EDUCACAO
+    ) {
+      throw new ForbiddenException(
+        'Sem permissao para consultar comunicacoes do evento.',
+      );
+    }
+  }
+
+  /**
    * Executa a operacao obter evento ou falhar.
    * @param idEvento Dados recebidos para a operacao.
    * @returns Resultado da operacao.
@@ -649,6 +860,32 @@ export class EventosService {
     }
 
     return evento;
+  }
+
+  /**
+   * Executa a operacao obter comunicacao do evento ou falhar.
+   * @param idComunicacao Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  private async obterComunicacaoEventoOuFalhar(
+    idComunicacao: number,
+  ): Promise<EventoComunicacao> {
+    if (!Number.isInteger(idComunicacao) || idComunicacao <= 0) {
+      throw new BadRequestException('ID da comunicacao do evento invalido.');
+    }
+
+    const comunicacao = await this.prisma.eventoComunicacao.findUnique({
+      where: {
+        ID_Evento_Comunicacao: idComunicacao,
+      },
+    });
+
+    if (!comunicacao) {
+      throw new NotFoundException('Comunicacao do evento nao encontrada.');
+    }
+
+    return comunicacao;
   }
 
   /**
@@ -697,6 +934,26 @@ export class EventosService {
     const texto = valor.trim();
 
     return texto.length > 0 ? texto : null;
+  }
+
+  /**
+   * Executa a operacao normalizar texto obrigatorio.
+   * @param valor Dados recebidos para a operacao.
+   * @param mensagemErro Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  private normalizarTextoObrigatorio(
+    valor: string,
+    mensagemErro: string,
+  ): string {
+    const texto = valor.trim();
+
+    if (!texto) {
+      throw new BadRequestException(mensagemErro);
+    }
+
+    return texto;
   }
 
   /**
@@ -920,6 +1177,42 @@ export class EventosService {
       imagem: evento.Imagem,
       dataInicio: evento.Data_Inicio,
       dataFim: evento.Data_Fim,
+    };
+  }
+
+  /**
+   * Executa a operacao mapear comunicacao do evento.
+   * @param comunicacao Dados recebidos para a operacao.
+   * @returns Resultado da operacao.
+   */
+
+  private mapearComunicacaoEvento(
+    comunicacao: EventoComunicacao & {
+      Utilizador?: {
+        ID_Utilizador: number;
+        Pessoa?: {
+          Nome: string;
+        } | null;
+      };
+    },
+  ) {
+    return {
+      id: comunicacao.ID_Evento_Comunicacao,
+      idEvento: comunicacao.ID_Evento,
+      titulo: comunicacao.Titulo,
+      mensagem: comunicacao.Mensagem,
+      tipo: comunicacao.Tipo,
+      importante: comunicacao.Importante,
+      ativo: comunicacao.Ativo,
+      dataCriacao: comunicacao.Data_Criacao,
+      dataAtualizacao: comunicacao.Data_Atualizacao,
+      dataRemocao: comunicacao.Data_Remocao,
+      criador: comunicacao.Utilizador
+        ? {
+            id: comunicacao.Utilizador.ID_Utilizador,
+            nome: comunicacao.Utilizador.Pessoa?.Nome ?? null,
+          }
+        : null,
     };
   }
 }
