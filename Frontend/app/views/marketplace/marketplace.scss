@@ -934,6 +934,10 @@
         border-radius: 20px;
         padding: 20px;
         box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+        max-height: calc(100vh - 48px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        min-width: 0;
 
         h3 {
             margin-top: 0;
@@ -956,6 +960,37 @@
         .form-grid {
             display: grid;
             gap: 12px;
+        }
+
+        &.publish-modal,
+        &.marketplace-publish-modal {
+            width: min(760px, calc(100vw - 32px)) !important;
+            max-width: 760px !important;
+        }
+
+        .modal-form-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .modal-form-row {
+            grid-column: 1 / -1;
+            min-width: 0;
+        }
+
+        .form-field-full {
+            grid-column: 1 / -1;
+            min-width: 0;
+        }
+
+        .upload-area {
+            min-width: 0;
+            width: 100%;
+        }
+
+        .upload-area input[type="file"] {
+            min-width: 0;
+            width: 100%;
         }
 
         .texto-ajuda {
@@ -1100,6 +1135,11 @@
                 flex: 1;
             }
         }
+
+        .modal-card .modal-form-grid,
+        .modal-card .modal-form-row {
+            grid-template-columns: 1fr !important;
+        }
     }
 }
 
@@ -1185,6 +1225,12 @@ body.entconnect-dark {
             border-color: #334155 !important;
         }
 
+        .badge-outline {
+            background: rgba(59, 130, 246, 0.1) !important;
+            border-color: rgba(59, 130, 246, 0.22) !important;
+            color: #bfdbfe !important;
+        }
+
         .cartao-imagem-placeholder {
             background:
                 radial-gradient(circle at top, rgba(148, 163, 184, 0.28), transparent 55%),
@@ -1209,6 +1255,32 @@ body.entconnect-dark {
             color-scheme: dark;
         }
 
+        .modal-card [style*="border: 1px dashed #cbd5e1"],
+        .modal-card [style*="border:1px dashed #cbd5e1"],
+        .modal-card .upload-area {
+            background: #020617 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+
+        .modal-card input[type="file"] {
+            background: #0f172a !important;
+            color: #e2e8f0 !important;
+        }
+
+        .modal-card input[type="file"]::file-selector-button {
+            background: #1f2937;
+            color: #e2e8f0;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            margin-right: 12px;
+            padding: 8px 12px;
+        }
+
+        .modal-card span[style*="color: #10b981"] {
+            color: #86efac !important;
+        }
+
         .tabs button,
         .detalhe-tabs button,
         .btn-secundario,
@@ -1230,13 +1302,34 @@ body.entconnect-dark {
             color: #ffffff !important;
         }
 
-        .badge-estado,
-        .estado-ativo,
-        .estado-reservado,
-        .estado-concluido,
-        .estado-arquivado,
+        .estado-ativo {
+            background: rgba(34, 197, 94, 0.14) !important;
+            color: #86efac !important;
+            border-color: rgba(34, 197, 94, 0.28) !important;
+        }
+
+        .estado-reservado {
+            background: rgba(245, 158, 11, 0.14) !important;
+            color: #fde68a !important;
+            border-color: rgba(245, 158, 11, 0.28) !important;
+        }
+
+        .estado-concluido {
+            background: rgba(59, 130, 246, 0.14) !important;
+            color: #bfdbfe !important;
+            border-color: rgba(59, 130, 246, 0.28) !important;
+        }
+
+        .estado-arquivado {
+            background: rgba(148, 163, 184, 0.12) !important;
+            color: #cbd5e1 !important;
+            border-color: rgba(148, 163, 184, 0.22) !important;
+        }
+
         .estado-removido {
-            color: #0f172a !important;
+            background: rgba(244, 63, 94, 0.14) !important;
+            color: #fda4af !important;
+            border-color: rgba(244, 63, 94, 0.28) !important;
         }
 
         .cartao-rodape {

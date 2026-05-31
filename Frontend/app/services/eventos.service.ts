@@ -1,5 +1,3 @@
-
-
 import type {
     Evento,
     EventoResumo,
@@ -23,6 +21,52 @@ export type ListarEventosPublicosParams = {
     destaque?: boolean;
     apenasFuturos?: boolean;
     limite?: number;
+};
+
+/**
+ * Tipos de comunicação disponíveis para um evento.
+ */
+export type TipoComunicacaoEvento =
+    | 'GERAL'
+    | 'FIGURINO'
+    | 'LOCAL'
+    | 'HORARIO'
+    | 'DOCUMENTOS'
+    | 'OUTRO';
+
+/**
+ * Informação pública e segura do utilizador que criou a comunicação.
+ */
+export type CriadorComunicacaoEvento = {
+    id: number;
+    nome: string | null;
+};
+
+/**
+ * Comunicação associada a um evento.
+ */
+export type ComunicacaoEvento = {
+    id: number;
+    idEvento: number;
+    titulo: string;
+    mensagem: string;
+    tipo: TipoComunicacaoEvento | string;
+    importante: boolean;
+    ativo: boolean;
+    dataCriacao: string;
+    dataAtualizacao?: string | null;
+    dataRemocao?: string | null;
+    criador: CriadorComunicacaoEvento;
+};
+
+/**
+ * Dados enviados para criar uma comunicação de evento.
+ */
+export type CriarComunicacaoEventoPayload = {
+    titulo: string;
+    mensagem: string;
+    tipo?: TipoComunicacaoEvento | string;
+    importante?: boolean;
 };
 
 function getAuthHeaders() {
@@ -251,6 +295,73 @@ export const eventosService = {
 
         if (!response.ok) {
             return parseError(response, 'Erro ao atualizar evento.');
+        }
+
+        return response.json();
+    },
+
+    /**
+     * Lista as comunicações ativas associadas a um evento.
+     *
+     * @param idEvento - Identificador do evento.
+     * @returns Comunicações do evento.
+     */
+    async listarComunicacoesEvento(idEvento: number): Promise<ComunicacaoEvento[]> {
+        const response = await fetch(`${API_URL}/${idEvento}/comunicacoes`, {
+            method: 'GET',
+            headers: getAuthHeaders(),
+        });
+
+        if (!response.ok) {
+            return parseError(response, 'Erro ao carregar comunicações do evento.');
+        }
+
+        return response.json();
+    },
+
+    /**
+     * Cria uma nova comunicação associada a um evento.
+     *
+     * @param idEvento - Identificador do evento.
+     * @param dados - Dados da comunicação.
+     * @returns Comunicação criada.
+     */
+    async criarComunicacaoEvento(
+        idEvento: number,
+        dados: CriarComunicacaoEventoPayload,
+    ): Promise<{ mensagem: string; comunicacao: ComunicacaoEvento }> {
+        const response = await fetch(`${API_URL}/${idEvento}/comunicacoes`, {
+            method: 'POST',
+            headers: {
+                ...getAuthHeaders(),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dados),
+        });
+
+        if (!response.ok) {
+            return parseError(response, 'Erro ao criar comunicação do evento.');
+        }
+
+        return response.json();
+    },
+
+    /**
+     * Remove logicamente uma comunicação de evento.
+     *
+     * @param idComunicacao - Identificador da comunicação.
+     * @returns Comunicação removida.
+     */
+    async removerComunicacaoEvento(
+        idComunicacao: number,
+    ): Promise<{ mensagem: string; comunicacao: ComunicacaoEvento }> {
+        const response = await fetch(`${API_URL}/comunicacoes/${idComunicacao}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders(),
+        });
+
+        if (!response.ok) {
+            return parseError(response, 'Erro ao remover comunicação do evento.');
         }
 
         return response.json();

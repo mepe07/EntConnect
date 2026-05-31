@@ -14,7 +14,7 @@ export function ModalCriarItem({ form, setForm, onClose, onGuardar }: Props) {
         <>
             <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1000 }}></div>
             <div
-                className="modal-card"
+                className="modal-card inventory-modal inventory-create-modal"
                 style={{
                     position: 'fixed',
                     top: '50%',
@@ -30,8 +30,8 @@ export function ModalCriarItem({ form, setForm, onClose, onGuardar }: Props) {
                     Cria um novo item institucional no armazém da escola.
                 </p>
 
-                <div className="form-grid">
-                    <div className="form-grupo">
+                <div className="form-grid modal-form-grid">
+                    <div className="form-grupo form-field-full">
                         <label>Título do Item *</label>
                         <input
                             type="text"
@@ -40,7 +40,7 @@ export function ModalCriarItem({ form, setForm, onClose, onGuardar }: Props) {
                         />
                     </div>
 
-                    <div className="form-grupo">
+                    <div className="form-grupo form-field-full upload-area">
                         <label>Fotografia (Upload)</label>
                         <input
                             type="file"
@@ -67,7 +67,7 @@ export function ModalCriarItem({ form, setForm, onClose, onGuardar }: Props) {
                         />
                     </div>
 
-                    <div className="form-grupo form-grupo-linha">
+                    <div className="form-grupo form-grupo-linha modal-form-row">
                         <div>
                             <label>Estado da peça</label>
                             <select
@@ -93,7 +93,7 @@ export function ModalCriarItem({ form, setForm, onClose, onGuardar }: Props) {
                         </div>
                     </div>
 
-                    <div className="form-grupo">
+                    <div className="form-grupo form-field-full">
                         <label>Descrição (Opcional)</label>
                         <textarea
                             value={form.descricao || ''}

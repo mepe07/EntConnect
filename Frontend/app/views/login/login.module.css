@@ -8,6 +8,7 @@
     --text-secondary: #6c757d;
     --input-bg: #ffffff;
     --input-border: #ced4da;
+    --card-border: rgba(15, 23, 42, 0.08);
     --brand-color: #2ea071;
     --brand-color-hover: #248059;
     display: flex;
@@ -18,17 +19,17 @@
     transition: background-color 0.4s ease, color 0.4s ease;
 }
 
-    .loginContainer.dark {
-
-        --bg-primary: #1c1d21;
-        --bg-panel: rgba(255, 255, 255, 0.04);
-        --text-primary: #ffffff;
-        --text-secondary: #8b8b8b;
-        --input-bg: rgba(0, 0, 0, 0.2);
-        --input-border: rgba(255, 255, 255, 0.08);
-        --brand-color: #2ea071;
-        --brand-color-hover: #3bbf88;
-    }
+:global(body.entconnect-dark) .loginContainer {
+    --bg-primary: #020617;
+    --bg-panel: rgba(15, 23, 42, 0.88);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --input-bg: #0f172a;
+    --input-border: #334155;
+    --card-border: rgba(148, 163, 184, 0.18);
+    --brand-color: #34d399;
+    --brand-color-hover: #6ee7b7;
+}
 
 .themeToggle {
     position: absolute;
@@ -55,6 +56,18 @@
     text-align: left;
     position: relative;
     overflow: hidden;
+}
+
+.brandPanel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(248, 249, 250, 0.12), rgba(248, 249, 250, 0.04));
+    pointer-events: none;
+}
+
+:global(body.entconnect-dark) .brandPanel::after {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0.08));
 }
 
 .formPanel {
@@ -124,8 +137,12 @@
     background-color: var(--bg-panel);
     border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--card-border);
     backdrop-filter: blur(10px);
+}
+
+:global(body.entconnect-dark) .loginCard {
+    box-shadow: 0 18px 40px rgba(2, 6, 23, 0.45);
 }
 
 .cardTitle {
@@ -175,6 +192,14 @@
     border-radius: 8px;
     outline: none;
     transition: all 0.3s ease;
+}
+
+.inputGroup input:-webkit-autofill,
+.inputGroup input:-webkit-autofill:hover,
+.inputGroup input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--text-primary);
+    -webkit-box-shadow: 0 0 0 1000px var(--input-bg) inset;
+    transition: background-color 5000s ease-in-out 0s;
 }
 
 .inputGroup label {
