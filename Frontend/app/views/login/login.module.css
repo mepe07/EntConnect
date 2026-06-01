@@ -239,10 +239,21 @@
     color: var(--text-secondary);
     display: flex;
     align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    padding: 0;
 }
 
     .eyeButton:hover {
+        background: transparent;
         color: var(--text-primary);
+    }
+
+    .eyeButton:not(:disabled):hover {
+        box-shadow: none;
+        transform: translateY(-50%);
     }
 
 .submitButton {
@@ -327,6 +338,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 1rem;
     width: 100%;
 }
 
@@ -338,6 +350,8 @@
     font-size: 0.8rem;
     color: var(--text-secondary);
     user-select: none;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
     .rememberCheckbox input {
@@ -347,11 +361,13 @@
 .customCheck {
     height: 14px;
     width: 14px;
+    flex: 0 0 14px;
     background-color: var(--input-bg);
     border: 1px solid var(--input-border);
     border-radius: 4px;
     position: relative;
     transition: all 0.2s;
+    box-sizing: border-box;
 }
 
 .rememberCheckbox input:checked ~ .customCheck {
@@ -363,12 +379,12 @@
     content: "";
     position: absolute;
     display: none;
-    left: 3px;
+    left: 4px;
     top: 1px;
     width: 3px;
     height: 7px;
     border: solid white;
-    border-width: 0 2px 2px 0;
+    border-width: 0 1.5px 1.5px 0;
     transform: rotate(45deg);
 }
 
@@ -435,13 +451,26 @@
     background: transparent;
     border: none;
     padding: 0;
+    height: auto;
+    min-width: 0;
+    width: auto;
     cursor: pointer;
     color: var(--brand-color);
     text-decoration: none;
     font-size: 0.8rem;
+    font-family: inherit;
+    font-weight: 400;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
+:global(.button-container).forgotPassword:hover,
+:global(.button-container).forgotPassword:not(:disabled):hover,
 .forgotPassword:hover {
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+    color: var(--brand-color);
     text-decoration: underline;
 }
 

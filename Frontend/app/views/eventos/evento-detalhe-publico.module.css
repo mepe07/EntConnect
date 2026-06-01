@@ -73,6 +73,7 @@
 
 .heroContent {
     min-height: 430px;
+    min-width: 0;
     padding: 38px;
     border-radius: 26px;
     display: flex;
@@ -114,12 +115,14 @@
 }
 
 .heroContent h1 {
-    max-width: 760px;
+    max-width: 100%;
     margin: 0;
     color: #ffffff;
-    font-size: clamp(2.8rem, 6vw, 5rem);
-    line-height: 0.96;
-    letter-spacing: -0.07em;
+    font-size: clamp(2.4rem, 5vw, 4.4rem);
+    line-height: 1.04;
+    letter-spacing: -0.05em;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .resumo {
