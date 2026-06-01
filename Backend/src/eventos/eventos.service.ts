@@ -5,7 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Evento, EventoComunicacao, Prisma } from '@prisma/client';
+import { Evento, Evento_Comunicacao, Prisma } from '@prisma/client';
 import 'multer';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -389,7 +389,7 @@ export class EventosService {
       'A mensagem da comunicacao do evento e obrigatoria.',
     );
 
-    const comunicacao = await this.prisma.eventoComunicacao.create({
+    const comunicacao = await this.prisma.evento_Comunicacao.create({
       data: {
         ID_Evento: idEvento,
         ID_Utilizador_Criador: utilizador.sub,
@@ -438,7 +438,7 @@ export class EventosService {
     this.validarPermissaoConsultaComunicacoes(utilizador.role);
     await this.obterEventoOuFalhar(idEvento);
 
-    const comunicacoes = await this.prisma.eventoComunicacao.findMany({
+    const comunicacoes = await this.prisma.evento_Comunicacao.findMany({
       where: {
         ID_Evento: idEvento,
         Ativo: true,
@@ -503,7 +503,7 @@ async removerComunicacaoEvento(
     );
   }
 
-  const comunicacao = await this.prisma.eventoComunicacao.update({
+  const comunicacao = await this.prisma.evento_Comunicacao.update({
     where: {
       ID_Evento_Comunicacao: idComunicacao,
     },
@@ -870,12 +870,12 @@ async removerComunicacaoEvento(
 
   private async obterComunicacaoEventoOuFalhar(
     idComunicacao: number,
-  ): Promise<EventoComunicacao> {
+  ): Promise<Evento_Comunicacao> {
     if (!Number.isInteger(idComunicacao) || idComunicacao <= 0) {
       throw new BadRequestException('ID da comunicacao do evento invalido.');
     }
 
-    const comunicacao = await this.prisma.eventoComunicacao.findUnique({
+    const comunicacao = await this.prisma.evento_Comunicacao.findUnique({
       where: {
         ID_Evento_Comunicacao: idComunicacao,
       },
@@ -1187,7 +1187,7 @@ async removerComunicacaoEvento(
    */
 
   private mapearComunicacaoEvento(
-    comunicacao: EventoComunicacao & {
+    comunicacao: Evento_Comunicacao & {
       Utilizador?: {
         ID_Utilizador: number;
         Pessoa?: {
