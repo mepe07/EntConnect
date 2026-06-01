@@ -214,31 +214,31 @@ model Estado_Pedido {
 }
 
 model Evento {
-  ID_Evento                                               Int                 @id(map: "PK_Evento") @default(autoincrement())
-  Titulo                                                  String              @db.NVarChar(150)
-  Slug                                                    String              @unique(map: "UQ_Evento_Slug") @db.VarChar(180)
-  Resumo                                                  String?             @db.NVarChar(300)
-  Descricao                                               String?             @db.NVarChar(3000)
-  Tipo                                                    String              @default("evento", map: "DF_Evento_Tipo") @db.VarChar(30)
-  Local                                                   String?             @db.NVarChar(150)
-  Imagem                                                  String?             @db.NVarChar(500)
-  Data_Inicio                                             DateTime            @db.DateTime
-  Data_Fim                                                DateTime?           @db.DateTime
-  Publico                                                 Boolean             @default(true, map: "DF_Evento_Publico")
-  Publicado                                               Boolean             @default(false, map: "DF_Evento_Publicado")
-  Destaque                                                Boolean             @default(false, map: "DF_Evento_Destaque")
-  Destaque_Login                                          Boolean             @default(false, map: "DF_Evento_Destaque_Login")
-  Ativo                                                   Boolean             @default(true, map: "DF_Evento_Ativo")
+  ID_Evento                                               Int                  @id(map: "PK_Evento") @default(autoincrement())
+  Titulo                                                  String               @db.NVarChar(150)
+  Slug                                                    String               @unique(map: "UQ_Evento_Slug") @db.VarChar(180)
+  Resumo                                                  String?              @db.NVarChar(300)
+  Descricao                                               String?              @db.NVarChar(3000)
+  Tipo                                                    String               @default("evento", map: "DF_Evento_Tipo") @db.VarChar(30)
+  Local                                                   String?              @db.NVarChar(150)
+  Imagem                                                  String?              @db.NVarChar(500)
+  Data_Inicio                                             DateTime             @db.DateTime
+  Data_Fim                                                DateTime?            @db.DateTime
+  Publico                                                 Boolean              @default(true, map: "DF_Evento_Publico")
+  Publicado                                               Boolean              @default(false, map: "DF_Evento_Publicado")
+  Destaque                                                Boolean              @default(false, map: "DF_Evento_Destaque")
+  Destaque_Login                                          Boolean              @default(false, map: "DF_Evento_Destaque_Login")
+  Ativo                                                   Boolean              @default(true, map: "DF_Evento_Ativo")
   ID_Utilizador_Criador                                   Int
   ID_Utilizador_Atualizacao                               Int?
   ID_Utilizador_Remocao                                   Int?
-  Data_Criacao                                            DateTime            @default(now(), map: "DF_Evento_Data_Criacao") @db.DateTime
-  Data_Atualizacao                                        DateTime            @default(now(), map: "DF_Evento_Data_Atualizacao") @db.DateTime
-  Data_Remocao                                            DateTime?           @db.DateTime
-  Utilizador_Evento_ID_Utilizador_AtualizacaoToUtilizador Utilizador?         @relation("Evento_ID_Utilizador_AtualizacaoToUtilizador", fields: [ID_Utilizador_Atualizacao], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction, map: "FK_Evento_Atualizacao")
-  Utilizador_Evento_ID_Utilizador_CriadorToUtilizador     Utilizador          @relation("Evento_ID_Utilizador_CriadorToUtilizador", fields: [ID_Utilizador_Criador], references: [ID_Utilizador], onUpdate: NoAction, map: "FK_Evento_Criador")
-  Utilizador_Evento_ID_Utilizador_RemocaoToUtilizador     Utilizador?         @relation("Evento_ID_Utilizador_RemocaoToUtilizador", fields: [ID_Utilizador_Remocao], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction, map: "FK_Evento_Remocao")
-  Comunicacoes                                            EventoComunicacao[]
+  Data_Criacao                                            DateTime             @default(now(), map: "DF_Evento_Data_Criacao") @db.DateTime
+  Data_Atualizacao                                        DateTime             @default(now(), map: "DF_Evento_Data_Atualizacao") @db.DateTime
+  Data_Remocao                                            DateTime?            @db.DateTime
+  Utilizador_Evento_ID_Utilizador_AtualizacaoToUtilizador Utilizador?          @relation("Evento_ID_Utilizador_AtualizacaoToUtilizador", fields: [ID_Utilizador_Atualizacao], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction, map: "FK_Evento_Atualizacao")
+  Utilizador_Evento_ID_Utilizador_CriadorToUtilizador     Utilizador           @relation("Evento_ID_Utilizador_CriadorToUtilizador", fields: [ID_Utilizador_Criador], references: [ID_Utilizador], onUpdate: NoAction, map: "FK_Evento_Criador")
+  Utilizador_Evento_ID_Utilizador_RemocaoToUtilizador     Utilizador?          @relation("Evento_ID_Utilizador_RemocaoToUtilizador", fields: [ID_Utilizador_Remocao], references: [ID_Utilizador], onDelete: NoAction, onUpdate: NoAction, map: "FK_Evento_Remocao")
+  Evento_Comunicacao                                      Evento_Comunicacao[]
 
   @@index([Destaque, Data_Inicio], map: "IX_Evento_Destaque_Data")
   @@index([ID_Utilizador_Criador], map: "IX_Evento_ID_Utilizador_Criador")
@@ -246,7 +246,7 @@ model Evento {
   @@index([Publico, Publicado, Ativo, Destaque_Login, Data_Inicio], map: "IX_Evento_Publico_Login")
 }
 
-model EventoComunicacao {
+model Evento_Comunicacao {
   ID_Evento_Comunicacao Int        @id(map: "PK__Evento_C__B3CD90EA1B95FCA8") @default(autoincrement())
   ID_Evento             Int
   ID_Utilizador_Criador Int
@@ -264,7 +264,6 @@ model EventoComunicacao {
   @@index([Data_Criacao], map: "IX_EventoComunicacao_DataCriacao")
   @@index([ID_Evento], map: "IX_EventoComunicacao_Evento")
   @@index([ID_Evento, Ativo], map: "IX_EventoComunicacao_Evento_Ativo")
-  @@map("Evento_Comunicacao")
 }
 
 model Excecao_Aula_Fixa {
@@ -449,7 +448,7 @@ model Utilizador {
   Evento_Evento_ID_Utilizador_AtualizacaoToUtilizador      Evento[]                        @relation("Evento_ID_Utilizador_AtualizacaoToUtilizador")
   Evento_Evento_ID_Utilizador_CriadorToUtilizador          Evento[]                        @relation("Evento_ID_Utilizador_CriadorToUtilizador")
   Evento_Evento_ID_Utilizador_RemocaoToUtilizador          Evento[]                        @relation("Evento_ID_Utilizador_RemocaoToUtilizador")
-  Evento_Comunicacao                                       EventoComunicacao[]
+  Evento_Comunicacao                                       Evento_Comunicacao[]
   Interesse_Artigo                                         Interesse_Artigo[]
   Pedido_Coaching_Pedido_Coaching_ID_EEToUtilizador        Pedido_Coaching[]               @relation("Pedido_Coaching_ID_EEToUtilizador")
   Pedido_Coaching_Pedido_Coaching_ID_ProfessorToUtilizador Pedido_Coaching[]               @relation("Pedido_Coaching_ID_ProfessorToUtilizador")
