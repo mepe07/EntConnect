@@ -120,7 +120,8 @@ Refer to `Backend/README.md` and `Frontend/README.md` for framework-specific com
 
 This `Docs` folder should hold diagrams, requirements, manuals and other supporting artifacts, namely:
 
-- **Database models** — SQL scripts or Entity-Relationship diagram images (complementing the Prisma schema in `Backend/prisma/schema.prisma`).
+- **Database models** — see [`database-model.md`](./database-model.md) for the Entity-Relationship diagrams (complementing the Prisma schema in `Backend/prisma/schema.prisma`).
+- **User manual** — see [`user-manual.md`](./user-manual.md) for a walkthrough of the screens available to each role (Coordinator, Professor, Guardian).
 - **ADRs (Architecture Decision Records)** — records of the architecture decisions made by the team.
 
   Example: `Docs/ADR-001-Backend-Choice.md` containing: "We decided to use NestJS instead of FastAPI because the team is more comfortable with TypeScript, which also makes it easier to share models with the React frontend."
