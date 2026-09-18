@@ -1,6 +1,6 @@
 # EntConnect — Documentation
 
-This directory holds the supporting documentation for **EntConnect**, a management platform built for the dance school **Ent'artes** as a university group project (Software Development Project course).
+This directory holds the supporting documentation for **EntConnect**, a management platform built for the dance school **Ent'artes** as a university group project (Computer’s Engineering Project course).
 
 ## About the project
 
